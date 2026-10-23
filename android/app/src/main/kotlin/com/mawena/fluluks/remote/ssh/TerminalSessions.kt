@@ -1,5 +1,6 @@
 package com.mawena.fluluks.remote.ssh
 
+import android.content.Context
 import androidx.annotation.VisibleForTesting
 import com.mawena.fluluks.engine.EngineError
 import com.mawena.fluluks.files.FilesException
@@ -7,12 +8,15 @@ import com.mawena.fluluks.remote.Remotes
 import com.mawena.fluluks.remote.Secrets
 import java.io.FileNotFoundException
 import java.util.UUID
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
 
 /**
  * Sessions de terminal ouvertes (phase 13, T2), [MAX] au plus en cours (`connecting` ou `open`). Une session tombée
  * reste listée, `closed` avec son message, jusqu'à [close] (pour « Reconnecter » et relire sa sortie). Sortie et
  * changements d'état partent vers [listener], sur les fils de lecture et de lots (le pont les remet sur le fil
- * principal).
+ * principal). [state] suit la liste ; [starter] est appelé à chaque changement (le service des sessions SSH s'y
+ * démarre, T3).
  */
 object TerminalSessions {
     interface Listener {
@@ -21,6 +25,20 @@ object TerminalSessions {
     }
 
     @Volatile var listener: Listener? = null
+
+    /** Appelé après chaque changement : démarre le service si une session est en cours. */
+    @Volatile var starter: (() -> Unit)? = null
+
+    private val flow = MutableStateFlow<List<TerminalInfo>>(emptyList())
+    val state: StateFlow<List<TerminalInfo>> = flow
+
+    /** Branche le démarrage du service des sessions SSH (une fois, au premier pont). */
+    fun init(context: Context) {
+        if (starter == null) {
+            val app = context.applicationContext
+            starter = { com.mawena.fluluks.service.SshService.startIfNeeded(app) }
+        }
+    }
 
     private val sessions = LinkedHashMap<String, TerminalSession>()
 
@@ -41,7 +59,7 @@ object TerminalSessions {
             val same = sessions.values.count { it.info.serverId == serverId }
             val title = if (same == 0) cfg.name else "${cfg.name} (${same + 1})"
             val info = TerminalInfo(UUID.randomUUID().toString(), serverId, title, TerminalInfo.CONNECTING, null, COLS, ROWS)
-            TerminalSession(info, cfg, { id, data -> listener?.onOutput(id, data) }, { listener?.onChanged(it) })
+            TerminalSession(info, cfg, { id, data -> listener?.onOutput(id, data) }, ::changed)
                 .also { sessions[info.id] = it }
         }
         changed(t.info)
@@ -88,13 +106,16 @@ object TerminalSessions {
     fun list(): List<TerminalInfo> = synchronized(this) { sessions.values.map { it.info } }
 
     private fun changed(info: TerminalInfo) {
+        flow.value = list()
         runCatching { listener?.onChanged(info) }
+        runCatching { starter?.invoke() }
     }
 
     /** Tests JVM : tout est fermé, sans écouteur. */
     @VisibleForTesting
     fun resetForTests() {
         listener = null
+        starter = null
         closeAll()
     }
 

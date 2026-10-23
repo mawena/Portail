@@ -92,6 +92,7 @@ class HostApiImpl(
     fun attach(messenger: BinaryMessenger) {
         FluLuksHostApi.setUp(messenger, this)
         SshPromptBridge.prompts = sshPrompts
+        TerminalSessions.init(context)
         TerminalSessions.listener = terminalListener
         if (Music.backend == null) Music.backend = AndroidMusic(context)
         scope.launch {

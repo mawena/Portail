@@ -292,6 +292,17 @@ class TerminalSessionsTest {
         assertTrue(TerminalSessions.list().isEmpty())
     }
 
+    @Test fun stateFlowAndServiceStarter() {
+        var starts = 0
+        TerminalSessions.starter = { starts++ }
+        val t = open(serverId())
+        assertTrue(starts >= 1) // service démarré dès la première session
+        assertEquals(listOf(t.id), TerminalSessions.state.value.map { it.id })
+        assertEquals("open", TerminalSessions.state.value.single().state)
+        TerminalSessions.close(t.id)
+        assertTrue(TerminalSessions.state.value.isEmpty())
+    }
+
     @Test fun closeAllClosesEverything() {
         val id = serverId()
         val a = open(id)
