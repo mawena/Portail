@@ -366,7 +366,7 @@ dans le même commit que le travail.
 - [x] T1 — Connexions SSH fiables et expliquées : messages précis, Tester la connexion, keyboard-interactive, `mawena.cloud:2244` *(connexion à mawena.cloud rétablie avant la phase)*
 - [x] T2 — Sessions de terminal (Kotlin) : PTY xterm, sortie par lots, 8 sessions *(MINA : 12 tests, dont 5 Mo de sortie en lots bornés)*
 - [x] T3 — Sessions gardées en arrière-plan : service et notification « Tout fermer »
-- [ ] T4 — Écran Terminal (xterm) : thème, copier-coller, pincement, Reconnecter
+- [x] T4 — Écran Terminal (xterm) : thème, copier-coller, pincement, Reconnecter *(xterm 4.0.0 vérifié avec Flutter 3.41)*
 - [ ] T5 — Barre de touches : Échap, Tab, Ctrl, Alt, flèches
 - [ ] T6 — Sessions multiples, bouton Terminal, Ouvrir un terminal ici
 - [ ] T7 — Trousseau de clés SSH : générer, importer, clé publique
