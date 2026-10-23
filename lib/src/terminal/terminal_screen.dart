@@ -16,6 +16,23 @@ import 'terminal_theme.dart';
 
 enum _Menu { paste, fontSize, close }
 
+/// Ouvre un terminal sur le serveur SFTP [s] (mot de passe, empreinte et échecs comme pour l'explorateur), puis son
+/// écran ; [startDir] : dossier de départ (« Ouvrir un terminal ici »).
+Future<void> openTerminal(BuildContext context, AppState state, RemoteServerMsg s, {String? startDir}) async {
+  final e = await withServerAuth(
+    context,
+    state,
+    s,
+    (pw) => state.terminals.open(s.id, password: pw, startDir: startDir),
+  );
+  if (e == null || !context.mounted) return;
+  await showTerminal(context, state, e.info.id);
+}
+
+/// Écran de la session [sessionId], déjà ouverte.
+Future<void> showTerminal(BuildContext context, AppState state, String sessionId) => Navigator.of(context)
+    .push(MaterialPageRoute<void>(builder: (_) => TerminalScreen(state: state, sessionId: sessionId)));
+
 /// Écran d'un terminal SSH (phase 13) : affichage xterm de la session [sessionId] tenue par `AppState.terminals`.
 /// Pincer change la taille du texte (8 à 32, mémorisée) ; appui long : sélection, puis « Copier » ; menu ⋮ : Coller,
 /// Taille du texte, Fermer la session. Une session fermée propose « Reconnecter » sur le même serveur.
@@ -227,6 +244,19 @@ class _TerminalScreenState extends State<TerminalScreen> {
       appBar: AppBar(
         title: Text(e.title, overflow: TextOverflow.ellipsis),
         actions: [
+          if (_hub.sessions.length > 1)
+            PopupMenuButton<String>(
+              tooltip: Fr.sshSessions,
+              icon: const Icon(Icons.layers_rounded),
+              onSelected: (id) {
+                _controller.clearSelection();
+                setState(() => _id = id);
+              },
+              itemBuilder: (_) => [
+                for (final s in _hub.sessions)
+                  CheckedPopupMenuItem(value: s.info.id, checked: s.info.id == _id, child: Text(s.title)),
+              ],
+            ),
           if (_controller.selection != null)
             IconButton(tooltip: Fr.copy, icon: const Icon(Icons.copy_rounded), onPressed: () => _copy(e)),
           PopupMenuButton<_Menu>(

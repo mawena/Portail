@@ -8,12 +8,13 @@ import '../screens/explorer_screen.dart';
 import '../screens/server_form_screen.dart';
 import '../state/app_state.dart';
 import '../strings_fr.dart';
+import '../terminal/terminal_screen.dart';
 import '../ui/feedback.dart';
 import '../ui/tokens.dart';
 import 'connection_details_sheet.dart';
 
-/// Serveur distant enregistré (accueil) : toucher connecte puis ouvre son dossier de départ ; Déconnecter si la
-/// connexion est ouverte ; Modifier ouvre sa fiche.
+/// Serveur distant enregistré (accueil) : toucher connecte puis ouvre son dossier de départ ; Terminal (SFTP
+/// seulement, phase 13) ouvre une session SSH ; Déconnecter si la connexion est ouverte ; Modifier ouvre sa fiche.
 class ServerTile extends StatelessWidget {
   const ServerTile({super.key, required this.state, required this.server});
 
@@ -35,6 +36,12 @@ class ServerTile extends StatelessWidget {
         subtitle: Text(Fr.serverLine(s.protocol, s.user, s.host, s.port, s.connected)),
         onTap: () => connectAndOpen(context, state, s),
         trailing: Row(mainAxisSize: MainAxisSize.min, children: [
+          if (s.protocol == 'sftp')
+            IconButton(
+              tooltip: Fr.terminal,
+              icon: const Icon(Icons.terminal_rounded),
+              onPressed: () => openTerminal(context, state, s),
+            ),
           if (s.connected)
             IconButton(
               tooltip: Fr.disconnect,

@@ -320,8 +320,14 @@ class FakeHostApi implements HostApi {
     final hook = openTerminalHook;
     if (hook != null) return hook(serverId, password, startDir);
     final name = servers.where((s) => s.id == serverId).map((s) => s.name).firstOrNull ?? serverId;
+    final same = terminals.where((t) => t.serverId == serverId).length; // titres comme côté Kotlin
     final t = TerminalSessionMsg(
-        id: 't${++_terminalSeq}', serverId: serverId, title: name, state: 'open', cols: 80, rows: 24);
+        id: 't${++_terminalSeq}',
+        serverId: serverId,
+        title: same == 0 ? name : '$name (${same + 1})',
+        state: 'open',
+        cols: 80,
+        rows: 24);
     terminals.add(t);
     return t;
   }

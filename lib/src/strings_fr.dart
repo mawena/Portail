@@ -170,6 +170,12 @@ class Fr {
 
   // --- terminal SSH (phase 13)
   static String terminalOf(String server) => 'Terminal de $server';
+  static const terminal = 'Terminal';
+  static const sshSessions = 'Sessions SSH';
+  static const openTerminalHere = 'Ouvrir un terminal ici';
+  static const sessionConnecting = 'Connexion…';
+  static const sessionOpen = 'Ouverte';
+  static String sessionClosedBecause(String? why) => why == null ? sessionClosed : 'Fermée\u00A0: $why';
   static const terminalPaste = 'Coller';
   static String pasteLines(int n) => 'Coller ${count(n, 'ligne', 'lignes')}\u202F?';
   static const pasteLinesHelp = 'Chaque ligne sera exécutée comme si vous la tapiez.';
@@ -422,7 +428,8 @@ class Fr {
 
   static String readOnlyText(String reason) => 'Lecture seule\u00A0: $reason';
   static String serverLine(String protocol, String user, String host, int port, bool connected) =>
-      '${protocol.toUpperCase()} · ${user.isEmpty ? '' : '$user@'}$host:$port${connected ? ' · connecté' : ''}';
+      '${protocol.toUpperCase()}${protocol == 'sftp' ? ' · SSH' : ''} · ${user.isEmpty ? '' : '$user@'}$host:$port'
+      '${connected ? ' · connecté' : ''}';
   static String passwordFor(String name) => 'Mot de passe de $name';
   static String trustBody(String fingerprint) =>
       "Première connexion à ce serveur. Vérifiez que son empreinte est bien celle-ci avant de lui faire confiance\u00A0:\n\n$fingerprint";
