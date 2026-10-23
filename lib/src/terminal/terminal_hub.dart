@@ -18,6 +18,9 @@ class TerminalEntry {
   final Terminal terminal;
   String? oscTitle;
 
+  /// Transforme ce que tape le clavier du téléphone (Ctrl ou Alt de la barre de touches), posé par l'écran.
+  String Function(String data)? inputFilter;
+
   /// Décodage UTF-8 en flux : un caractère coupé entre deux lots reste entier.
   late final ByteConversionSink _decoder =
       const Utf8Decoder(allowMalformed: true).startChunkedConversion(_TerminalSink(terminal));
@@ -64,6 +67,11 @@ class TerminalHub extends ChangeNotifier {
     final e = _adopt(msg);
     notifyListeners();
     return e;
+  }
+
+  /// Envoie [data] tel quel à la session [id] si elle est ouverte (barre de touches, collage déjà transformé).
+  void send(String id, String data) {
+    if (_entries[id]?.isOpen ?? false) api.terminalWrite(id, Uint8List.fromList(utf8.encode(data)));
   }
 
   /// Ferme et oublie [id] (côté Kotlin aussi).
@@ -113,9 +121,7 @@ class TerminalHub extends ChangeNotifier {
     late final TerminalEntry e;
     final t = Terminal(
       maxLines: terminalScrollback,
-      onOutput: (data) {
-        if (e.isOpen) api.terminalWrite(id, Uint8List.fromList(utf8.encode(data)));
-      },
+      onOutput: (data) => send(id, e.inputFilter?.call(data) ?? data),
       onResize: (w, h, pw, ph) {
         if (!e.isClosed) api.terminalResize(id, w, h);
       },

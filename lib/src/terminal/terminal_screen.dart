@@ -10,6 +10,7 @@ import '../ui/dialogs.dart';
 import '../ui/feedback.dart';
 import '../ui/tokens.dart';
 import '../widgets/server_tile.dart';
+import 'key_bar.dart';
 import 'terminal_hub.dart';
 import 'terminal_theme.dart';
 
@@ -32,6 +33,7 @@ class _TerminalScreenState extends State<TerminalScreen> {
   late String _id = widget.sessionId;
   final _controller = TerminalController();
   final _focus = FocusNode();
+  final _mods = KeyModifiers();
   bool _secure = false;
 
   // pincement à deux doigts : position des doigts, écart et taille au départ, taille en cours
@@ -61,6 +63,9 @@ class _TerminalScreenState extends State<TerminalScreen> {
     _state.uiPrefsListenable.removeListener(_changed);
     _controller.removeListener(_changed);
     if (_secure) _state.api.setSecureScreen(false);
+    final e = _hub.entry(_id);
+    if (e != null && e.inputFilter == _mods.apply) e.inputFilter = null;
+    _mods.dispose();
     _controller.dispose();
     _focus.dispose();
     super.dispose();
@@ -217,6 +222,7 @@ class _TerminalScreenState extends State<TerminalScreen> {
     }
     final cs = Theme.of(context).colorScheme;
     final serverName = _server(e)?.name ?? e.info.title;
+    e.inputFilter = _mods.apply; // Ctrl et Alt de la barre s'appliquent aussi au clavier du téléphone
     return Scaffold(
       appBar: AppBar(
         title: Text(e.title, overflow: TextOverflow.ellipsis),
@@ -264,6 +270,12 @@ class _TerminalScreenState extends State<TerminalScreen> {
               ),
             ),
           ),
+          if (e.isOpen)
+            KeyBar(
+              onInput: (s) => _hub.send(e.info.id, s),
+              modifiers: _mods,
+              appCursorKeys: () => e.terminal.cursorKeysMode,
+            ),
         ]),
       ),
     );

@@ -183,6 +183,25 @@ class Fr {
   static const reconnect = 'Reconnecter';
   static const terminalSecure = 'Masquer le terminal';
   static const terminalSecureHelp = 'Dans les captures d\'écran et les applications récentes';
+  // barre de touches : noms lus par TalkBack
+  static const keyEsc = 'Échap';
+  static const keyTab = 'Tabulation';
+  static const keyCtrl = 'Contrôle';
+  static const keyAlt = 'Alt';
+  static const keyUp = 'Flèche haut';
+  static const keyDown = 'Flèche bas';
+  static const keyLeft = 'Flèche gauche';
+  static const keyRight = 'Flèche droite';
+  static const keyHome = 'Début';
+  static const keyEnd = 'Fin';
+  static const keyPageUp = 'Page précédente';
+  static const keyPageDown = 'Page suivante';
+  static const keyTilde = 'Tilde';
+  static const keyPipe = 'Barre verticale';
+  static const keySlash = 'Barre oblique';
+  static const keyDash = 'Tiret';
+  static const modifierOnce = 'Pour la prochaine touche';
+  static const modifierLocked = 'Verrouillée';
   static const editServer = 'Modifier';
   static const disconnect = 'Déconnecter';
   static const serverForm = 'Serveur distant';
