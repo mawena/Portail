@@ -10,6 +10,8 @@ import '../ui/dialogs.dart';
 import '../ui/feedback.dart';
 import '../ui/tokens.dart';
 import '../ui/widgets.dart';
+import '../widgets/connection_details_sheet.dart';
+import '../widgets/server_tile.dart';
 
 /// Fiche d'un serveur distant (phase 10) : protocole, nom, adresse, port (21 ou 22 par défaut), utilisateur, mot de
 /// passe (mémorisé seulement si coché), dossier de départ. FTP : avertissement « en clair ». Un serveur existant
@@ -128,6 +130,25 @@ class _ServerFormScreenState extends State<ServerFormScreen> {
     if (mounted) Navigator.of(context).pop();
   }
 
+  /// « Tester la connexion » (phase 13) : la fiche enregistrée, avec le mot de passe saisi s'il y en a un.
+  Future<void> _test() async {
+    final s = widget.server!;
+    final pw = _password.text.isEmpty ? null : Uint8List.fromList(utf8.encode(_password.text));
+    try {
+      final log = await withServerAuth(context, widget.state, s, (p) => widget.state.testServer(s.id, p), password: pw);
+      if (log == null || !mounted) return;
+      showMessage(
+        context,
+        Fr.connectionOk,
+        kind: MessageKind.success,
+        actionLabel: Fr.details,
+        onAction: () => showConnectionDetails(context, widget.state, s.id),
+      );
+    } finally {
+      pw?.fillRange(0, pw.length, 0);
+    }
+  }
+
   Future<void> _copyHostKey() async {
     await Clipboard.setData(ClipboardData(text: _hostKey!));
     if (mounted) showMessage(context, Fr.hashCopied, kind: MessageKind.success);
@@ -238,6 +259,14 @@ class _ServerFormScreenState extends State<ServerFormScreen> {
               ),
             ],
             const SizedBox(height: Space.l),
+            if (s != null) ...[
+              OutlinedButton.icon(
+                onPressed: _test,
+                icon: const Icon(Icons.network_check_rounded),
+                label: const Text(Fr.testConnection),
+              ),
+              const SizedBox(height: Space.s),
+            ],
             FilledButton(onPressed: _save, child: const Text(Fr.save)),
           ]),
         ),

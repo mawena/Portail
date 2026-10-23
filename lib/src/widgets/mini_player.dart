@@ -7,6 +7,7 @@ import '../strings_fr.dart';
 import '../ui/feedback.dart';
 import '../ui/tokens.dart';
 import 'bottom_dock.dart';
+import 'ssh_prompt_dialog.dart';
 import 'transfer_bar.dart';
 
 /// Barre réduite de la musique en cours (phase 10), dans le dock du bas de tous les écrans : pochette, titre, rang,
@@ -118,7 +119,16 @@ class _PlayerFrameState extends State<PlayerFrame> {
     final m = widget.state.takePlayerMessage();
     // le cadre est sous le ScaffoldMessenger de l'application : le message s'affiche sur l'écran courant
     if (m != null && mounted) showMessage(context, m);
+    final p = widget.state.takeSshPrompt();
+    if (p != null) _askSshPrompt(p);
     if (mounted) _entry.markNeedsBuild();
+  }
+
+  /// Invite keyboard-interactive d'un serveur SSH (phase 13), posée par-dessus l'écran courant.
+  Future<void> _askSshPrompt(SshPromptMsg p) async {
+    final ctx = widget.navigatorKey.currentContext;
+    final answers = ctx == null ? null : await askSshPrompt(ctx, p);
+    await widget.state.answerSshPrompt(p.requestId, answers);
   }
 
   @override

@@ -111,6 +111,28 @@ class RemoteSourceTest {
         assertEquals(emptyList<RemoteSource>(), Remotes.connected())
     }
 
+    // --- phase 13, T1
+    @Test fun testServerLeavesNothingOpen() {
+        val saved = store.save(cfg.copy(id = ""), null, null)
+        var given: ByteArray? = null
+        Remotes.resetForTests(store) { _, sec -> given = sec.password; client }
+        Remotes.testServer(saved.id, "secret".toByteArray())
+        assertTrue(client.closed)
+        assertFalse(Remotes.isConnected(saved.id))
+        assertTrue(given!!.all { it == 0.toByte() }) // copie du mot de passe effacée
+    }
+
+    @Test fun sshFailureKeepsItsTypeThroughConnect() {
+        val saved = store.save(cfg.copy(id = ""), null, null)
+        Remotes.resetForTests(store) { _, _ ->
+            val r = com.mawena.fluluks.remote.ssh.SshFailure.Reason.REFUSED
+            throw com.mawena.fluluks.remote.ssh.SshFailure(r, "refusé")
+        }
+        val e = runCatching { Remotes.connect(saved.id, null) }.exceptionOrNull()
+        assertTrue("$e", e is com.mawena.fluluks.remote.ssh.SshFailure)
+        assertEquals("refusé", (e as com.mawena.fluluks.remote.ssh.SshFailure).detail)
+    }
+
     @Test fun hostKeyErrorNotConnected() {
         val saved = store.save(cfg.copy(id = ""), null, null)
         Remotes.resetForTests(store) { _, _ -> throw HostKeyUnknown("ssh-ed25519 SHA256:xyz") }

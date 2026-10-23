@@ -51,7 +51,16 @@ import com.mawena.fluluks.volumes.FormatOptions
 import com.mawena.fluluks.volumes.VolumeManager
 import com.mawena.fluluks.volumes.VolumeState
 import io.flutter.plugin.common.BinaryMessenger
+import com.mawena.fluluks.remote.ssh.AttemptLogs
+import com.mawena.fluluks.remote.ssh.SshFailure
+import com.mawena.fluluks.remote.ssh.SshPromptBridge
+import com.mawena.fluluks.remote.ssh.SshPrompts
 import java.io.FileNotFoundException
+import java.util.UUID
+import java.util.concurrent.CompletableFuture
+import java.util.concurrent.ConcurrentHashMap
+import java.util.concurrent.TimeUnit
+import java.util.concurrent.TimeoutException
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
@@ -80,6 +89,7 @@ class HostApiImpl(
     /** À appeler une fois : enregistre l'API hôte et pousse chaque changement d'état vers Flutter. */
     fun attach(messenger: BinaryMessenger) {
         FluLuksHostApi.setUp(messenger, this)
+        SshPromptBridge.prompts = sshPrompts
         if (Music.backend == null) Music.backend = AndroidMusic(context)
         scope.launch {
             combine(VolumeManager.disks, VolumeManager.volumes) { d, v -> toMsgs(d, v) }
@@ -115,6 +125,8 @@ class HostApiImpl(
 
     fun detach(messenger: BinaryMessenger) {
         FluLuksHostApi.setUp(messenger, null)
+        SshPromptBridge.prompts = null
+        pendingPrompts.values.forEach { it.complete(null) } // invites sans interface : refusées
         if (Build.VERSION.SDK_INT >= 30) {
             context.getSystemService(StorageManager::class.java)
                 .unregisterStorageVolumeCallback(storageCallback as StorageManager.StorageVolumeCallback)
@@ -292,21 +304,67 @@ class HostApiImpl(
     override fun connectServer(serverId: String, password: ByteArray?, callback: (Result<SourceMsg>) -> Unit) =
         io(callback) {
             try {
-                sourceMsg(Remotes.connect(serverId, password), null)
-            } catch (e: HostKeyUnknown) {
-                throw FlutterError("hostkey-unknown", e.message, e.fingerprint)
-            } catch (e: HostKeyChanged) {
-                throw FlutterError("hostkey-changed", e.message, null)
-            } catch (e: AuthFailed) {
-                throw FlutterError("auth", e.message, e.missing)
-            } catch (e: FlutterError) {
-                throw e
-            } catch (e: Exception) {
-                throw Files.toFilesException(e, "openDocument")
+                remoteErrors { sourceMsg(Remotes.connect(serverId, password), null) }
             } finally {
                 password?.fill(0)
             }
         }
+
+    /** Erreurs d'une connexion distante en codes pour Flutter : `hostkey-unknown`, `hostkey-changed`, `auth`, `ssh`. */
+    private inline fun <T> remoteErrors(block: () -> T): T = try {
+        block()
+    } catch (e: HostKeyUnknown) {
+        throw FlutterError("hostkey-unknown", e.message, e.fingerprint)
+    } catch (e: HostKeyChanged) {
+        throw FlutterError("hostkey-changed", e.message, null)
+    } catch (e: AuthFailed) {
+        throw FlutterError("auth", e.message, e.missing)
+    } catch (e: SshFailure) {
+        throw FlutterError("ssh", e.message, e.detail)
+    } catch (e: FlutterError) {
+        throw e
+    } catch (e: Exception) {
+        throw Files.toFilesException(e, "openDocument")
+    }
+
+    override fun testServer(serverId: String, password: ByteArray?, callback: (Result<List<String>>) -> Unit) =
+        io(callback) {
+            try {
+                remoteErrors {
+                    Remotes.testServer(serverId, password)
+                    AttemptLogs.get(serverId)
+                }
+            } finally {
+                password?.fill(0)
+            }
+        }
+
+    override fun lastAttemptLog(serverId: String): List<String> = AttemptLogs.get(serverId)
+
+    /** Invites keyboard-interactive en attente d'une réponse de Flutter, par identifiant. */
+    private val pendingPrompts = ConcurrentHashMap<String, CompletableFuture<List<ByteArray>?>>()
+
+    /** Pose une invite à Flutter et attend sa réponse ([PROMPT_WAIT_S] au plus), sur le fil de la connexion. */
+    private val sshPrompts = SshPrompts { name, instruction, prompts, echo ->
+        val id = UUID.randomUUID().toString()
+        val answer = CompletableFuture<List<ByteArray>?>()
+        pendingPrompts[id] = answer
+        val msg = SshPromptMsg(id, name, instruction, prompts, echo)
+        scope.launch { events.onSshPrompt(msg) { /* réponse ignorée */ } }
+        try {
+            answer.get(PROMPT_WAIT_S, TimeUnit.SECONDS)
+        } catch (e: TimeoutException) {
+            null
+        } finally {
+            pendingPrompts.remove(id)
+        }
+    }
+
+    override fun answerSshPrompt(requestId: String, answers: List<ByteArray>?) {
+        val copy = answers?.map { it.copyOf() }
+        answers?.forEach { it.fill(0) }
+        if (pendingPrompts[requestId]?.complete(copy) != true) copy?.forEach { it.fill(0) }
+    }
 
     override fun disconnectServer(serverId: String) = guardedValue {
         Remotes.disconnect(serverId)
@@ -596,6 +654,9 @@ class HostApiImpl(
     }
 
     companion object {
+        /** Attente d'une réponse à une invite keyboard-interactive (spec § 21 : 120 s). */
+        const val PROMPT_WAIT_S = 120L
+
         /** Erreur rendue à Flutter : code fl_err et message français, jamais le détail d'une exception. */
         internal fun toFlutterError(e: Throwable): FlutterError = when (e) {
             is FlutterError -> e // déjà en français (« Aucune application… »)

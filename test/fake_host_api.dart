@@ -283,6 +283,25 @@ class FakeHostApi implements HostApi {
   @override
   Future<void> forgetHostKey(String serverId) async => calls.add('forgetHostKey $serverId');
 
+  /// Phase 13 : réponse de testServer (défaut : un journal d'une ligne) ; journal rendu par lastAttemptLog ;
+  /// réponses reçues aux invites keyboard-interactive (identifiant, réponses décodées ou null si refusée).
+  List<String> Function(String id, Uint8List? password)? test;
+  List<String> attemptLog = [];
+  final promptAnswers = <(String, List<String>?)>[];
+
+  @override
+  Future<List<String>> testServer(String serverId, Uint8List? password) async {
+    calls.add('testServer $serverId');
+    return test?.call(serverId, password) ?? ['Connecté'];
+  }
+
+  @override
+  Future<List<String>> lastAttemptLog(String serverId) async => List.of(attemptLog);
+
+  @override
+  Future<void> answerSshPrompt(String requestId, List<Uint8List>? answers) async =>
+      promptAnswers.add((requestId, answers?.map((a) => utf8.decode(List<int>.of(a))).toList()));
+
   /// Description rendue par importPrivateKey (null : sélecteur fermé sans choix).
   String? importedKey;
 

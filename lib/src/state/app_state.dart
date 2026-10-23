@@ -209,6 +209,12 @@ class AppState extends ChangeNotifier implements FluLuksEventsApi {
 
   Future<void> trustHostKey(String id, String fingerprint) => api.trustHostKey(id, fingerprint);
 
+  /// « Tester la connexion » (phase 13) : mêmes erreurs que [connectServer] ; rend le journal de la tentative.
+  Future<List<String>> testServer(String id, Uint8List? password) => api.testServer(id, password);
+
+  /// Journal de la dernière tentative de connexion de [id], pour « Détails ».
+  Future<List<String>> lastAttemptLog(String id) => api.lastAttemptLog(id);
+
   Future<void> forgetHostKey(String id) async {
     await api.forgetHostKey(id);
     await refreshSources();
@@ -296,6 +302,30 @@ class AppState extends ChangeNotifier implements FluLuksEventsApi {
 
   /// Musique en cours (phase 10), ou null.
   PlayerMsg? get player => _player;
+
+  /// Invites keyboard-interactive des serveurs SSH en attente (phase 13), posées une à une par le cadre de
+  /// l'application.
+  final _sshPrompts = <SshPromptMsg>[];
+
+  /// Prochaine invite à poser, rendue une seule fois.
+  SshPromptMsg? takeSshPrompt() => _sshPrompts.isEmpty ? null : _sshPrompts.removeAt(0);
+
+  @override
+  void onSshPrompt(SshPromptMsg prompt) {
+    _sshPrompts.add(prompt);
+    notifyListeners();
+  }
+
+  /// Réponses à l'invite [requestId] (null : refusée) ; remises à zéro ici après l'envoi.
+  Future<void> answerSshPrompt(String requestId, List<Uint8List>? answers) async {
+    try {
+      await api.answerSshPrompt(requestId, answers);
+    } finally {
+      for (final a in answers ?? const <Uint8List>[]) {
+        a.fillRange(0, a.length, 0);
+      }
+    }
+  }
 
   /// Raison du dernier arrêt subi de la musique, rendue une seule fois.
   String? takePlayerMessage() {

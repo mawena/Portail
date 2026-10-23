@@ -195,6 +195,64 @@ class FlutterError (
   val details: Any? = null
 ) : RuntimeException()
 
+/**
+ * Invite keyboard-interactive (phase 13) : [name] (serveur ou titre de l'invite), [instruction], une saisie par
+ * élément de [prompts] ; [echo] faux : saisie masquée.
+ *
+ * Generated class from Pigeon that represents data sent in messages.
+ */
+data class SshPromptMsg (
+  val requestId: String,
+  val name: String,
+  val instruction: String,
+  val prompts: List<String>,
+  val echo: List<Boolean>
+)
+ {
+  companion object {
+    fun fromList(pigeonVar_list: List<Any?>): SshPromptMsg {
+      val requestId = pigeonVar_list[0] as String
+      val name = pigeonVar_list[1] as String
+      val instruction = pigeonVar_list[2] as String
+      val prompts = pigeonVar_list[3] as List<String>
+      val echo = pigeonVar_list[4] as List<Boolean>
+      return SshPromptMsg(requestId, name, instruction, prompts, echo)
+    }
+  }
+  fun toList(): List<Any?> {
+    return listOf(
+      requestId,
+      name,
+      instruction,
+      prompts,
+      echo,
+    )
+  }
+  override fun equals(other: Any?): Boolean {
+    if (other == null || other.javaClass != javaClass) {
+      return false
+    }
+    if (this === other) {
+      return true
+    }
+    val other = other as SshPromptMsg
+    return FluLuksApiPigeonUtils.deepEquals(this.requestId, other.requestId) && FluLuksApiPigeonUtils.deepEquals(this.name, other.name) && FluLuksApiPigeonUtils.deepEquals(this.instruction, other.instruction) && FluLuksApiPigeonUtils.deepEquals(this.prompts, other.prompts) && FluLuksApiPigeonUtils.deepEquals(this.echo, other.echo)
+  }
+
+  override fun hashCode(): Int {
+    var result = javaClass.hashCode()
+    result = 31 * result + FluLuksApiPigeonUtils.deepHash(this.requestId)
+    result = 31 * result + FluLuksApiPigeonUtils.deepHash(this.name)
+    result = 31 * result + FluLuksApiPigeonUtils.deepHash(this.instruction)
+    result = 31 * result + FluLuksApiPigeonUtils.deepHash(this.prompts)
+    result = 31 * result + FluLuksApiPigeonUtils.deepHash(this.echo)
+    return result
+  }
+  override fun toString(): String {
+    return "SshPromptMsg(requestId=$requestId, name=$name, instruction=$instruction, prompts=$prompts, echo=$echo)"
+  }
+}
+
 /** Generated class from Pigeon that represents data sent in messages. */
 data class PartitionMsg (
   val index: Long,
@@ -1620,115 +1678,120 @@ private open class FluLuksApiPigeonCodec : StandardMessageCodec() {
     return when (type) {
       129.toByte() -> {
         return (readValue(buffer) as? List<Any?>)?.let {
-          PartitionMsg.fromList(it)
+          SshPromptMsg.fromList(it)
         }
       }
       130.toByte() -> {
         return (readValue(buffer) as? List<Any?>)?.let {
-          DiskMsg.fromList(it)
+          PartitionMsg.fromList(it)
         }
       }
       131.toByte() -> {
         return (readValue(buffer) as? List<Any?>)?.let {
-          VolumeMsg.fromList(it)
+          DiskMsg.fromList(it)
         }
       }
       132.toByte() -> {
         return (readValue(buffer) as? List<Any?>)?.let {
-          SourceMsg.fromList(it)
+          VolumeMsg.fromList(it)
         }
       }
       133.toByte() -> {
         return (readValue(buffer) as? List<Any?>)?.let {
-          EntryMsg.fromList(it)
+          SourceMsg.fromList(it)
         }
       }
       134.toByte() -> {
         return (readValue(buffer) as? List<Any?>)?.let {
-          PlayerMsg.fromList(it)
+          EntryMsg.fromList(it)
         }
       }
       135.toByte() -> {
         return (readValue(buffer) as? List<Any?>)?.let {
-          TransferMsg.fromList(it)
+          PlayerMsg.fromList(it)
         }
       }
       136.toByte() -> {
         return (readValue(buffer) as? List<Any?>)?.let {
-          TrashItemMsg.fromList(it)
+          TransferMsg.fromList(it)
         }
       }
       137.toByte() -> {
         return (readValue(buffer) as? List<Any?>)?.let {
-          DetailsMsg.fromList(it)
+          TrashItemMsg.fromList(it)
         }
       }
       138.toByte() -> {
         return (readValue(buffer) as? List<Any?>)?.let {
-          TextFileMsg.fromList(it)
+          DetailsMsg.fromList(it)
         }
       }
       139.toByte() -> {
         return (readValue(buffer) as? List<Any?>)?.let {
-          TextSaveMsg.fromList(it)
+          TextFileMsg.fromList(it)
         }
       }
       140.toByte() -> {
         return (readValue(buffer) as? List<Any?>)?.let {
-          RenameRuleMsg.fromList(it)
+          TextSaveMsg.fromList(it)
         }
       }
       141.toByte() -> {
         return (readValue(buffer) as? List<Any?>)?.let {
-          RenamePreviewMsg.fromList(it)
+          RenameRuleMsg.fromList(it)
         }
       }
       142.toByte() -> {
         return (readValue(buffer) as? List<Any?>)?.let {
-          FilterItemMsg.fromList(it)
+          RenamePreviewMsg.fromList(it)
         }
       }
       143.toByte() -> {
         return (readValue(buffer) as? List<Any?>)?.let {
-          FolderSizeMsg.fromList(it)
+          FilterItemMsg.fromList(it)
         }
       }
       144.toByte() -> {
         return (readValue(buffer) as? List<Any?>)?.let {
-          SpaceItemMsg.fromList(it)
+          FolderSizeMsg.fromList(it)
         }
       }
       145.toByte() -> {
         return (readValue(buffer) as? List<Any?>)?.let {
-          SpaceReportMsg.fromList(it)
+          SpaceItemMsg.fromList(it)
         }
       }
       146.toByte() -> {
         return (readValue(buffer) as? List<Any?>)?.let {
-          SearchResultMsg.fromList(it)
+          SpaceReportMsg.fromList(it)
         }
       }
       147.toByte() -> {
         return (readValue(buffer) as? List<Any?>)?.let {
-          RemoteServerMsg.fromList(it)
+          SearchResultMsg.fromList(it)
         }
       }
       148.toByte() -> {
         return (readValue(buffer) as? List<Any?>)?.let {
-          ViewPrefsMsg.fromList(it)
+          RemoteServerMsg.fromList(it)
         }
       }
       149.toByte() -> {
         return (readValue(buffer) as? List<Any?>)?.let {
-          UiPrefsMsg.fromList(it)
+          ViewPrefsMsg.fromList(it)
         }
       }
       150.toByte() -> {
         return (readValue(buffer) as? List<Any?>)?.let {
-          AppInfoMsg.fromList(it)
+          UiPrefsMsg.fromList(it)
         }
       }
       151.toByte() -> {
+        return (readValue(buffer) as? List<Any?>)?.let {
+          AppInfoMsg.fromList(it)
+        }
+      }
+      152.toByte() -> {
         return (readValue(buffer) as? List<Any?>)?.let {
           FavoriteMsg.fromList(it)
         }
@@ -1738,96 +1801,100 @@ private open class FluLuksApiPigeonCodec : StandardMessageCodec() {
   }
   override fun writeValue(stream: ByteArrayOutputStream, value: Any?)   {
     when (value) {
-      is PartitionMsg -> {
+      is SshPromptMsg -> {
         stream.write(129)
         writeValue(stream, value.toList())
       }
-      is DiskMsg -> {
+      is PartitionMsg -> {
         stream.write(130)
         writeValue(stream, value.toList())
       }
-      is VolumeMsg -> {
+      is DiskMsg -> {
         stream.write(131)
         writeValue(stream, value.toList())
       }
-      is SourceMsg -> {
+      is VolumeMsg -> {
         stream.write(132)
         writeValue(stream, value.toList())
       }
-      is EntryMsg -> {
+      is SourceMsg -> {
         stream.write(133)
         writeValue(stream, value.toList())
       }
-      is PlayerMsg -> {
+      is EntryMsg -> {
         stream.write(134)
         writeValue(stream, value.toList())
       }
-      is TransferMsg -> {
+      is PlayerMsg -> {
         stream.write(135)
         writeValue(stream, value.toList())
       }
-      is TrashItemMsg -> {
+      is TransferMsg -> {
         stream.write(136)
         writeValue(stream, value.toList())
       }
-      is DetailsMsg -> {
+      is TrashItemMsg -> {
         stream.write(137)
         writeValue(stream, value.toList())
       }
-      is TextFileMsg -> {
+      is DetailsMsg -> {
         stream.write(138)
         writeValue(stream, value.toList())
       }
-      is TextSaveMsg -> {
+      is TextFileMsg -> {
         stream.write(139)
         writeValue(stream, value.toList())
       }
-      is RenameRuleMsg -> {
+      is TextSaveMsg -> {
         stream.write(140)
         writeValue(stream, value.toList())
       }
-      is RenamePreviewMsg -> {
+      is RenameRuleMsg -> {
         stream.write(141)
         writeValue(stream, value.toList())
       }
-      is FilterItemMsg -> {
+      is RenamePreviewMsg -> {
         stream.write(142)
         writeValue(stream, value.toList())
       }
-      is FolderSizeMsg -> {
+      is FilterItemMsg -> {
         stream.write(143)
         writeValue(stream, value.toList())
       }
-      is SpaceItemMsg -> {
+      is FolderSizeMsg -> {
         stream.write(144)
         writeValue(stream, value.toList())
       }
-      is SpaceReportMsg -> {
+      is SpaceItemMsg -> {
         stream.write(145)
         writeValue(stream, value.toList())
       }
-      is SearchResultMsg -> {
+      is SpaceReportMsg -> {
         stream.write(146)
         writeValue(stream, value.toList())
       }
-      is RemoteServerMsg -> {
+      is SearchResultMsg -> {
         stream.write(147)
         writeValue(stream, value.toList())
       }
-      is ViewPrefsMsg -> {
+      is RemoteServerMsg -> {
         stream.write(148)
         writeValue(stream, value.toList())
       }
-      is UiPrefsMsg -> {
+      is ViewPrefsMsg -> {
         stream.write(149)
         writeValue(stream, value.toList())
       }
-      is AppInfoMsg -> {
+      is UiPrefsMsg -> {
         stream.write(150)
         writeValue(stream, value.toList())
       }
-      is FavoriteMsg -> {
+      is AppInfoMsg -> {
         stream.write(151)
+        writeValue(stream, value.toList())
+      }
+      is FavoriteMsg -> {
+        stream.write(152)
         writeValue(stream, value.toList())
       }
       else -> super.writeValue(stream, value)
@@ -1899,7 +1966,8 @@ interface FluLuksHostApi {
    * sauf `force`.
    * Dossiers distants (phase 10). `saveServer` : identifiant vide pour un nouveau serveur ; mots de passe null :
    * ceux mémorisés sont gardés. `connectServer` échoue avec le code `auth` (mot de passe requis ou refusé ; détails :
-   * vrai s'il manquait), `hostkey-unknown` (détails : l'empreinte à montrer) ou `hostkey-changed`.
+   * vrai s'il manquait), `hostkey-unknown` (détails : l'empreinte à montrer), `hostkey-changed` ou `ssh` (phase 13 :
+   * message précis en français ; détails : la cause technique ; journal : `lastAttemptLog`).
    */
   fun listServers(): List<RemoteServerMsg>
   fun saveServer(server: RemoteServerMsg, password: ByteArray?, keyPassphrase: ByteArray?): RemoteServerMsg
@@ -1908,6 +1976,14 @@ interface FluLuksHostApi {
   fun disconnectServer(serverId: String)
   fun trustHostKey(serverId: String, fingerprint: String)
   fun forgetHostKey(serverId: String)
+  /**
+   * Phase 13 : « Tester la connexion » : connecte puis déconnecte aussitôt, sans ouvrir la source ; mêmes erreurs que
+   * `connectServer` ; rend le journal de la tentative. `lastAttemptLog` : journal de la dernière tentative du serveur
+   * (SFTP), sans aucun secret. `answerSshPrompt` : réponses à une invite `onSshPrompt` (null : refusée), mises à zéro.
+   */
+  fun testServer(serverId: String, password: ByteArray?, callback: (Result<List<String>>) -> Unit)
+  fun lastAttemptLog(serverId: String): List<String>
+  fun answerSshPrompt(requestId: String, answers: List<ByteArray>?)
   /**
    * Clé privée OpenSSH choisie dans le sélecteur d'Android, scellée pour `serverId` ; rend sa description
    * (« ssh-ed25519 SHA256:… »), ou null si rien n'a été choisi.
@@ -2836,6 +2912,63 @@ interface FluLuksHostApi {
         }
       }
       run {
+        val channel = BasicMessageChannel<Any?>(binaryMessenger, "dev.flutter.pigeon.fluluks.FluLuksHostApi.testServer$separatedMessageChannelSuffix", codec)
+        if (api != null) {
+          channel.setMessageHandler { message, reply ->
+            val args = message as List<Any?>
+            val serverIdArg = args[0] as String
+            val passwordArg = args[1] as ByteArray?
+            api.testServer(serverIdArg, passwordArg) { result: Result<List<String>> ->
+              val error = result.exceptionOrNull()
+              if (error != null) {
+                reply.reply(FluLuksApiPigeonUtils.wrapError(error))
+              } else {
+                val data = result.getOrNull()
+                reply.reply(FluLuksApiPigeonUtils.wrapResult(data))
+              }
+            }
+          }
+        } else {
+          channel.setMessageHandler(null)
+        }
+      }
+      run {
+        val channel = BasicMessageChannel<Any?>(binaryMessenger, "dev.flutter.pigeon.fluluks.FluLuksHostApi.lastAttemptLog$separatedMessageChannelSuffix", codec)
+        if (api != null) {
+          channel.setMessageHandler { message, reply ->
+            val args = message as List<Any?>
+            val serverIdArg = args[0] as String
+            val wrapped: List<Any?> = try {
+              listOf(api.lastAttemptLog(serverIdArg))
+            } catch (exception: Throwable) {
+              FluLuksApiPigeonUtils.wrapError(exception)
+            }
+            reply.reply(wrapped)
+          }
+        } else {
+          channel.setMessageHandler(null)
+        }
+      }
+      run {
+        val channel = BasicMessageChannel<Any?>(binaryMessenger, "dev.flutter.pigeon.fluluks.FluLuksHostApi.answerSshPrompt$separatedMessageChannelSuffix", codec)
+        if (api != null) {
+          channel.setMessageHandler { message, reply ->
+            val args = message as List<Any?>
+            val requestIdArg = args[0] as String
+            val answersArg = args[1] as List<ByteArray>?
+            val wrapped: List<Any?> = try {
+              api.answerSshPrompt(requestIdArg, answersArg)
+              listOf(null)
+            } catch (exception: Throwable) {
+              FluLuksApiPigeonUtils.wrapError(exception)
+            }
+            reply.reply(wrapped)
+          }
+        } else {
+          channel.setMessageHandler(null)
+        }
+      }
+      run {
         val channel = BasicMessageChannel<Any?>(binaryMessenger, "dev.flutter.pigeon.fluluks.FluLuksHostApi.importPrivateKey$separatedMessageChannelSuffix", codec)
         if (api != null) {
           channel.setMessageHandler { message, reply ->
@@ -3292,6 +3425,27 @@ class FluLuksEventsApi(private val binaryMessenger: BinaryMessenger, private val
     val channelName = "dev.flutter.pigeon.fluluks.FluLuksEventsApi.onPlayerChanged$separatedMessageChannelSuffix"
     val channel = BasicMessageChannel<Any?>(binaryMessenger, channelName, codec)
     channel.send(listOf(playerArg, messageArg)) {
+      if (it is List<*>) {
+        if (it.size > 1) {
+          callback(Result.failure(FlutterError(it[0] as String, it[1] as String, it[2] as String?)))
+        } else {
+          callback(Result.success(Unit))
+        }
+      } else {
+        callback(Result.failure(FluLuksApiPigeonUtils.createConnectionError(channelName)))
+      } 
+    }
+  }
+  /**
+   * Phase 13 : invite keyboard-interactive d'un serveur SSH (code de vérification…), à poser à l'utilisateur ; réponse
+   * par `answerSshPrompt` dans les 120 s.
+   */
+  fun onSshPrompt(promptArg: SshPromptMsg, callback: (Result<Unit>) -> Unit)
+{
+    val separatedMessageChannelSuffix = if (messageChannelSuffix.isNotEmpty()) ".$messageChannelSuffix" else ""
+    val channelName = "dev.flutter.pigeon.fluluks.FluLuksEventsApi.onSshPrompt$separatedMessageChannelSuffix"
+    val channel = BasicMessageChannel<Any?>(binaryMessenger, channelName, codec)
+    channel.send(listOf(promptArg)) {
       if (it is List<*>) {
         if (it.size > 1) {
           callback(Result.failure(FlutterError(it[0] as String, it[1] as String, it[2] as String?)))

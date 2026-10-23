@@ -51,6 +51,9 @@ abstract class HostApi {
   Future<void> disconnectServer(String serverId);
   Future<void> trustHostKey(String serverId, String fingerprint);
   Future<void> forgetHostKey(String serverId);
+  Future<List<String>> testServer(String serverId, Uint8List? password);
+  Future<List<String>> lastAttemptLog(String serverId);
+  Future<void> answerSshPrompt(String requestId, List<Uint8List>? answers);
   Future<String?> importPrivateKey(String serverId);
   Future<void> forgetPrivateKey(String serverId);
   Future<Uint8List> readImage(String sourceId, String path);
@@ -182,6 +185,13 @@ class PigeonHostApi implements HostApi {
   Future<void> trustHostKey(String serverId, String fingerprint) => _api.trustHostKey(serverId, fingerprint);
   @override
   Future<void> forgetHostKey(String serverId) => _api.forgetHostKey(serverId);
+  @override
+  Future<List<String>> testServer(String serverId, Uint8List? password) => _api.testServer(serverId, password);
+  @override
+  Future<List<String>> lastAttemptLog(String serverId) => _api.lastAttemptLog(serverId);
+  @override
+  Future<void> answerSshPrompt(String requestId, List<Uint8List>? answers) =>
+      _api.answerSshPrompt(requestId, answers);
   @override
   Future<String?> importPrivateKey(String serverId) => _api.importPrivateKey(serverId);
   @override

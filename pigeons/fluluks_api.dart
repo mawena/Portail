@@ -10,6 +10,23 @@ import 'package:pigeon/pigeon.dart';
   kotlinOut: 'android/app/src/main/kotlin/com/mawena/fluluks/bridge/FluLuksApi.g.kt',
   kotlinOptions: KotlinOptions(package: 'com.mawena.fluluks.bridge'),
 ))
+/// Invite keyboard-interactive (phase 13) : [name] (serveur ou titre de l'invite), [instruction], une saisie par
+/// élément de [prompts] ; [echo] faux : saisie masquée.
+class SshPromptMsg {
+  SshPromptMsg({
+    required this.requestId,
+    required this.name,
+    required this.instruction,
+    required this.prompts,
+    required this.echo,
+  });
+  String requestId;
+  String name;
+  String instruction;
+  List<String> prompts;
+  List<bool> echo;
+}
+
 class PartitionMsg {
   PartitionMsg({
     required this.index,
@@ -492,7 +509,8 @@ abstract class FluLuksHostApi {
   /// sauf `force`.
   /// Dossiers distants (phase 10). `saveServer` : identifiant vide pour un nouveau serveur ; mots de passe null :
   /// ceux mémorisés sont gardés. `connectServer` échoue avec le code `auth` (mot de passe requis ou refusé ; détails :
-  /// vrai s'il manquait), `hostkey-unknown` (détails : l'empreinte à montrer) ou `hostkey-changed`.
+  /// vrai s'il manquait), `hostkey-unknown` (détails : l'empreinte à montrer), `hostkey-changed` ou `ssh` (phase 13 :
+  /// message précis en français ; détails : la cause technique ; journal : `lastAttemptLog`).
   List<RemoteServerMsg> listServers();
   RemoteServerMsg saveServer(RemoteServerMsg server, Uint8List? password, Uint8List? keyPassphrase);
   void deleteServer(String serverId);
@@ -501,6 +519,14 @@ abstract class FluLuksHostApi {
   void disconnectServer(String serverId);
   void trustHostKey(String serverId, String fingerprint);
   void forgetHostKey(String serverId);
+
+  /// Phase 13 : « Tester la connexion » : connecte puis déconnecte aussitôt, sans ouvrir la source ; mêmes erreurs que
+  /// `connectServer` ; rend le journal de la tentative. `lastAttemptLog` : journal de la dernière tentative du serveur
+  /// (SFTP), sans aucun secret. `answerSshPrompt` : réponses à une invite `onSshPrompt` (null : refusée), mises à zéro.
+  @async
+  List<String> testServer(String serverId, Uint8List? password);
+  List<String> lastAttemptLog(String serverId);
+  void answerSshPrompt(String requestId, List<Uint8List>? answers);
 
   /// Clé privée OpenSSH choisie dans le sélecteur d'Android, scellée pour `serverId` ; rend sa description
   /// (« ssh-ed25519 SHA256:… »), ou null si rien n'a été choisi.
@@ -570,4 +596,8 @@ abstract class FluLuksEventsApi {
 
   /// Musique en cours, ou null à l'arrêt ; `message` : raison d'un arrêt subi (« Lecture arrêtée : stockage fermé »).
   void onPlayerChanged(PlayerMsg? player, String? message);
+
+  /// Phase 13 : invite keyboard-interactive d'un serveur SSH (code de vérification…), à poser à l'utilisateur ; réponse
+  /// par `answerSshPrompt` dans les 120 s.
+  void onSshPrompt(SshPromptMsg prompt);
 }

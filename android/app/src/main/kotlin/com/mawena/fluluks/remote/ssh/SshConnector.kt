@@ -128,7 +128,8 @@ class SshConnector(
             val p = prompt?.toList().orEmpty()
             if (p.isEmpty()) return emptyArray()
             log.add("Invite du serveur : ${p.joinToString(" / ")}")
-            val answers = prompts?.ask(name.orEmpty(), instruction.orEmpty(), p, echo?.toList() ?: p.map { false })
+            val title = name?.takeIf { it.isNotBlank() } ?: "${server.user}@${server.host}"
+            val answers = prompts?.ask(title, instruction.orEmpty(), p, echo?.toList() ?: p.map { false })
                 ?: return null
             // l'interface de JSch prend des chaînes : copies brèves, jamais journalisées ; nos octets remis à zéro
             return try {

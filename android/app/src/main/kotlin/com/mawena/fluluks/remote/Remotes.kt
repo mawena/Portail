@@ -68,6 +68,24 @@ object Remotes {
         return src
     }
 
+    /**
+     * « Tester la connexion » (phase 13) : connecte [serverId] comme [connect], puis ferme aussitôt, sans source ni
+     * connexion gardée ; mêmes exceptions que [connect].
+     */
+    fun testServer(serverId: String, password: ByteArray?) {
+        val s = servers()
+        val cfg = s.get(serverId) ?: throw FileNotFoundException("Serveur introuvable")
+        val stored = s.secrets(serverId)
+        val sec = Secrets(password?.copyOf() ?: stored?.password, stored?.keyPassphrase, stored?.privateKey)
+        if (password != null) stored?.password?.fill(0)
+        try {
+            val client = net { factory.connect(cfg, sec) }
+            runCatching { client.close() }
+        } finally {
+            sec.wipe()
+        }
+    }
+
     fun disconnect(serverId: String) {
         val (src, sec) = open.remove(serverId) ?: return
         runCatching { src.client.close() }

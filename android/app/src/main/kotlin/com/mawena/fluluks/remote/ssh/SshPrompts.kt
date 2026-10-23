@@ -9,3 +9,8 @@ package com.mawena.fluluks.remote.ssh
 fun interface SshPrompts {
     fun ask(name: String, instruction: String, prompts: List<String>, echo: List<Boolean>): List<ByteArray>?
 }
+
+/** Invites de l'application (posées par Flutter), branchées par le pont à son ouverture ; null : aucune interface. */
+object SshPromptBridge {
+    @Volatile var prompts: SshPrompts? = null
+}

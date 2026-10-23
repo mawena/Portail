@@ -107,6 +107,73 @@ int _deepHash(Object? value) {
 }
 
 
+/// Invite keyboard-interactive (phase 13) : [name] (serveur ou titre de l'invite), [instruction], une saisie par
+/// élément de [prompts] ; [echo] faux : saisie masquée.
+class SshPromptMsg {
+  SshPromptMsg({
+    required this.requestId,
+    required this.name,
+    required this.instruction,
+    required this.prompts,
+    required this.echo,
+  });
+
+  String requestId;
+
+  String name;
+
+  String instruction;
+
+  List<String> prompts;
+
+  List<bool> echo;
+
+  List<Object?> _toList() {
+    return <Object?>[
+      requestId,
+      name,
+      instruction,
+      prompts,
+      echo,
+    ];
+  }
+
+  Object encode() {
+    return _toList();  }
+
+  static SshPromptMsg decode(Object result) {
+    result as List<Object?>;
+    return SshPromptMsg(
+      requestId: result[0]! as String,
+      name: result[1]! as String,
+      instruction: result[2]! as String,
+      prompts: (result[3]! as List<Object?>).cast<String>(),
+      echo: (result[4]! as List<Object?>).cast<bool>(),
+    );
+  }
+
+  @override
+  // ignore: avoid_equals_and_hash_code_on_mutable_classes
+  bool operator ==(Object other) {
+    if (other is! SshPromptMsg || other.runtimeType != runtimeType) {
+      return false;
+    }
+    if (identical(this, other)) {
+      return true;
+    }
+    return _deepEquals(requestId, other.requestId) && _deepEquals(name, other.name) && _deepEquals(instruction, other.instruction) && _deepEquals(prompts, other.prompts) && _deepEquals(echo, other.echo);
+  }
+
+  @override
+  // ignore: avoid_equals_and_hash_code_on_mutable_classes
+  int get hashCode => _deepHash(<Object?>[runtimeType, ..._toList()]);
+
+  @override
+  String toString() {
+    return 'SshPromptMsg(requestId: $requestId, name: $name, instruction: $instruction, prompts: $prompts, echo: $echo)';
+  }
+}
+
 class PartitionMsg {
   PartitionMsg({
     required this.index,
@@ -1779,74 +1846,77 @@ class _PigeonCodec extends StandardMessageCodec {
     if (value is int) {
       buffer.putUint8(4);
       buffer.putInt64(value);
-    }    else if (value is PartitionMsg) {
+    }    else if (value is SshPromptMsg) {
       buffer.putUint8(129);
       writeValue(buffer, value.encode());
-    }    else if (value is DiskMsg) {
+    }    else if (value is PartitionMsg) {
       buffer.putUint8(130);
       writeValue(buffer, value.encode());
-    }    else if (value is VolumeMsg) {
+    }    else if (value is DiskMsg) {
       buffer.putUint8(131);
       writeValue(buffer, value.encode());
-    }    else if (value is SourceMsg) {
+    }    else if (value is VolumeMsg) {
       buffer.putUint8(132);
       writeValue(buffer, value.encode());
-    }    else if (value is EntryMsg) {
+    }    else if (value is SourceMsg) {
       buffer.putUint8(133);
       writeValue(buffer, value.encode());
-    }    else if (value is PlayerMsg) {
+    }    else if (value is EntryMsg) {
       buffer.putUint8(134);
       writeValue(buffer, value.encode());
-    }    else if (value is TransferMsg) {
+    }    else if (value is PlayerMsg) {
       buffer.putUint8(135);
       writeValue(buffer, value.encode());
-    }    else if (value is TrashItemMsg) {
+    }    else if (value is TransferMsg) {
       buffer.putUint8(136);
       writeValue(buffer, value.encode());
-    }    else if (value is DetailsMsg) {
+    }    else if (value is TrashItemMsg) {
       buffer.putUint8(137);
       writeValue(buffer, value.encode());
-    }    else if (value is TextFileMsg) {
+    }    else if (value is DetailsMsg) {
       buffer.putUint8(138);
       writeValue(buffer, value.encode());
-    }    else if (value is TextSaveMsg) {
+    }    else if (value is TextFileMsg) {
       buffer.putUint8(139);
       writeValue(buffer, value.encode());
-    }    else if (value is RenameRuleMsg) {
+    }    else if (value is TextSaveMsg) {
       buffer.putUint8(140);
       writeValue(buffer, value.encode());
-    }    else if (value is RenamePreviewMsg) {
+    }    else if (value is RenameRuleMsg) {
       buffer.putUint8(141);
       writeValue(buffer, value.encode());
-    }    else if (value is FilterItemMsg) {
+    }    else if (value is RenamePreviewMsg) {
       buffer.putUint8(142);
       writeValue(buffer, value.encode());
-    }    else if (value is FolderSizeMsg) {
+    }    else if (value is FilterItemMsg) {
       buffer.putUint8(143);
       writeValue(buffer, value.encode());
-    }    else if (value is SpaceItemMsg) {
+    }    else if (value is FolderSizeMsg) {
       buffer.putUint8(144);
       writeValue(buffer, value.encode());
-    }    else if (value is SpaceReportMsg) {
+    }    else if (value is SpaceItemMsg) {
       buffer.putUint8(145);
       writeValue(buffer, value.encode());
-    }    else if (value is SearchResultMsg) {
+    }    else if (value is SpaceReportMsg) {
       buffer.putUint8(146);
       writeValue(buffer, value.encode());
-    }    else if (value is RemoteServerMsg) {
+    }    else if (value is SearchResultMsg) {
       buffer.putUint8(147);
       writeValue(buffer, value.encode());
-    }    else if (value is ViewPrefsMsg) {
+    }    else if (value is RemoteServerMsg) {
       buffer.putUint8(148);
       writeValue(buffer, value.encode());
-    }    else if (value is UiPrefsMsg) {
+    }    else if (value is ViewPrefsMsg) {
       buffer.putUint8(149);
       writeValue(buffer, value.encode());
-    }    else if (value is AppInfoMsg) {
+    }    else if (value is UiPrefsMsg) {
       buffer.putUint8(150);
       writeValue(buffer, value.encode());
-    }    else if (value is FavoriteMsg) {
+    }    else if (value is AppInfoMsg) {
       buffer.putUint8(151);
+      writeValue(buffer, value.encode());
+    }    else if (value is FavoriteMsg) {
+      buffer.putUint8(152);
       writeValue(buffer, value.encode());
     } else {
       super.writeValue(buffer, value);
@@ -1857,50 +1927,52 @@ class _PigeonCodec extends StandardMessageCodec {
   Object? readValueOfType(int type, ReadBuffer buffer) {
     switch (type) {
       case 129:
-        return PartitionMsg.decode(readValue(buffer)!);
+        return SshPromptMsg.decode(readValue(buffer)!);
       case 130:
-        return DiskMsg.decode(readValue(buffer)!);
+        return PartitionMsg.decode(readValue(buffer)!);
       case 131:
-        return VolumeMsg.decode(readValue(buffer)!);
+        return DiskMsg.decode(readValue(buffer)!);
       case 132:
-        return SourceMsg.decode(readValue(buffer)!);
+        return VolumeMsg.decode(readValue(buffer)!);
       case 133:
-        return EntryMsg.decode(readValue(buffer)!);
+        return SourceMsg.decode(readValue(buffer)!);
       case 134:
-        return PlayerMsg.decode(readValue(buffer)!);
+        return EntryMsg.decode(readValue(buffer)!);
       case 135:
-        return TransferMsg.decode(readValue(buffer)!);
+        return PlayerMsg.decode(readValue(buffer)!);
       case 136:
-        return TrashItemMsg.decode(readValue(buffer)!);
+        return TransferMsg.decode(readValue(buffer)!);
       case 137:
-        return DetailsMsg.decode(readValue(buffer)!);
+        return TrashItemMsg.decode(readValue(buffer)!);
       case 138:
-        return TextFileMsg.decode(readValue(buffer)!);
+        return DetailsMsg.decode(readValue(buffer)!);
       case 139:
-        return TextSaveMsg.decode(readValue(buffer)!);
+        return TextFileMsg.decode(readValue(buffer)!);
       case 140:
-        return RenameRuleMsg.decode(readValue(buffer)!);
+        return TextSaveMsg.decode(readValue(buffer)!);
       case 141:
-        return RenamePreviewMsg.decode(readValue(buffer)!);
+        return RenameRuleMsg.decode(readValue(buffer)!);
       case 142:
-        return FilterItemMsg.decode(readValue(buffer)!);
+        return RenamePreviewMsg.decode(readValue(buffer)!);
       case 143:
-        return FolderSizeMsg.decode(readValue(buffer)!);
+        return FilterItemMsg.decode(readValue(buffer)!);
       case 144:
-        return SpaceItemMsg.decode(readValue(buffer)!);
+        return FolderSizeMsg.decode(readValue(buffer)!);
       case 145:
-        return SpaceReportMsg.decode(readValue(buffer)!);
+        return SpaceItemMsg.decode(readValue(buffer)!);
       case 146:
-        return SearchResultMsg.decode(readValue(buffer)!);
+        return SpaceReportMsg.decode(readValue(buffer)!);
       case 147:
-        return RemoteServerMsg.decode(readValue(buffer)!);
+        return SearchResultMsg.decode(readValue(buffer)!);
       case 148:
-        return ViewPrefsMsg.decode(readValue(buffer)!);
+        return RemoteServerMsg.decode(readValue(buffer)!);
       case 149:
-        return UiPrefsMsg.decode(readValue(buffer)!);
+        return ViewPrefsMsg.decode(readValue(buffer)!);
       case 150:
-        return AppInfoMsg.decode(readValue(buffer)!);
+        return UiPrefsMsg.decode(readValue(buffer)!);
       case 151:
+        return AppInfoMsg.decode(readValue(buffer)!);
+      case 152:
         return FavoriteMsg.decode(readValue(buffer)!);
       default:
         return super.readValueOfType(type, buffer);
@@ -2675,7 +2747,8 @@ class FluLuksHostApi {
   /// sauf `force`.
   /// Dossiers distants (phase 10). `saveServer` : identifiant vide pour un nouveau serveur ; mots de passe null :
   /// ceux mémorisés sont gardés. `connectServer` échoue avec le code `auth` (mot de passe requis ou refusé ; détails :
-  /// vrai s'il manquait), `hostkey-unknown` (détails : l'empreinte à montrer) ou `hostkey-changed`.
+  /// vrai s'il manquait), `hostkey-unknown` (détails : l'empreinte à montrer), `hostkey-changed` ou `ssh` (phase 13 :
+  /// message précis en français ; détails : la cause technique ; journal : `lastAttemptLog`).
   Future<List<RemoteServerMsg>> listServers() async {
     final pigeonVar_channelName = 'dev.flutter.pigeon.fluluks.FluLuksHostApi.listServers$pigeonVar_messageChannelSuffix';
     final pigeonVar_channel = BasicMessageChannel<Object?>(
@@ -2795,6 +2868,65 @@ class FluLuksHostApi {
       binaryMessenger: pigeonVar_binaryMessenger,
     );
     final Future<Object?> pigeonVar_sendFuture = pigeonVar_channel.send(<Object?>[serverId]);
+    final pigeonVar_replyList = await pigeonVar_sendFuture as List<Object?>?;
+
+    _extractReplyValueOrThrow(
+        pigeonVar_replyList,
+        pigeonVar_channelName,
+        isNullValid: true,
+    )
+    ;
+  }
+
+  /// Phase 13 : « Tester la connexion » : connecte puis déconnecte aussitôt, sans ouvrir la source ; mêmes erreurs que
+  /// `connectServer` ; rend le journal de la tentative. `lastAttemptLog` : journal de la dernière tentative du serveur
+  /// (SFTP), sans aucun secret. `answerSshPrompt` : réponses à une invite `onSshPrompt` (null : refusée), mises à zéro.
+  Future<List<String>> testServer(String serverId, Uint8List? password) async {
+    final pigeonVar_channelName = 'dev.flutter.pigeon.fluluks.FluLuksHostApi.testServer$pigeonVar_messageChannelSuffix';
+    final pigeonVar_channel = BasicMessageChannel<Object?>(
+      pigeonVar_channelName,
+      pigeonChannelCodec,
+      binaryMessenger: pigeonVar_binaryMessenger,
+    );
+    final Future<Object?> pigeonVar_sendFuture = pigeonVar_channel.send(<Object?>[serverId, password]);
+    final pigeonVar_replyList = await pigeonVar_sendFuture as List<Object?>?;
+
+    final Object? pigeonVar_replyValue = _extractReplyValueOrThrow(
+        pigeonVar_replyList,
+        pigeonVar_channelName,
+        isNullValid: false,
+    )
+    ;
+    return (pigeonVar_replyValue! as List<Object?>).cast<String>();
+  }
+
+  Future<List<String>> lastAttemptLog(String serverId) async {
+    final pigeonVar_channelName = 'dev.flutter.pigeon.fluluks.FluLuksHostApi.lastAttemptLog$pigeonVar_messageChannelSuffix';
+    final pigeonVar_channel = BasicMessageChannel<Object?>(
+      pigeonVar_channelName,
+      pigeonChannelCodec,
+      binaryMessenger: pigeonVar_binaryMessenger,
+    );
+    final Future<Object?> pigeonVar_sendFuture = pigeonVar_channel.send(<Object?>[serverId]);
+    final pigeonVar_replyList = await pigeonVar_sendFuture as List<Object?>?;
+
+    final Object? pigeonVar_replyValue = _extractReplyValueOrThrow(
+        pigeonVar_replyList,
+        pigeonVar_channelName,
+        isNullValid: false,
+    )
+    ;
+    return (pigeonVar_replyValue! as List<Object?>).cast<String>();
+  }
+
+  Future<void> answerSshPrompt(String requestId, List<Uint8List>? answers) async {
+    final pigeonVar_channelName = 'dev.flutter.pigeon.fluluks.FluLuksHostApi.answerSshPrompt$pigeonVar_messageChannelSuffix';
+    final pigeonVar_channel = BasicMessageChannel<Object?>(
+      pigeonVar_channelName,
+      pigeonChannelCodec,
+      binaryMessenger: pigeonVar_binaryMessenger,
+    );
+    final Future<Object?> pigeonVar_sendFuture = pigeonVar_channel.send(<Object?>[requestId, answers]);
     final pigeonVar_replyList = await pigeonVar_sendFuture as List<Object?>?;
 
     _extractReplyValueOrThrow(
@@ -3166,6 +3298,10 @@ abstract class FluLuksEventsApi {
   /// Musique en cours, ou null à l'arrêt ; `message` : raison d'un arrêt subi (« Lecture arrêtée : stockage fermé »).
   void onPlayerChanged(PlayerMsg? player, String? message);
 
+  /// Phase 13 : invite keyboard-interactive d'un serveur SSH (code de vérification…), à poser à l'utilisateur ; réponse
+  /// par `answerSshPrompt` dans les 120 s.
+  void onSshPrompt(SshPromptMsg prompt);
+
   static void setUp(FluLuksEventsApi? api, {BinaryMessenger? binaryMessenger, String messageChannelSuffix = '',}) {
     messageChannelSuffix = messageChannelSuffix.isNotEmpty ? '.$messageChannelSuffix' : '';
     {
@@ -3288,6 +3424,27 @@ abstract class FluLuksEventsApi {
           final String? arg_message = args[1] as String?;
           try {
             api.onPlayerChanged(arg_player, arg_message);
+            return wrapResponse(empty: true);
+          } on PlatformException catch (e) {
+            return wrapResponse(error: e);
+          }          catch (e) {
+            return wrapResponse(error: PlatformException(code: 'error', message: e.toString()));
+          }
+        });
+      }
+    }
+    {
+      final pigeonVar_channel = BasicMessageChannel<Object?>(
+          'dev.flutter.pigeon.fluluks.FluLuksEventsApi.onSshPrompt$messageChannelSuffix', pigeonChannelCodec,
+          binaryMessenger: binaryMessenger);
+      if (api == null) {
+        pigeonVar_channel.setMessageHandler(null);
+      } else {
+        pigeonVar_channel.setMessageHandler((Object? message) async {
+          final List<Object?> args = message! as List<Object?>;
+          final SshPromptMsg arg_prompt = args[0]! as SshPromptMsg;
+          try {
+            api.onSshPrompt(arg_prompt);
             return wrapResponse(empty: true);
           } on PlatformException catch (e) {
             return wrapResponse(error: e);

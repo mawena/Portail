@@ -10,6 +10,7 @@ import com.mawena.fluluks.engine.FileType
 import com.mawena.fluluks.files.Entry
 import com.mawena.fluluks.provider.DocumentIds
 import com.mawena.fluluks.remote.ssh.SshConnector
+import com.mawena.fluluks.remote.ssh.SshPromptBridge
 import java.io.FileNotFoundException
 import java.io.FilterInputStream
 import java.io.FilterOutputStream
@@ -42,7 +43,7 @@ class SftpClient private constructor(
 
     private fun openSession(): Session {
         connector?.close()
-        val c = SshConnector(server, secrets)
+        val c = SshConnector(server, secrets, SshPromptBridge.prompts)
         connector = c
         return c.open()
     }

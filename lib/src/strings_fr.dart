@@ -157,6 +157,16 @@ class Fr {
   // Dossiers distants (phase 10)
   static const remoteFolders = 'Dossiers distants';
   static const addServer = 'Ajouter un serveur';
+
+  // --- connexions SSH (phase 13)
+  static const testConnection = 'Tester la connexion';
+  static const connectionOk = 'Connexion réussie';
+  static const details = 'Détails';
+  static const connectionDetails = 'Détails de la connexion';
+  static const detailsCopied = 'Détails copiés';
+  static const noAttemptLog = 'Aucun journal pour ce serveur';
+  static const sshPromptTitle = 'Le serveur demande';
+  static const sendAnswer = 'Envoyer';
   static const editServer = 'Modifier';
   static const disconnect = 'Déconnecter';
   static const serverForm = 'Serveur distant';
