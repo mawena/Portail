@@ -316,6 +316,13 @@ class AppState extends ChangeNotifier implements FluLuksEventsApi {
     notifyListeners();
   }
 
+  /// Sortie et états des terminaux SSH (phase 13) : tenus par le hub des terminaux (T4).
+  @override
+  void onTerminalOutput(String sessionId, Uint8List data) {}
+
+  @override
+  void onTerminalChanged(TerminalSessionMsg session) {}
+
   /// Réponses à l'invite [requestId] (null : refusée) ; remises à zéro ici après l'envoi.
   Future<void> answerSshPrompt(String requestId, List<Uint8List>? answers) async {
     try {

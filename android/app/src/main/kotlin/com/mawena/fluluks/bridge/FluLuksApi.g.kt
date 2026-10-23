@@ -253,6 +253,72 @@ data class SshPromptMsg (
   }
 }
 
+/**
+ * Session de terminal (phase 13) : [state] ∈ `connecting`, `open`, `closed` ; [error] : pourquoi elle s'est fermée
+ * (null : fermeture normale ou demandée) ; [cols] × [rows] : taille du PTY.
+ *
+ * Generated class from Pigeon that represents data sent in messages.
+ */
+data class TerminalSessionMsg (
+  val id: String,
+  val serverId: String,
+  val title: String,
+  val state: String,
+  val error: String? = null,
+  val cols: Long,
+  val rows: Long
+)
+ {
+  companion object {
+    fun fromList(pigeonVar_list: List<Any?>): TerminalSessionMsg {
+      val id = pigeonVar_list[0] as String
+      val serverId = pigeonVar_list[1] as String
+      val title = pigeonVar_list[2] as String
+      val state = pigeonVar_list[3] as String
+      val error = pigeonVar_list[4] as String?
+      val cols = pigeonVar_list[5] as Long
+      val rows = pigeonVar_list[6] as Long
+      return TerminalSessionMsg(id, serverId, title, state, error, cols, rows)
+    }
+  }
+  fun toList(): List<Any?> {
+    return listOf(
+      id,
+      serverId,
+      title,
+      state,
+      error,
+      cols,
+      rows,
+    )
+  }
+  override fun equals(other: Any?): Boolean {
+    if (other == null || other.javaClass != javaClass) {
+      return false
+    }
+    if (this === other) {
+      return true
+    }
+    val other = other as TerminalSessionMsg
+    return FluLuksApiPigeonUtils.deepEquals(this.id, other.id) && FluLuksApiPigeonUtils.deepEquals(this.serverId, other.serverId) && FluLuksApiPigeonUtils.deepEquals(this.title, other.title) && FluLuksApiPigeonUtils.deepEquals(this.state, other.state) && FluLuksApiPigeonUtils.deepEquals(this.error, other.error) && FluLuksApiPigeonUtils.deepEquals(this.cols, other.cols) && FluLuksApiPigeonUtils.deepEquals(this.rows, other.rows)
+  }
+
+  override fun hashCode(): Int {
+    var result = javaClass.hashCode()
+    result = 31 * result + FluLuksApiPigeonUtils.deepHash(this.id)
+    result = 31 * result + FluLuksApiPigeonUtils.deepHash(this.serverId)
+    result = 31 * result + FluLuksApiPigeonUtils.deepHash(this.title)
+    result = 31 * result + FluLuksApiPigeonUtils.deepHash(this.state)
+    result = 31 * result + FluLuksApiPigeonUtils.deepHash(this.error)
+    result = 31 * result + FluLuksApiPigeonUtils.deepHash(this.cols)
+    result = 31 * result + FluLuksApiPigeonUtils.deepHash(this.rows)
+    return result
+  }
+  override fun toString(): String {
+    return "TerminalSessionMsg(id=$id, serverId=$serverId, title=$title, state=$state, error=$error, cols=$cols, rows=$rows)"
+  }
+}
+
 /** Generated class from Pigeon that represents data sent in messages. */
 data class PartitionMsg (
   val index: Long,
@@ -1683,115 +1749,120 @@ private open class FluLuksApiPigeonCodec : StandardMessageCodec() {
       }
       130.toByte() -> {
         return (readValue(buffer) as? List<Any?>)?.let {
-          PartitionMsg.fromList(it)
+          TerminalSessionMsg.fromList(it)
         }
       }
       131.toByte() -> {
         return (readValue(buffer) as? List<Any?>)?.let {
-          DiskMsg.fromList(it)
+          PartitionMsg.fromList(it)
         }
       }
       132.toByte() -> {
         return (readValue(buffer) as? List<Any?>)?.let {
-          VolumeMsg.fromList(it)
+          DiskMsg.fromList(it)
         }
       }
       133.toByte() -> {
         return (readValue(buffer) as? List<Any?>)?.let {
-          SourceMsg.fromList(it)
+          VolumeMsg.fromList(it)
         }
       }
       134.toByte() -> {
         return (readValue(buffer) as? List<Any?>)?.let {
-          EntryMsg.fromList(it)
+          SourceMsg.fromList(it)
         }
       }
       135.toByte() -> {
         return (readValue(buffer) as? List<Any?>)?.let {
-          PlayerMsg.fromList(it)
+          EntryMsg.fromList(it)
         }
       }
       136.toByte() -> {
         return (readValue(buffer) as? List<Any?>)?.let {
-          TransferMsg.fromList(it)
+          PlayerMsg.fromList(it)
         }
       }
       137.toByte() -> {
         return (readValue(buffer) as? List<Any?>)?.let {
-          TrashItemMsg.fromList(it)
+          TransferMsg.fromList(it)
         }
       }
       138.toByte() -> {
         return (readValue(buffer) as? List<Any?>)?.let {
-          DetailsMsg.fromList(it)
+          TrashItemMsg.fromList(it)
         }
       }
       139.toByte() -> {
         return (readValue(buffer) as? List<Any?>)?.let {
-          TextFileMsg.fromList(it)
+          DetailsMsg.fromList(it)
         }
       }
       140.toByte() -> {
         return (readValue(buffer) as? List<Any?>)?.let {
-          TextSaveMsg.fromList(it)
+          TextFileMsg.fromList(it)
         }
       }
       141.toByte() -> {
         return (readValue(buffer) as? List<Any?>)?.let {
-          RenameRuleMsg.fromList(it)
+          TextSaveMsg.fromList(it)
         }
       }
       142.toByte() -> {
         return (readValue(buffer) as? List<Any?>)?.let {
-          RenamePreviewMsg.fromList(it)
+          RenameRuleMsg.fromList(it)
         }
       }
       143.toByte() -> {
         return (readValue(buffer) as? List<Any?>)?.let {
-          FilterItemMsg.fromList(it)
+          RenamePreviewMsg.fromList(it)
         }
       }
       144.toByte() -> {
         return (readValue(buffer) as? List<Any?>)?.let {
-          FolderSizeMsg.fromList(it)
+          FilterItemMsg.fromList(it)
         }
       }
       145.toByte() -> {
         return (readValue(buffer) as? List<Any?>)?.let {
-          SpaceItemMsg.fromList(it)
+          FolderSizeMsg.fromList(it)
         }
       }
       146.toByte() -> {
         return (readValue(buffer) as? List<Any?>)?.let {
-          SpaceReportMsg.fromList(it)
+          SpaceItemMsg.fromList(it)
         }
       }
       147.toByte() -> {
         return (readValue(buffer) as? List<Any?>)?.let {
-          SearchResultMsg.fromList(it)
+          SpaceReportMsg.fromList(it)
         }
       }
       148.toByte() -> {
         return (readValue(buffer) as? List<Any?>)?.let {
-          RemoteServerMsg.fromList(it)
+          SearchResultMsg.fromList(it)
         }
       }
       149.toByte() -> {
         return (readValue(buffer) as? List<Any?>)?.let {
-          ViewPrefsMsg.fromList(it)
+          RemoteServerMsg.fromList(it)
         }
       }
       150.toByte() -> {
         return (readValue(buffer) as? List<Any?>)?.let {
-          UiPrefsMsg.fromList(it)
+          ViewPrefsMsg.fromList(it)
         }
       }
       151.toByte() -> {
         return (readValue(buffer) as? List<Any?>)?.let {
-          AppInfoMsg.fromList(it)
+          UiPrefsMsg.fromList(it)
         }
       }
       152.toByte() -> {
+        return (readValue(buffer) as? List<Any?>)?.let {
+          AppInfoMsg.fromList(it)
+        }
+      }
+      153.toByte() -> {
         return (readValue(buffer) as? List<Any?>)?.let {
           FavoriteMsg.fromList(it)
         }
@@ -1805,96 +1876,100 @@ private open class FluLuksApiPigeonCodec : StandardMessageCodec() {
         stream.write(129)
         writeValue(stream, value.toList())
       }
-      is PartitionMsg -> {
+      is TerminalSessionMsg -> {
         stream.write(130)
         writeValue(stream, value.toList())
       }
-      is DiskMsg -> {
+      is PartitionMsg -> {
         stream.write(131)
         writeValue(stream, value.toList())
       }
-      is VolumeMsg -> {
+      is DiskMsg -> {
         stream.write(132)
         writeValue(stream, value.toList())
       }
-      is SourceMsg -> {
+      is VolumeMsg -> {
         stream.write(133)
         writeValue(stream, value.toList())
       }
-      is EntryMsg -> {
+      is SourceMsg -> {
         stream.write(134)
         writeValue(stream, value.toList())
       }
-      is PlayerMsg -> {
+      is EntryMsg -> {
         stream.write(135)
         writeValue(stream, value.toList())
       }
-      is TransferMsg -> {
+      is PlayerMsg -> {
         stream.write(136)
         writeValue(stream, value.toList())
       }
-      is TrashItemMsg -> {
+      is TransferMsg -> {
         stream.write(137)
         writeValue(stream, value.toList())
       }
-      is DetailsMsg -> {
+      is TrashItemMsg -> {
         stream.write(138)
         writeValue(stream, value.toList())
       }
-      is TextFileMsg -> {
+      is DetailsMsg -> {
         stream.write(139)
         writeValue(stream, value.toList())
       }
-      is TextSaveMsg -> {
+      is TextFileMsg -> {
         stream.write(140)
         writeValue(stream, value.toList())
       }
-      is RenameRuleMsg -> {
+      is TextSaveMsg -> {
         stream.write(141)
         writeValue(stream, value.toList())
       }
-      is RenamePreviewMsg -> {
+      is RenameRuleMsg -> {
         stream.write(142)
         writeValue(stream, value.toList())
       }
-      is FilterItemMsg -> {
+      is RenamePreviewMsg -> {
         stream.write(143)
         writeValue(stream, value.toList())
       }
-      is FolderSizeMsg -> {
+      is FilterItemMsg -> {
         stream.write(144)
         writeValue(stream, value.toList())
       }
-      is SpaceItemMsg -> {
+      is FolderSizeMsg -> {
         stream.write(145)
         writeValue(stream, value.toList())
       }
-      is SpaceReportMsg -> {
+      is SpaceItemMsg -> {
         stream.write(146)
         writeValue(stream, value.toList())
       }
-      is SearchResultMsg -> {
+      is SpaceReportMsg -> {
         stream.write(147)
         writeValue(stream, value.toList())
       }
-      is RemoteServerMsg -> {
+      is SearchResultMsg -> {
         stream.write(148)
         writeValue(stream, value.toList())
       }
-      is ViewPrefsMsg -> {
+      is RemoteServerMsg -> {
         stream.write(149)
         writeValue(stream, value.toList())
       }
-      is UiPrefsMsg -> {
+      is ViewPrefsMsg -> {
         stream.write(150)
         writeValue(stream, value.toList())
       }
-      is AppInfoMsg -> {
+      is UiPrefsMsg -> {
         stream.write(151)
         writeValue(stream, value.toList())
       }
-      is FavoriteMsg -> {
+      is AppInfoMsg -> {
         stream.write(152)
+        writeValue(stream, value.toList())
+      }
+      is FavoriteMsg -> {
+        stream.write(153)
         writeValue(stream, value.toList())
       }
       else -> super.writeValue(stream, value)
@@ -1984,6 +2059,18 @@ interface FluLuksHostApi {
   fun testServer(serverId: String, password: ByteArray?, callback: (Result<List<String>>) -> Unit)
   fun lastAttemptLog(serverId: String): List<String>
   fun answerSshPrompt(requestId: String, answers: List<ByteArray>?)
+  /**
+   * Phase 13 : terminaux SSH sur un serveur SFTP enregistré (8 au plus). `openTerminal` : mêmes erreurs que
+   * `connectServer`, puis `cd` vers `startDir` s'il est donné ; la sortie arrive par `onTerminalOutput` (octets bruts,
+   * par lots), les changements d'état par `onTerminalChanged`. `terminalWrite` : octets tapés, mis à zéro après envoi.
+   * `terminalBacklog` : sortie récente (256 Kio au plus) pour rouvrir l'écran. `closeTerminal` : ferme et oublie.
+   */
+  fun openTerminal(serverId: String, password: ByteArray?, startDir: String?, callback: (Result<TerminalSessionMsg>) -> Unit)
+  fun terminalWrite(sessionId: String, data: ByteArray)
+  fun terminalResize(sessionId: String, cols: Long, rows: Long)
+  fun terminalBacklog(sessionId: String): ByteArray
+  fun closeTerminal(sessionId: String)
+  fun terminalSessions(): List<TerminalSessionMsg>
   /**
    * Clé privée OpenSSH choisie dans le sélecteur d'Android, scellée pour `serverId` ; rend sa description
    * (« ssh-ed25519 SHA256:… »), ou null si rien n'a été choisi.
@@ -2969,6 +3056,117 @@ interface FluLuksHostApi {
         }
       }
       run {
+        val channel = BasicMessageChannel<Any?>(binaryMessenger, "dev.flutter.pigeon.fluluks.FluLuksHostApi.openTerminal$separatedMessageChannelSuffix", codec)
+        if (api != null) {
+          channel.setMessageHandler { message, reply ->
+            val args = message as List<Any?>
+            val serverIdArg = args[0] as String
+            val passwordArg = args[1] as ByteArray?
+            val startDirArg = args[2] as String?
+            api.openTerminal(serverIdArg, passwordArg, startDirArg) { result: Result<TerminalSessionMsg> ->
+              val error = result.exceptionOrNull()
+              if (error != null) {
+                reply.reply(FluLuksApiPigeonUtils.wrapError(error))
+              } else {
+                val data = result.getOrNull()
+                reply.reply(FluLuksApiPigeonUtils.wrapResult(data))
+              }
+            }
+          }
+        } else {
+          channel.setMessageHandler(null)
+        }
+      }
+      run {
+        val channel = BasicMessageChannel<Any?>(binaryMessenger, "dev.flutter.pigeon.fluluks.FluLuksHostApi.terminalWrite$separatedMessageChannelSuffix", codec)
+        if (api != null) {
+          channel.setMessageHandler { message, reply ->
+            val args = message as List<Any?>
+            val sessionIdArg = args[0] as String
+            val dataArg = args[1] as ByteArray
+            val wrapped: List<Any?> = try {
+              api.terminalWrite(sessionIdArg, dataArg)
+              listOf(null)
+            } catch (exception: Throwable) {
+              FluLuksApiPigeonUtils.wrapError(exception)
+            }
+            reply.reply(wrapped)
+          }
+        } else {
+          channel.setMessageHandler(null)
+        }
+      }
+      run {
+        val channel = BasicMessageChannel<Any?>(binaryMessenger, "dev.flutter.pigeon.fluluks.FluLuksHostApi.terminalResize$separatedMessageChannelSuffix", codec)
+        if (api != null) {
+          channel.setMessageHandler { message, reply ->
+            val args = message as List<Any?>
+            val sessionIdArg = args[0] as String
+            val colsArg = args[1] as Long
+            val rowsArg = args[2] as Long
+            val wrapped: List<Any?> = try {
+              api.terminalResize(sessionIdArg, colsArg, rowsArg)
+              listOf(null)
+            } catch (exception: Throwable) {
+              FluLuksApiPigeonUtils.wrapError(exception)
+            }
+            reply.reply(wrapped)
+          }
+        } else {
+          channel.setMessageHandler(null)
+        }
+      }
+      run {
+        val channel = BasicMessageChannel<Any?>(binaryMessenger, "dev.flutter.pigeon.fluluks.FluLuksHostApi.terminalBacklog$separatedMessageChannelSuffix", codec)
+        if (api != null) {
+          channel.setMessageHandler { message, reply ->
+            val args = message as List<Any?>
+            val sessionIdArg = args[0] as String
+            val wrapped: List<Any?> = try {
+              listOf(api.terminalBacklog(sessionIdArg))
+            } catch (exception: Throwable) {
+              FluLuksApiPigeonUtils.wrapError(exception)
+            }
+            reply.reply(wrapped)
+          }
+        } else {
+          channel.setMessageHandler(null)
+        }
+      }
+      run {
+        val channel = BasicMessageChannel<Any?>(binaryMessenger, "dev.flutter.pigeon.fluluks.FluLuksHostApi.closeTerminal$separatedMessageChannelSuffix", codec)
+        if (api != null) {
+          channel.setMessageHandler { message, reply ->
+            val args = message as List<Any?>
+            val sessionIdArg = args[0] as String
+            val wrapped: List<Any?> = try {
+              api.closeTerminal(sessionIdArg)
+              listOf(null)
+            } catch (exception: Throwable) {
+              FluLuksApiPigeonUtils.wrapError(exception)
+            }
+            reply.reply(wrapped)
+          }
+        } else {
+          channel.setMessageHandler(null)
+        }
+      }
+      run {
+        val channel = BasicMessageChannel<Any?>(binaryMessenger, "dev.flutter.pigeon.fluluks.FluLuksHostApi.terminalSessions$separatedMessageChannelSuffix", codec)
+        if (api != null) {
+          channel.setMessageHandler { _, reply ->
+            val wrapped: List<Any?> = try {
+              listOf(api.terminalSessions())
+            } catch (exception: Throwable) {
+              FluLuksApiPigeonUtils.wrapError(exception)
+            }
+            reply.reply(wrapped)
+          }
+        } else {
+          channel.setMessageHandler(null)
+        }
+      }
+      run {
         val channel = BasicMessageChannel<Any?>(binaryMessenger, "dev.flutter.pigeon.fluluks.FluLuksHostApi.importPrivateKey$separatedMessageChannelSuffix", codec)
         if (api != null) {
           channel.setMessageHandler { message, reply ->
@@ -3446,6 +3644,42 @@ class FluLuksEventsApi(private val binaryMessenger: BinaryMessenger, private val
     val channelName = "dev.flutter.pigeon.fluluks.FluLuksEventsApi.onSshPrompt$separatedMessageChannelSuffix"
     val channel = BasicMessageChannel<Any?>(binaryMessenger, channelName, codec)
     channel.send(listOf(promptArg)) {
+      if (it is List<*>) {
+        if (it.size > 1) {
+          callback(Result.failure(FlutterError(it[0] as String, it[1] as String, it[2] as String?)))
+        } else {
+          callback(Result.success(Unit))
+        }
+      } else {
+        callback(Result.failure(FluLuksApiPigeonUtils.createConnectionError(channelName)))
+      } 
+    }
+  }
+  /** Phase 13 : sortie d'un terminal, par lots (au plus un toutes les 16 ms, 64 Kio au plus). */
+  fun onTerminalOutput(sessionIdArg: String, dataArg: ByteArray, callback: (Result<Unit>) -> Unit)
+{
+    val separatedMessageChannelSuffix = if (messageChannelSuffix.isNotEmpty()) ".$messageChannelSuffix" else ""
+    val channelName = "dev.flutter.pigeon.fluluks.FluLuksEventsApi.onTerminalOutput$separatedMessageChannelSuffix"
+    val channel = BasicMessageChannel<Any?>(binaryMessenger, channelName, codec)
+    channel.send(listOf(sessionIdArg, dataArg)) {
+      if (it is List<*>) {
+        if (it.size > 1) {
+          callback(Result.failure(FlutterError(it[0] as String, it[1] as String, it[2] as String?)))
+        } else {
+          callback(Result.success(Unit))
+        }
+      } else {
+        callback(Result.failure(FluLuksApiPigeonUtils.createConnectionError(channelName)))
+      } 
+    }
+  }
+  /** Phase 13 : état d'un terminal changé (ouvert, fermé par le serveur, connexion perdue, fermé à la demande). */
+  fun onTerminalChanged(sessionArg: TerminalSessionMsg, callback: (Result<Unit>) -> Unit)
+{
+    val separatedMessageChannelSuffix = if (messageChannelSuffix.isNotEmpty()) ".$messageChannelSuffix" else ""
+    val channelName = "dev.flutter.pigeon.fluluks.FluLuksEventsApi.onTerminalChanged$separatedMessageChannelSuffix"
+    val channel = BasicMessageChannel<Any?>(binaryMessenger, channelName, codec)
+    channel.send(listOf(sessionArg)) {
       if (it is List<*>) {
         if (it.size > 1) {
           callback(Result.failure(FlutterError(it[0] as String, it[1] as String, it[2] as String?)))

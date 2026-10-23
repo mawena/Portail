@@ -27,6 +27,27 @@ class SshPromptMsg {
   List<bool> echo;
 }
 
+/// Session de terminal (phase 13) : [state] ∈ `connecting`, `open`, `closed` ; [error] : pourquoi elle s'est fermée
+/// (null : fermeture normale ou demandée) ; [cols] × [rows] : taille du PTY.
+class TerminalSessionMsg {
+  TerminalSessionMsg({
+    required this.id,
+    required this.serverId,
+    required this.title,
+    required this.state,
+    this.error,
+    required this.cols,
+    required this.rows,
+  });
+  String id;
+  String serverId;
+  String title;
+  String state;
+  String? error;
+  int cols;
+  int rows;
+}
+
 class PartitionMsg {
   PartitionMsg({
     required this.index,
@@ -528,6 +549,18 @@ abstract class FluLuksHostApi {
   List<String> lastAttemptLog(String serverId);
   void answerSshPrompt(String requestId, List<Uint8List>? answers);
 
+  /// Phase 13 : terminaux SSH sur un serveur SFTP enregistré (8 au plus). `openTerminal` : mêmes erreurs que
+  /// `connectServer`, puis `cd` vers `startDir` s'il est donné ; la sortie arrive par `onTerminalOutput` (octets bruts,
+  /// par lots), les changements d'état par `onTerminalChanged`. `terminalWrite` : octets tapés, mis à zéro après envoi.
+  /// `terminalBacklog` : sortie récente (256 Kio au plus) pour rouvrir l'écran. `closeTerminal` : ferme et oublie.
+  @async
+  TerminalSessionMsg openTerminal(String serverId, Uint8List? password, String? startDir);
+  void terminalWrite(String sessionId, Uint8List data);
+  void terminalResize(String sessionId, int cols, int rows);
+  Uint8List terminalBacklog(String sessionId);
+  void closeTerminal(String sessionId);
+  List<TerminalSessionMsg> terminalSessions();
+
   /// Clé privée OpenSSH choisie dans le sélecteur d'Android, scellée pour `serverId` ; rend sa description
   /// (« ssh-ed25519 SHA256:… »), ou null si rien n'a été choisi.
   @async
@@ -600,4 +633,10 @@ abstract class FluLuksEventsApi {
   /// Phase 13 : invite keyboard-interactive d'un serveur SSH (code de vérification…), à poser à l'utilisateur ; réponse
   /// par `answerSshPrompt` dans les 120 s.
   void onSshPrompt(SshPromptMsg prompt);
+
+  /// Phase 13 : sortie d'un terminal, par lots (au plus un toutes les 16 ms, 64 Kio au plus).
+  void onTerminalOutput(String sessionId, Uint8List data);
+
+  /// Phase 13 : état d'un terminal changé (ouvert, fermé par le serveur, connexion perdue, fermé à la demande).
+  void onTerminalChanged(TerminalSessionMsg session);
 }

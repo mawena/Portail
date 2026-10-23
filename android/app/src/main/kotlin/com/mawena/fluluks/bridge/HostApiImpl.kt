@@ -55,6 +55,8 @@ import com.mawena.fluluks.remote.ssh.AttemptLogs
 import com.mawena.fluluks.remote.ssh.SshFailure
 import com.mawena.fluluks.remote.ssh.SshPromptBridge
 import com.mawena.fluluks.remote.ssh.SshPrompts
+import com.mawena.fluluks.remote.ssh.TerminalInfo
+import com.mawena.fluluks.remote.ssh.TerminalSessions
 import java.io.FileNotFoundException
 import java.util.UUID
 import java.util.concurrent.CompletableFuture
@@ -90,6 +92,7 @@ class HostApiImpl(
     fun attach(messenger: BinaryMessenger) {
         FluLuksHostApi.setUp(messenger, this)
         SshPromptBridge.prompts = sshPrompts
+        TerminalSessions.listener = terminalListener
         if (Music.backend == null) Music.backend = AndroidMusic(context)
         scope.launch {
             combine(VolumeManager.disks, VolumeManager.volumes) { d, v -> toMsgs(d, v) }
@@ -126,6 +129,7 @@ class HostApiImpl(
     fun detach(messenger: BinaryMessenger) {
         FluLuksHostApi.setUp(messenger, null)
         SshPromptBridge.prompts = null
+        if (TerminalSessions.listener === terminalListener) TerminalSessions.listener = null
         pendingPrompts.values.forEach { it.complete(null) } // invites sans interface : refusées
         if (Build.VERSION.SDK_INT >= 30) {
             context.getSystemService(StorageManager::class.java)
@@ -365,6 +369,44 @@ class HostApiImpl(
         answers?.forEach { it.fill(0) }
         if (pendingPrompts[requestId]?.complete(copy) != true) copy?.forEach { it.fill(0) }
     }
+
+    /** Sortie et états des terminaux, remis sur le fil principal dans l'ordre d'arrivée. */
+    private val terminalListener = object : TerminalSessions.Listener {
+        override fun onOutput(id: String, data: ByteArray) {
+            scope.launch { events.onTerminalOutput(id, data) { /* réponse ignorée */ } }
+        }
+
+        override fun onChanged(info: TerminalInfo) {
+            val msg = terminalMsg(info)
+            scope.launch { events.onTerminalChanged(msg) { /* réponse ignorée */ } }
+        }
+    }
+
+    private fun terminalMsg(t: TerminalInfo) =
+        TerminalSessionMsg(t.id, t.serverId, t.title, t.state, t.error, t.cols.toLong(), t.rows.toLong())
+
+    override fun openTerminal(serverId: String, password: ByteArray?, startDir: String?, callback: (Result<TerminalSessionMsg>) -> Unit) =
+        io(callback) {
+            try {
+                remoteErrors { terminalMsg(TerminalSessions.open(serverId, password, startDir)) }
+            } finally {
+                password?.fill(0)
+            }
+        }
+
+    override fun terminalWrite(sessionId: String, data: ByteArray) = TerminalSessions.write(sessionId, data)
+
+    override fun terminalResize(sessionId: String, cols: Long, rows: Long) =
+        TerminalSessions.resize(sessionId, cols.toInt(), rows.toInt())
+
+    override fun terminalBacklog(sessionId: String): ByteArray = TerminalSessions.backlog(sessionId)
+
+    /** La fermeture parle au serveur : hors du fil principal. */
+    override fun closeTerminal(sessionId: String) {
+        scope.launch(Dispatchers.IO) { TerminalSessions.close(sessionId) }
+    }
+
+    override fun terminalSessions(): List<TerminalSessionMsg> = TerminalSessions.list().map(::terminalMsg)
 
     override fun disconnectServer(serverId: String) = guardedValue {
         Remotes.disconnect(serverId)
