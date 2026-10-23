@@ -167,6 +167,22 @@ class Fr {
   static const noAttemptLog = 'Aucun journal pour ce serveur';
   static const sshPromptTitle = 'Le serveur demande';
   static const sendAnswer = 'Envoyer';
+
+  // --- terminal SSH (phase 13)
+  static String terminalOf(String server) => 'Terminal de $server';
+  static const terminalPaste = 'Coller';
+  static String pasteLines(int n) => 'Coller ${count(n, 'ligne', 'lignes')}\u202F?';
+  static const pasteLinesHelp = 'Chaque ligne sera exécutée comme si vous la tapiez.';
+  static const terminalCopied = 'Copié';
+  static const terminalFontSize = 'Taille du texte';
+  static String terminalFontValue(int size) => '$size points';
+  static const closeSession = 'Fermer la session';
+  static const closeSessionAsk = 'Fermer la session\u202F?';
+  static const closeSessionHelp = 'Les programmes lancés dans ce terminal seront arrêtés.';
+  static const sessionClosed = 'Session fermée';
+  static const reconnect = 'Reconnecter';
+  static const terminalSecure = 'Masquer le terminal';
+  static const terminalSecureHelp = 'Dans les captures d\'écran et les applications récentes';
   static const editServer = 'Modifier';
   static const disconnect = 'Déconnecter';
   static const serverForm = 'Serveur distant';

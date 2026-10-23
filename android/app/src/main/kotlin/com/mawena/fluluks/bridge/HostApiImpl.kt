@@ -645,9 +645,30 @@ class HostApiImpl(
 
     private val uiPrefs by lazy { UiPrefs(SharedPrefStore(context)) }
 
-    override fun getUiPrefs(): UiPrefsMsg = uiPrefs.get().let { UiPrefsMsg(it.theme, it.haptics, it.welcomeSeen) }
+    override fun getUiPrefs(): UiPrefsMsg = uiPrefs.get().let {
+        UiPrefsMsg(it.theme, it.haptics, it.welcomeSeen, it.terminalFontSize.toLong(), it.terminalSecure)
+    }
 
-    override fun setUiPrefs(prefs: UiPrefsMsg) = guarded { uiPrefs.set(UiSettings(prefs.theme, prefs.haptics, prefs.welcomeSeen)) }
+    override fun setUiPrefs(prefs: UiPrefsMsg) = guarded {
+        val old = uiPrefs.get()
+        uiPrefs.set(
+            UiSettings(
+                prefs.theme, prefs.haptics, prefs.welcomeSeen,
+                prefs.terminalFontSize?.toInt() ?: old.terminalFontSize,
+                prefs.terminalSecure ?: old.terminalSecure,
+            ),
+        )
+    }
+
+    /** FLAG_SECURE sur la fenêtre de l'activité (terminal SSH, réglage « Masquer le terminal… »). */
+    override fun setSecureScreen(secure: Boolean) {
+        val w = FilePicker.activity?.get()?.window ?: return
+        if (secure) {
+            w.addFlags(android.view.WindowManager.LayoutParams.FLAG_SECURE)
+        } else {
+            w.clearFlags(android.view.WindowManager.LayoutParams.FLAG_SECURE)
+        }
+    }
 
     /** Version du paquet et appareil, pour « À propos ». */
     override fun getAppInfo(): AppInfoMsg = guardedValue {

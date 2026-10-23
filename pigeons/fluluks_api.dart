@@ -416,10 +416,20 @@ class ViewPrefsMsg {
 
 /// Préférences d'interface (phase 11) ; `theme` : `system`, `light` ou `dark`.
 class UiPrefsMsg {
-  UiPrefsMsg({required this.theme, required this.haptics, required this.welcomeSeen});
+  UiPrefsMsg({
+    required this.theme,
+    required this.haptics,
+    required this.welcomeSeen,
+    this.terminalFontSize,
+    this.terminalSecure,
+  });
   String theme;
   bool haptics;
   bool welcomeSeen;
+
+  /// Phase 13 : taille du texte du terminal (8 à 32 ; null : 13) ; terminal masqué dans les captures (null : non).
+  int? terminalFontSize;
+  bool? terminalSecure;
 }
 
 /// Version de Portail (`versionName`, `versionCode` du paquet) et appareil (`Build.VERSION.RELEASE`, `Build.MODEL`),
@@ -603,6 +613,9 @@ abstract class FluLuksHostApi {
   // --- interface (phase 11)
   UiPrefsMsg getUiPrefs();
   void setUiPrefs(UiPrefsMsg prefs);
+
+  /// Phase 13 : FLAG_SECURE sur la fenêtre de Portail (terminal masqué dans les captures et les applications récentes).
+  void setSecureScreen(bool secure);
   AppInfoMsg getAppInfo();
 
   // --- formatage (phase 8)

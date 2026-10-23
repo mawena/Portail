@@ -5,6 +5,7 @@ import 'package:flutter/services.dart';
 
 import '../bridge/fluluks_api.g.dart';
 import '../strings_fr.dart';
+import '../terminal/terminal_hub.dart';
 import 'host_api.dart';
 
 /// État de l'interface : copie de ce que le côté Kotlin publie. Ne contient jamais de phrase de passe.
@@ -13,6 +14,13 @@ class AppState extends ChangeNotifier implements FluLuksEventsApi {
   AppState(this.api);
 
   final HostApi api;
+
+  /// Terminaux SSH ouverts (phase 13), gardés hors des écrans.
+  late final terminals = TerminalHub(api, onBell: _bell);
+
+  void _bell() {
+    if (uiPrefs.haptics) HapticFeedback.vibrate();
+  }
 
   List<DiskMsg> _disks = const [];
   List<VolumeMsg> _volumes = const [];
@@ -178,6 +186,7 @@ class AppState extends ChangeNotifier implements FluLuksEventsApi {
       _favorites = await api.listFavorites();
       _servers = await api.listServers();
       notifyListeners();
+      await terminals.restore(); // sessions gardées par le service pendant que l'application était fermée
     } on PlatformException catch (e) {
       _fail(e);
     }
@@ -316,12 +325,12 @@ class AppState extends ChangeNotifier implements FluLuksEventsApi {
     notifyListeners();
   }
 
-  /// Sortie et états des terminaux SSH (phase 13) : tenus par le hub des terminaux (T4).
+  /// Sortie et états des terminaux SSH (phase 13), confiés au hub des terminaux.
   @override
-  void onTerminalOutput(String sessionId, Uint8List data) {}
+  void onTerminalOutput(String sessionId, Uint8List data) => terminals.onOutput(sessionId, data);
 
   @override
-  void onTerminalChanged(TerminalSessionMsg session) {}
+  void onTerminalChanged(TerminalSessionMsg session) => terminals.onChanged(session);
 
   /// Réponses à l'invite [requestId] (null : refusée) ; remises à zéro ici après l'envoi.
   Future<void> answerSshPrompt(String requestId, List<Uint8List>? answers) async {

@@ -54,6 +54,13 @@ abstract class HostApi {
   Future<List<String>> testServer(String serverId, Uint8List? password);
   Future<List<String>> lastAttemptLog(String serverId);
   Future<void> answerSshPrompt(String requestId, List<Uint8List>? answers);
+  Future<TerminalSessionMsg> openTerminal(String serverId, Uint8List? password, String? startDir);
+  Future<void> terminalWrite(String sessionId, Uint8List data);
+  Future<void> terminalResize(String sessionId, int cols, int rows);
+  Future<Uint8List> terminalBacklog(String sessionId);
+  Future<void> closeTerminal(String sessionId);
+  Future<List<TerminalSessionMsg>> terminalSessions();
+  Future<void> setSecureScreen(bool secure);
   Future<String?> importPrivateKey(String serverId);
   Future<void> forgetPrivateKey(String serverId);
   Future<Uint8List> readImage(String sourceId, String path);
@@ -192,6 +199,21 @@ class PigeonHostApi implements HostApi {
   @override
   Future<void> answerSshPrompt(String requestId, List<Uint8List>? answers) =>
       _api.answerSshPrompt(requestId, answers);
+  @override
+  Future<TerminalSessionMsg> openTerminal(String serverId, Uint8List? password, String? startDir) =>
+      _api.openTerminal(serverId, password, startDir);
+  @override
+  Future<void> terminalWrite(String sessionId, Uint8List data) => _api.terminalWrite(sessionId, data);
+  @override
+  Future<void> terminalResize(String sessionId, int cols, int rows) => _api.terminalResize(sessionId, cols, rows);
+  @override
+  Future<Uint8List> terminalBacklog(String sessionId) => _api.terminalBacklog(sessionId);
+  @override
+  Future<void> closeTerminal(String sessionId) => _api.closeTerminal(sessionId);
+  @override
+  Future<List<TerminalSessionMsg>> terminalSessions() => _api.terminalSessions();
+  @override
+  Future<void> setSecureScreen(bool secure) => _api.setSecureScreen(secure);
   @override
   Future<String?> importPrivateKey(String serverId) => _api.importPrivateKey(serverId);
   @override

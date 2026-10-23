@@ -1592,7 +1592,10 @@ data class ViewPrefsMsg (
 data class UiPrefsMsg (
   val theme: String,
   val haptics: Boolean,
-  val welcomeSeen: Boolean
+  val welcomeSeen: Boolean,
+  /** Phase 13 : taille du texte du terminal (8 à 32 ; null : 13) ; terminal masqué dans les captures (null : non). */
+  val terminalFontSize: Long? = null,
+  val terminalSecure: Boolean? = null
 )
  {
   companion object {
@@ -1600,7 +1603,9 @@ data class UiPrefsMsg (
       val theme = pigeonVar_list[0] as String
       val haptics = pigeonVar_list[1] as Boolean
       val welcomeSeen = pigeonVar_list[2] as Boolean
-      return UiPrefsMsg(theme, haptics, welcomeSeen)
+      val terminalFontSize = pigeonVar_list[3] as Long?
+      val terminalSecure = pigeonVar_list[4] as Boolean?
+      return UiPrefsMsg(theme, haptics, welcomeSeen, terminalFontSize, terminalSecure)
     }
   }
   fun toList(): List<Any?> {
@@ -1608,6 +1613,8 @@ data class UiPrefsMsg (
       theme,
       haptics,
       welcomeSeen,
+      terminalFontSize,
+      terminalSecure,
     )
   }
   override fun equals(other: Any?): Boolean {
@@ -1618,7 +1625,7 @@ data class UiPrefsMsg (
       return true
     }
     val other = other as UiPrefsMsg
-    return FluLuksApiPigeonUtils.deepEquals(this.theme, other.theme) && FluLuksApiPigeonUtils.deepEquals(this.haptics, other.haptics) && FluLuksApiPigeonUtils.deepEquals(this.welcomeSeen, other.welcomeSeen)
+    return FluLuksApiPigeonUtils.deepEquals(this.theme, other.theme) && FluLuksApiPigeonUtils.deepEquals(this.haptics, other.haptics) && FluLuksApiPigeonUtils.deepEquals(this.welcomeSeen, other.welcomeSeen) && FluLuksApiPigeonUtils.deepEquals(this.terminalFontSize, other.terminalFontSize) && FluLuksApiPigeonUtils.deepEquals(this.terminalSecure, other.terminalSecure)
   }
 
   override fun hashCode(): Int {
@@ -1626,10 +1633,12 @@ data class UiPrefsMsg (
     result = 31 * result + FluLuksApiPigeonUtils.deepHash(this.theme)
     result = 31 * result + FluLuksApiPigeonUtils.deepHash(this.haptics)
     result = 31 * result + FluLuksApiPigeonUtils.deepHash(this.welcomeSeen)
+    result = 31 * result + FluLuksApiPigeonUtils.deepHash(this.terminalFontSize)
+    result = 31 * result + FluLuksApiPigeonUtils.deepHash(this.terminalSecure)
     return result
   }
   override fun toString(): String {
-    return "UiPrefsMsg(theme=$theme, haptics=$haptics, welcomeSeen=$welcomeSeen)"
+    return "UiPrefsMsg(theme=$theme, haptics=$haptics, welcomeSeen=$welcomeSeen, terminalFontSize=$terminalFontSize, terminalSecure=$terminalSecure)"
   }
 }
 
@@ -2093,6 +2102,8 @@ interface FluLuksHostApi {
   fun removeFavorite(key: String, path: String)
   fun getUiPrefs(): UiPrefsMsg
   fun setUiPrefs(prefs: UiPrefsMsg)
+  /** Phase 13 : FLAG_SECURE sur la fenêtre de Portail (terminal masqué dans les captures et les applications récentes). */
+  fun setSecureScreen(secure: Boolean)
   fun getAppInfo(): AppInfoMsg
   /** Formate tout le disque : fs parmi fat32, exfat, ext4, ntfs ; passphrase si encrypted (mise à zéro). */
   fun formatDisk(diskId: String, fs: String, encrypted: Boolean, label: String, passphrase: ByteArray?, callback: (Result<Unit>) -> Unit)
@@ -3468,6 +3479,24 @@ interface FluLuksHostApi {
             val prefsArg = args[0] as UiPrefsMsg
             val wrapped: List<Any?> = try {
               api.setUiPrefs(prefsArg)
+              listOf(null)
+            } catch (exception: Throwable) {
+              FluLuksApiPigeonUtils.wrapError(exception)
+            }
+            reply.reply(wrapped)
+          }
+        } else {
+          channel.setMessageHandler(null)
+        }
+      }
+      run {
+        val channel = BasicMessageChannel<Any?>(binaryMessenger, "dev.flutter.pigeon.fluluks.FluLuksHostApi.setSecureScreen$separatedMessageChannelSuffix", codec)
+        if (api != null) {
+          channel.setMessageHandler { message, reply ->
+            val args = message as List<Any?>
+            val secureArg = args[0] as Boolean
+            val wrapped: List<Any?> = try {
+              api.setSecureScreen(secureArg)
               listOf(null)
             } catch (exception: Throwable) {
               FluLuksApiPigeonUtils.wrapError(exception)

@@ -116,6 +116,12 @@ class SettingsScreen extends StatelessWidget {
               value: state.uiPrefs.haptics,
               onChanged: (on) => state.setUiPrefs(state.uiPrefs.copyWith(haptics: on)),
             ),
+            SwitchListTile(
+              title: const Text(Fr.terminalSecure),
+              subtitle: const Text(Fr.terminalSecureHelp),
+              value: state.uiPrefs.terminalSecure ?? false,
+              onChanged: (on) => state.setUiPrefs(state.uiPrefs.copyWith(terminalSecure: on)),
+            ),
             const SectionHeader(Fr.title),
             ListTile(
               leading: const Icon(Icons.help_rounded),

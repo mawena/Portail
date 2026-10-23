@@ -1,3 +1,6 @@
+import 'dart:convert';
+import 'dart:typed_data';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:fluluks/src/app.dart';
@@ -15,6 +18,7 @@ import 'package:fluluks/src/screens/space_screen.dart';
 import 'package:fluluks/src/screens/text_editor_screen.dart';
 import 'package:fluluks/src/screens/trash_screen.dart';
 import 'package:fluluks/src/state/app_state.dart';
+import 'package:fluluks/src/terminal/terminal_screen.dart';
 import 'package:fluluks/src/ui/root.dart';
 import 'package:fluluks/src/widgets/mini_player.dart';
 import 'package:fluluks/src/widgets/unlock_dialog.dart';
@@ -25,7 +29,7 @@ import 'fake_host_api.dart';
 /// Écrans que [pumpScreen] sait afficher, sur les données de [demoApi].
 const screens = [
   'home', 'explorerList', 'explorerGrid', 'filterGrid', 'search', 'globalSearch', 'trash', 'space', 'settings', //
-  'about', 'help', 'welcome', 'unlock', 'format', 'editor', 'serverForm', 'nowPlaying',
+  'about', 'help', 'welcome', 'unlock', 'format', 'editor', 'serverForm', 'nowPlaying', 'terminal',
 ];
 
 /// Pont et état du dernier [pumpScreen] (pour les tests qui agissent ensuite sur l'écran).
@@ -71,6 +75,15 @@ Future<void> pumpScreen(
       null,
     );
   }
+  String? terminalId;
+  if (screen == 'terminal') {
+    terminalId = (await state.terminals.open('s1')).info.id;
+    state.onTerminalOutput(
+      terminalId,
+      Uint8List.fromList(utf8.encode('charles@maison:~\$ ls --color\r\n\x1b[1;34mDocuments\x1b[0m  '
+          '\x1b[1;32mscript.sh\x1b[0m  notes.txt\r\ncharles@maison:~\$ ')),
+    );
+  }
   await t.pumpWidget(const SizedBox.shrink()); // arbre neuf : rien ne reste d'un écran précédent
   await t.pumpWidget(PortailRoot(state: state, builder: (_) => FluLuksApp(state: state)));
   await t.pumpAndSettle();
@@ -89,6 +102,7 @@ Future<void> pumpScreen(
     'format' => FormatScreen(state: state, disk: api.disks.single),
     'editor' => TextEditorScreen(state: state, sourceId: 'phone', path: '/notes-1.txt', name: 'notes-1.txt'),
     'serverForm' => ServerFormScreen(state: state, server: api.servers.single),
+    'terminal' => TerminalScreen(state: state, sessionId: terminalId!),
     'unlock' || 'nowPlaying' => null,
     _ => throw ArgumentError.value(screen, 'screen'),
   };

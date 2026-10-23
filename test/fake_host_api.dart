@@ -302,6 +302,53 @@ class FakeHostApi implements HostApi {
   Future<void> answerSshPrompt(String requestId, List<Uint8List>? answers) async =>
       promptAnswers.add((requestId, answers?.map((a) => utf8.decode(List<int>.of(a))).toList()));
 
+  /// Phase 13 : terminaux factices. [terminals] : sessions connues du côté Kotlin ; [terminalBacklogs] : leur sortie
+  /// récente ; [terminalWrites] : octets écrits (copiés à l'appel) ; [terminalResizes] : (id, colonnes, lignes) ;
+  /// [openTerminalHook] : remplace l'ouverture (erreurs, invites) ; [secureScreen] : dernier FLAG_SECURE demandé.
+  final terminals = <TerminalSessionMsg>[];
+  final terminalBacklogs = <String, Uint8List>{};
+  final terminalWrites = <(String, List<int>)>[];
+  final terminalResizes = <(String, int, int)>[];
+  final closedTerminals = <String>[];
+  TerminalSessionMsg Function(String serverId, Uint8List? password, String? startDir)? openTerminalHook;
+  bool? secureScreen;
+  var _terminalSeq = 0;
+
+  @override
+  Future<TerminalSessionMsg> openTerminal(String serverId, Uint8List? password, String? startDir) async {
+    calls.add('openTerminal $serverId${startDir == null ? '' : ' $startDir'}');
+    final hook = openTerminalHook;
+    if (hook != null) return hook(serverId, password, startDir);
+    final name = servers.where((s) => s.id == serverId).map((s) => s.name).firstOrNull ?? serverId;
+    final t = TerminalSessionMsg(
+        id: 't${++_terminalSeq}', serverId: serverId, title: name, state: 'open', cols: 80, rows: 24);
+    terminals.add(t);
+    return t;
+  }
+
+  @override
+  Future<void> terminalWrite(String sessionId, Uint8List data) async =>
+      terminalWrites.add((sessionId, List<int>.of(data)));
+
+  @override
+  Future<void> terminalResize(String sessionId, int cols, int rows) async =>
+      terminalResizes.add((sessionId, cols, rows));
+
+  @override
+  Future<Uint8List> terminalBacklog(String sessionId) async => terminalBacklogs[sessionId] ?? Uint8List(0);
+
+  @override
+  Future<void> closeTerminal(String sessionId) async {
+    closedTerminals.add(sessionId);
+    terminals.removeWhere((t) => t.id == sessionId);
+  }
+
+  @override
+  Future<List<TerminalSessionMsg>> terminalSessions() async => List.of(terminals);
+
+  @override
+  Future<void> setSecureScreen(bool secure) async => secureScreen = secure;
+
   /// Description rendue par importPrivateKey (null : sélecteur fermé sans choix).
   String? importedKey;
 

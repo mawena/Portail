@@ -1742,6 +1742,8 @@ class UiPrefsMsg {
     required this.theme,
     required this.haptics,
     required this.welcomeSeen,
+    this.terminalFontSize,
+    this.terminalSecure,
   });
 
   String theme;
@@ -1750,11 +1752,18 @@ class UiPrefsMsg {
 
   bool welcomeSeen;
 
+  /// Phase 13 : taille du texte du terminal (8 à 32 ; null : 13) ; terminal masqué dans les captures (null : non).
+  int? terminalFontSize;
+
+  bool? terminalSecure;
+
   List<Object?> _toList() {
     return <Object?>[
       theme,
       haptics,
       welcomeSeen,
+      terminalFontSize,
+      terminalSecure,
     ];
   }
 
@@ -1767,6 +1776,8 @@ class UiPrefsMsg {
       theme: result[0]! as String,
       haptics: result[1]! as bool,
       welcomeSeen: result[2]! as bool,
+      terminalFontSize: result[3] as int?,
+      terminalSecure: result[4] as bool?,
     );
   }
 
@@ -1779,7 +1790,7 @@ class UiPrefsMsg {
     if (identical(this, other)) {
       return true;
     }
-    return _deepEquals(theme, other.theme) && _deepEquals(haptics, other.haptics) && _deepEquals(welcomeSeen, other.welcomeSeen);
+    return _deepEquals(theme, other.theme) && _deepEquals(haptics, other.haptics) && _deepEquals(welcomeSeen, other.welcomeSeen) && _deepEquals(terminalFontSize, other.terminalFontSize) && _deepEquals(terminalSecure, other.terminalSecure);
   }
 
   @override
@@ -1788,7 +1799,7 @@ class UiPrefsMsg {
 
   @override
   String toString() {
-    return 'UiPrefsMsg(theme: $theme, haptics: $haptics, welcomeSeen: $welcomeSeen)';
+    return 'UiPrefsMsg(theme: $theme, haptics: $haptics, welcomeSeen: $welcomeSeen, terminalFontSize: $terminalFontSize, terminalSecure: $terminalSecure)';
   }
 }
 
@@ -3426,6 +3437,25 @@ class FluLuksHostApi {
       binaryMessenger: pigeonVar_binaryMessenger,
     );
     final Future<Object?> pigeonVar_sendFuture = pigeonVar_channel.send(<Object?>[prefs]);
+    final pigeonVar_replyList = await pigeonVar_sendFuture as List<Object?>?;
+
+    _extractReplyValueOrThrow(
+        pigeonVar_replyList,
+        pigeonVar_channelName,
+        isNullValid: true,
+    )
+    ;
+  }
+
+  /// Phase 13 : FLAG_SECURE sur la fenêtre de Portail (terminal masqué dans les captures et les applications récentes).
+  Future<void> setSecureScreen(bool secure) async {
+    final pigeonVar_channelName = 'dev.flutter.pigeon.fluluks.FluLuksHostApi.setSecureScreen$pigeonVar_messageChannelSuffix';
+    final pigeonVar_channel = BasicMessageChannel<Object?>(
+      pigeonVar_channelName,
+      pigeonChannelCodec,
+      binaryMessenger: pigeonVar_binaryMessenger,
+    );
+    final Future<Object?> pigeonVar_sendFuture = pigeonVar_channel.send(<Object?>[secure]);
     final pigeonVar_replyList = await pigeonVar_sendFuture as List<Object?>?;
 
     _extractReplyValueOrThrow(
