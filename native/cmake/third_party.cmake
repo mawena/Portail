@@ -26,6 +26,23 @@ find_package(Threads REQUIRED)
 target_link_libraries(fl_argon2 PUBLIC Threads::Threads)
 target_compile_options(fl_argon2 PRIVATE -w)
 
+# --- scrypt 1.3.2 de Tarsnap (phase 14) ---
+# Copie d'amont non modifiée dans third_party/scrypt (crypto_scrypt-ref.c, crypto_scrypt.h, sysendian.h,
+# COPYRIGHT ; voir third_party/PATCHES.md). Le sha256.h local (src/crypto/scrypt) ne déclare que
+# PBKDF2_SHA256, fourni par src/crypto/scrypt_glue.c sur mbedTLS ; malloc et free du fichier de référence
+# sont redirigés vers des allocations effacées avant libération ; crypto_scrypt est renommé. Optimisé même en
+# Debug (boucles octet par octet du fichier de référence).
+set(FL_SCRYPT_SRC ${CMAKE_CURRENT_SOURCE_DIR}/src/crypto/scrypt_glue.c)
+add_library(fl_scrypt STATIC ${TP}/scrypt/crypto_scrypt-ref.c ${FL_SCRYPT_SRC})
+target_include_directories(fl_scrypt PRIVATE ${TP}/scrypt ${CMAKE_CURRENT_SOURCE_DIR}/src/crypto/scrypt
+                           ${CMAKE_CURRENT_SOURCE_DIR}/src ${CMAKE_CURRENT_SOURCE_DIR}/include)
+target_compile_definitions(fl_scrypt PRIVATE crypto_scrypt=fl_crypto_scrypt_ref)
+set_source_files_properties(${TP}/scrypt/crypto_scrypt-ref.c PROPERTIES
+  COMPILE_DEFINITIONS "malloc=fl_scrypt_malloc;free=fl_scrypt_free" COMPILE_OPTIONS "-w")
+set_source_files_properties(${FL_SCRYPT_SRC} PROPERTIES COMPILE_OPTIONS "-Wall;-Wextra;-Werror")
+target_compile_options(fl_scrypt PRIVATE -O2)
+target_link_libraries(fl_scrypt PUBLIC fl_mbedcrypto)
+
 # --- cJSON ---
 add_library(fl_cjson STATIC ${TP}/cjson/cJSON.c)
 target_include_directories(fl_cjson SYSTEM PUBLIC ${TP}/cjson)

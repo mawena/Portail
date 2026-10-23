@@ -60,6 +60,9 @@ set(FL_SOURCES
   src/format/format.c
   src/archive/reader.c
   src/archive/writer.c
+  src/age/age_header.c
+  src/age/age_writer.c
+  src/age/age_reader.c
 )
 # Transport usbdevfs : Linux et Android seulement.
 if(CMAKE_SYSTEM_NAME STREQUAL "Linux" OR ANDROID)
@@ -69,7 +72,9 @@ endif()
 add_library(fluluks STATIC ${FL_SOURCES})
 target_include_directories(fluluks PUBLIC include PRIVATE src)
 target_compile_options(fluluks PRIVATE -Wall -Wextra -Werror)
-target_link_libraries(fluluks PUBLIC fl_mbedcrypto fl_argon2 fl_cjson fl_lwext4 fl_fatfs fl_mkntfs fl_ntfs3g fl_libarchive Threads::Threads)
+target_link_libraries(fluluks PUBLIC fl_mbedcrypto fl_scrypt fl_argon2 fl_cjson fl_lwext4 fl_fatfs fl_mkntfs fl_ntfs3g fl_libarchive Threads::Threads)
+# Cycle voulu entre bibliothèques statiques : scrypt_glue.c (fl_scrypt) efface par fl_memzero (fluluks).
+target_link_libraries(fl_scrypt PRIVATE fluluks)
 if(ANDROID)
   target_link_libraries(fluluks PUBLIC log) # fl_ext4_policy_log (logcat)
 endif()
@@ -135,6 +140,17 @@ if(FL_TESTS)
   fl_add_test(test_partition)
   fl_add_test(test_probe)
   fl_add_test(test_crypto)
+  # Phase 14 : scrypt (RFC 7914) et format age, jugé par tools/fixtures/agejuge.py.
+  fl_add_test(test_scrypt)
+  add_test(NAME test_scrypt_lent COMMAND test_scrypt lent)
+  set_tests_properties(test_scrypt_lent PROPERTIES LABELS lent TIMEOUT 1800)
+  add_test(NAME test_scrypt_debit COMMAND test_scrypt debit)
+  set_tests_properties(test_scrypt_debit PROPERTIES LABELS lent)
+  fl_add_test(test_age)
+  target_link_libraries(test_age PRIVATE fl_testsupport)
+  target_compile_definitions(test_age PRIVATE FL_TOOLS_DIR="${CMAKE_SOURCE_DIR}/../tools"
+                             FL_AGE_DATA="${CMAKE_SOURCE_DIR}/tests/data/age")
+  set_tests_properties(test_age PROPERTIES TIMEOUT 600)
   fl_add_test(test_luks1)
   fl_add_test(test_luks2)
   fl_add_test(test_luks2_lent LABELS lent)

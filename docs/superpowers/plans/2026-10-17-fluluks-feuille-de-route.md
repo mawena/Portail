@@ -382,7 +382,7 @@ dans le même commit que le travail.
 
 ### Phase 14 — Chiffrement de fichiers, de dossiers et coffres ([plan](2026-10-23-phase14-chiffrement.md))
 - [x] Plan de la phase 14 écrit *(demande du 2026-10-23 ; spec § 22)*
-- [ ] T1 — Moteur : scrypt et format age (chiffrement en flux, lecture à accès aléatoire, juge Python)
+- [x] T1 — Moteur : scrypt et format age (chiffrement en flux, lecture à accès aléatoire, juge Python) *(scrypt de Tarsnap copié sans modification, vecteurs RFC 7914 et C2SP/CCTV, juge agejuge.py ; ctest 46/46 ; essais sur le Pixel en T15)*
 - [ ] T2 — Moteur : ZIP chiffré AES-256 et archives ZIP protégées par mot de passe (libarchive sur mbedTLS)
 - [ ] T3 — Moteur : coffres LUKS2 dans un fichier, formatage sans table, emplacements de clé sûrs en cas de coupure
 - [ ] T4 — Poignées JNI et moteur Kotlin : chiffrement, déchiffrement, coffres en cascade sous leur fichier

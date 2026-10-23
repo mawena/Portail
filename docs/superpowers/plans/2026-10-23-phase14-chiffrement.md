@@ -137,13 +137,13 @@ JUnit 4, AndroidX Test.
   - `int fl_age_rewrap(const fl_arc_in *in, const fl_arc_out *out, const void *old, size_t oldlen, const void *nw, size_t nwlen, uint8_t log2n)`
     (même clé de fichier, nouvel en-tête, charge utile recopiée sans être déchiffrée, puis vérifiée).
 
-- [ ] **Step 1 : copier scrypt 1.3.2** (`lib/crypto/crypto_scrypt-ref.c`, `sysendian.h`, `COPYRIGHT`) sans
+- [x] **Step 1 : copier scrypt 1.3.2** (`lib/crypto/crypto_scrypt-ref.c`, `sysendian.h`, `COPYRIGHT`) sans
   modification ; si le fichier de référence n'existe plus dans cette version : `Ruling:` et arrêt
   (pas de scrypt écrit à la main). Récupérer `age/testdata/scrypt*` du dépôt C2SP/CCTV et vérifier sa licence ; si
   elle ne convient pas : `Ruling:`, juge Python seul.
-- [ ] **Step 2 : tests en échec** (`test_scrypt`) : `rfc7914Vectors` (les quatre vecteurs du § 12 du RFC 7914, le
+- [x] **Step 2 : tests en échec** (`test_scrypt`) : `rfc7914Vectors` (les quatre vecteurs du § 12 du RFC 7914, le
   dernier sous l'étiquette `lent`), `rejectsBadParams` (log2 N = 0 ou > 22, r ou p nuls).
-- [ ] **Step 3 : tests en échec** (`test_age`) : `roundTripSizes` (0, 1, 65 535, 65 536, 65 537, 3 × 65 536 octets,
+- [x] **Step 3 : tests en échec** (`test_age`) : `roundTripSizes` (0, 1, 65 535, 65 536, 65 537, 3 × 65 536 octets,
   et 5 Mio aléatoires), `ageMatchesPythonJudge` (le juge déchiffre ce que le moteur écrit, et le moteur déchiffre ce
   que le juge écrit), `cctvScryptVectors` (chaque vecteur : succès et contenu attendus, ou échec attendu),
   `wrongPasswordIsBadPass`, `truncatedStreamRejected` (coupé à la fin d'un morceau plein : refusé, le dernier
@@ -153,16 +153,17 @@ JUnit 4, AndroidX Test.
   destinataire), `rewrapKeepsPayload` (charge utile identique octet pour octet, ancien mot de passe refusé),
   `secretsWipedAfterClose` (crochet de test sur `fl_secure_free` : clé de fichier, clé de charge et clé d'enveloppe
   effacées).
-- [ ] **Step 4 : implémentation** selon la spécification age v1 : en-tête `age-encryption.org/v1`, stance
+- [x] **Step 4 : implémentation** selon la spécification age v1 : en-tête `age-encryption.org/v1`, stance
   `-> scrypt <sel b64> <log2N>` (sel = « age-encryption.org/v1/scrypt » ‖ 16 octets), corps = ChaCha20-Poly1305 de la
   clé de fichier (16 octets) sous la clé scrypt et un nonce nul, lignes base64 sans remplissage coupées à 64
   colonnes, MAC HMAC-SHA256 (clé HKDF « header ») sur l'en-tête jusqu'à `---` inclus ; nonce de 16 octets ; clé de
   charge HKDF-SHA256(sel = nonce, info « payload ») ; morceau `i` : nonce de 11 octets gros-boutiste ‖ drapeau de fin.
   Le lecteur vérifie le dernier morceau à l'ouverture (troncature) et chaque morceau lu. Mémoire scrypt et clés en
   mémoire sécurisée.
-- [ ] **Step 5 :** `ctest` vert, `tools/android/run_native_tests.sh` vert (temps de scrypt 2^18 sur le Pixel noté
-  dans le registre).
-- [ ] **Step 6 : commit** `feat(moteur): scrypt et format age, en flux et à accès aléatoire`.
+- [x] **Step 5 :** `ctest` vert, `tools/android/run_native_tests.sh` vert (temps de scrypt 2^18 sur le Pixel noté
+  dans le registre). *(ctest vert, 46/46 ; partie téléphone non faite dans cette session, qui n'avait pas le
+  téléphone : `test_scrypt`, `test_scrypt debit` et `test_age` ajoutés à `run_native_tests.sh`, à lancer en T15)*
+- [x] **Step 6 : commit** `feat(moteur): scrypt et format age, en flux et à accès aléatoire`.
 
 ### Task 2 : ZIP chiffré AES-256 et archives ZIP protégées
 

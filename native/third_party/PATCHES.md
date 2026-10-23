@@ -578,3 +578,30 @@ formatage dans le même processus : use-after-free vu par ASan). Appelé par `fl
 - Cible `fl_lzma` sans `config.h` : les définitions de son `CMakeLists.txt` (tous les filtres en encodage et
   décodage, contrôles CRC32, CRC64 et SHA-256) sont passées par CMake ; sans fils d'exécution (ni `*_mt.c`
   ni `outqueue.c`), sans `hardware_physmem.c` ni `hardware_cputhreads.c`.
+
+## scrypt de Tarsnap (phase 14)
+
+- Amont : scrypt 1.3.2 (octobre 2023), archive `https://www.tarsnap.com/scrypt/scrypt-1.3.2.tgz`, SHA-256
+  `d632c1193420ac6faebf9482e65e33d3a5664eccd643b09a509d21d1c1f29be2`, égal au condensé du fichier signé
+  `https://www.tarsnap.com/scrypt/scrypt-sigs-1.3.2.asc` (signature PGP non vérifiée : clé de Tarsnap absente
+  du trousseau). Licence BSD à deux clauses (`native/third_party/scrypt/COPYRIGHT`).
+- Copiés tels quels dans `native/third_party/scrypt/` : `lib/crypto/crypto_scrypt-ref.c` (implémentation de
+  référence, portable), `lib-platform/crypto/crypto_scrypt.h` (son prototype), `libcperciva/util/sysendian.h`
+  et `COPYRIGHT`. Aucun correctif.
+- Cible `fl_scrypt` (`native/cmake/third_party.cmake`) : le `sha256.h` de libcperciva est remplacé par
+  `native/src/crypto/scrypt/sha256.h`, qui ne déclare que `PBKDF2_SHA256`, fourni par
+  `native/src/crypto/scrypt_glue.c` sur `mbedtls_pkcs5_pbkdf2_hmac_ext` (PBKDF2-HMAC-SHA256 de mbedTLS ; un
+  échec d'allocation y est noté et rendu par `fl_scrypt`, la sortie jetée). Définitions de compilation du seul
+  fichier de référence : `malloc` et `free` deviennent `fl_scrypt_malloc` / `fl_scrypt_free` (chaque tampon,
+  dont les 128 × r × N octets de V, est effacé avant d'être libéré) ; `crypto_scrypt` devient
+  `fl_crypto_scrypt_ref`. Compilé en `-O2` même en Debug (boucles octet par octet). Les variables locales sur
+  la pile du fichier de référence (blocs de 64 octets) ne sont pas effacées.
+- Vecteurs : RFC 7914 § 12 (`native/tests/test_scrypt.c`) ; le vecteur N = 2^20 sous l'étiquette `lent`.
+
+## Vecteurs age du testkit C2SP/CCTV (phase 14)
+
+- Amont : `https://github.com/C2SP/CCTV`, dossier `age/testdata`, commit
+  `4448f2097b2daa812c91a26141f9f36c2096b9ca` (29 août 2026) ; licence « 0BSD OR CC0-1.0 OR Unlicense »
+  (`age/package.json` ; « The license allows this without attribution », `age/README.md`).
+- Copiés tels quels dans `native/tests/data/age/` : les 26 vecteurs `scrypt*` et `armor_scrypt` (les autres
+  supposent un destinataire X25519 ou ML-KEM, que Portail n'écrit ni ne lit). Voir `LICENCE` du dossier.

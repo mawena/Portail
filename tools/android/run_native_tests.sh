@@ -42,7 +42,7 @@ fi
 # Tests, dans l'ordre ; test_luks2_lent est le plus long (Argon2 aux paramètres exacts du disque).
 # Une entrée peut porter un argument après le nom du binaire (comme dans CTest : test_crc32c_debit).
 TESTS=(test_error test_crypto test_luks1 test_luks2 test_crc32c "test_crc32c debit" test_ext4 test_fat test_fat_hostile test_ntfs test_ntfs_dev test_ntfs_hostile test_usb
-       test_cache test_banc test_luks2_lent)
+       test_cache test_banc test_luks2_lent test_scrypt "test_scrypt debit" test_age)
 # Binaires à pousser, sans doublon.
 BINS=()
 for t in "${TESTS[@]}"; do
@@ -95,6 +95,9 @@ for t in "${TREES[@]}"; do
     adb_ push "$FIX_SRC/$t" "$REMOTE/fixtures/" >/dev/null
   fi
 done
+# Vecteurs age du testkit C2SP/CCTV (phase 14), lus par test_age dans $REMOTE/fixtures/age.
+adb_ shell "mkdir -p $REMOTE/fixtures/age"
+adb_ push "$ROOT/native/tests/data/age/." "$REMOTE/fixtures/age/" >/dev/null
 
 FAILED=0; SUMMARY=()
 for t in "${TESTS[@]}"; do
