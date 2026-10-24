@@ -375,7 +375,7 @@ dans le même commit que le travail.
 - [x] T10 — Tunnels (redirection de port locale)
 - [x] T11 — Documentation
 - [x] T12 — Essais instrumentés sur le Pixel *(5/5 : mot de passe, keyboard-interactive, clé Ed25519 générée et installée, tunnel, service 2 min)*
-- [ ] *(utilisateur)* T13 — Essais sur le Pixel
+- [x] *(utilisateur)* T13 — Essais sur le Pixel *(2026-10-24 : 35 points sur 38 faits par adb, essai jugé bon par l'utilisateur ; 5 défauts trouvés et corrigés : premier terminal depuis l'accueil, copie et affichage après `clear` (xterm), titres des sessions, message de port de tunnel ; pincement, couleurs à l'œil et journal d'un échec laissés à l'utilisateur ; [fiche](../research/2026-10-24-essais-phase13/essais.md))*
 - [x] Relecture finale de toute la branche *(3 constats importants corrigés, 7 mineurs notés)*
 - [ ] Fusion `feature/ssh` → `develop`
 - [ ] Version `v1.6.0`
