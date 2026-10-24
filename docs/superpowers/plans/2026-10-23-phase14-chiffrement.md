@@ -604,7 +604,7 @@ contredit.
    par défaut est une constante ; un autre conteneur serait une nouvelle tâche.*
 6. **Taille fixe, place écrite à la création** (zéros) : un fichier creux pourrait manquer de place plus tard et
    abîmer le système de fichiers du coffre. Pas d'agrandissement en phase 14 (il viendrait avec le redimensionnement
-   de la phase 17). *Coût si faux : création plus rapide par fichier creux, une option.*
+   de la phase 15). *Coût si faux : création plus rapide par fichier creux, une option.*
 7. **Pas de coffre sur un dossier distant ni dans un coffre** : accès aléatoire trop lent et fragile à distance ;
    l'imbrication ajoute un niveau de verrous et de cascade sans usage clair. *Coût si faux : lever le refus après des
    essais de débit.*
