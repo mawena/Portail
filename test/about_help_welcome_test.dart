@@ -98,7 +98,7 @@ void main() {
   testWidgets('helpEntriesExpand', (tester) async {
     await pumpApp(tester, FakeHostApi());
     await homeMenu(tester, Fr.help);
-    expect(find.byType(ExpansionTile), findsNWidgets(8));
+    expect(find.byType(ExpansionTile), findsNWidgets(10));
     final titles = [
       'Ouvrir un disque chiffré',
       'Pourquoi mon disque s\'ouvre en lecture seule ?',
@@ -108,6 +108,8 @@ void main() {
       'Le verrouillage automatique',
       'Les dossiers distants (FTP, SFTP)',
       'Formater un disque',
+      'Ouvrir un terminal SSH',
+      'Se connecter avec une clé SSH',
     ];
     expect(Fr.helpEntries.map((e) => e.$1).toList(), titles);
     for (final (title, answer) in Fr.helpEntries) {

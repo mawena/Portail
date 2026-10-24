@@ -373,7 +373,7 @@ dans le même commit que le travail.
 - [x] T8 — Installer la clé publique sur le serveur
 - [x] T9 — Commandes enregistrées
 - [x] T10 — Tunnels (redirection de port locale)
-- [ ] T11 — Documentation
+- [x] T11 — Documentation
 - [ ] T12 — Essais instrumentés sur le Pixel
 - [ ] *(utilisateur)* T13 — Essais sur le Pixel
 - [ ] Relecture finale de toute la branche

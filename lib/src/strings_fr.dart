@@ -438,6 +438,18 @@ class Fr {
           'si vous le voulez, le chiffrement LUKS2. Tout le contenu du disque est effacé : éjectez d\'abord ses '
           'volumes ouverts, puis tapez son nom pour confirmer. Gardez Portail ouvert jusqu\'à la fin du formatage.'
     ),
+    (
+      'Ouvrir un terminal SSH',
+      'Touchez Terminal sur la tuile d\'un serveur SFTP, ou Ouvrir un terminal ici dans le menu d\'un dossier '
+          'distant. La barre au-dessus du clavier donne Échap, Tab, Ctrl, Alt et les flèches ; pincez pour changer '
+          'la taille du texte. Les sessions restent ouvertes en arrière-plan, jusqu\'à Tout fermer dans la notification.'
+    ),
+    (
+      'Se connecter avec une clé SSH',
+      'Réglages, Clés SSH : générez une clé sur le téléphone ou importez-en une, puis Installer sur un serveur '
+          'l\'ajoute à ses clés autorisées. Acceptez ensuite d\'utiliser cette clé pour ce serveur : les connexions '
+          'ne demandent plus le mot de passe.'
+    ),
   ];
   static const addFavorite = 'Ajouter aux favoris';
   static const add = 'Ajouter';

@@ -24,6 +24,31 @@ LUKS2/ext4 qu'on utilise sous Ubuntu. Aucune application existante ne le permett
 
 ## Ce que fait la version 1.5.0
 
+### Connexions SSH (nouveau en 1.6.0)
+
+- **Terminal** sur les serveurs SFTP enregistrés : bouton **Terminal** de la tuile du serveur, ou **Ouvrir un
+  terminal ici** dans le menu d'un dossier distant (le shell démarre dans ce dossier). Émulation xterm complète
+  (256 couleurs, `htop`, `nano`, `vim`, `less`), copier par appui long, coller (plusieurs lignes confirmées), taille
+  du texte au pincement (8 à 32, mémorisée), titre posé par le serveur, sonnerie en vibration.
+- **Barre de touches** au-dessus du clavier : Échap, Tab, Ctrl et Alt (un toucher pour la touche suivante, deux pour
+  les verrouiller, valables aussi pour le clavier du téléphone), flèches, Début, Fin, pages et `~ | / -`.
+- **Sessions en arrière-plan** : jusqu'à 8 terminaux, qui restent ouverts en quittant Portail (notification « Sessions
+  SSH » avec **Tout fermer**) ; on passe de l'un à l'autre depuis la barre de titre ou la section **Sessions SSH** de
+  l'accueil. Une session coupée le dit et propose **Reconnecter**.
+- **Clés SSH** (Réglages → Fichiers) : générer une clé Ed25519 ou RSA 4096 sur le téléphone, avec ou sans phrase,
+  ou importer une clé OpenSSH ; copier ou partager la clé publique ; **Installer sur un serveur** l'ajoute à
+  `~/.ssh/authorized_keys` par SFTP (lignes existantes gardées, droits corrigés, lien symbolique refusé), puis le
+  serveur l'utilise. Les clés sont scellées par le Keystore d'Android ; celles importées par serveur en 1.3.0 y
+  sont reprises.
+- **Commandes enregistrées** (menu du terminal → **Commandes**) : par serveur ou communes, envoyées d'un toucher,
+  exécutées aussitôt ou seulement tapées ; une sélection du terminal s'enregistre comme commande.
+- **Tunnels** (menu du terminal ou fiche du serveur) : un port du téléphone, sur `127.0.0.1` seulement, mène à un
+  service vu du serveur (une page d'administration, une base de données) ; ouverts à la demande ou avec chaque
+  terminal, avec **Ouvrir dans le navigateur**.
+- **Connexions expliquées** : **Tester la connexion** dans la fiche du serveur, messages précis (adresse inconnue,
+  délai dépassé, connexion refusée ou fermée par le serveur, aucun algorithme commun…) avec **Détails** (journal de
+  la tentative, sans aucun secret), invites keyboard-interactive (code de vérification) posées à l'utilisateur.
+
 ### Interface (nouveau en 1.4.0)
 
 - **Thèmes clair et sombre**, aux couleurs terracotta du logo : Réglages → Apparence → **Thème** (Système, par
@@ -267,6 +292,12 @@ Mesures sur le même téléphone, sur une image (test `PerfInstrumentedTest`, sa
   - vignettes des images de 8 Mio au plus, pas de vignette de vidéo ;
   - au plus 3 transferts en même temps par serveur ; au-delà, une opération attend (30 s au plus) ;
   - pas d'FTPS (FTP sur TLS) ni d'authentification SSH par agent.
+- **Connexions SSH** :
+  - tunnels locaux seulement (`ssh -L`) : pas de redirection distante (`-R`) ni dynamique (`-D`, SOCKS) ;
+  - pas d'agent SSH, pas de saut par un hôte intermédiaire (`ProxyJump`), pas de transfert X11 ;
+  - 8 sessions au plus ; la sortie récente (256 Kio par session) n'est gardée qu'en mémoire, jamais sur le disque ;
+  - le terminal n'est masqué dans les captures d'écran que si le réglage Confort → **Masquer le terminal** est
+    activé.
 
 - **Écriture ext4** : vérifiée sur PC et sur le téléphone avec des images, puis essayée sur le vrai disque
   (LUKS2 et ext4 : copie de 1 Gio dans les deux sens, renommage, suppression, `e2fsck -fn` propre sous
@@ -522,7 +553,9 @@ l'être sous GPL, avec ses sources. FatFs est sous une licence de type BSD à un
 GPL, comme libarchive (BSD à deux clauses) et liblzma (0BSD). Depuis la phase 10, l'application embarque aussi
 AndroidX Media3 1.11.1 et Apache Commons Net 3.13.0 (Apache-2.0), JSch 2.28.8 de mwiede (BSD) et Bouncy Castle
 1.86 (licence MIT), toutes compatibles avec la GPL ; Apache FtpServer 1.2.1 et Apache MINA SSHD 2.20.0 (Apache-2.0)
-ne servent qu'aux tests. Les icônes du lecteur vidéo (phase 12) viennent d'AOSP et de Media3 (Apache-2.0). Les
+ne servent qu'aux tests. Les icônes du lecteur vidéo (phase 12) viennent d'AOSP et de Media3 (Apache-2.0). Le
+terminal SSH (phase 13) s'affiche par xterm 4.0.0 (licence MIT), avec ses dépendances equatable et zmodem (MIT)
+et quiver (Apache-2.0). Les
 licences des bibliothèques natives sont dans
 `native/third_party/` (`ntfs-3g/COPYING`, `fatfs/LICENSE.txt`, `libarchive/COPYING`, `xz/COPYING`…) ; leurs correctifs sont décrits dans
 [native/third_party/PATCHES.md](native/third_party/PATCHES.md). Depuis la phase 11, toutes ces licences se lisent aussi
