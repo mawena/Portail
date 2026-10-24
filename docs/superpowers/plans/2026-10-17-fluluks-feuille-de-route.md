@@ -402,24 +402,43 @@ dans le même commit que le travail.
 - [ ] Fusion `feature/chiffrement` → `develop`
 - [ ] Version `v1.7.0`
 
-### Phase 15 — Vérification et réparation des disques
-- [ ] Plan de la phase 15 écrit *(demande du 2026-10-22 ; spec § 16 ; phase 11, puis 12, 13 et 14, jusqu'au 2026-10-23)*
+### Phase 15 — Intégration IA : serveurs auto-hébergés, chat, automatisations ([plan](2026-10-24-phase15-ia.md))
+- [x] Plan de la phase 15 écrit *(demande du 2026-10-24 ; spec § 23 ; commence après la validation de la phase 14)*
+- [ ] T1 — Contrat d'API (compatible OpenAI) et serveur d'essai
+- [ ] T2 — Couche réseau `AiProvider` compatible OpenAI, lecture du flux SSE, erreurs traduites *(MockWebServer)*
+- [ ] T3 — Serveurs IA : stockage, clé API scellée, serveur par défaut, Tester la connexion
+- [ ] T4 — Écrans des serveurs IA : modèles, modèle par défaut, état en ligne ou hors ligne
+- [ ] T5 — Historique local des conversations (Room)
+- [ ] T6 — Réponses en flux vers l'écran, arrêter, régénérer
+- [ ] T7 — Écran de chat : Markdown, blocs de code, serveur, modèle et prompt système par conversation
+- [ ] T8 — Automatisations : modèles de prompt à variables, lancement manuel ou planifié (WorkManager), historique
+- [ ] T9 — Écrans des automatisations
+- [ ] T10 — Certificats auto-signés de confiance, conversations masquées dans les captures
+- [ ] T11 — Documentation
+- [ ] T12 — Essais instrumentés sur le Pixel
+- [ ] *(utilisateur)* T13 — Essais sur le Pixel
+- [ ] Relecture finale de toute la branche
+- [ ] Fusion `feature/ia` → `develop`
+- [ ] Version `v1.8.0`
+
+### Phase 16 — Vérification et réparation des disques
+- [ ] Plan de la phase 16 écrit *(demande du 2026-10-22 ; spec § 16 ; phase 11, puis 12, 13, 14 et 15, jusqu'au 2026-10-24)*
 - [ ] Vérification en lecture seule avec rapport, pour chaque système de fichiers
 - [ ] Réparation ext4 par e2fsck (e2fsprogs, sur l'accès USB du moteur)
 - [ ] Réparation NTFS par ntfsfix (ntfs-3g)
 - [ ] Réparation FAT32 et exFAT par fsck.fat et fsck.exfat
 - [ ] LUKS : vérification des deux en-têtes, sauvegarde et restauration de l'en-tête
-- [ ] Version `v1.8.0`
+- [ ] Version `v1.9.0`
 
-### Phase 16 — Gestion des partitions, comme GParted
-- [ ] Plan de la phase 16 écrit *(demande du 2026-10-22 ; spec § 17 ; phase 12, puis 13, 14 et 15, jusqu'au 2026-10-23)*
+### Phase 17 — Gestion des partitions, comme GParted
+- [ ] Plan de la phase 17 écrit *(demande du 2026-10-22 ; spec § 17 ; phase 12, puis 13, 14, 15 et 16, jusqu'au 2026-10-24)*
 - [ ] Vue du disque : partitions et espace libre à l'échelle, système de fichiers, étiquette, taille, place occupée
 - [ ] Taille choisie au formatage ; créer une partition dans un espace libre, en supprimer une, formater une seule partition
 - [ ] Changer l'étiquette d'une partition ; nouvelle table MBR ou GPT
 - [ ] Redimensionner (agrandir, réduire) : ext4 par resize2fs, NTFS par ntfsresize, système de fichiers dans LUKS2 ; FAT32 et exFAT à étudier
 - [ ] Déplacer une partition, si le plan sait le rendre sûr
 - [ ] Opérations préparées, résumées, puis appliquées après confirmation
-- [ ] Version `v1.9.0`
+- [ ] Version `v1.10.0`
 
 ---
 
