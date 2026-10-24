@@ -369,7 +369,7 @@ dans le même commit que le travail.
 - [x] T4 — Écran Terminal (xterm) : thème, copier-coller, pincement, Reconnecter *(xterm 4.0.0 vérifié avec Flutter 3.41)*
 - [x] T5 — Barre de touches : Échap, Tab, Ctrl, Alt, flèches
 - [x] T6 — Sessions multiples, bouton Terminal, Ouvrir un terminal ici
-- [ ] T7 — Trousseau de clés SSH : générer, importer, clé publique
+- [x] T7 — Trousseau de clés SSH : générer, importer, clé publique *(clés de la phase 10 reprises dans le trousseau)*
 - [ ] T8 — Installer la clé publique sur le serveur
 - [ ] T9 — Commandes enregistrées
 - [ ] T10 — Tunnels (redirection de port locale)
