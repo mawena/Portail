@@ -371,7 +371,7 @@ dans le même commit que le travail.
 - [x] T6 — Sessions multiples, bouton Terminal, Ouvrir un terminal ici
 - [x] T7 — Trousseau de clés SSH : générer, importer, clé publique *(clés de la phase 10 reprises dans le trousseau)*
 - [x] T8 — Installer la clé publique sur le serveur
-- [ ] T9 — Commandes enregistrées
+- [x] T9 — Commandes enregistrées
 - [ ] T10 — Tunnels (redirection de port locale)
 - [ ] T11 — Documentation
 - [ ] T12 — Essais instrumentés sur le Pixel
