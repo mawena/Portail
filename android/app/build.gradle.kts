@@ -86,3 +86,28 @@ dependencies {
 flutter {
     source = "../.."
 }
+
+// integration_test (Flutter, en dépendance de développement) tire androidx.test 1.2.x dans le classpath de debug ; la
+// résolution cohérente l'imposerait alors aux essais instrumentés (runner 1.6.2) : on aligne sur leurs versions.
+configurations.configureEach {
+    resolutionStrategy.force("androidx.test:runner:1.6.2", "androidx.test:rules:1.6.1")
+}
+
+val sshTestServer: Configuration by configurations.creating
+
+dependencies {
+    sshTestServer("org.apache.sshd:sshd-core:2.20.0")
+    sshTestServer("org.apache.sshd:sshd-sftp:2.20.0")
+    sshTestServer("org.jetbrains.kotlin:kotlin-stdlib:2.2.20")
+    sshTestServer("org.bouncycastle:bcprov-jdk18on:1.86") // clés Ed25519 des clients
+}
+
+// Phase 13 : serveur SSH d'essai pour les essais instrumentés (tools/ssh/serveur-essai.sh), lancé sur le PC avec
+// le classpath des tests JVM (MINA SSHD).
+tasks.register<JavaExec>("runSshTestServer") {
+    description = "Serveur SSH d'essai de la phase 13 (127.0.0.1:2222)"
+    dependsOn("compileDebugUnitTestKotlin")
+    classpath = files(layout.buildDirectory.dir("tmp/kotlin-classes/debugUnitTest")) + sshTestServer
+    mainClass.set("com.mawena.fluluks.tools.SshTestServerKt")
+    standardInput = System.`in`
+}
