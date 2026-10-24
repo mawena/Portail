@@ -8,9 +8,10 @@ import '../ui/dialogs.dart';
 import '../ui/feedback.dart';
 import '../ui/states.dart';
 import '../ui/tokens.dart';
+import '../widgets/key_install.dart';
 import '../widgets/ssh_key_form.dart';
 
-enum _KeyMenu { copy, share, rename, delete }
+enum _KeyMenu { install, copy, share, rename, delete }
 
 /// « Clés SSH » (Réglages → Fichiers, phase 13) : le trousseau de clés du téléphone ; Générer, Importer ; pour
 /// chaque clé : copier ou partager sa clé publique, la renommer, la supprimer (refusé si un serveur l'utilise).
@@ -73,6 +74,11 @@ class _SshKeysScreenState extends State<SshKeysScreen> {
 
   Future<void> _menu(SshKeyMsg k, _KeyMenu m) async {
     switch (m) {
+      case _KeyMenu.install:
+        final s = await pickSftpServer(context, _state);
+        if (s == null || !mounted) return;
+        await installKeyOnServer(context, _state, s, k);
+        await _load();
       case _KeyMenu.copy:
         await _run(() async {
           await Clipboard.setData(ClipboardData(text: await _state.api.sshPublicKey(k.id)));
@@ -142,6 +148,7 @@ class _SshKeysScreenState extends State<SshKeysScreen> {
                           tooltip: Fr.keyOptions(k.name),
                           onSelected: (m) => _menu(k, m),
                           itemBuilder: (_) => const [
+                            PopupMenuItem(value: _KeyMenu.install, child: Text(Fr.installKey)),
                             PopupMenuItem(value: _KeyMenu.copy, child: Text(Fr.copyPublicKey)),
                             PopupMenuItem(value: _KeyMenu.share, child: Text(Fr.sharePublicKey)),
                             PopupMenuItem(value: _KeyMenu.rename, child: Text(Fr.rename)),

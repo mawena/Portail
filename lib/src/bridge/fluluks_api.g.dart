@@ -3380,6 +3380,27 @@ class FluLuksHostApi {
     ;
   }
 
+  /// Phase 13 : installe la clé publique `keyId` dans `~/.ssh/authorized_keys` de `serverId` (mot de passe pour ce
+  /// seul usage ; mêmes erreurs que `connectServer`) ; rend le message à montrer (« Clé installée sur … »).
+  Future<String> installPublicKey(String serverId, String keyId, Uint8List? password) async {
+    final pigeonVar_channelName = 'dev.flutter.pigeon.fluluks.FluLuksHostApi.installPublicKey$pigeonVar_messageChannelSuffix';
+    final pigeonVar_channel = BasicMessageChannel<Object?>(
+      pigeonVar_channelName,
+      pigeonChannelCodec,
+      binaryMessenger: pigeonVar_binaryMessenger,
+    );
+    final Future<Object?> pigeonVar_sendFuture = pigeonVar_channel.send(<Object?>[serverId, keyId, password]);
+    final pigeonVar_replyList = await pigeonVar_sendFuture as List<Object?>?;
+
+    final Object? pigeonVar_replyValue = _extractReplyValueOrThrow(
+        pigeonVar_replyList,
+        pigeonVar_channelName,
+        isNullValid: false,
+    )
+    ;
+    return pigeonVar_replyValue! as String;
+  }
+
   /// Clé privée OpenSSH choisie dans le sélecteur d'Android, scellée pour `serverId` ; rend sa description
   /// (« ssh-ed25519 SHA256:… »), ou null si rien n'a été choisi.
   Future<String?> importPrivateKey(String serverId) async {

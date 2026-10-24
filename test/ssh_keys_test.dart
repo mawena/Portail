@@ -159,4 +159,56 @@ void main() {
     expect(api.calls, contains('setServerKey s1 k1'));
     expect(find.text('ssh-ed25519 SHA256:abc'), findsOneWidget);
   });
+
+  testWidgets('installFromKeysScreen', (tester) async {
+    final api = api0()..sshKeyList.add(key());
+    await openKeys(tester, api);
+    await keyMenu(tester, Fr.installKey);
+    await tester.tap(find.text('Maison'));
+    await tester.pumpAndSettle();
+    expect(api.calls, contains('installPublicKey s1 k1'));
+    expect(find.text('Clé installée sur Maison'), findsOneWidget);
+    // proposition : utiliser cette clé pour ce serveur
+    expect(find.text(Fr.useKeyFor('Maison')), findsOneWidget);
+    await tester.tap(find.widgetWithText(FilledButton, Fr.useKey));
+    await tester.pumpAndSettle();
+    expect(api.calls, contains('setServerKey s1 k1'));
+  });
+
+  testWidgets('installAsksPassword', (tester) async {
+    final api = api0()..sshKeyList.add(key());
+    api.installHook = (id, k, pw) {
+      if (pw == null) throw PlatformException(code: 'auth', message: 'Mot de passe requis', details: true);
+      return 'Clé déjà installée sur Maison';
+    };
+    await openKeys(tester, api);
+    await keyMenu(tester, Fr.installKey);
+    await tester.tap(find.text('Maison'));
+    await tester.pumpAndSettle();
+    await tester.enterText(find.byType(TextField), 'mdp');
+    await tester.tap(find.text(Fr.connect));
+    await tester.pumpAndSettle();
+    expect(api.installPasswords, [null, 'mdp']);
+    expect(find.text('Clé déjà installée sur Maison'), findsOneWidget);
+  });
+
+  testWidgets('installFromServerForm', (tester) async {
+    final api = api0()..sshKeyList.add(key());
+    await pump(tester, api);
+    await showServer(tester);
+    await tester.tap(find.byTooltip('Modifier'));
+    await tester.pumpAndSettle();
+    await tester.scrollUntilVisible(find.text(Fr.installKeyHere), 200, scrollable: formScroll);
+    await tester.ensureVisible(find.text(Fr.installKeyHere));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text(Fr.installKeyHere));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Téléphone'));
+    await tester.pumpAndSettle();
+    expect(api.calls, contains('installPublicKey s1 k1'));
+    await tester.tap(find.widgetWithText(FilledButton, Fr.useKey));
+    await tester.pumpAndSettle();
+    expect(api.calls, contains('setServerKey s1 k1'));
+    expect(find.text('ssh-ed25519 SHA256:abc'), findsOneWidget);
+  });
 }

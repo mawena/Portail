@@ -413,6 +413,17 @@ class FakeHostApi implements HostApi {
   @override
   Future<void> shareText(String text) async => sharedTexts.add(text);
 
+  /// Installation de clé : [installHook] remplace la réponse (erreurs) ; mots de passe reçus, décodés.
+  String Function(String serverId, String keyId, Uint8List? password)? installHook;
+  final installPasswords = <String?>[];
+
+  @override
+  Future<String> installPublicKey(String serverId, String keyId, Uint8List? password) async {
+    calls.add('installPublicKey $serverId $keyId');
+    installPasswords.add(password == null ? null : utf8.decode(List<int>.of(password)));
+    return installHook?.call(serverId, keyId, password) ?? 'Clé installée sur Maison';
+  }
+
   /// Description rendue par importPrivateKey (null : sélecteur fermé sans choix).
   String? importedKey;
 

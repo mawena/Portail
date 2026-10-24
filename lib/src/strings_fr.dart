@@ -235,6 +235,13 @@ class Fr {
   static const noKeysTitle = 'Aucune clé';
   static const noKeysBody = 'Générez une clé sur ce téléphone ou importez-en une (OpenSSH\u00A0: Ed25519, ECDSA ou RSA).';
   static const chooseKey = 'Choisir une clé';
+  static const installKey = 'Installer sur un serveur';
+  static const installKeyHere = 'Installer une clé sur ce serveur';
+  static const chooseServer = 'Choisir un serveur';
+  static const noSftpServer = 'Aucun serveur SFTP enregistré';
+  static const useKey = 'Utiliser';
+  static String useKeyFor(String server) => 'Utiliser cette clé pour $server\u202F?';
+  static const useKeyHelp = 'Les connexions à ce serveur se feront par cette clé.';
   static const editServer = 'Modifier';
   static const disconnect = 'Déconnecter';
   static const serverForm = 'Serveur distant';

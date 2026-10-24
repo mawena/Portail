@@ -54,6 +54,7 @@ import io.flutter.plugin.common.BinaryMessenger
 import com.mawena.fluluks.remote.ssh.AttemptLogs
 import com.mawena.fluluks.remote.ssh.SshFailure
 import com.mawena.fluluks.remote.ssh.SshPromptBridge
+import com.mawena.fluluks.remote.ssh.KeyInstaller
 import com.mawena.fluluks.remote.ssh.SshKeyInfo
 import com.mawena.fluluks.remote.ssh.SshPrompts
 import com.mawena.fluluks.remote.ssh.TerminalInfo
@@ -489,6 +490,18 @@ class HostApiImpl(
         Remotes.disconnect(serverId) // reconnecté avec la nouvelle clé
         Remotes.servers().setKey(serverId, keyId)
     }
+
+    override fun installPublicKey(serverId: String, keyId: String, password: ByteArray?, callback: (Result<String>) -> Unit) =
+        io(callback) {
+            try {
+                remoteErrors {
+                    val r = Remotes.installPublicKey(serverId, keyId, password)
+                    KeyInstaller.message(r, Remotes.servers().get(serverId)?.name.orEmpty())
+                }
+            } finally {
+                password?.fill(0)
+            }
+        }
 
     override fun shareText(text: String) {
         val send = Intent(Intent.ACTION_SEND).setType("text/plain").putExtra(Intent.EXTRA_TEXT, text)

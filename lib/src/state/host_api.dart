@@ -69,6 +69,7 @@ abstract class HostApi {
   Future<String> sshPublicKey(String keyId);
   Future<void> setServerKey(String serverId, String? keyId);
   Future<void> shareText(String text);
+  Future<String> installPublicKey(String serverId, String keyId, Uint8List? password);
   Future<String?> importPrivateKey(String serverId);
   Future<void> forgetPrivateKey(String serverId);
   Future<Uint8List> readImage(String sourceId, String path);
@@ -239,6 +240,9 @@ class PigeonHostApi implements HostApi {
   Future<void> setServerKey(String serverId, String? keyId) => _api.setServerKey(serverId, keyId);
   @override
   Future<void> shareText(String text) => _api.shareText(text);
+  @override
+  Future<String> installPublicKey(String serverId, String keyId, Uint8List? password) =>
+      _api.installPublicKey(serverId, keyId, password);
   @override
   Future<String?> importPrivateKey(String serverId) => _api.importPrivateKey(serverId);
   @override

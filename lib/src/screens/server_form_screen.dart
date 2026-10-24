@@ -11,6 +11,7 @@ import '../ui/feedback.dart';
 import '../ui/tokens.dart';
 import '../ui/widgets.dart';
 import '../widgets/connection_details_sheet.dart';
+import '../widgets/key_install.dart';
 import '../widgets/server_tile.dart';
 
 /// Fiche d'un serveur distant (phase 10) : protocole, nom, adresse, port (21 ou 22 par défaut), utilisateur, mot de
@@ -110,33 +111,24 @@ class _ServerFormScreenState extends State<ServerFormScreen> {
   Future<void> _chooseKey() async {
     final keys = await widget.state.api.sshKeys();
     if (!mounted) return;
-    final k = await showDialog<SshKeyMsg>(
-      context: context,
-      builder: (ctx) => SimpleDialog(
-        title: const Text(Fr.chooseKey),
-        children: [
-          if (keys.isEmpty)
-            const Padding(padding: EdgeInsets.all(Space.l), child: Text(Fr.noKeysBody))
-          else
-            for (final k in keys)
-              SimpleDialogOption(
-                onPressed: () => Navigator.pop(ctx, k),
-                child: ListTile(
-                  contentPadding: EdgeInsets.zero,
-                  leading: const Icon(Icons.key_rounded),
-                  title: Text(k.name),
-                  subtitle: Text('${k.type} ${k.fingerprint}'),
-                ),
-              ),
-        ],
-      ),
-    );
+    final k = await pickSshKey(context, keys);
     if (k == null || !mounted) return;
     try {
       await widget.state.setServerKey(widget.server!.id, k.id);
       if (mounted) setState(() => _keyInfo = '${k.type} ${k.fingerprint}');
     } on PlatformException catch (e) {
       if (mounted) _snack(e.message ?? Fr.genericError);
+    }
+  }
+
+  /// Installe une clé du trousseau sur ce serveur, puis propose de l'utiliser (phase 13).
+  Future<void> _installKey() async {
+    final keys = await widget.state.api.sshKeys();
+    if (!mounted) return;
+    final k = await pickSshKey(context, keys);
+    if (k == null || !mounted) return;
+    if (await installKeyOnServer(context, widget.state, widget.server!, k) && mounted) {
+      setState(() => _keyInfo = '${k.type} ${k.fingerprint}');
     }
   }
 
@@ -271,6 +263,7 @@ class _ServerFormScreenState extends State<ServerFormScreen> {
                 _field(_keyPassphrase, Fr.keyPassphrase, obscure: true, helper: Fr.keyPassphraseHelp),
               Wrap(spacing: Space.s, children: [
                 TextButton(onPressed: _chooseKey, child: const Text(Fr.chooseKey)),
+                TextButton(onPressed: _installKey, child: const Text(Fr.installKeyHere)),
                 TextButton(onPressed: _importKey, child: const Text(Fr.importKey)),
                 if (_keyInfo != null) TextButton(onPressed: _removeKey, child: const Text(Fr.removeKey)),
               ]),

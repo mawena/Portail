@@ -2171,6 +2171,11 @@ interface FluLuksHostApi {
   fun setServerKey(serverId: String, keyId: String?)
   fun shareText(text: String)
   /**
+   * Phase 13 : installe la clé publique `keyId` dans `~/.ssh/authorized_keys` de `serverId` (mot de passe pour ce
+   * seul usage ; mêmes erreurs que `connectServer`) ; rend le message à montrer (« Clé installée sur … »).
+   */
+  fun installPublicKey(serverId: String, keyId: String, password: ByteArray?, callback: (Result<String>) -> Unit)
+  /**
    * Clé privée OpenSSH choisie dans le sélecteur d'Android, scellée pour `serverId` ; rend sa description
    * (« ssh-ed25519 SHA256:… »), ou null si rien n'a été choisi.
    */
@@ -3410,6 +3415,28 @@ interface FluLuksHostApi {
               FluLuksApiPigeonUtils.wrapError(exception)
             }
             reply.reply(wrapped)
+          }
+        } else {
+          channel.setMessageHandler(null)
+        }
+      }
+      run {
+        val channel = BasicMessageChannel<Any?>(binaryMessenger, "dev.flutter.pigeon.fluluks.FluLuksHostApi.installPublicKey$separatedMessageChannelSuffix", codec)
+        if (api != null) {
+          channel.setMessageHandler { message, reply ->
+            val args = message as List<Any?>
+            val serverIdArg = args[0] as String
+            val keyIdArg = args[1] as String
+            val passwordArg = args[2] as ByteArray?
+            api.installPublicKey(serverIdArg, keyIdArg, passwordArg) { result: Result<String> ->
+              val error = result.exceptionOrNull()
+              if (error != null) {
+                reply.reply(FluLuksApiPigeonUtils.wrapError(error))
+              } else {
+                val data = result.getOrNull()
+                reply.reply(FluLuksApiPigeonUtils.wrapResult(data))
+              }
+            }
           }
         } else {
           channel.setMessageHandler(null)

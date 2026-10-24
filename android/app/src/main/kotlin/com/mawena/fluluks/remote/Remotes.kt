@@ -133,6 +133,33 @@ object Remotes {
         }
     }
 
+    /**
+     * Installe la clé publique [keyId] du trousseau dans `~/.ssh/authorized_keys` de [serverId] (phase 13). Connexion
+     * par [password] (sinon celui mémorisé ; sans mot de passe, par la clé actuelle du serveur), empreinte vérifiée ;
+     * mêmes exceptions que [connect].
+     */
+    fun installPublicKey(serverId: String, keyId: String, password: ByteArray?): com.mawena.fluluks.remote.ssh.KeyInstaller.Result {
+        val s = servers()
+        val cfg = s.get(serverId) ?: throw FileNotFoundException("Serveur introuvable")
+        val line = net { s.keys.publicKey(keyId) }
+        val stored = s.secrets(serverId)
+        val pw = password?.copyOf() ?: stored?.password?.copyOf()
+        stored?.wipe()
+        val sec = if (pw != null) Secrets(pw, null, null) else secretsFor(cfg, null)
+        val connector = com.mawena.fluluks.remote.ssh.SshConnector(cfg, sec, com.mawena.fluluks.remote.ssh.SshPromptBridge.prompts)
+        try {
+            val session = net { connector.open() }
+            try {
+                return net { com.mawena.fluluks.remote.ssh.KeyInstaller.install(session, line) }
+            } finally {
+                session.disconnect()
+            }
+        } finally {
+            connector.close()
+            sec.wipe()
+        }
+    }
+
     /** Le serveur n'utilise plus de clé ; elle reste dans le trousseau. */
     fun forgetPrivateKey(serverId: String) = servers().setKey(serverId, null)
 }

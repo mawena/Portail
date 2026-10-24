@@ -609,6 +609,11 @@ abstract class FluLuksHostApi {
   void setServerKey(String serverId, String? keyId);
   void shareText(String text);
 
+  /// Phase 13 : installe la clé publique `keyId` dans `~/.ssh/authorized_keys` de `serverId` (mot de passe pour ce
+  /// seul usage ; mêmes erreurs que `connectServer`) ; rend le message à montrer (« Clé installée sur … »).
+  @async
+  String installPublicKey(String serverId, String keyId, Uint8List? password);
+
   /// Clé privée OpenSSH choisie dans le sélecteur d'Android, scellée pour `serverId` ; rend sa description
   /// (« ssh-ed25519 SHA256:… »), ou null si rien n'a été choisi.
   @async
