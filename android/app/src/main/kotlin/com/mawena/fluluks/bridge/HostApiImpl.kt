@@ -380,8 +380,11 @@ class HostApiImpl(
 
     /** Sortie et états des terminaux, remis sur le fil principal dans l'ordre d'arrivée. */
     private val terminalListener = object : TerminalSessions.Listener {
+        override val acknowledges = true
+
+        // la réponse de Dart acquitte le lot : au plus quelques lots en route, la sortie attend Dart
         override fun onOutput(id: String, data: ByteArray) {
-            scope.launch { events.onTerminalOutput(id, data) { /* réponse ignorée */ } }
+            scope.launch { events.onTerminalOutput(id, data) { TerminalSessions.delivered(id) } }
         }
 
         override fun onChanged(info: TerminalInfo) {

@@ -84,6 +84,19 @@ void main() {
     expect(hub.sessions, isEmpty);
   });
 
+  test('goneSessionsAreForgotten', () async {
+    final hub = TerminalHub(FakeHostApi());
+    // ouverture qui échoue (mot de passe demandé, empreinte inconnue) : annoncée puis retirée, aucun fantôme
+    hub.onChanged(TerminalSessionMsg(id: 'ta', serverId: 's1', title: 'Maison', state: 'connecting', cols: 80, rows: 24));
+    hub.onChanged(TerminalSessionMsg(
+        id: 'ta', serverId: 's1', title: 'Maison', state: 'gone', error: 'Mot de passe requis', cols: 80, rows: 24));
+    expect(hub.sessions, isEmpty);
+    // « Tout fermer » depuis la notification : chaque session est retirée
+    final e = await hub.open('s1');
+    hub.onChanged(TerminalSessionMsg(id: e.info.id, serverId: 's1', title: 'Maison', state: 'gone', cols: 80, rows: 24));
+    expect(hub.sessions, isEmpty);
+  });
+
   testWidgets('bellVibratesWhenHapticsOn', (tester) async {
     final calls = <String>[];
     tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(SystemChannels.platform, (call) async {

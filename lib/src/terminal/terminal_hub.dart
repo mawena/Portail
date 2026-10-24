@@ -100,6 +100,11 @@ class TerminalHub extends ChangeNotifier {
   }
 
   void onChanged(TerminalSessionMsg msg) {
+    // retirée côté Kotlin (fermée à la demande, « Tout fermer », ouverture qui a échoué) : oubliée ici aussi
+    if (msg.state == 'gone') {
+      if (_entries.remove(msg.id) != null) notifyListeners();
+      return;
+    }
     final e = _entries[msg.id];
     if (e == null) {
       // annoncée avant la réponse d'ouverture : adoptée ; fermée sans être connue : rien à montrer

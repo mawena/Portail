@@ -4,6 +4,7 @@ import android.content.Context
 import androidx.annotation.VisibleForTesting
 import com.mawena.fluluks.engine.EngineError
 import com.mawena.fluluks.files.FilesException
+import com.mawena.fluluks.remote.RemoteIOException
 import com.mawena.fluluks.remote.Remotes
 import com.mawena.fluluks.remote.Secrets
 import java.io.FileNotFoundException
@@ -23,9 +24,22 @@ object TerminalSessions {
     interface Listener {
         fun onOutput(id: String, data: ByteArray)
         fun onChanged(info: TerminalInfo)
+
+        /** Vrai si chaque lot sera acquitté par [delivered] (le pont, une fois Dart servi). */
+        val acknowledges: Boolean get() = false
+    }
+
+    /** Un lot de sortie de [id] a été remis à Dart. */
+    fun delivered(id: String) {
+        synchronized(this) { sessions[id] }?.pump?.delivered()
     }
 
     @Volatile var listener: Listener? = null
+        set(value) {
+            field = value
+            // l'ancien écouteur n'acquittera plus : rien ne reste en attente
+            for (t in synchronized(this) { sessions.values.toList() }) t.pump.resetInflight()
+        }
 
     /** Appelé après chaque changement : démarre le service si une session est en cours. */
     @Volatile var starter: (() -> Unit)? = null
@@ -60,18 +74,22 @@ object TerminalSessions {
             val same = sessions.values.count { it.info.serverId == serverId }
             val title = if (same == 0) cfg.name else "${cfg.name} (${same + 1})"
             val info = TerminalInfo(UUID.randomUUID().toString(), serverId, title, TerminalInfo.CONNECTING, null, COLS, ROWS)
-            TerminalSession(info, cfg, { id, data -> listener?.onOutput(id, data) }, ::changed)
+            TerminalSession(info, cfg, { id, data -> listener?.onOutput(id, data) }, ::changed, {
+                listener?.acknowledges == true
+            })
                 .also { sessions[info.id] = it }
         }
         changed(t.info)
         val sec = Remotes.secretsFor(cfg, password)
         try {
             t.connect(sec, SshPromptBridge.prompts, startDir)
+            // fermée (« Tout fermer », croix) pendant la connexion : elle ne revient pas
+            if (synchronized(this) { sessions[t.info.id] !== t }) throw RemoteIOException(TerminalSession.SESSION_CLOSED)
             for (tunnel in store.tunnels.list(serverId).filter { it.auto }) start(t, tunnel)
         } catch (e: Exception) {
             synchronized(this) { sessions.remove(t.info.id) }
             t.close()
-            changed(t.info.copy(state = TerminalInfo.CLOSED, error = e.message))
+            changed(t.info.copy(state = TerminalInfo.GONE, error = e.message)) // jamais ouverte : rien à montrer
             throw e
         } finally {
             sec.wipe()
@@ -130,11 +148,11 @@ object TerminalSessions {
     /** Sortie récente de [id] (vide si inconnue). */
     fun backlog(id: String): ByteArray = synchronized(this) { sessions[id] }?.pump?.backlog() ?: ByteArray(0)
 
-    /** Ferme et retire [id] ; `closed` est annoncé au [listener]. */
+    /** Ferme et retire [id] ; `gone` est annoncé au [listener]. */
     fun close(id: String) {
         val t = synchronized(this) { sessions.remove(id) } ?: return
         t.close()
-        changed(t.info)
+        changed(t.info.copy(state = TerminalInfo.GONE))
     }
 
     fun closeAll() {

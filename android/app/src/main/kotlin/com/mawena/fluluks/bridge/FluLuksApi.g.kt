@@ -254,7 +254,8 @@ data class SshPromptMsg (
 }
 
 /**
- * Session de terminal (phase 13) : [state] ∈ `connecting`, `open`, `closed` ; [error] : pourquoi elle s'est fermée
+ * Session de terminal (phase 13) : [state] ∈ `connecting`, `open`, `closed`, `gone` (retirée : fermée à la demande
+ * ou jamais ouverte) ; [error] : pourquoi elle s'est fermée
  * (null : fermeture normale ou demandée) ; [cols] × [rows] : taille du PTY.
  *
  * Generated class from Pigeon that represents data sent in messages.

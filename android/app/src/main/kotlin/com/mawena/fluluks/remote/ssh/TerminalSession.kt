@@ -30,6 +30,9 @@ data class TerminalInfo(
         const val CONNECTING = "connecting"
         const val OPEN = "open"
         const val CLOSED = "closed"
+
+        /** Retirée : fermée à la demande, ou jamais ouverte (échec de connexion). Dart l'oublie. */
+        const val GONE = "gone"
     }
 }
 
@@ -44,11 +47,20 @@ internal class TerminalSession(
     private val server: ServerConfig,
     output: (String, ByteArray) -> Unit,
     private val changed: (TerminalInfo) -> Unit,
+    acks: () -> Boolean = { false },
 ) {
     @Volatile var info: TerminalInfo = initial
         private set
 
-    val pump = OutputPump({ output(initial.id, it) })
+    /** Garde l'état et la fermeture : une session fermée ne redevient jamais ouverte. */
+    private val stateLock = Any()
+
+    private fun update(f: (TerminalInfo) -> TerminalInfo) = synchronized(stateLock) {
+        val next = f(info)
+        info = if (info.state == TerminalInfo.CLOSED) next.copy(state = TerminalInfo.CLOSED, error = info.error) else next
+    }
+
+    val pump = OutputPump({ output(initial.id, it) }, awaitsAck = acks)
     private val writer: ExecutorService = Executors.newSingleThreadExecutor { r ->
         Thread(r, "terminal-écriture").apply { isDaemon = true }
     }
@@ -76,13 +88,13 @@ internal class TerminalSession(
             )
         }
         forwards[t.id] = t.localPort
-        info = info.copy(tunnels = forwards.size)
+        update { it.copy(tunnels = forwards.size) }
     }
 
     fun stopTunnel(id: String) {
         val port = forwards.remove(id) ?: return
         runCatching { session?.delPortForwardingL(LOOPBACK, port) }
-        info = info.copy(tunnels = forwards.size)
+        update { it.copy(tunnels = forwards.size) }
     }
 
     /** Connecte (vérification d'empreinte et authentification par [SshConnector]) puis ouvre le shell. */
@@ -93,6 +105,14 @@ internal class TerminalSession(
         } finally {
             connector.close() // clé déchiffrée inutile une fois authentifié
         }
+        // fermée pendant la connexion (invite, serveur lent) : rien ne reste ouvert
+        synchronized(stateLock) {
+            if (closing) {
+                s.disconnect()
+                throw RemoteIOException(SESSION_CLOSED)
+            }
+            session = s
+        }
         try {
             val ch = s.openChannel("shell") as ChannelShell
             ch.setPtyType(PTY_TYPE, info.cols, info.rows, 0, 0)
@@ -100,15 +120,20 @@ internal class TerminalSession(
             val input = ch.inputStream
             val o = ch.outputStream
             ch.connect(SshConnector.CONNECT_TIMEOUT_MS)
-            session = s
-            channel = ch
-            out = o
-            info = info.copy(state = TerminalInfo.OPEN)
+            synchronized(stateLock) {
+                if (closing) {
+                    ch.disconnect()
+                    throw RemoteIOException(SESSION_CLOSED)
+                }
+                channel = ch
+                out = o
+                info = info.copy(state = TerminalInfo.OPEN)
+            }
             Thread({ read(input) }, "terminal-lecture").apply { isDaemon = true }.start()
             startDir?.takeIf { it.isNotEmpty() }?.let { write(cd(it).toByteArray(Charsets.UTF_8)) }
         } catch (e: Exception) {
             s.disconnect()
-            throw if (e is JSchException) SshErrors.failure(e) else e
+            throw if (closing) RemoteIOException(SESSION_CLOSED) else if (e is JSchException) SshErrors.failure(e) else e
         }
     }
 
@@ -131,15 +156,17 @@ internal class TerminalSession(
     fun resize(cols: Int, rows: Int) {
         val c = cols.coerceIn(1, MAX_SIZE)
         val r = rows.coerceIn(1, MAX_SIZE)
-        info = info.copy(cols = c, rows = r)
+        update { it.copy(cols = c, rows = r) }
         if (info.state != TerminalInfo.OPEN) return
         runCatching { writer.execute { runCatching { channel?.setPtySize(c, r, 0, 0) } } }
     }
 
     /** Fermeture demandée : tout est libéré, la sortie récente effacée. */
     fun close() {
-        closing = true
-        info = info.copy(state = TerminalInfo.CLOSED, error = null)
+        synchronized(stateLock) {
+            closing = true
+            info = info.copy(state = TerminalInfo.CLOSED, error = null)
+        }
         release()
         pump.close()
         pump.clear()
@@ -170,7 +197,7 @@ internal class TerminalSession(
         val ch = channel
         val normal = (ch != null && ch.exitStatus >= 0) || stillConnected()
         release()
-        info = info.copy(state = TerminalInfo.CLOSED, error = if (normal) null else LOST)
+        synchronized(stateLock) { info = info.copy(state = TerminalInfo.CLOSED, error = if (normal) null else LOST) }
         changed(info)
     }
 

@@ -7,6 +7,8 @@ import com.mawena.fluluks.remote.Remotes
 import com.mawena.fluluks.remote.SecretBox
 import com.mawena.fluluks.remote.ServerConfig
 import com.mawena.fluluks.remote.ssh.OutputPump
+import com.mawena.fluluks.remote.ssh.SshPromptBridge
+import com.mawena.fluluks.remote.ssh.SshPrompts
 import com.mawena.fluluks.remote.ssh.TerminalInfo
 import com.mawena.fluluks.remote.ssh.TerminalSessions
 import java.io.ByteArrayOutputStream
@@ -18,6 +20,8 @@ import java.security.MessageDigest
 import java.security.PublicKey
 import java.util.Base64
 import java.util.concurrent.ConcurrentHashMap
+import java.util.concurrent.CountDownLatch
+import java.util.concurrent.TimeUnit
 import java.util.concurrent.CopyOnWriteArrayList
 import kotlin.concurrent.thread
 import org.apache.sshd.common.config.keys.PublicKeyEntry
@@ -25,7 +29,12 @@ import org.apache.sshd.common.keyprovider.KeyPairProvider
 import org.apache.sshd.server.Environment
 import org.apache.sshd.server.ExitCallback
 import org.apache.sshd.server.SshServer
+import org.apache.sshd.server.auth.keyboard.InteractiveChallenge
+import org.apache.sshd.server.auth.keyboard.KeyboardInteractiveAuthenticator
+import org.apache.sshd.server.auth.keyboard.PromptEntry
+import org.apache.sshd.server.auth.keyboard.UserAuthKeyboardInteractiveFactory
 import org.apache.sshd.server.auth.password.PasswordAuthenticator
+import org.apache.sshd.server.session.ServerSession
 import org.apache.sshd.server.channel.ChannelSession
 import org.apache.sshd.server.command.Command
 import org.apache.sshd.server.shell.ShellFactory
@@ -79,6 +88,7 @@ class TerminalSessionsTest {
     }
 
     @After fun teardown() {
+        SshPromptBridge.prompts = null
         TerminalSessions.resetForTests()
         Remotes.resetForTests(null, null)
         sshd?.stop(true)
@@ -153,12 +163,22 @@ class TerminalSessionsTest {
     }
 
     /** Démarre le serveur et enregistre « Maison » (clé du serveur acceptée, mot de passe non mémorisé). */
-    private fun serverId(hostKey: String? = fingerprint(hostKeys.public)): String {
+    private fun serverId(hostKey: String? = fingerprint(hostKeys.public), ki: Boolean = false): String {
         val s = SshServer.setUpDefaultServer().apply {
             host = "127.0.0.1"
             port = 0
             keyPairProvider = KeyPairProvider.wrap(hostKeys)
             passwordAuthenticator = PasswordAuthenticator { u, p, _ -> u == USER && p == PASSWORD }
+            if (ki) {
+                // code de vérification seulement : la connexion attend la réponse de l'utilisateur
+                userAuthFactories = listOf(UserAuthKeyboardInteractiveFactory.INSTANCE)
+                keyboardInteractiveAuthenticator = object : KeyboardInteractiveAuthenticator {
+                    override fun generateChallenge(ss: ServerSession, u: String, l: String?, sub: String?) =
+                        InteractiveChallenge().apply { addPrompt(PromptEntry("Code : ", true)) }
+
+                    override fun authenticate(ss: ServerSession, u: String, r: List<String>) = r == listOf(CODE)
+                }
+            }
             shellFactory = ShellFactory { EchoShell() }
             start()
         }.also { sshd = it }
@@ -290,6 +310,60 @@ class TerminalSessionsTest {
         val id = serverId(hostKey = fingerprint(other.public))
         assertThrows(HostKeyChanged::class.java) { open(id) }
         assertTrue(TerminalSessions.list().isEmpty())
+        // jamais ouverte : annoncée « connecting » puis retirée (« gone »), sans session « fermée » à montrer
+        assertEquals(listOf("connecting", "gone"), changes.map { it.state })
+    }
+
+    @Test fun closeWhileConnectingLeavesNothing() {
+        val id = serverId(ki = true)
+        val asked = CountDownLatch(1)
+        val answer = CountDownLatch(1)
+        SshPromptBridge.prompts = SshPrompts { _, _, _, _ ->
+            asked.countDown()
+            answer.await(10, TimeUnit.SECONDS)
+            listOf(CODE.toByteArray())
+        }
+        var result: Result<TerminalInfo>? = null
+        val opening = thread { result = runCatching { TerminalSessions.open(id, null, null) } }
+        assertTrue(asked.await(10, TimeUnit.SECONDS))
+        val t = TerminalSessions.list().single()
+        assertEquals("connecting", t.state)
+        TerminalSessions.closeAll() // « Tout fermer » pendant l'invite
+        answer.countDown()
+        opening.join(15_000)
+        assertTrue(result!!.isFailure)
+        assertTrue(TerminalSessions.list().isEmpty())
+        assertFalse(changes.any { it.id == t.id && it.state == "open" })
+        waitFor("aucune session côté serveur") { sshd!!.activeSessions.isEmpty() }
+    }
+
+    @Test fun slowDartPausesOutput() {
+        TerminalSessions.listener = object : TerminalSessions.Listener {
+            override val acknowledges = true
+
+            override fun onOutput(id: String, data: ByteArray) {
+                batches.getOrPut(id) { CopyOnWriteArrayList() }.add(System.nanoTime() to data.size)
+                val o = outputs.getOrPut(id) { ByteArrayOutputStream() }
+                synchronized(o) { o.write(data) }
+            }
+
+            override fun onChanged(info: TerminalInfo) {
+                changes += info
+            }
+        }
+        val t = open(serverId())
+        send(t.id, "flood 5000000\n")
+        Thread.sleep(600)
+        // Dart n'a rien acquitté : au plus MAX_INFLIGHT lots en route
+        val before = batches.getValue(t.id).size
+        Thread.sleep(300)
+        assertEquals(before, batches.getValue(t.id).size)
+        assertTrue(before <= OutputPump.MAX_INFLIGHT + 1)
+        // acquittés au fil de l'eau : le flot reprend jusqu'au bout
+        waitFor("FIN", 30_000) {
+            TerminalSessions.delivered(t.id)
+            text(t.id).endsWith("FIN\n")
+        }
     }
 
     @Test fun stateFlowAndServiceStarter() {
@@ -310,7 +384,7 @@ class TerminalSessionsTest {
         waitFor("sessions côté serveur") { sshd!!.activeSessions.size == 2 }
         TerminalSessions.closeAll()
         assertTrue(TerminalSessions.list().isEmpty())
-        for (t in listOf(a, b)) assertTrue(changes.any { it.id == t.id && it.state == "closed" })
+        for (t in listOf(a, b)) assertTrue(changes.any { it.id == t.id && it.state == "gone" }) // retirées
         waitFor("sessions fermées côté serveur") { sshd!!.activeSessions.isEmpty() }
         assertEquals(0, TerminalSessions.backlog(a.id).size)
     }
@@ -318,5 +392,6 @@ class TerminalSessionsTest {
     private companion object {
         const val USER = "portail"
         const val PASSWORD = "mot-de-passe-test"
+        const val CODE = "123456"
     }
 }
