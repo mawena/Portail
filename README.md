@@ -12,17 +12,18 @@ photo dans les applications habituelles.
 Elle est née d'un besoin simple : utiliser sur un téléphone non rooté (un Pixel 4 XL) le disque
 LUKS2/ext4 qu'on utilise sous Ubuntu. Aucune application existante ne le permettait.
 
-> **État actuel : version 1.5.0 ; gestionnaire de fichiers (interface claire ou sombre et accessible, recherche dans
-> tous les stockages, lecteurs intégrés de photos, musique, vidéos et textes, dossiers distants FTP et SFTP, archives
-> ZIP, 7z, RAR et TAR, corbeille, analyse de l'espace, renommage par lot), lecture et écriture sur ext4, FAT, exFAT
-> et NTFS, formatage des disques USB, en clair ou chiffrés.** L'écriture a été vérifiée sur PC (batteries de
+> **État actuel : version 1.6.0 ; gestionnaire de fichiers (interface claire ou sombre et accessible, recherche dans
+> tous les stockages, lecteurs intégrés de photos, musique, vidéos et textes, dossiers distants FTP et SFTP, terminal
+> SSH avec clés et tunnels, archives ZIP, 7z, RAR et TAR, corbeille, analyse de l'espace, renommage par lot), lecture
+> et écriture sur ext4, FAT, exFAT et NTFS, formatage des disques USB, en clair ou chiffrés.** L'écriture a été
+> vérifiée sur PC (batteries de
 > non-corruption jugées par des outils indépendants et le noyau Linux, coupures simulées), sur le téléphone avec des
 > images, puis essayée sur une vraie clé et un vrai disque pour chaque système de fichiers (ext4 compris : `e2fsck`
 > propre ensuite sous Ubuntu).
 > Une sauvegarde reste recommandée avant d'écrire sur un disque qui compte. Voir les
 > [limites](#limites-actuelles).
 
-## Ce que fait la version 1.5.0
+## Ce que fait la version 1.6.0
 
 ### Connexions SSH (nouveau en 1.6.0)
 
@@ -537,7 +538,7 @@ Le dépôt suit git flow :
 | 10 | Visionneuse d'images, lecteurs de musique et de vidéo, éditeur de texte, dossiers distants FTP puis SFTP | **v1.3.0** |
 | 11 | Interface complète et professionnelle : thèmes clair et sombre, accessibilité, grands écrans, liste ou grille partout, recherche dans tous les stockages, aide, à propos et licences | **v1.4.0** |
 | 12 | Lecteur vidéo : portrait par défaut, rotation et verrou, pistes audio et sous-titres, gestes comme VLC | **v1.5.0** |
-| 13 | Connexions SSH : terminal, sessions en arrière-plan, clés, commandes enregistrées, tunnels | v1.6.0 |
+| 13 | Connexions SSH : terminal, sessions en arrière-plan, clés, commandes enregistrées, tunnels | **v1.6.0** |
 | 14 | Chiffrement de fichiers et de dossiers, coffres de fichiers, chacun avec son mot de passe | v1.7.0 |
 | 15 | Intégration IA : serveurs auto-hébergés compatibles OpenAI, chat en flux, automatisations | v1.8.0 |
 | 16 | Vérification et réparation des disques : e2fsck, ntfsfix, fsck.fat, fsck.exfat, en-têtes LUKS | v1.9.0 |
