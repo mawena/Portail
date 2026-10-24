@@ -50,7 +50,10 @@ class SshSessionsCard extends StatelessWidget {
                 color: e.isClosed ? scheme.onSurfaceVariant : scheme.primary,
               ),
               title: Text(e.title, overflow: TextOverflow.ellipsis),
-              subtitle: Text(_status(e)),
+              subtitle: Text(
+                e.detail == null ? _status(e) : '${_status(e)} · ${e.detail}',
+                overflow: TextOverflow.ellipsis,
+              ),
               onTap: () => showTerminal(context, state, e.info.id),
               trailing: IconButton(
                 tooltip: Fr.closeSession,

@@ -26,7 +26,11 @@ class TerminalEntry {
   late final ByteConversionSink _decoder =
       const Utf8Decoder(allowMalformed: true).startChunkedConversion(_TerminalSink(terminal));
 
-  String get title => (oscTitle?.trim().isNotEmpty ?? false) ? oscTitle! : info.title;
+  /// Nom donné par Portail (« mawena cloud (2) ») : deux sessions d'un même serveur restent distinctes.
+  String get title => info.title;
+
+  /// Titre posé par le shell (utilisateur, machine, dossier), montré sous le nom ; null s'il n'y en a pas.
+  String? get detail => (oscTitle?.trim().isNotEmpty ?? false) ? oscTitle!.trim() : null;
   bool get isOpen => info.state == 'open';
   bool get isClosed => info.state == 'closed';
 }

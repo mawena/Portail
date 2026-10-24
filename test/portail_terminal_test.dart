@@ -13,7 +13,8 @@ void main() {
     }
   }
 
-  List<String> texts(Terminal t) => [for (var i = 0; i < t.buffer.lines.length; i++) t.buffer.lines[i].getText().trim()];
+  List<String> texts(Terminal t) =>
+      [for (var i = 0; i < t.buffer.lines.length; i++) t.buffer.lines[i].getText().trim()];
 
   void expectIndices(Terminal t) {
     for (var i = 0; i < t.buffer.lines.length; i++) {

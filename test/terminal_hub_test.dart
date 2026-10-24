@@ -60,8 +60,12 @@ void main() {
     final hub = TerminalHub(FakeHostApi());
     final e = await hub.open('s1');
     expect(e.title, 's1');
+    expect(e.detail, isNull);
     hub.onOutput(e.info.id, bytes('\x1b]0;charles@cloud: ~\x07'));
-    expect(hub.sessions.single.title, 'charles@cloud: ~');
+    // le nom donné par Portail reste le titre (deux sessions d'un serveur restent distinctes) ; celui du shell,
+    // en dessous
+    expect(hub.sessions.single.title, 's1');
+    expect(hub.sessions.single.detail, 'charles@cloud: ~');
   });
 
   test('reopenRestoresBacklog', () async {

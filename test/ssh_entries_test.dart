@@ -216,4 +216,24 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.byType(TerminalScreen), findsOneWidget);
   });
+
+  testWidgets('sameShellTitleSessionsStayDistinct', (tester) async {
+    final api = api0();
+    final state = await pump(tester, api);
+    await state.terminals.open('s1');
+    await state.terminals.open('s1');
+    for (final e in state.terminals.sessions) {
+      state.terminals.onOutput(e.info.id, Uint8List.fromList(utf8.encode('\x1b]0;charles@maison: ~\x07')));
+    }
+    await tester.pumpAndSettle();
+    await tester.scrollUntilVisible(find.byType(SshSessionsCard), 200);
+    final card = find.byType(SshSessionsCard);
+    expect(find.descendant(of: card, matching: find.text('Maison')), findsOneWidget);
+    expect(find.descendant(of: card, matching: find.text('Maison (2)')), findsOneWidget);
+    expect(find.descendant(of: card, matching: find.text('${Fr.sessionOpen} · charles@maison: ~')), findsNWidgets(2));
+    await tester.tap(find.descendant(of: card, matching: find.text('Maison (2)')));
+    await tester.pumpAndSettle();
+    expect(appTitle(tester), 'Maison (2)');
+    expect(find.text('charles@maison: ~'), findsOneWidget); // sous le titre
+  });
 }

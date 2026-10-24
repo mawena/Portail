@@ -261,7 +261,11 @@ class _TerminalScreenState extends State<TerminalScreen> {
     e.inputFilter = _mods.apply; // Ctrl et Alt de la barre s'appliquent aussi au clavier du téléphone
     return Scaffold(
       appBar: AppBar(
-        title: Text(e.title, overflow: TextOverflow.ellipsis),
+        title: Column(crossAxisAlignment: CrossAxisAlignment.start, mainAxisSize: MainAxisSize.min, children: [
+          Text(e.title, overflow: TextOverflow.ellipsis),
+          if (e.detail != null)
+            Text(e.detail!, overflow: TextOverflow.ellipsis, style: Theme.of(context).textTheme.bodySmall),
+        ]),
         actions: [
           if (_hub.sessions.length > 1)
             PopupMenuButton<String>(
@@ -273,7 +277,14 @@ class _TerminalScreenState extends State<TerminalScreen> {
               },
               itemBuilder: (_) => [
                 for (final s in _hub.sessions)
-                  CheckedPopupMenuItem(value: s.info.id, checked: s.info.id == _id, child: Text(s.title)),
+                  CheckedPopupMenuItem(
+                    value: s.info.id,
+                    checked: s.info.id == _id,
+                    child: Text(
+                      s.detail == null ? s.title : '${s.title} · ${s.detail}',
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
               ],
             ),
           if (_controller.selection != null) ...[
