@@ -13,11 +13,27 @@ extension ViewPrefsCopy on ViewPrefsMsg {
       );
 }
 
-/// Copie modifiée des préférences d'interface (thème, retours haptiques, bienvenue vue).
+/// Copie modifiée des préférences d'interface (thème, retours haptiques, bienvenue vue, terminal).
 extension UiPrefsCopy on UiPrefsMsg {
-  UiPrefsMsg copyWith({String? theme, bool? haptics, bool? welcomeSeen}) => UiPrefsMsg(
+  UiPrefsMsg copyWith({
+    String? theme,
+    bool? haptics,
+    bool? welcomeSeen,
+    int? terminalFontSize,
+    bool? terminalSecure,
+  }) =>
+      UiPrefsMsg(
         theme: theme ?? this.theme,
         haptics: haptics ?? this.haptics,
         welcomeSeen: welcomeSeen ?? this.welcomeSeen,
+        terminalFontSize: terminalFontSize ?? this.terminalFontSize,
+        terminalSecure: terminalSecure ?? this.terminalSecure,
       );
+
+  /// Taille du texte du terminal, bornée (13 par défaut).
+  int get terminalFont => (terminalFontSize ?? terminalFontDefault).clamp(terminalFontMin, terminalFontMax);
 }
+
+const terminalFontDefault = 13;
+const terminalFontMin = 8;
+const terminalFontMax = 32;

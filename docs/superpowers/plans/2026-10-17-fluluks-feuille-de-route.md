@@ -363,22 +363,22 @@ dans le même commit que le travail.
 
 ### Phase 13 — Connexions SSH : terminal, clés, tunnels ([plan](2026-10-23-phase13-ssh.md))
 - [x] Plan de la phase 13 écrit *(demande du 2026-10-23 ; spec § 21)*
-- [ ] T1 — Connexions SSH fiables et expliquées : messages précis, Tester la connexion, keyboard-interactive, `mawena.cloud:2244`
-- [ ] T2 — Sessions de terminal (Kotlin) : PTY xterm, sortie par lots, 8 sessions
-- [ ] T3 — Sessions gardées en arrière-plan : service et notification « Tout fermer »
-- [ ] T4 — Écran Terminal (xterm) : thème, copier-coller, pincement, Reconnecter
-- [ ] T5 — Barre de touches : Échap, Tab, Ctrl, Alt, flèches
-- [ ] T6 — Sessions multiples, bouton Terminal, Ouvrir un terminal ici
-- [ ] T7 — Trousseau de clés SSH : générer, importer, clé publique
-- [ ] T8 — Installer la clé publique sur le serveur
-- [ ] T9 — Commandes enregistrées
-- [ ] T10 — Tunnels (redirection de port locale)
-- [ ] T11 — Documentation
-- [ ] T12 — Essais instrumentés sur le Pixel
-- [ ] *(utilisateur)* T13 — Essais sur le Pixel
-- [ ] Relecture finale de toute la branche
-- [ ] Fusion `feature/ssh` → `develop`
-- [ ] Version `v1.6.0`
+- [x] T1 — Connexions SSH fiables et expliquées : messages précis, Tester la connexion, keyboard-interactive, `mawena.cloud:2244` *(connexion à mawena.cloud rétablie avant la phase)*
+- [x] T2 — Sessions de terminal (Kotlin) : PTY xterm, sortie par lots, 8 sessions *(MINA : 12 tests, dont 5 Mo de sortie en lots bornés)*
+- [x] T3 — Sessions gardées en arrière-plan : service et notification « Tout fermer »
+- [x] T4 — Écran Terminal (xterm) : thème, copier-coller, pincement, Reconnecter *(xterm 4.0.0 vérifié avec Flutter 3.41)*
+- [x] T5 — Barre de touches : Échap, Tab, Ctrl, Alt, flèches
+- [x] T6 — Sessions multiples, bouton Terminal, Ouvrir un terminal ici
+- [x] T7 — Trousseau de clés SSH : générer, importer, clé publique *(clés de la phase 10 reprises dans le trousseau)*
+- [x] T8 — Installer la clé publique sur le serveur
+- [x] T9 — Commandes enregistrées
+- [x] T10 — Tunnels (redirection de port locale)
+- [x] T11 — Documentation
+- [x] T12 — Essais instrumentés sur le Pixel *(5/5 : mot de passe, keyboard-interactive, clé Ed25519 générée et installée, tunnel, service 2 min)*
+- [x] *(utilisateur)* T13 — Essais sur le Pixel *(2026-10-24 : 35 points sur 38 faits par adb, essai jugé bon par l'utilisateur ; 5 défauts trouvés et corrigés : premier terminal depuis l'accueil, copie et affichage après `clear` (xterm), titres des sessions, message de port de tunnel ; pincement, couleurs à l'œil et journal d'un échec laissés à l'utilisateur ; [fiche](../research/2026-10-24-essais-phase13/essais.md))*
+- [x] Relecture finale de toute la branche *(3 constats importants corrigés, 7 mineurs notés)*
+- [x] Fusion `feature/ssh` → `develop`
+- [x] Version `v1.6.0`
 
 ### Phase 14 — Chiffrement de fichiers, de dossiers et coffres ([plan](2026-10-23-phase14-chiffrement.md))
 - [x] Plan de la phase 14 écrit *(demande du 2026-10-23 ; spec § 22)*

@@ -11,6 +11,7 @@ import '../widgets/disk_card.dart';
 import '../widgets/server_tile.dart';
 import '../widgets/shortcut_grid.dart';
 import '../widgets/source_tile.dart';
+import '../widgets/ssh_sessions_card.dart';
 import 'explorer_screen.dart';
 import 'filter_screen.dart';
 import 'global_search_screen.dart';
@@ -58,11 +59,15 @@ class HomeScreen extends StatelessWidget {
       ),
       bottomNavigationBar: BottomDock(state: state), // copie en cours ou interrompue, même hors de l'explorateur
       body: ListenableBuilder(
-        listenable: state,
+        listenable: Listenable.merge([state, state.terminals]),
         builder: (context, _) {
           final top = _top(context);
           final phone = [..._shortcuts(context), ..._storage(context)];
-          final away = [..._disks(context), ..._remote(context)];
+          final away = [
+            ..._disks(context),
+            if (state.terminals.sessions.isNotEmpty) SshSessionsCard(state: state),
+            ..._remote(context),
+          ];
           final favorites = _favorites(context);
           if (windowClassOf(context) == WindowClass.expanded) {
             return ListView(padding: const EdgeInsets.all(Space.l), children: [

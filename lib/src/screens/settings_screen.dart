@@ -7,6 +7,7 @@ import '../ui/tokens.dart';
 import '../ui/widgets.dart';
 import 'about_screen.dart';
 import 'help_screen.dart';
+import 'ssh_keys_screen.dart';
 
 /// Délais proposés (minutes ; 0 = jamais), les mêmes que AutoLock.CHOICES côté Kotlin.
 const autoLockChoices = [0, 5, 15, 30, 60];
@@ -88,6 +89,13 @@ class SettingsScreen extends StatelessWidget {
                   ? const Text(Fr.allFilesGranted)
                   : FilledButton(onPressed: state.requestAllFilesAccess, child: const Text(Fr.allFilesButton)),
             ),
+            ListTile(
+              title: const Text(Fr.sshKeys),
+              subtitle: const Text(Fr.sshKeysHelp),
+              trailing: const Icon(Icons.chevron_right_rounded),
+              onTap: () => Navigator.of(context)
+                  .push(MaterialPageRoute<void>(builder: (_) => SshKeysScreen(state: state))),
+            ),
             const SectionHeader(Fr.sectionDisks),
             SwitchListTile(
               title: const Text(Fr.readOnlySwitch),
@@ -115,6 +123,12 @@ class SettingsScreen extends StatelessWidget {
               subtitle: const Text(Fr.hapticsHelp),
               value: state.uiPrefs.haptics,
               onChanged: (on) => state.setUiPrefs(state.uiPrefs.copyWith(haptics: on)),
+            ),
+            SwitchListTile(
+              title: const Text(Fr.terminalSecure),
+              subtitle: const Text(Fr.terminalSecureHelp),
+              value: state.uiPrefs.terminalSecure ?? false,
+              onChanged: (on) => state.setUiPrefs(state.uiPrefs.copyWith(terminalSecure: on)),
             ),
             const SectionHeader(Fr.title),
             ListTile(

@@ -10,6 +10,45 @@ import 'package:pigeon/pigeon.dart';
   kotlinOut: 'android/app/src/main/kotlin/com/mawena/fluluks/bridge/FluLuksApi.g.kt',
   kotlinOptions: KotlinOptions(package: 'com.mawena.fluluks.bridge'),
 ))
+/// Invite keyboard-interactive (phase 13) : [name] (serveur ou titre de l'invite), [instruction], une saisie par
+/// élément de [prompts] ; [echo] faux : saisie masquée.
+class SshPromptMsg {
+  SshPromptMsg({
+    required this.requestId,
+    required this.name,
+    required this.instruction,
+    required this.prompts,
+    required this.echo,
+  });
+  String requestId;
+  String name;
+  String instruction;
+  List<String> prompts;
+  List<bool> echo;
+}
+
+/// Session de terminal (phase 13) : [state] ∈ `connecting`, `open`, `closed`, `gone` (retirée : fermée à la demande
+/// ou jamais ouverte) ; [error] : pourquoi elle s'est fermée
+/// (null : fermeture normale ou demandée) ; [cols] × [rows] : taille du PTY.
+class TerminalSessionMsg {
+  TerminalSessionMsg({
+    required this.id,
+    required this.serverId,
+    required this.title,
+    required this.state,
+    this.error,
+    required this.cols,
+    required this.rows,
+  });
+  String id;
+  String serverId;
+  String title;
+  String state;
+  String? error;
+  int cols;
+  int rows;
+}
+
 class PartitionMsg {
   PartitionMsg({
     required this.index,
@@ -344,6 +383,7 @@ class RemoteServerMsg {
     this.keyInfo,
     required this.hasPassword,
     required this.connected,
+    this.keyId,
   });
   String id;
   String protocol;
@@ -357,6 +397,62 @@ class RemoteServerMsg {
   String? keyInfo;
   bool hasPassword;
   bool connected;
+
+  /// Phase 13 : clé du trousseau utilisée pour ce serveur.
+  String? keyId;
+}
+
+/// Commande enregistrée du terminal (phase 13) : [serverId] null pour une commande commune ; [runNow] : suivie
+/// d'Entrée.
+class SnippetMsg {
+  SnippetMsg({required this.id, this.serverId, required this.name, required this.command, required this.runNow});
+  String id;
+  String? serverId;
+  String name;
+  String command;
+  bool runNow;
+}
+
+/// Tunnel d'un serveur (phase 13) : `127.0.0.1:[localPort]` sur le téléphone mène à [remoteHost]:[remotePort] vu du
+/// serveur ; [auto] : ouvert avec chaque terminal ; [active] : ouvert sur un terminal ; [error] : dernier échec.
+class TunnelMsg {
+  TunnelMsg({
+    required this.id,
+    required this.serverId,
+    required this.localPort,
+    required this.remoteHost,
+    required this.remotePort,
+    required this.auto,
+    required this.active,
+    this.error,
+  });
+  String id;
+  String serverId;
+  int localPort;
+  String remoteHost;
+  int remotePort;
+  bool auto;
+  bool active;
+  String? error;
+}
+
+/// Clé du trousseau SSH (phase 13) : [type] « ssh-ed25519 »… ; [fingerprint] « SHA256:… » ; [usedBy] : noms des
+/// serveurs qui l'utilisent.
+class SshKeyMsg {
+  SshKeyMsg({
+    required this.id,
+    required this.name,
+    required this.type,
+    required this.fingerprint,
+    required this.encrypted,
+    required this.usedBy,
+  });
+  String id;
+  String name;
+  String type;
+  String fingerprint;
+  bool encrypted;
+  List<String> usedBy;
 }
 
 /// Préférences d'affichage ; `sort` : `name`, `size` ou `date` ; `builtInViewers` : ouvrir images, musique, vidéos et
@@ -378,10 +474,20 @@ class ViewPrefsMsg {
 
 /// Préférences d'interface (phase 11) ; `theme` : `system`, `light` ou `dark`.
 class UiPrefsMsg {
-  UiPrefsMsg({required this.theme, required this.haptics, required this.welcomeSeen});
+  UiPrefsMsg({
+    required this.theme,
+    required this.haptics,
+    required this.welcomeSeen,
+    this.terminalFontSize,
+    this.terminalSecure,
+  });
   String theme;
   bool haptics;
   bool welcomeSeen;
+
+  /// Phase 13 : taille du texte du terminal (8 à 32 ; null : 13) ; terminal masqué dans les captures (null : non).
+  int? terminalFontSize;
+  bool? terminalSecure;
 }
 
 /// Version de Portail (`versionName`, `versionCode` du paquet) et appareil (`Build.VERSION.RELEASE`, `Build.MODEL`),
@@ -492,7 +598,8 @@ abstract class FluLuksHostApi {
   /// sauf `force`.
   /// Dossiers distants (phase 10). `saveServer` : identifiant vide pour un nouveau serveur ; mots de passe null :
   /// ceux mémorisés sont gardés. `connectServer` échoue avec le code `auth` (mot de passe requis ou refusé ; détails :
-  /// vrai s'il manquait), `hostkey-unknown` (détails : l'empreinte à montrer) ou `hostkey-changed`.
+  /// vrai s'il manquait), `hostkey-unknown` (détails : l'empreinte à montrer), `hostkey-changed` ou `ssh` (phase 13 :
+  /// message précis en français ; détails : la cause technique ; journal : `lastAttemptLog`).
   List<RemoteServerMsg> listServers();
   RemoteServerMsg saveServer(RemoteServerMsg server, Uint8List? password, Uint8List? keyPassphrase);
   void deleteServer(String serverId);
@@ -501,6 +608,61 @@ abstract class FluLuksHostApi {
   void disconnectServer(String serverId);
   void trustHostKey(String serverId, String fingerprint);
   void forgetHostKey(String serverId);
+
+  /// Phase 13 : « Tester la connexion » : connecte puis déconnecte aussitôt, sans ouvrir la source ; mêmes erreurs que
+  /// `connectServer` ; rend le journal de la tentative. `lastAttemptLog` : journal de la dernière tentative du serveur
+  /// (SFTP), sans aucun secret. `answerSshPrompt` : réponses à une invite `onSshPrompt` (null : refusée), mises à zéro.
+  @async
+  List<String> testServer(String serverId, Uint8List? password);
+  List<String> lastAttemptLog(String serverId);
+  void answerSshPrompt(String requestId, List<Uint8List>? answers);
+
+  /// Phase 13 : terminaux SSH sur un serveur SFTP enregistré (8 au plus). `openTerminal` : mêmes erreurs que
+  /// `connectServer`, puis `cd` vers `startDir` s'il est donné ; la sortie arrive par `onTerminalOutput` (octets bruts,
+  /// par lots), les changements d'état par `onTerminalChanged`. `terminalWrite` : octets tapés, mis à zéro après envoi.
+  /// `terminalBacklog` : sortie récente (256 Kio au plus) pour rouvrir l'écran. `closeTerminal` : ferme et oublie.
+  @async
+  TerminalSessionMsg openTerminal(String serverId, Uint8List? password, String? startDir);
+  void terminalWrite(String sessionId, Uint8List data);
+  void terminalResize(String sessionId, int cols, int rows);
+  Uint8List terminalBacklog(String sessionId);
+  void closeTerminal(String sessionId);
+  List<TerminalSessionMsg> terminalSessions();
+
+  /// Phase 13 : trousseau de clés SSH. `generateSshKey` : `type` `ed25519` ou `rsa` (4096 bits), phrase facultative
+  /// (mise à zéro). `importSshKey` : fichier choisi dans le sélecteur d'Android (null : rien de choisi).
+  /// `deleteSshKey` : refusé tant qu'un serveur l'utilise. `sshPublicKey` : ligne OpenSSH. `setServerKey` : clé
+  /// utilisée par un serveur (null : aucune). `shareText` : partage d'un texte (clé publique).
+  List<SshKeyMsg> sshKeys();
+  @async
+  SshKeyMsg generateSshKey(String name, String type, Uint8List? passphrase);
+  @async
+  SshKeyMsg? importSshKey(String name);
+  void renameSshKey(String keyId, String name);
+  void deleteSshKey(String keyId);
+  String sshPublicKey(String keyId);
+  void setServerKey(String serverId, String? keyId);
+  void shareText(String text);
+
+  /// Phase 13 : installe la clé publique `keyId` dans `~/.ssh/authorized_keys` de `serverId` (mot de passe pour ce
+  /// seul usage ; mêmes erreurs que `connectServer`) ; rend le message à montrer (« Clé installée sur … »).
+  @async
+  String installPublicKey(String serverId, String keyId, Uint8List? password);
+
+  /// Phase 13 : commandes enregistrées ; `snippets` : celles du serveur puis les communes.
+  List<SnippetMsg> snippets(String? serverId);
+  SnippetMsg saveSnippet(SnippetMsg snippet);
+  void deleteSnippet(String id);
+
+  /// Phase 13 : tunnels (redirection de port locale, 127.0.0.1 seulement). `startTunnel` : sur le terminal ouvert
+  /// `sessionId` du même serveur. `openUrl` : ouvre une adresse dans le navigateur.
+  List<TunnelMsg> tunnels(String serverId);
+  TunnelMsg saveTunnel(TunnelMsg tunnel);
+  void deleteTunnel(String id);
+  @async
+  TunnelMsg startTunnel(String sessionId, String tunnelId);
+  void stopTunnel(String sessionId, String tunnelId);
+  void openUrl(String url);
 
   /// Clé privée OpenSSH choisie dans le sélecteur d'Android, scellée pour `serverId` ; rend sa description
   /// (« ssh-ed25519 SHA256:… »), ou null si rien n'a été choisi.
@@ -544,6 +706,9 @@ abstract class FluLuksHostApi {
   // --- interface (phase 11)
   UiPrefsMsg getUiPrefs();
   void setUiPrefs(UiPrefsMsg prefs);
+
+  /// Phase 13 : FLAG_SECURE sur la fenêtre de Portail (terminal masqué dans les captures et les applications récentes).
+  void setSecureScreen(bool secure);
   AppInfoMsg getAppInfo();
 
   // --- formatage (phase 8)
@@ -570,4 +735,14 @@ abstract class FluLuksEventsApi {
 
   /// Musique en cours, ou null à l'arrêt ; `message` : raison d'un arrêt subi (« Lecture arrêtée : stockage fermé »).
   void onPlayerChanged(PlayerMsg? player, String? message);
+
+  /// Phase 13 : invite keyboard-interactive d'un serveur SSH (code de vérification…), à poser à l'utilisateur ; réponse
+  /// par `answerSshPrompt` dans les 120 s.
+  void onSshPrompt(SshPromptMsg prompt);
+
+  /// Phase 13 : sortie d'un terminal, par lots (au plus un toutes les 16 ms, 64 Kio au plus).
+  void onTerminalOutput(String sessionId, Uint8List data);
+
+  /// Phase 13 : état d'un terminal changé (ouvert, fermé par le serveur, connexion perdue, fermé à la demande).
+  void onTerminalChanged(TerminalSessionMsg session);
 }

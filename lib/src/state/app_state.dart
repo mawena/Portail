@@ -5,6 +5,7 @@ import 'package:flutter/services.dart';
 
 import '../bridge/fluluks_api.g.dart';
 import '../strings_fr.dart';
+import '../terminal/terminal_hub.dart';
 import 'host_api.dart';
 
 /// État de l'interface : copie de ce que le côté Kotlin publie. Ne contient jamais de phrase de passe.
@@ -13,6 +14,13 @@ class AppState extends ChangeNotifier implements FluLuksEventsApi {
   AppState(this.api);
 
   final HostApi api;
+
+  /// Terminaux SSH ouverts (phase 13), gardés hors des écrans.
+  late final terminals = TerminalHub(api, onBell: _bell);
+
+  void _bell() {
+    if (uiPrefs.haptics) HapticFeedback.vibrate();
+  }
 
   List<DiskMsg> _disks = const [];
   List<VolumeMsg> _volumes = const [];
@@ -178,6 +186,7 @@ class AppState extends ChangeNotifier implements FluLuksEventsApi {
       _favorites = await api.listFavorites();
       _servers = await api.listServers();
       notifyListeners();
+      await terminals.restore(); // sessions gardées par le service pendant que l'application était fermée
     } on PlatformException catch (e) {
       _fail(e);
     }
@@ -209,6 +218,12 @@ class AppState extends ChangeNotifier implements FluLuksEventsApi {
 
   Future<void> trustHostKey(String id, String fingerprint) => api.trustHostKey(id, fingerprint);
 
+  /// « Tester la connexion » (phase 13) : mêmes erreurs que [connectServer] ; rend le journal de la tentative.
+  Future<List<String>> testServer(String id, Uint8List? password) => api.testServer(id, password);
+
+  /// Journal de la dernière tentative de connexion de [id], pour « Détails ».
+  Future<List<String>> lastAttemptLog(String id) => api.lastAttemptLog(id);
+
   Future<void> forgetHostKey(String id) async {
     await api.forgetHostKey(id);
     await refreshSources();
@@ -223,6 +238,12 @@ class AppState extends ChangeNotifier implements FluLuksEventsApi {
 
   Future<void> forgetPrivateKey(String id) async {
     await api.forgetPrivateKey(id);
+    await refreshSources();
+  }
+
+  /// Phase 13 : le serveur [serverId] utilise la clé [keyId] du trousseau (null : aucune).
+  Future<void> setServerKey(String serverId, String? keyId) async {
+    await api.setServerKey(serverId, keyId);
     await refreshSources();
   }
 
@@ -296,6 +317,37 @@ class AppState extends ChangeNotifier implements FluLuksEventsApi {
 
   /// Musique en cours (phase 10), ou null.
   PlayerMsg? get player => _player;
+
+  /// Invites keyboard-interactive des serveurs SSH en attente (phase 13), posées une à une par le cadre de
+  /// l'application.
+  final _sshPrompts = <SshPromptMsg>[];
+
+  /// Prochaine invite à poser, rendue une seule fois.
+  SshPromptMsg? takeSshPrompt() => _sshPrompts.isEmpty ? null : _sshPrompts.removeAt(0);
+
+  @override
+  void onSshPrompt(SshPromptMsg prompt) {
+    _sshPrompts.add(prompt);
+    notifyListeners();
+  }
+
+  /// Sortie et états des terminaux SSH (phase 13), confiés au hub des terminaux.
+  @override
+  void onTerminalOutput(String sessionId, Uint8List data) => terminals.onOutput(sessionId, data);
+
+  @override
+  void onTerminalChanged(TerminalSessionMsg session) => terminals.onChanged(session);
+
+  /// Réponses à l'invite [requestId] (null : refusée) ; remises à zéro ici après l'envoi.
+  Future<void> answerSshPrompt(String requestId, List<Uint8List>? answers) async {
+    try {
+      await api.answerSshPrompt(requestId, answers);
+    } finally {
+      for (final a in answers ?? const <Uint8List>[]) {
+        a.fillRange(0, a.length, 0);
+      }
+    }
+  }
 
   /// Raison du dernier arrêt subi de la musique, rendue une seule fois.
   String? takePlayerMessage() {

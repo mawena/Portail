@@ -107,6 +107,151 @@ int _deepHash(Object? value) {
 }
 
 
+/// Invite keyboard-interactive (phase 13) : [name] (serveur ou titre de l'invite), [instruction], une saisie par
+/// élément de [prompts] ; [echo] faux : saisie masquée.
+class SshPromptMsg {
+  SshPromptMsg({
+    required this.requestId,
+    required this.name,
+    required this.instruction,
+    required this.prompts,
+    required this.echo,
+  });
+
+  String requestId;
+
+  String name;
+
+  String instruction;
+
+  List<String> prompts;
+
+  List<bool> echo;
+
+  List<Object?> _toList() {
+    return <Object?>[
+      requestId,
+      name,
+      instruction,
+      prompts,
+      echo,
+    ];
+  }
+
+  Object encode() {
+    return _toList();  }
+
+  static SshPromptMsg decode(Object result) {
+    result as List<Object?>;
+    return SshPromptMsg(
+      requestId: result[0]! as String,
+      name: result[1]! as String,
+      instruction: result[2]! as String,
+      prompts: (result[3]! as List<Object?>).cast<String>(),
+      echo: (result[4]! as List<Object?>).cast<bool>(),
+    );
+  }
+
+  @override
+  // ignore: avoid_equals_and_hash_code_on_mutable_classes
+  bool operator ==(Object other) {
+    if (other is! SshPromptMsg || other.runtimeType != runtimeType) {
+      return false;
+    }
+    if (identical(this, other)) {
+      return true;
+    }
+    return _deepEquals(requestId, other.requestId) && _deepEquals(name, other.name) && _deepEquals(instruction, other.instruction) && _deepEquals(prompts, other.prompts) && _deepEquals(echo, other.echo);
+  }
+
+  @override
+  // ignore: avoid_equals_and_hash_code_on_mutable_classes
+  int get hashCode => _deepHash(<Object?>[runtimeType, ..._toList()]);
+
+  @override
+  String toString() {
+    return 'SshPromptMsg(requestId: $requestId, name: $name, instruction: $instruction, prompts: $prompts, echo: $echo)';
+  }
+}
+
+/// Session de terminal (phase 13) : [state] ∈ `connecting`, `open`, `closed`, `gone` (retirée : fermée à la demande
+/// ou jamais ouverte) ; [error] : pourquoi elle s'est fermée
+/// (null : fermeture normale ou demandée) ; [cols] × [rows] : taille du PTY.
+class TerminalSessionMsg {
+  TerminalSessionMsg({
+    required this.id,
+    required this.serverId,
+    required this.title,
+    required this.state,
+    this.error,
+    required this.cols,
+    required this.rows,
+  });
+
+  String id;
+
+  String serverId;
+
+  String title;
+
+  String state;
+
+  String? error;
+
+  int cols;
+
+  int rows;
+
+  List<Object?> _toList() {
+    return <Object?>[
+      id,
+      serverId,
+      title,
+      state,
+      error,
+      cols,
+      rows,
+    ];
+  }
+
+  Object encode() {
+    return _toList();  }
+
+  static TerminalSessionMsg decode(Object result) {
+    result as List<Object?>;
+    return TerminalSessionMsg(
+      id: result[0]! as String,
+      serverId: result[1]! as String,
+      title: result[2]! as String,
+      state: result[3]! as String,
+      error: result[4] as String?,
+      cols: result[5]! as int,
+      rows: result[6]! as int,
+    );
+  }
+
+  @override
+  // ignore: avoid_equals_and_hash_code_on_mutable_classes
+  bool operator ==(Object other) {
+    if (other is! TerminalSessionMsg || other.runtimeType != runtimeType) {
+      return false;
+    }
+    if (identical(this, other)) {
+      return true;
+    }
+    return _deepEquals(id, other.id) && _deepEquals(serverId, other.serverId) && _deepEquals(title, other.title) && _deepEquals(state, other.state) && _deepEquals(error, other.error) && _deepEquals(cols, other.cols) && _deepEquals(rows, other.rows);
+  }
+
+  @override
+  // ignore: avoid_equals_and_hash_code_on_mutable_classes
+  int get hashCode => _deepHash(<Object?>[runtimeType, ..._toList()]);
+
+  @override
+  String toString() {
+    return 'TerminalSessionMsg(id: $id, serverId: $serverId, title: $title, state: $state, error: $error, cols: $cols, rows: $rows)';
+  }
+}
+
 class PartitionMsg {
   PartitionMsg({
     required this.index,
@@ -1439,6 +1584,7 @@ class RemoteServerMsg {
     this.keyInfo,
     required this.hasPassword,
     required this.connected,
+    this.keyId,
   });
 
   String id;
@@ -1465,6 +1611,9 @@ class RemoteServerMsg {
 
   bool connected;
 
+  /// Phase 13 : clé du trousseau utilisée pour ce serveur.
+  String? keyId;
+
   List<Object?> _toList() {
     return <Object?>[
       id,
@@ -1479,6 +1628,7 @@ class RemoteServerMsg {
       keyInfo,
       hasPassword,
       connected,
+      keyId,
     ];
   }
 
@@ -1500,6 +1650,7 @@ class RemoteServerMsg {
       keyInfo: result[9] as String?,
       hasPassword: result[10]! as bool,
       connected: result[11]! as bool,
+      keyId: result[12] as String?,
     );
   }
 
@@ -1512,7 +1663,7 @@ class RemoteServerMsg {
     if (identical(this, other)) {
       return true;
     }
-    return _deepEquals(id, other.id) && _deepEquals(protocol, other.protocol) && _deepEquals(name, other.name) && _deepEquals(host, other.host) && _deepEquals(port, other.port) && _deepEquals(user, other.user) && _deepEquals(startPath, other.startPath) && _deepEquals(remember, other.remember) && _deepEquals(hostKey, other.hostKey) && _deepEquals(keyInfo, other.keyInfo) && _deepEquals(hasPassword, other.hasPassword) && _deepEquals(connected, other.connected);
+    return _deepEquals(id, other.id) && _deepEquals(protocol, other.protocol) && _deepEquals(name, other.name) && _deepEquals(host, other.host) && _deepEquals(port, other.port) && _deepEquals(user, other.user) && _deepEquals(startPath, other.startPath) && _deepEquals(remember, other.remember) && _deepEquals(hostKey, other.hostKey) && _deepEquals(keyInfo, other.keyInfo) && _deepEquals(hasPassword, other.hasPassword) && _deepEquals(connected, other.connected) && _deepEquals(keyId, other.keyId);
   }
 
   @override
@@ -1521,7 +1672,228 @@ class RemoteServerMsg {
 
   @override
   String toString() {
-    return 'RemoteServerMsg(id: $id, protocol: $protocol, name: $name, host: $host, port: $port, user: $user, startPath: $startPath, remember: $remember, hostKey: $hostKey, keyInfo: $keyInfo, hasPassword: $hasPassword, connected: $connected)';
+    return 'RemoteServerMsg(id: $id, protocol: $protocol, name: $name, host: $host, port: $port, user: $user, startPath: $startPath, remember: $remember, hostKey: $hostKey, keyInfo: $keyInfo, hasPassword: $hasPassword, connected: $connected, keyId: $keyId)';
+  }
+}
+
+/// Commande enregistrée du terminal (phase 13) : [serverId] null pour une commande commune ; [runNow] : suivie
+/// d'Entrée.
+class SnippetMsg {
+  SnippetMsg({
+    required this.id,
+    this.serverId,
+    required this.name,
+    required this.command,
+    required this.runNow,
+  });
+
+  String id;
+
+  String? serverId;
+
+  String name;
+
+  String command;
+
+  bool runNow;
+
+  List<Object?> _toList() {
+    return <Object?>[
+      id,
+      serverId,
+      name,
+      command,
+      runNow,
+    ];
+  }
+
+  Object encode() {
+    return _toList();  }
+
+  static SnippetMsg decode(Object result) {
+    result as List<Object?>;
+    return SnippetMsg(
+      id: result[0]! as String,
+      serverId: result[1] as String?,
+      name: result[2]! as String,
+      command: result[3]! as String,
+      runNow: result[4]! as bool,
+    );
+  }
+
+  @override
+  // ignore: avoid_equals_and_hash_code_on_mutable_classes
+  bool operator ==(Object other) {
+    if (other is! SnippetMsg || other.runtimeType != runtimeType) {
+      return false;
+    }
+    if (identical(this, other)) {
+      return true;
+    }
+    return _deepEquals(id, other.id) && _deepEquals(serverId, other.serverId) && _deepEquals(name, other.name) && _deepEquals(command, other.command) && _deepEquals(runNow, other.runNow);
+  }
+
+  @override
+  // ignore: avoid_equals_and_hash_code_on_mutable_classes
+  int get hashCode => _deepHash(<Object?>[runtimeType, ..._toList()]);
+
+  @override
+  String toString() {
+    return 'SnippetMsg(id: $id, serverId: $serverId, name: $name, command: $command, runNow: $runNow)';
+  }
+}
+
+/// Tunnel d'un serveur (phase 13) : `127.0.0.1:[localPort]` sur le téléphone mène à [remoteHost]:[remotePort] vu du
+/// serveur ; [auto] : ouvert avec chaque terminal ; [active] : ouvert sur un terminal ; [error] : dernier échec.
+class TunnelMsg {
+  TunnelMsg({
+    required this.id,
+    required this.serverId,
+    required this.localPort,
+    required this.remoteHost,
+    required this.remotePort,
+    required this.auto,
+    required this.active,
+    this.error,
+  });
+
+  String id;
+
+  String serverId;
+
+  int localPort;
+
+  String remoteHost;
+
+  int remotePort;
+
+  bool auto;
+
+  bool active;
+
+  String? error;
+
+  List<Object?> _toList() {
+    return <Object?>[
+      id,
+      serverId,
+      localPort,
+      remoteHost,
+      remotePort,
+      auto,
+      active,
+      error,
+    ];
+  }
+
+  Object encode() {
+    return _toList();  }
+
+  static TunnelMsg decode(Object result) {
+    result as List<Object?>;
+    return TunnelMsg(
+      id: result[0]! as String,
+      serverId: result[1]! as String,
+      localPort: result[2]! as int,
+      remoteHost: result[3]! as String,
+      remotePort: result[4]! as int,
+      auto: result[5]! as bool,
+      active: result[6]! as bool,
+      error: result[7] as String?,
+    );
+  }
+
+  @override
+  // ignore: avoid_equals_and_hash_code_on_mutable_classes
+  bool operator ==(Object other) {
+    if (other is! TunnelMsg || other.runtimeType != runtimeType) {
+      return false;
+    }
+    if (identical(this, other)) {
+      return true;
+    }
+    return _deepEquals(id, other.id) && _deepEquals(serverId, other.serverId) && _deepEquals(localPort, other.localPort) && _deepEquals(remoteHost, other.remoteHost) && _deepEquals(remotePort, other.remotePort) && _deepEquals(auto, other.auto) && _deepEquals(active, other.active) && _deepEquals(error, other.error);
+  }
+
+  @override
+  // ignore: avoid_equals_and_hash_code_on_mutable_classes
+  int get hashCode => _deepHash(<Object?>[runtimeType, ..._toList()]);
+
+  @override
+  String toString() {
+    return 'TunnelMsg(id: $id, serverId: $serverId, localPort: $localPort, remoteHost: $remoteHost, remotePort: $remotePort, auto: $auto, active: $active, error: $error)';
+  }
+}
+
+/// Clé du trousseau SSH (phase 13) : [type] « ssh-ed25519 »… ; [fingerprint] « SHA256:… » ; [usedBy] : noms des
+/// serveurs qui l'utilisent.
+class SshKeyMsg {
+  SshKeyMsg({
+    required this.id,
+    required this.name,
+    required this.type,
+    required this.fingerprint,
+    required this.encrypted,
+    required this.usedBy,
+  });
+
+  String id;
+
+  String name;
+
+  String type;
+
+  String fingerprint;
+
+  bool encrypted;
+
+  List<String> usedBy;
+
+  List<Object?> _toList() {
+    return <Object?>[
+      id,
+      name,
+      type,
+      fingerprint,
+      encrypted,
+      usedBy,
+    ];
+  }
+
+  Object encode() {
+    return _toList();  }
+
+  static SshKeyMsg decode(Object result) {
+    result as List<Object?>;
+    return SshKeyMsg(
+      id: result[0]! as String,
+      name: result[1]! as String,
+      type: result[2]! as String,
+      fingerprint: result[3]! as String,
+      encrypted: result[4]! as bool,
+      usedBy: (result[5]! as List<Object?>).cast<String>(),
+    );
+  }
+
+  @override
+  // ignore: avoid_equals_and_hash_code_on_mutable_classes
+  bool operator ==(Object other) {
+    if (other is! SshKeyMsg || other.runtimeType != runtimeType) {
+      return false;
+    }
+    if (identical(this, other)) {
+      return true;
+    }
+    return _deepEquals(id, other.id) && _deepEquals(name, other.name) && _deepEquals(type, other.type) && _deepEquals(fingerprint, other.fingerprint) && _deepEquals(encrypted, other.encrypted) && _deepEquals(usedBy, other.usedBy);
+  }
+
+  @override
+  // ignore: avoid_equals_and_hash_code_on_mutable_classes
+  int get hashCode => _deepHash(<Object?>[runtimeType, ..._toList()]);
+
+  @override
+  String toString() {
+    return 'SshKeyMsg(id: $id, name: $name, type: $type, fingerprint: $fingerprint, encrypted: $encrypted, usedBy: $usedBy)';
   }
 }
 
@@ -1598,6 +1970,8 @@ class UiPrefsMsg {
     required this.theme,
     required this.haptics,
     required this.welcomeSeen,
+    this.terminalFontSize,
+    this.terminalSecure,
   });
 
   String theme;
@@ -1606,11 +1980,18 @@ class UiPrefsMsg {
 
   bool welcomeSeen;
 
+  /// Phase 13 : taille du texte du terminal (8 à 32 ; null : 13) ; terminal masqué dans les captures (null : non).
+  int? terminalFontSize;
+
+  bool? terminalSecure;
+
   List<Object?> _toList() {
     return <Object?>[
       theme,
       haptics,
       welcomeSeen,
+      terminalFontSize,
+      terminalSecure,
     ];
   }
 
@@ -1623,6 +2004,8 @@ class UiPrefsMsg {
       theme: result[0]! as String,
       haptics: result[1]! as bool,
       welcomeSeen: result[2]! as bool,
+      terminalFontSize: result[3] as int?,
+      terminalSecure: result[4] as bool?,
     );
   }
 
@@ -1635,7 +2018,7 @@ class UiPrefsMsg {
     if (identical(this, other)) {
       return true;
     }
-    return _deepEquals(theme, other.theme) && _deepEquals(haptics, other.haptics) && _deepEquals(welcomeSeen, other.welcomeSeen);
+    return _deepEquals(theme, other.theme) && _deepEquals(haptics, other.haptics) && _deepEquals(welcomeSeen, other.welcomeSeen) && _deepEquals(terminalFontSize, other.terminalFontSize) && _deepEquals(terminalSecure, other.terminalSecure);
   }
 
   @override
@@ -1644,7 +2027,7 @@ class UiPrefsMsg {
 
   @override
   String toString() {
-    return 'UiPrefsMsg(theme: $theme, haptics: $haptics, welcomeSeen: $welcomeSeen)';
+    return 'UiPrefsMsg(theme: $theme, haptics: $haptics, welcomeSeen: $welcomeSeen, terminalFontSize: $terminalFontSize, terminalSecure: $terminalSecure)';
   }
 }
 
@@ -1779,74 +2162,89 @@ class _PigeonCodec extends StandardMessageCodec {
     if (value is int) {
       buffer.putUint8(4);
       buffer.putInt64(value);
-    }    else if (value is PartitionMsg) {
+    }    else if (value is SshPromptMsg) {
       buffer.putUint8(129);
       writeValue(buffer, value.encode());
-    }    else if (value is DiskMsg) {
+    }    else if (value is TerminalSessionMsg) {
       buffer.putUint8(130);
       writeValue(buffer, value.encode());
-    }    else if (value is VolumeMsg) {
+    }    else if (value is PartitionMsg) {
       buffer.putUint8(131);
       writeValue(buffer, value.encode());
-    }    else if (value is SourceMsg) {
+    }    else if (value is DiskMsg) {
       buffer.putUint8(132);
       writeValue(buffer, value.encode());
-    }    else if (value is EntryMsg) {
+    }    else if (value is VolumeMsg) {
       buffer.putUint8(133);
       writeValue(buffer, value.encode());
-    }    else if (value is PlayerMsg) {
+    }    else if (value is SourceMsg) {
       buffer.putUint8(134);
       writeValue(buffer, value.encode());
-    }    else if (value is TransferMsg) {
+    }    else if (value is EntryMsg) {
       buffer.putUint8(135);
       writeValue(buffer, value.encode());
-    }    else if (value is TrashItemMsg) {
+    }    else if (value is PlayerMsg) {
       buffer.putUint8(136);
       writeValue(buffer, value.encode());
-    }    else if (value is DetailsMsg) {
+    }    else if (value is TransferMsg) {
       buffer.putUint8(137);
       writeValue(buffer, value.encode());
-    }    else if (value is TextFileMsg) {
+    }    else if (value is TrashItemMsg) {
       buffer.putUint8(138);
       writeValue(buffer, value.encode());
-    }    else if (value is TextSaveMsg) {
+    }    else if (value is DetailsMsg) {
       buffer.putUint8(139);
       writeValue(buffer, value.encode());
-    }    else if (value is RenameRuleMsg) {
+    }    else if (value is TextFileMsg) {
       buffer.putUint8(140);
       writeValue(buffer, value.encode());
-    }    else if (value is RenamePreviewMsg) {
+    }    else if (value is TextSaveMsg) {
       buffer.putUint8(141);
       writeValue(buffer, value.encode());
-    }    else if (value is FilterItemMsg) {
+    }    else if (value is RenameRuleMsg) {
       buffer.putUint8(142);
       writeValue(buffer, value.encode());
-    }    else if (value is FolderSizeMsg) {
+    }    else if (value is RenamePreviewMsg) {
       buffer.putUint8(143);
       writeValue(buffer, value.encode());
-    }    else if (value is SpaceItemMsg) {
+    }    else if (value is FilterItemMsg) {
       buffer.putUint8(144);
       writeValue(buffer, value.encode());
-    }    else if (value is SpaceReportMsg) {
+    }    else if (value is FolderSizeMsg) {
       buffer.putUint8(145);
       writeValue(buffer, value.encode());
-    }    else if (value is SearchResultMsg) {
+    }    else if (value is SpaceItemMsg) {
       buffer.putUint8(146);
       writeValue(buffer, value.encode());
-    }    else if (value is RemoteServerMsg) {
+    }    else if (value is SpaceReportMsg) {
       buffer.putUint8(147);
       writeValue(buffer, value.encode());
-    }    else if (value is ViewPrefsMsg) {
+    }    else if (value is SearchResultMsg) {
       buffer.putUint8(148);
       writeValue(buffer, value.encode());
-    }    else if (value is UiPrefsMsg) {
+    }    else if (value is RemoteServerMsg) {
       buffer.putUint8(149);
       writeValue(buffer, value.encode());
-    }    else if (value is AppInfoMsg) {
+    }    else if (value is SnippetMsg) {
       buffer.putUint8(150);
       writeValue(buffer, value.encode());
-    }    else if (value is FavoriteMsg) {
+    }    else if (value is TunnelMsg) {
       buffer.putUint8(151);
+      writeValue(buffer, value.encode());
+    }    else if (value is SshKeyMsg) {
+      buffer.putUint8(152);
+      writeValue(buffer, value.encode());
+    }    else if (value is ViewPrefsMsg) {
+      buffer.putUint8(153);
+      writeValue(buffer, value.encode());
+    }    else if (value is UiPrefsMsg) {
+      buffer.putUint8(154);
+      writeValue(buffer, value.encode());
+    }    else if (value is AppInfoMsg) {
+      buffer.putUint8(155);
+      writeValue(buffer, value.encode());
+    }    else if (value is FavoriteMsg) {
+      buffer.putUint8(156);
       writeValue(buffer, value.encode());
     } else {
       super.writeValue(buffer, value);
@@ -1857,50 +2255,60 @@ class _PigeonCodec extends StandardMessageCodec {
   Object? readValueOfType(int type, ReadBuffer buffer) {
     switch (type) {
       case 129:
-        return PartitionMsg.decode(readValue(buffer)!);
+        return SshPromptMsg.decode(readValue(buffer)!);
       case 130:
-        return DiskMsg.decode(readValue(buffer)!);
+        return TerminalSessionMsg.decode(readValue(buffer)!);
       case 131:
-        return VolumeMsg.decode(readValue(buffer)!);
+        return PartitionMsg.decode(readValue(buffer)!);
       case 132:
-        return SourceMsg.decode(readValue(buffer)!);
+        return DiskMsg.decode(readValue(buffer)!);
       case 133:
-        return EntryMsg.decode(readValue(buffer)!);
+        return VolumeMsg.decode(readValue(buffer)!);
       case 134:
-        return PlayerMsg.decode(readValue(buffer)!);
+        return SourceMsg.decode(readValue(buffer)!);
       case 135:
-        return TransferMsg.decode(readValue(buffer)!);
+        return EntryMsg.decode(readValue(buffer)!);
       case 136:
-        return TrashItemMsg.decode(readValue(buffer)!);
+        return PlayerMsg.decode(readValue(buffer)!);
       case 137:
-        return DetailsMsg.decode(readValue(buffer)!);
+        return TransferMsg.decode(readValue(buffer)!);
       case 138:
-        return TextFileMsg.decode(readValue(buffer)!);
+        return TrashItemMsg.decode(readValue(buffer)!);
       case 139:
-        return TextSaveMsg.decode(readValue(buffer)!);
+        return DetailsMsg.decode(readValue(buffer)!);
       case 140:
-        return RenameRuleMsg.decode(readValue(buffer)!);
+        return TextFileMsg.decode(readValue(buffer)!);
       case 141:
-        return RenamePreviewMsg.decode(readValue(buffer)!);
+        return TextSaveMsg.decode(readValue(buffer)!);
       case 142:
-        return FilterItemMsg.decode(readValue(buffer)!);
+        return RenameRuleMsg.decode(readValue(buffer)!);
       case 143:
-        return FolderSizeMsg.decode(readValue(buffer)!);
+        return RenamePreviewMsg.decode(readValue(buffer)!);
       case 144:
-        return SpaceItemMsg.decode(readValue(buffer)!);
+        return FilterItemMsg.decode(readValue(buffer)!);
       case 145:
-        return SpaceReportMsg.decode(readValue(buffer)!);
+        return FolderSizeMsg.decode(readValue(buffer)!);
       case 146:
-        return SearchResultMsg.decode(readValue(buffer)!);
+        return SpaceItemMsg.decode(readValue(buffer)!);
       case 147:
-        return RemoteServerMsg.decode(readValue(buffer)!);
+        return SpaceReportMsg.decode(readValue(buffer)!);
       case 148:
-        return ViewPrefsMsg.decode(readValue(buffer)!);
+        return SearchResultMsg.decode(readValue(buffer)!);
       case 149:
-        return UiPrefsMsg.decode(readValue(buffer)!);
+        return RemoteServerMsg.decode(readValue(buffer)!);
       case 150:
-        return AppInfoMsg.decode(readValue(buffer)!);
+        return SnippetMsg.decode(readValue(buffer)!);
       case 151:
+        return TunnelMsg.decode(readValue(buffer)!);
+      case 152:
+        return SshKeyMsg.decode(readValue(buffer)!);
+      case 153:
+        return ViewPrefsMsg.decode(readValue(buffer)!);
+      case 154:
+        return UiPrefsMsg.decode(readValue(buffer)!);
+      case 155:
+        return AppInfoMsg.decode(readValue(buffer)!);
+      case 156:
         return FavoriteMsg.decode(readValue(buffer)!);
       default:
         return super.readValueOfType(type, buffer);
@@ -2675,7 +3083,8 @@ class FluLuksHostApi {
   /// sauf `force`.
   /// Dossiers distants (phase 10). `saveServer` : identifiant vide pour un nouveau serveur ; mots de passe null :
   /// ceux mémorisés sont gardés. `connectServer` échoue avec le code `auth` (mot de passe requis ou refusé ; détails :
-  /// vrai s'il manquait), `hostkey-unknown` (détails : l'empreinte à montrer) ou `hostkey-changed`.
+  /// vrai s'il manquait), `hostkey-unknown` (détails : l'empreinte à montrer), `hostkey-changed` ou `ssh` (phase 13 :
+  /// message précis en français ; détails : la cause technique ; journal : `lastAttemptLog`).
   Future<List<RemoteServerMsg>> listServers() async {
     final pigeonVar_channelName = 'dev.flutter.pigeon.fluluks.FluLuksHostApi.listServers$pigeonVar_messageChannelSuffix';
     final pigeonVar_channel = BasicMessageChannel<Object?>(
@@ -2795,6 +3204,523 @@ class FluLuksHostApi {
       binaryMessenger: pigeonVar_binaryMessenger,
     );
     final Future<Object?> pigeonVar_sendFuture = pigeonVar_channel.send(<Object?>[serverId]);
+    final pigeonVar_replyList = await pigeonVar_sendFuture as List<Object?>?;
+
+    _extractReplyValueOrThrow(
+        pigeonVar_replyList,
+        pigeonVar_channelName,
+        isNullValid: true,
+    )
+    ;
+  }
+
+  /// Phase 13 : « Tester la connexion » : connecte puis déconnecte aussitôt, sans ouvrir la source ; mêmes erreurs que
+  /// `connectServer` ; rend le journal de la tentative. `lastAttemptLog` : journal de la dernière tentative du serveur
+  /// (SFTP), sans aucun secret. `answerSshPrompt` : réponses à une invite `onSshPrompt` (null : refusée), mises à zéro.
+  Future<List<String>> testServer(String serverId, Uint8List? password) async {
+    final pigeonVar_channelName = 'dev.flutter.pigeon.fluluks.FluLuksHostApi.testServer$pigeonVar_messageChannelSuffix';
+    final pigeonVar_channel = BasicMessageChannel<Object?>(
+      pigeonVar_channelName,
+      pigeonChannelCodec,
+      binaryMessenger: pigeonVar_binaryMessenger,
+    );
+    final Future<Object?> pigeonVar_sendFuture = pigeonVar_channel.send(<Object?>[serverId, password]);
+    final pigeonVar_replyList = await pigeonVar_sendFuture as List<Object?>?;
+
+    final Object? pigeonVar_replyValue = _extractReplyValueOrThrow(
+        pigeonVar_replyList,
+        pigeonVar_channelName,
+        isNullValid: false,
+    )
+    ;
+    return (pigeonVar_replyValue! as List<Object?>).cast<String>();
+  }
+
+  Future<List<String>> lastAttemptLog(String serverId) async {
+    final pigeonVar_channelName = 'dev.flutter.pigeon.fluluks.FluLuksHostApi.lastAttemptLog$pigeonVar_messageChannelSuffix';
+    final pigeonVar_channel = BasicMessageChannel<Object?>(
+      pigeonVar_channelName,
+      pigeonChannelCodec,
+      binaryMessenger: pigeonVar_binaryMessenger,
+    );
+    final Future<Object?> pigeonVar_sendFuture = pigeonVar_channel.send(<Object?>[serverId]);
+    final pigeonVar_replyList = await pigeonVar_sendFuture as List<Object?>?;
+
+    final Object? pigeonVar_replyValue = _extractReplyValueOrThrow(
+        pigeonVar_replyList,
+        pigeonVar_channelName,
+        isNullValid: false,
+    )
+    ;
+    return (pigeonVar_replyValue! as List<Object?>).cast<String>();
+  }
+
+  Future<void> answerSshPrompt(String requestId, List<Uint8List>? answers) async {
+    final pigeonVar_channelName = 'dev.flutter.pigeon.fluluks.FluLuksHostApi.answerSshPrompt$pigeonVar_messageChannelSuffix';
+    final pigeonVar_channel = BasicMessageChannel<Object?>(
+      pigeonVar_channelName,
+      pigeonChannelCodec,
+      binaryMessenger: pigeonVar_binaryMessenger,
+    );
+    final Future<Object?> pigeonVar_sendFuture = pigeonVar_channel.send(<Object?>[requestId, answers]);
+    final pigeonVar_replyList = await pigeonVar_sendFuture as List<Object?>?;
+
+    _extractReplyValueOrThrow(
+        pigeonVar_replyList,
+        pigeonVar_channelName,
+        isNullValid: true,
+    )
+    ;
+  }
+
+  /// Phase 13 : terminaux SSH sur un serveur SFTP enregistré (8 au plus). `openTerminal` : mêmes erreurs que
+  /// `connectServer`, puis `cd` vers `startDir` s'il est donné ; la sortie arrive par `onTerminalOutput` (octets bruts,
+  /// par lots), les changements d'état par `onTerminalChanged`. `terminalWrite` : octets tapés, mis à zéro après envoi.
+  /// `terminalBacklog` : sortie récente (256 Kio au plus) pour rouvrir l'écran. `closeTerminal` : ferme et oublie.
+  Future<TerminalSessionMsg> openTerminal(String serverId, Uint8List? password, String? startDir) async {
+    final pigeonVar_channelName = 'dev.flutter.pigeon.fluluks.FluLuksHostApi.openTerminal$pigeonVar_messageChannelSuffix';
+    final pigeonVar_channel = BasicMessageChannel<Object?>(
+      pigeonVar_channelName,
+      pigeonChannelCodec,
+      binaryMessenger: pigeonVar_binaryMessenger,
+    );
+    final Future<Object?> pigeonVar_sendFuture = pigeonVar_channel.send(<Object?>[serverId, password, startDir]);
+    final pigeonVar_replyList = await pigeonVar_sendFuture as List<Object?>?;
+
+    final Object? pigeonVar_replyValue = _extractReplyValueOrThrow(
+        pigeonVar_replyList,
+        pigeonVar_channelName,
+        isNullValid: false,
+    )
+    ;
+    return pigeonVar_replyValue! as TerminalSessionMsg;
+  }
+
+  Future<void> terminalWrite(String sessionId, Uint8List data) async {
+    final pigeonVar_channelName = 'dev.flutter.pigeon.fluluks.FluLuksHostApi.terminalWrite$pigeonVar_messageChannelSuffix';
+    final pigeonVar_channel = BasicMessageChannel<Object?>(
+      pigeonVar_channelName,
+      pigeonChannelCodec,
+      binaryMessenger: pigeonVar_binaryMessenger,
+    );
+    final Future<Object?> pigeonVar_sendFuture = pigeonVar_channel.send(<Object?>[sessionId, data]);
+    final pigeonVar_replyList = await pigeonVar_sendFuture as List<Object?>?;
+
+    _extractReplyValueOrThrow(
+        pigeonVar_replyList,
+        pigeonVar_channelName,
+        isNullValid: true,
+    )
+    ;
+  }
+
+  Future<void> terminalResize(String sessionId, int cols, int rows) async {
+    final pigeonVar_channelName = 'dev.flutter.pigeon.fluluks.FluLuksHostApi.terminalResize$pigeonVar_messageChannelSuffix';
+    final pigeonVar_channel = BasicMessageChannel<Object?>(
+      pigeonVar_channelName,
+      pigeonChannelCodec,
+      binaryMessenger: pigeonVar_binaryMessenger,
+    );
+    final Future<Object?> pigeonVar_sendFuture = pigeonVar_channel.send(<Object?>[sessionId, cols, rows]);
+    final pigeonVar_replyList = await pigeonVar_sendFuture as List<Object?>?;
+
+    _extractReplyValueOrThrow(
+        pigeonVar_replyList,
+        pigeonVar_channelName,
+        isNullValid: true,
+    )
+    ;
+  }
+
+  Future<Uint8List> terminalBacklog(String sessionId) async {
+    final pigeonVar_channelName = 'dev.flutter.pigeon.fluluks.FluLuksHostApi.terminalBacklog$pigeonVar_messageChannelSuffix';
+    final pigeonVar_channel = BasicMessageChannel<Object?>(
+      pigeonVar_channelName,
+      pigeonChannelCodec,
+      binaryMessenger: pigeonVar_binaryMessenger,
+    );
+    final Future<Object?> pigeonVar_sendFuture = pigeonVar_channel.send(<Object?>[sessionId]);
+    final pigeonVar_replyList = await pigeonVar_sendFuture as List<Object?>?;
+
+    final Object? pigeonVar_replyValue = _extractReplyValueOrThrow(
+        pigeonVar_replyList,
+        pigeonVar_channelName,
+        isNullValid: false,
+    )
+    ;
+    return pigeonVar_replyValue! as Uint8List;
+  }
+
+  Future<void> closeTerminal(String sessionId) async {
+    final pigeonVar_channelName = 'dev.flutter.pigeon.fluluks.FluLuksHostApi.closeTerminal$pigeonVar_messageChannelSuffix';
+    final pigeonVar_channel = BasicMessageChannel<Object?>(
+      pigeonVar_channelName,
+      pigeonChannelCodec,
+      binaryMessenger: pigeonVar_binaryMessenger,
+    );
+    final Future<Object?> pigeonVar_sendFuture = pigeonVar_channel.send(<Object?>[sessionId]);
+    final pigeonVar_replyList = await pigeonVar_sendFuture as List<Object?>?;
+
+    _extractReplyValueOrThrow(
+        pigeonVar_replyList,
+        pigeonVar_channelName,
+        isNullValid: true,
+    )
+    ;
+  }
+
+  Future<List<TerminalSessionMsg>> terminalSessions() async {
+    final pigeonVar_channelName = 'dev.flutter.pigeon.fluluks.FluLuksHostApi.terminalSessions$pigeonVar_messageChannelSuffix';
+    final pigeonVar_channel = BasicMessageChannel<Object?>(
+      pigeonVar_channelName,
+      pigeonChannelCodec,
+      binaryMessenger: pigeonVar_binaryMessenger,
+    );
+    final Future<Object?> pigeonVar_sendFuture = pigeonVar_channel.send(null);
+    final pigeonVar_replyList = await pigeonVar_sendFuture as List<Object?>?;
+
+    final Object? pigeonVar_replyValue = _extractReplyValueOrThrow(
+        pigeonVar_replyList,
+        pigeonVar_channelName,
+        isNullValid: false,
+    )
+    ;
+    return (pigeonVar_replyValue! as List<Object?>).cast<TerminalSessionMsg>();
+  }
+
+  /// Phase 13 : trousseau de clés SSH. `generateSshKey` : `type` `ed25519` ou `rsa` (4096 bits), phrase facultative
+  /// (mise à zéro). `importSshKey` : fichier choisi dans le sélecteur d'Android (null : rien de choisi).
+  /// `deleteSshKey` : refusé tant qu'un serveur l'utilise. `sshPublicKey` : ligne OpenSSH. `setServerKey` : clé
+  /// utilisée par un serveur (null : aucune). `shareText` : partage d'un texte (clé publique).
+  Future<List<SshKeyMsg>> sshKeys() async {
+    final pigeonVar_channelName = 'dev.flutter.pigeon.fluluks.FluLuksHostApi.sshKeys$pigeonVar_messageChannelSuffix';
+    final pigeonVar_channel = BasicMessageChannel<Object?>(
+      pigeonVar_channelName,
+      pigeonChannelCodec,
+      binaryMessenger: pigeonVar_binaryMessenger,
+    );
+    final Future<Object?> pigeonVar_sendFuture = pigeonVar_channel.send(null);
+    final pigeonVar_replyList = await pigeonVar_sendFuture as List<Object?>?;
+
+    final Object? pigeonVar_replyValue = _extractReplyValueOrThrow(
+        pigeonVar_replyList,
+        pigeonVar_channelName,
+        isNullValid: false,
+    )
+    ;
+    return (pigeonVar_replyValue! as List<Object?>).cast<SshKeyMsg>();
+  }
+
+  Future<SshKeyMsg> generateSshKey(String name, String type, Uint8List? passphrase) async {
+    final pigeonVar_channelName = 'dev.flutter.pigeon.fluluks.FluLuksHostApi.generateSshKey$pigeonVar_messageChannelSuffix';
+    final pigeonVar_channel = BasicMessageChannel<Object?>(
+      pigeonVar_channelName,
+      pigeonChannelCodec,
+      binaryMessenger: pigeonVar_binaryMessenger,
+    );
+    final Future<Object?> pigeonVar_sendFuture = pigeonVar_channel.send(<Object?>[name, type, passphrase]);
+    final pigeonVar_replyList = await pigeonVar_sendFuture as List<Object?>?;
+
+    final Object? pigeonVar_replyValue = _extractReplyValueOrThrow(
+        pigeonVar_replyList,
+        pigeonVar_channelName,
+        isNullValid: false,
+    )
+    ;
+    return pigeonVar_replyValue! as SshKeyMsg;
+  }
+
+  Future<SshKeyMsg?> importSshKey(String name) async {
+    final pigeonVar_channelName = 'dev.flutter.pigeon.fluluks.FluLuksHostApi.importSshKey$pigeonVar_messageChannelSuffix';
+    final pigeonVar_channel = BasicMessageChannel<Object?>(
+      pigeonVar_channelName,
+      pigeonChannelCodec,
+      binaryMessenger: pigeonVar_binaryMessenger,
+    );
+    final Future<Object?> pigeonVar_sendFuture = pigeonVar_channel.send(<Object?>[name]);
+    final pigeonVar_replyList = await pigeonVar_sendFuture as List<Object?>?;
+
+    final Object? pigeonVar_replyValue = _extractReplyValueOrThrow(
+        pigeonVar_replyList,
+        pigeonVar_channelName,
+        isNullValid: true,
+    )
+    ;
+    return pigeonVar_replyValue as SshKeyMsg?;
+  }
+
+  Future<void> renameSshKey(String keyId, String name) async {
+    final pigeonVar_channelName = 'dev.flutter.pigeon.fluluks.FluLuksHostApi.renameSshKey$pigeonVar_messageChannelSuffix';
+    final pigeonVar_channel = BasicMessageChannel<Object?>(
+      pigeonVar_channelName,
+      pigeonChannelCodec,
+      binaryMessenger: pigeonVar_binaryMessenger,
+    );
+    final Future<Object?> pigeonVar_sendFuture = pigeonVar_channel.send(<Object?>[keyId, name]);
+    final pigeonVar_replyList = await pigeonVar_sendFuture as List<Object?>?;
+
+    _extractReplyValueOrThrow(
+        pigeonVar_replyList,
+        pigeonVar_channelName,
+        isNullValid: true,
+    )
+    ;
+  }
+
+  Future<void> deleteSshKey(String keyId) async {
+    final pigeonVar_channelName = 'dev.flutter.pigeon.fluluks.FluLuksHostApi.deleteSshKey$pigeonVar_messageChannelSuffix';
+    final pigeonVar_channel = BasicMessageChannel<Object?>(
+      pigeonVar_channelName,
+      pigeonChannelCodec,
+      binaryMessenger: pigeonVar_binaryMessenger,
+    );
+    final Future<Object?> pigeonVar_sendFuture = pigeonVar_channel.send(<Object?>[keyId]);
+    final pigeonVar_replyList = await pigeonVar_sendFuture as List<Object?>?;
+
+    _extractReplyValueOrThrow(
+        pigeonVar_replyList,
+        pigeonVar_channelName,
+        isNullValid: true,
+    )
+    ;
+  }
+
+  Future<String> sshPublicKey(String keyId) async {
+    final pigeonVar_channelName = 'dev.flutter.pigeon.fluluks.FluLuksHostApi.sshPublicKey$pigeonVar_messageChannelSuffix';
+    final pigeonVar_channel = BasicMessageChannel<Object?>(
+      pigeonVar_channelName,
+      pigeonChannelCodec,
+      binaryMessenger: pigeonVar_binaryMessenger,
+    );
+    final Future<Object?> pigeonVar_sendFuture = pigeonVar_channel.send(<Object?>[keyId]);
+    final pigeonVar_replyList = await pigeonVar_sendFuture as List<Object?>?;
+
+    final Object? pigeonVar_replyValue = _extractReplyValueOrThrow(
+        pigeonVar_replyList,
+        pigeonVar_channelName,
+        isNullValid: false,
+    )
+    ;
+    return pigeonVar_replyValue! as String;
+  }
+
+  Future<void> setServerKey(String serverId, String? keyId) async {
+    final pigeonVar_channelName = 'dev.flutter.pigeon.fluluks.FluLuksHostApi.setServerKey$pigeonVar_messageChannelSuffix';
+    final pigeonVar_channel = BasicMessageChannel<Object?>(
+      pigeonVar_channelName,
+      pigeonChannelCodec,
+      binaryMessenger: pigeonVar_binaryMessenger,
+    );
+    final Future<Object?> pigeonVar_sendFuture = pigeonVar_channel.send(<Object?>[serverId, keyId]);
+    final pigeonVar_replyList = await pigeonVar_sendFuture as List<Object?>?;
+
+    _extractReplyValueOrThrow(
+        pigeonVar_replyList,
+        pigeonVar_channelName,
+        isNullValid: true,
+    )
+    ;
+  }
+
+  Future<void> shareText(String text) async {
+    final pigeonVar_channelName = 'dev.flutter.pigeon.fluluks.FluLuksHostApi.shareText$pigeonVar_messageChannelSuffix';
+    final pigeonVar_channel = BasicMessageChannel<Object?>(
+      pigeonVar_channelName,
+      pigeonChannelCodec,
+      binaryMessenger: pigeonVar_binaryMessenger,
+    );
+    final Future<Object?> pigeonVar_sendFuture = pigeonVar_channel.send(<Object?>[text]);
+    final pigeonVar_replyList = await pigeonVar_sendFuture as List<Object?>?;
+
+    _extractReplyValueOrThrow(
+        pigeonVar_replyList,
+        pigeonVar_channelName,
+        isNullValid: true,
+    )
+    ;
+  }
+
+  /// Phase 13 : installe la clé publique `keyId` dans `~/.ssh/authorized_keys` de `serverId` (mot de passe pour ce
+  /// seul usage ; mêmes erreurs que `connectServer`) ; rend le message à montrer (« Clé installée sur … »).
+  Future<String> installPublicKey(String serverId, String keyId, Uint8List? password) async {
+    final pigeonVar_channelName = 'dev.flutter.pigeon.fluluks.FluLuksHostApi.installPublicKey$pigeonVar_messageChannelSuffix';
+    final pigeonVar_channel = BasicMessageChannel<Object?>(
+      pigeonVar_channelName,
+      pigeonChannelCodec,
+      binaryMessenger: pigeonVar_binaryMessenger,
+    );
+    final Future<Object?> pigeonVar_sendFuture = pigeonVar_channel.send(<Object?>[serverId, keyId, password]);
+    final pigeonVar_replyList = await pigeonVar_sendFuture as List<Object?>?;
+
+    final Object? pigeonVar_replyValue = _extractReplyValueOrThrow(
+        pigeonVar_replyList,
+        pigeonVar_channelName,
+        isNullValid: false,
+    )
+    ;
+    return pigeonVar_replyValue! as String;
+  }
+
+  /// Phase 13 : commandes enregistrées ; `snippets` : celles du serveur puis les communes.
+  Future<List<SnippetMsg>> snippets(String? serverId) async {
+    final pigeonVar_channelName = 'dev.flutter.pigeon.fluluks.FluLuksHostApi.snippets$pigeonVar_messageChannelSuffix';
+    final pigeonVar_channel = BasicMessageChannel<Object?>(
+      pigeonVar_channelName,
+      pigeonChannelCodec,
+      binaryMessenger: pigeonVar_binaryMessenger,
+    );
+    final Future<Object?> pigeonVar_sendFuture = pigeonVar_channel.send(<Object?>[serverId]);
+    final pigeonVar_replyList = await pigeonVar_sendFuture as List<Object?>?;
+
+    final Object? pigeonVar_replyValue = _extractReplyValueOrThrow(
+        pigeonVar_replyList,
+        pigeonVar_channelName,
+        isNullValid: false,
+    )
+    ;
+    return (pigeonVar_replyValue! as List<Object?>).cast<SnippetMsg>();
+  }
+
+  Future<SnippetMsg> saveSnippet(SnippetMsg snippet) async {
+    final pigeonVar_channelName = 'dev.flutter.pigeon.fluluks.FluLuksHostApi.saveSnippet$pigeonVar_messageChannelSuffix';
+    final pigeonVar_channel = BasicMessageChannel<Object?>(
+      pigeonVar_channelName,
+      pigeonChannelCodec,
+      binaryMessenger: pigeonVar_binaryMessenger,
+    );
+    final Future<Object?> pigeonVar_sendFuture = pigeonVar_channel.send(<Object?>[snippet]);
+    final pigeonVar_replyList = await pigeonVar_sendFuture as List<Object?>?;
+
+    final Object? pigeonVar_replyValue = _extractReplyValueOrThrow(
+        pigeonVar_replyList,
+        pigeonVar_channelName,
+        isNullValid: false,
+    )
+    ;
+    return pigeonVar_replyValue! as SnippetMsg;
+  }
+
+  Future<void> deleteSnippet(String id) async {
+    final pigeonVar_channelName = 'dev.flutter.pigeon.fluluks.FluLuksHostApi.deleteSnippet$pigeonVar_messageChannelSuffix';
+    final pigeonVar_channel = BasicMessageChannel<Object?>(
+      pigeonVar_channelName,
+      pigeonChannelCodec,
+      binaryMessenger: pigeonVar_binaryMessenger,
+    );
+    final Future<Object?> pigeonVar_sendFuture = pigeonVar_channel.send(<Object?>[id]);
+    final pigeonVar_replyList = await pigeonVar_sendFuture as List<Object?>?;
+
+    _extractReplyValueOrThrow(
+        pigeonVar_replyList,
+        pigeonVar_channelName,
+        isNullValid: true,
+    )
+    ;
+  }
+
+  /// Phase 13 : tunnels (redirection de port locale, 127.0.0.1 seulement). `startTunnel` : sur le terminal ouvert
+  /// `sessionId` du même serveur. `openUrl` : ouvre une adresse dans le navigateur.
+  Future<List<TunnelMsg>> tunnels(String serverId) async {
+    final pigeonVar_channelName = 'dev.flutter.pigeon.fluluks.FluLuksHostApi.tunnels$pigeonVar_messageChannelSuffix';
+    final pigeonVar_channel = BasicMessageChannel<Object?>(
+      pigeonVar_channelName,
+      pigeonChannelCodec,
+      binaryMessenger: pigeonVar_binaryMessenger,
+    );
+    final Future<Object?> pigeonVar_sendFuture = pigeonVar_channel.send(<Object?>[serverId]);
+    final pigeonVar_replyList = await pigeonVar_sendFuture as List<Object?>?;
+
+    final Object? pigeonVar_replyValue = _extractReplyValueOrThrow(
+        pigeonVar_replyList,
+        pigeonVar_channelName,
+        isNullValid: false,
+    )
+    ;
+    return (pigeonVar_replyValue! as List<Object?>).cast<TunnelMsg>();
+  }
+
+  Future<TunnelMsg> saveTunnel(TunnelMsg tunnel) async {
+    final pigeonVar_channelName = 'dev.flutter.pigeon.fluluks.FluLuksHostApi.saveTunnel$pigeonVar_messageChannelSuffix';
+    final pigeonVar_channel = BasicMessageChannel<Object?>(
+      pigeonVar_channelName,
+      pigeonChannelCodec,
+      binaryMessenger: pigeonVar_binaryMessenger,
+    );
+    final Future<Object?> pigeonVar_sendFuture = pigeonVar_channel.send(<Object?>[tunnel]);
+    final pigeonVar_replyList = await pigeonVar_sendFuture as List<Object?>?;
+
+    final Object? pigeonVar_replyValue = _extractReplyValueOrThrow(
+        pigeonVar_replyList,
+        pigeonVar_channelName,
+        isNullValid: false,
+    )
+    ;
+    return pigeonVar_replyValue! as TunnelMsg;
+  }
+
+  Future<void> deleteTunnel(String id) async {
+    final pigeonVar_channelName = 'dev.flutter.pigeon.fluluks.FluLuksHostApi.deleteTunnel$pigeonVar_messageChannelSuffix';
+    final pigeonVar_channel = BasicMessageChannel<Object?>(
+      pigeonVar_channelName,
+      pigeonChannelCodec,
+      binaryMessenger: pigeonVar_binaryMessenger,
+    );
+    final Future<Object?> pigeonVar_sendFuture = pigeonVar_channel.send(<Object?>[id]);
+    final pigeonVar_replyList = await pigeonVar_sendFuture as List<Object?>?;
+
+    _extractReplyValueOrThrow(
+        pigeonVar_replyList,
+        pigeonVar_channelName,
+        isNullValid: true,
+    )
+    ;
+  }
+
+  Future<TunnelMsg> startTunnel(String sessionId, String tunnelId) async {
+    final pigeonVar_channelName = 'dev.flutter.pigeon.fluluks.FluLuksHostApi.startTunnel$pigeonVar_messageChannelSuffix';
+    final pigeonVar_channel = BasicMessageChannel<Object?>(
+      pigeonVar_channelName,
+      pigeonChannelCodec,
+      binaryMessenger: pigeonVar_binaryMessenger,
+    );
+    final Future<Object?> pigeonVar_sendFuture = pigeonVar_channel.send(<Object?>[sessionId, tunnelId]);
+    final pigeonVar_replyList = await pigeonVar_sendFuture as List<Object?>?;
+
+    final Object? pigeonVar_replyValue = _extractReplyValueOrThrow(
+        pigeonVar_replyList,
+        pigeonVar_channelName,
+        isNullValid: false,
+    )
+    ;
+    return pigeonVar_replyValue! as TunnelMsg;
+  }
+
+  Future<void> stopTunnel(String sessionId, String tunnelId) async {
+    final pigeonVar_channelName = 'dev.flutter.pigeon.fluluks.FluLuksHostApi.stopTunnel$pigeonVar_messageChannelSuffix';
+    final pigeonVar_channel = BasicMessageChannel<Object?>(
+      pigeonVar_channelName,
+      pigeonChannelCodec,
+      binaryMessenger: pigeonVar_binaryMessenger,
+    );
+    final Future<Object?> pigeonVar_sendFuture = pigeonVar_channel.send(<Object?>[sessionId, tunnelId]);
+    final pigeonVar_replyList = await pigeonVar_sendFuture as List<Object?>?;
+
+    _extractReplyValueOrThrow(
+        pigeonVar_replyList,
+        pigeonVar_channelName,
+        isNullValid: true,
+    )
+    ;
+  }
+
+  Future<void> openUrl(String url) async {
+    final pigeonVar_channelName = 'dev.flutter.pigeon.fluluks.FluLuksHostApi.openUrl$pigeonVar_messageChannelSuffix';
+    final pigeonVar_channel = BasicMessageChannel<Object?>(
+      pigeonVar_channelName,
+      pigeonChannelCodec,
+      binaryMessenger: pigeonVar_binaryMessenger,
+    );
+    final Future<Object?> pigeonVar_sendFuture = pigeonVar_channel.send(<Object?>[url]);
     final pigeonVar_replyList = await pigeonVar_sendFuture as List<Object?>?;
 
     _extractReplyValueOrThrow(
@@ -3107,6 +4033,25 @@ class FluLuksHostApi {
     ;
   }
 
+  /// Phase 13 : FLAG_SECURE sur la fenêtre de Portail (terminal masqué dans les captures et les applications récentes).
+  Future<void> setSecureScreen(bool secure) async {
+    final pigeonVar_channelName = 'dev.flutter.pigeon.fluluks.FluLuksHostApi.setSecureScreen$pigeonVar_messageChannelSuffix';
+    final pigeonVar_channel = BasicMessageChannel<Object?>(
+      pigeonVar_channelName,
+      pigeonChannelCodec,
+      binaryMessenger: pigeonVar_binaryMessenger,
+    );
+    final Future<Object?> pigeonVar_sendFuture = pigeonVar_channel.send(<Object?>[secure]);
+    final pigeonVar_replyList = await pigeonVar_sendFuture as List<Object?>?;
+
+    _extractReplyValueOrThrow(
+        pigeonVar_replyList,
+        pigeonVar_channelName,
+        isNullValid: true,
+    )
+    ;
+  }
+
   Future<AppInfoMsg> getAppInfo() async {
     final pigeonVar_channelName = 'dev.flutter.pigeon.fluluks.FluLuksHostApi.getAppInfo$pigeonVar_messageChannelSuffix';
     final pigeonVar_channel = BasicMessageChannel<Object?>(
@@ -3165,6 +4110,16 @@ abstract class FluLuksEventsApi {
 
   /// Musique en cours, ou null à l'arrêt ; `message` : raison d'un arrêt subi (« Lecture arrêtée : stockage fermé »).
   void onPlayerChanged(PlayerMsg? player, String? message);
+
+  /// Phase 13 : invite keyboard-interactive d'un serveur SSH (code de vérification…), à poser à l'utilisateur ; réponse
+  /// par `answerSshPrompt` dans les 120 s.
+  void onSshPrompt(SshPromptMsg prompt);
+
+  /// Phase 13 : sortie d'un terminal, par lots (au plus un toutes les 16 ms, 64 Kio au plus).
+  void onTerminalOutput(String sessionId, Uint8List data);
+
+  /// Phase 13 : état d'un terminal changé (ouvert, fermé par le serveur, connexion perdue, fermé à la demande).
+  void onTerminalChanged(TerminalSessionMsg session);
 
   static void setUp(FluLuksEventsApi? api, {BinaryMessenger? binaryMessenger, String messageChannelSuffix = '',}) {
     messageChannelSuffix = messageChannelSuffix.isNotEmpty ? '.$messageChannelSuffix' : '';
@@ -3288,6 +4243,70 @@ abstract class FluLuksEventsApi {
           final String? arg_message = args[1] as String?;
           try {
             api.onPlayerChanged(arg_player, arg_message);
+            return wrapResponse(empty: true);
+          } on PlatformException catch (e) {
+            return wrapResponse(error: e);
+          }          catch (e) {
+            return wrapResponse(error: PlatformException(code: 'error', message: e.toString()));
+          }
+        });
+      }
+    }
+    {
+      final pigeonVar_channel = BasicMessageChannel<Object?>(
+          'dev.flutter.pigeon.fluluks.FluLuksEventsApi.onSshPrompt$messageChannelSuffix', pigeonChannelCodec,
+          binaryMessenger: binaryMessenger);
+      if (api == null) {
+        pigeonVar_channel.setMessageHandler(null);
+      } else {
+        pigeonVar_channel.setMessageHandler((Object? message) async {
+          final List<Object?> args = message! as List<Object?>;
+          final SshPromptMsg arg_prompt = args[0]! as SshPromptMsg;
+          try {
+            api.onSshPrompt(arg_prompt);
+            return wrapResponse(empty: true);
+          } on PlatformException catch (e) {
+            return wrapResponse(error: e);
+          }          catch (e) {
+            return wrapResponse(error: PlatformException(code: 'error', message: e.toString()));
+          }
+        });
+      }
+    }
+    {
+      final pigeonVar_channel = BasicMessageChannel<Object?>(
+          'dev.flutter.pigeon.fluluks.FluLuksEventsApi.onTerminalOutput$messageChannelSuffix', pigeonChannelCodec,
+          binaryMessenger: binaryMessenger);
+      if (api == null) {
+        pigeonVar_channel.setMessageHandler(null);
+      } else {
+        pigeonVar_channel.setMessageHandler((Object? message) async {
+          final List<Object?> args = message! as List<Object?>;
+          final String arg_sessionId = args[0]! as String;
+          final Uint8List arg_data = args[1]! as Uint8List;
+          try {
+            api.onTerminalOutput(arg_sessionId, arg_data);
+            return wrapResponse(empty: true);
+          } on PlatformException catch (e) {
+            return wrapResponse(error: e);
+          }          catch (e) {
+            return wrapResponse(error: PlatformException(code: 'error', message: e.toString()));
+          }
+        });
+      }
+    }
+    {
+      final pigeonVar_channel = BasicMessageChannel<Object?>(
+          'dev.flutter.pigeon.fluluks.FluLuksEventsApi.onTerminalChanged$messageChannelSuffix', pigeonChannelCodec,
+          binaryMessenger: binaryMessenger);
+      if (api == null) {
+        pigeonVar_channel.setMessageHandler(null);
+      } else {
+        pigeonVar_channel.setMessageHandler((Object? message) async {
+          final List<Object?> args = message! as List<Object?>;
+          final TerminalSessionMsg arg_session = args[0]! as TerminalSessionMsg;
+          try {
+            api.onTerminalChanged(arg_session);
             return wrapResponse(empty: true);
           } on PlatformException catch (e) {
             return wrapResponse(error: e);

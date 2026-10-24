@@ -68,7 +68,7 @@ void main() {
     await pump(tester, api0());
     await tester.scrollUntilVisible(find.text('Dossiers distants'), 200);
     await showServer(tester);
-    expect(find.text('SFTP · charles@192.168.0.10:22'), findsOneWidget);
+    expect(find.text('SFTP · SSH · charles@192.168.0.10:22'), findsOneWidget);
     expect(find.text('Ajouter un serveur'), findsOneWidget);
   });
 

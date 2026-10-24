@@ -8,11 +8,13 @@ import '../screens/explorer_screen.dart';
 import '../screens/server_form_screen.dart';
 import '../state/app_state.dart';
 import '../strings_fr.dart';
+import '../terminal/terminal_screen.dart';
 import '../ui/feedback.dart';
 import '../ui/tokens.dart';
+import 'connection_details_sheet.dart';
 
-/// Serveur distant enregistré (accueil) : toucher connecte puis ouvre son dossier de départ ; Déconnecter si la
-/// connexion est ouverte ; Modifier ouvre sa fiche.
+/// Serveur distant enregistré (accueil) : toucher connecte puis ouvre son dossier de départ ; Terminal (SFTP
+/// seulement, phase 13) ouvre une session SSH ; Déconnecter si la connexion est ouverte ; Modifier ouvre sa fiche.
 class ServerTile extends StatelessWidget {
   const ServerTile({super.key, required this.state, required this.server});
 
@@ -34,6 +36,12 @@ class ServerTile extends StatelessWidget {
         subtitle: Text(Fr.serverLine(s.protocol, s.user, s.host, s.port, s.connected)),
         onTap: () => connectAndOpen(context, state, s),
         trailing: Row(mainAxisSize: MainAxisSize.min, children: [
+          if (s.protocol == 'sftp')
+            IconButton(
+              tooltip: Fr.terminal,
+              icon: const Icon(Icons.terminal_rounded),
+              onPressed: () => openTerminal(context, state, s),
+            ),
           if (s.connected)
             IconButton(
               tooltip: Fr.disconnect,
@@ -52,29 +60,42 @@ class ServerTile extends StatelessWidget {
   }
 }
 
-/// Connecte [s] puis ouvre son dossier de départ. Mot de passe manquant ou refusé : demandé ; clé SFTP inconnue :
-/// montrée, et acceptée seulement sur « Faire confiance » ; clé changée : refus expliqué.
+/// Connecte [s] puis ouvre son dossier de départ (voir [withServerAuth]).
 Future<void> connectAndOpen(BuildContext context, AppState state, RemoteServerMsg s, {Uint8List? password}) async {
+  final src = await withServerAuth(context, state, s, (pw) => state.connectServer(s.id, pw), password: password);
+  if (src != null && context.mounted) await openExplorer(context, state, src.id, path: s.startPath);
+}
+
+/// Lance [action] sur le serveur [s] (connexion, test) ; rend son résultat, ou null après un échec déjà montré. Mot de
+/// passe manquant ou refusé : demandé ; clé SFTP inconnue : montrée, et acceptée seulement sur « Faire confiance » ;
+/// clé changée : refus expliqué ; échec SSH (phase 13) : message précis et bouton « Détails ».
+Future<T?> withServerAuth<T>(
+  BuildContext context,
+  AppState state,
+  RemoteServerMsg s,
+  Future<T> Function(Uint8List? password) action, {
+  Uint8List? password,
+}) async {
   try {
-    final src = await state.connectServer(s.id, password);
-    if (context.mounted) await openExplorer(context, state, src.id, path: s.startPath);
+    return await action(password);
   } on PlatformException catch (e) {
-    if (!context.mounted) return;
+    if (!context.mounted) return null;
     switch (e.code) {
       case 'auth':
         final p = await _askPassword(context, s, wrong: e.details != true);
-        if (p == null || !context.mounted) return;
+        if (p == null || !context.mounted) return null;
         final bytes = Uint8List.fromList(utf8.encode(p));
         try {
-          await connectAndOpen(context, state, s, password: bytes);
+          return await withServerAuth(context, state, s, action, password: bytes);
         } finally {
           bytes.fillRange(0, bytes.length, 0);
         }
       case 'hostkey-unknown':
         final fp = e.details as String? ?? '';
-        if (!await _trust(context, fp) || !context.mounted) return;
+        if (!await _trust(context, fp) || !context.mounted) return null;
         await state.trustHostKey(s.id, fp);
-        if (context.mounted) await connectAndOpen(context, state, s, password: password);
+        if (!context.mounted) return null;
+        return withServerAuth(context, state, s, action, password: password);
       case 'hostkey-changed':
         await showDialog<void>(
           context: context,
@@ -84,8 +105,19 @@ Future<void> connectAndOpen(BuildContext context, AppState state, RemoteServerMs
             actions: [TextButton(onPressed: () => Navigator.pop(ctx), child: const Text(Fr.ok))],
           ),
         );
+        return null;
+      case 'ssh':
+        showMessage(
+          context,
+          e.message ?? Fr.genericError,
+          kind: MessageKind.error,
+          actionLabel: Fr.details,
+          onAction: () => showConnectionDetails(context, state, s.id, cause: e.details as String?),
+        );
+        return null;
       default:
         showMessage(context, e.message ?? Fr.genericError, kind: MessageKind.error);
+        return null;
     }
   }
 }
