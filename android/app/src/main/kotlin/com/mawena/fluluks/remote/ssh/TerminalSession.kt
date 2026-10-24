@@ -3,12 +3,14 @@ package com.mawena.fluluks.remote.ssh
 import com.jcraft.jsch.ChannelShell
 import com.jcraft.jsch.JSchException
 import com.jcraft.jsch.Session
+import com.mawena.fluluks.remote.RemoteIOException
 import com.mawena.fluluks.remote.Secrets
 import com.mawena.fluluks.remote.ServerConfig
 import com.mawena.fluluks.remote.net
 import java.io.IOException
 import java.io.InputStream
 import java.io.OutputStream
+import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
 
@@ -21,6 +23,8 @@ data class TerminalInfo(
     val error: String?,
     val cols: Int,
     val rows: Int,
+    /** Tunnels ouverts sur cette session (phase 13, T10). */
+    val tunnels: Int = 0,
 ) {
     companion object {
         const val CONNECTING = "connecting"
@@ -52,6 +56,34 @@ internal class TerminalSession(
     private var channel: ChannelShell? = null
     private var out: OutputStream? = null
     @Volatile private var closing = false
+
+    /** Tunnels ouverts : identifiant → port du téléphone. */
+    private val forwards = ConcurrentHashMap<String, Int>()
+
+    fun activeTunnels(): Set<String> = forwards.keys.toSet()
+
+    /** Ouvre le tunnel [t] sur 127.0.0.1 seulement ; port déjà pris ou refus : message en français. */
+    fun startTunnel(t: TunnelConfig) {
+        if (forwards.containsKey(t.id)) return
+        val s = session?.takeIf { info.state == TerminalInfo.OPEN } ?: throw RemoteIOException(SESSION_CLOSED)
+        try {
+            s.setPortForwardingL(LOOPBACK, t.localPort, t.remoteHost, t.remotePort)
+        } catch (e: JSchException) {
+            val taken = e.cause is java.net.BindException || e.message.orEmpty().contains("cannot be bound")
+            throw RemoteIOException(
+                if (taken) "Le port ${t.localPort} est déjà utilisé sur ce téléphone" else "Tunnel impossible\u00A0: ${e.message.orEmpty()}",
+                e,
+            )
+        }
+        forwards[t.id] = t.localPort
+        info = info.copy(tunnels = forwards.size)
+    }
+
+    fun stopTunnel(id: String) {
+        val port = forwards.remove(id) ?: return
+        runCatching { session?.delPortForwardingL(LOOPBACK, port) }
+        info = info.copy(tunnels = forwards.size)
+    }
 
     /** Connecte (vérification d'empreinte et authentification par [SshConnector]) puis ouvre le shell. */
     fun connect(secrets: Secrets, prompts: SshPrompts?, startDir: String?) {
@@ -114,6 +146,7 @@ internal class TerminalSession(
     }
 
     private fun release() {
+        for (id in forwards.keys.toList()) stopTunnel(id)
         writer.shutdownNow()
         runCatching { channel?.disconnect() }
         runCatching { session?.disconnect() }
@@ -154,6 +187,8 @@ internal class TerminalSession(
     companion object {
         const val PTY_TYPE = "xterm-256color"
         const val LOST = "Connexion au serveur perdue"
+        const val SESSION_CLOSED = "Session fermée"
+        private const val LOOPBACK = "127.0.0.1"
         const val MAX_SIZE = 1000
         private const val READ_BUFFER = 16 * 1024
         private const val DROP_WAIT_NS = 1_000_000_000L

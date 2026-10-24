@@ -20,6 +20,7 @@ import 'package:fluluks/src/screens/text_editor_screen.dart';
 import 'package:fluluks/src/screens/trash_screen.dart';
 import 'package:fluluks/src/state/app_state.dart';
 import 'package:fluluks/src/terminal/terminal_screen.dart';
+import 'package:fluluks/src/terminal/tunnels_screen.dart';
 import 'package:fluluks/src/ui/root.dart';
 import 'package:fluluks/src/widgets/mini_player.dart';
 import 'package:fluluks/src/widgets/unlock_dialog.dart';
@@ -30,7 +31,7 @@ import 'fake_host_api.dart';
 /// Écrans que [pumpScreen] sait afficher, sur les données de [demoApi].
 const screens = [
   'home', 'explorerList', 'explorerGrid', 'filterGrid', 'search', 'globalSearch', 'trash', 'space', 'settings', //
-  'about', 'help', 'welcome', 'unlock', 'format', 'editor', 'serverForm', 'nowPlaying', 'terminal', 'sshKeys',
+  'about', 'help', 'welcome', 'unlock', 'format', 'editor', 'serverForm', 'nowPlaying', 'terminal', 'sshKeys', 'tunnels',
 ];
 
 /// Pont et état du dernier [pumpScreen] (pour les tests qui agissent ensuite sur l'écran).
@@ -85,7 +86,13 @@ Future<void> pumpScreen(
     );
   }
   String? terminalId;
-  if (screen == 'terminal') {
+  if (screen == 'tunnels') {
+    api.tunnelList.addAll([
+      TunnelMsg(id: 'u1', serverId: 's1', localPort: 8080, remoteHost: 'localhost', remotePort: 80, auto: true, active: true),
+      TunnelMsg(id: 'u2', serverId: 's1', localPort: 5433, remoteHost: 'db', remotePort: 5432, auto: false, active: false),
+    ]);
+  }
+  if (screen == 'terminal' || screen == 'tunnels') {
     terminalId = (await state.terminals.open('s1')).info.id;
     state.onTerminalOutput(
       terminalId,
@@ -113,6 +120,7 @@ Future<void> pumpScreen(
     'serverForm' => ServerFormScreen(state: state, server: api.servers.single),
     'terminal' => TerminalScreen(state: state, sessionId: terminalId!),
     'sshKeys' => SshKeysScreen(state: state),
+    'tunnels' => TunnelsScreen(state: state, serverId: 's1', sessionId: terminalId),
     'unlock' || 'nowPlaying' => null,
     _ => throw ArgumentError.value(screen, 'screen'),
   };

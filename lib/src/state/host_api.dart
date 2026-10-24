@@ -73,6 +73,12 @@ abstract class HostApi {
   Future<List<SnippetMsg>> snippets(String? serverId);
   Future<SnippetMsg> saveSnippet(SnippetMsg snippet);
   Future<void> deleteSnippet(String id);
+  Future<List<TunnelMsg>> tunnels(String serverId);
+  Future<TunnelMsg> saveTunnel(TunnelMsg tunnel);
+  Future<void> deleteTunnel(String id);
+  Future<TunnelMsg> startTunnel(String sessionId, String tunnelId);
+  Future<void> stopTunnel(String sessionId, String tunnelId);
+  Future<void> openUrl(String url);
   Future<String?> importPrivateKey(String serverId);
   Future<void> forgetPrivateKey(String serverId);
   Future<Uint8List> readImage(String sourceId, String path);
@@ -252,6 +258,18 @@ class PigeonHostApi implements HostApi {
   Future<SnippetMsg> saveSnippet(SnippetMsg snippet) => _api.saveSnippet(snippet);
   @override
   Future<void> deleteSnippet(String id) => _api.deleteSnippet(id);
+  @override
+  Future<List<TunnelMsg>> tunnels(String serverId) => _api.tunnels(serverId);
+  @override
+  Future<TunnelMsg> saveTunnel(TunnelMsg tunnel) => _api.saveTunnel(tunnel);
+  @override
+  Future<void> deleteTunnel(String id) => _api.deleteTunnel(id);
+  @override
+  Future<TunnelMsg> startTunnel(String sessionId, String tunnelId) => _api.startTunnel(sessionId, tunnelId);
+  @override
+  Future<void> stopTunnel(String sessionId, String tunnelId) => _api.stopTunnel(sessionId, tunnelId);
+  @override
+  Future<void> openUrl(String url) => _api.openUrl(url);
   @override
   Future<String?> importPrivateKey(String serverId) => _api.importPrivateKey(serverId);
   @override

@@ -37,4 +37,13 @@ class SshServiceLogicTest {
         assertFalse(SshServiceLogic.onAction("autre") { closed++ })
         assertEquals(1, closed)
     }
+
+    @Test fun tunnelsCounted() {
+        val open = t("Maison", TerminalInfo.OPEN)
+        assertEquals("Maison · 1 tunnel actif", SshServiceLogic.text(listOf(open.copy(tunnels = 1))))
+        assertEquals(
+            "Maison, Cloud · 3 tunnels actifs",
+            SshServiceLogic.text(listOf(open.copy(tunnels = 2), t("Cloud", TerminalInfo.OPEN).copy(tunnels = 1))),
+        )
+    }
 }

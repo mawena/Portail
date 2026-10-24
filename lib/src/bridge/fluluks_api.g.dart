@@ -1742,6 +1742,88 @@ class SnippetMsg {
   }
 }
 
+/// Tunnel d'un serveur (phase 13) : `127.0.0.1:[localPort]` sur le téléphone mène à [remoteHost]:[remotePort] vu du
+/// serveur ; [auto] : ouvert avec chaque terminal ; [active] : ouvert sur un terminal ; [error] : dernier échec.
+class TunnelMsg {
+  TunnelMsg({
+    required this.id,
+    required this.serverId,
+    required this.localPort,
+    required this.remoteHost,
+    required this.remotePort,
+    required this.auto,
+    required this.active,
+    this.error,
+  });
+
+  String id;
+
+  String serverId;
+
+  int localPort;
+
+  String remoteHost;
+
+  int remotePort;
+
+  bool auto;
+
+  bool active;
+
+  String? error;
+
+  List<Object?> _toList() {
+    return <Object?>[
+      id,
+      serverId,
+      localPort,
+      remoteHost,
+      remotePort,
+      auto,
+      active,
+      error,
+    ];
+  }
+
+  Object encode() {
+    return _toList();  }
+
+  static TunnelMsg decode(Object result) {
+    result as List<Object?>;
+    return TunnelMsg(
+      id: result[0]! as String,
+      serverId: result[1]! as String,
+      localPort: result[2]! as int,
+      remoteHost: result[3]! as String,
+      remotePort: result[4]! as int,
+      auto: result[5]! as bool,
+      active: result[6]! as bool,
+      error: result[7] as String?,
+    );
+  }
+
+  @override
+  // ignore: avoid_equals_and_hash_code_on_mutable_classes
+  bool operator ==(Object other) {
+    if (other is! TunnelMsg || other.runtimeType != runtimeType) {
+      return false;
+    }
+    if (identical(this, other)) {
+      return true;
+    }
+    return _deepEquals(id, other.id) && _deepEquals(serverId, other.serverId) && _deepEquals(localPort, other.localPort) && _deepEquals(remoteHost, other.remoteHost) && _deepEquals(remotePort, other.remotePort) && _deepEquals(auto, other.auto) && _deepEquals(active, other.active) && _deepEquals(error, other.error);
+  }
+
+  @override
+  // ignore: avoid_equals_and_hash_code_on_mutable_classes
+  int get hashCode => _deepHash(<Object?>[runtimeType, ..._toList()]);
+
+  @override
+  String toString() {
+    return 'TunnelMsg(id: $id, serverId: $serverId, localPort: $localPort, remoteHost: $remoteHost, remotePort: $remotePort, auto: $auto, active: $active, error: $error)';
+  }
+}
+
 /// Clé du trousseau SSH (phase 13) : [type] « ssh-ed25519 »… ; [fingerprint] « SHA256:… » ; [usedBy] : noms des
 /// serveurs qui l'utilisent.
 class SshKeyMsg {
@@ -2145,20 +2227,23 @@ class _PigeonCodec extends StandardMessageCodec {
     }    else if (value is SnippetMsg) {
       buffer.putUint8(150);
       writeValue(buffer, value.encode());
-    }    else if (value is SshKeyMsg) {
+    }    else if (value is TunnelMsg) {
       buffer.putUint8(151);
       writeValue(buffer, value.encode());
-    }    else if (value is ViewPrefsMsg) {
+    }    else if (value is SshKeyMsg) {
       buffer.putUint8(152);
       writeValue(buffer, value.encode());
-    }    else if (value is UiPrefsMsg) {
+    }    else if (value is ViewPrefsMsg) {
       buffer.putUint8(153);
       writeValue(buffer, value.encode());
-    }    else if (value is AppInfoMsg) {
+    }    else if (value is UiPrefsMsg) {
       buffer.putUint8(154);
       writeValue(buffer, value.encode());
-    }    else if (value is FavoriteMsg) {
+    }    else if (value is AppInfoMsg) {
       buffer.putUint8(155);
+      writeValue(buffer, value.encode());
+    }    else if (value is FavoriteMsg) {
+      buffer.putUint8(156);
       writeValue(buffer, value.encode());
     } else {
       super.writeValue(buffer, value);
@@ -2213,14 +2298,16 @@ class _PigeonCodec extends StandardMessageCodec {
       case 150:
         return SnippetMsg.decode(readValue(buffer)!);
       case 151:
-        return SshKeyMsg.decode(readValue(buffer)!);
+        return TunnelMsg.decode(readValue(buffer)!);
       case 152:
-        return ViewPrefsMsg.decode(readValue(buffer)!);
+        return SshKeyMsg.decode(readValue(buffer)!);
       case 153:
-        return UiPrefsMsg.decode(readValue(buffer)!);
+        return ViewPrefsMsg.decode(readValue(buffer)!);
       case 154:
-        return AppInfoMsg.decode(readValue(buffer)!);
+        return UiPrefsMsg.decode(readValue(buffer)!);
       case 155:
+        return AppInfoMsg.decode(readValue(buffer)!);
+      case 156:
         return FavoriteMsg.decode(readValue(buffer)!);
       default:
         return super.readValueOfType(type, buffer);
@@ -3520,6 +3607,119 @@ class FluLuksHostApi {
       binaryMessenger: pigeonVar_binaryMessenger,
     );
     final Future<Object?> pigeonVar_sendFuture = pigeonVar_channel.send(<Object?>[id]);
+    final pigeonVar_replyList = await pigeonVar_sendFuture as List<Object?>?;
+
+    _extractReplyValueOrThrow(
+        pigeonVar_replyList,
+        pigeonVar_channelName,
+        isNullValid: true,
+    )
+    ;
+  }
+
+  /// Phase 13 : tunnels (redirection de port locale, 127.0.0.1 seulement). `startTunnel` : sur le terminal ouvert
+  /// `sessionId` du même serveur. `openUrl` : ouvre une adresse dans le navigateur.
+  Future<List<TunnelMsg>> tunnels(String serverId) async {
+    final pigeonVar_channelName = 'dev.flutter.pigeon.fluluks.FluLuksHostApi.tunnels$pigeonVar_messageChannelSuffix';
+    final pigeonVar_channel = BasicMessageChannel<Object?>(
+      pigeonVar_channelName,
+      pigeonChannelCodec,
+      binaryMessenger: pigeonVar_binaryMessenger,
+    );
+    final Future<Object?> pigeonVar_sendFuture = pigeonVar_channel.send(<Object?>[serverId]);
+    final pigeonVar_replyList = await pigeonVar_sendFuture as List<Object?>?;
+
+    final Object? pigeonVar_replyValue = _extractReplyValueOrThrow(
+        pigeonVar_replyList,
+        pigeonVar_channelName,
+        isNullValid: false,
+    )
+    ;
+    return (pigeonVar_replyValue! as List<Object?>).cast<TunnelMsg>();
+  }
+
+  Future<TunnelMsg> saveTunnel(TunnelMsg tunnel) async {
+    final pigeonVar_channelName = 'dev.flutter.pigeon.fluluks.FluLuksHostApi.saveTunnel$pigeonVar_messageChannelSuffix';
+    final pigeonVar_channel = BasicMessageChannel<Object?>(
+      pigeonVar_channelName,
+      pigeonChannelCodec,
+      binaryMessenger: pigeonVar_binaryMessenger,
+    );
+    final Future<Object?> pigeonVar_sendFuture = pigeonVar_channel.send(<Object?>[tunnel]);
+    final pigeonVar_replyList = await pigeonVar_sendFuture as List<Object?>?;
+
+    final Object? pigeonVar_replyValue = _extractReplyValueOrThrow(
+        pigeonVar_replyList,
+        pigeonVar_channelName,
+        isNullValid: false,
+    )
+    ;
+    return pigeonVar_replyValue! as TunnelMsg;
+  }
+
+  Future<void> deleteTunnel(String id) async {
+    final pigeonVar_channelName = 'dev.flutter.pigeon.fluluks.FluLuksHostApi.deleteTunnel$pigeonVar_messageChannelSuffix';
+    final pigeonVar_channel = BasicMessageChannel<Object?>(
+      pigeonVar_channelName,
+      pigeonChannelCodec,
+      binaryMessenger: pigeonVar_binaryMessenger,
+    );
+    final Future<Object?> pigeonVar_sendFuture = pigeonVar_channel.send(<Object?>[id]);
+    final pigeonVar_replyList = await pigeonVar_sendFuture as List<Object?>?;
+
+    _extractReplyValueOrThrow(
+        pigeonVar_replyList,
+        pigeonVar_channelName,
+        isNullValid: true,
+    )
+    ;
+  }
+
+  Future<TunnelMsg> startTunnel(String sessionId, String tunnelId) async {
+    final pigeonVar_channelName = 'dev.flutter.pigeon.fluluks.FluLuksHostApi.startTunnel$pigeonVar_messageChannelSuffix';
+    final pigeonVar_channel = BasicMessageChannel<Object?>(
+      pigeonVar_channelName,
+      pigeonChannelCodec,
+      binaryMessenger: pigeonVar_binaryMessenger,
+    );
+    final Future<Object?> pigeonVar_sendFuture = pigeonVar_channel.send(<Object?>[sessionId, tunnelId]);
+    final pigeonVar_replyList = await pigeonVar_sendFuture as List<Object?>?;
+
+    final Object? pigeonVar_replyValue = _extractReplyValueOrThrow(
+        pigeonVar_replyList,
+        pigeonVar_channelName,
+        isNullValid: false,
+    )
+    ;
+    return pigeonVar_replyValue! as TunnelMsg;
+  }
+
+  Future<void> stopTunnel(String sessionId, String tunnelId) async {
+    final pigeonVar_channelName = 'dev.flutter.pigeon.fluluks.FluLuksHostApi.stopTunnel$pigeonVar_messageChannelSuffix';
+    final pigeonVar_channel = BasicMessageChannel<Object?>(
+      pigeonVar_channelName,
+      pigeonChannelCodec,
+      binaryMessenger: pigeonVar_binaryMessenger,
+    );
+    final Future<Object?> pigeonVar_sendFuture = pigeonVar_channel.send(<Object?>[sessionId, tunnelId]);
+    final pigeonVar_replyList = await pigeonVar_sendFuture as List<Object?>?;
+
+    _extractReplyValueOrThrow(
+        pigeonVar_replyList,
+        pigeonVar_channelName,
+        isNullValid: true,
+    )
+    ;
+  }
+
+  Future<void> openUrl(String url) async {
+    final pigeonVar_channelName = 'dev.flutter.pigeon.fluluks.FluLuksHostApi.openUrl$pigeonVar_messageChannelSuffix';
+    final pigeonVar_channel = BasicMessageChannel<Object?>(
+      pigeonVar_channelName,
+      pigeonChannelCodec,
+      binaryMessenger: pigeonVar_binaryMessenger,
+    );
+    final Future<Object?> pigeonVar_sendFuture = pigeonVar_channel.send(<Object?>[url]);
     final pigeonVar_replyList = await pigeonVar_sendFuture as List<Object?>?;
 
     _extractReplyValueOrThrow(

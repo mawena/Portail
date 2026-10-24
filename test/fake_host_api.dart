@@ -443,6 +443,69 @@ class FakeHostApi implements HostApi {
   @override
   Future<void> deleteSnippet(String id) async => snippetList.removeWhere((s) => s.id == id);
 
+  /// Tunnels factices ; [startTunnelHook] remplace l'ouverture (erreurs) ; [openedUrls] : adresses ouvertes.
+  final tunnelList = <TunnelMsg>[];
+  TunnelMsg Function(String sessionId, String tunnelId)? startTunnelHook;
+  final openedUrls = <String>[];
+  var _tunnelSeq = 0;
+
+  TunnelMsg _withActive(TunnelMsg t, bool active, {String? error}) => TunnelMsg(
+      id: t.id,
+      serverId: t.serverId,
+      localPort: t.localPort,
+      remoteHost: t.remoteHost,
+      remotePort: t.remotePort,
+      auto: t.auto,
+      active: active,
+      error: error);
+
+  @override
+  Future<List<TunnelMsg>> tunnels(String serverId) async => tunnelList.where((t) => t.serverId == serverId).toList();
+
+  @override
+  Future<TunnelMsg> saveTunnel(TunnelMsg tunnel) async {
+    if (tunnel.localPort < 1024 || tunnel.localPort > 65535) {
+      throw PlatformException(code: '1', message: 'Port du téléphone entre 1024 et 65535');
+    }
+    final saved = TunnelMsg(
+        id: tunnel.id.isEmpty ? 'u${++_tunnelSeq}' : tunnel.id,
+        serverId: tunnel.serverId,
+        localPort: tunnel.localPort,
+        remoteHost: tunnel.remoteHost,
+        remotePort: tunnel.remotePort,
+        auto: tunnel.auto,
+        active: false);
+    final i = tunnelList.indexWhere((t) => t.id == saved.id);
+    if (i >= 0) {
+      tunnelList[i] = saved;
+    } else {
+      tunnelList.add(saved);
+    }
+    return saved;
+  }
+
+  @override
+  Future<void> deleteTunnel(String id) async => tunnelList.removeWhere((t) => t.id == id);
+
+  @override
+  Future<TunnelMsg> startTunnel(String sessionId, String tunnelId) async {
+    calls.add('startTunnel $sessionId $tunnelId');
+    final hook = startTunnelHook;
+    if (hook != null) return hook(sessionId, tunnelId);
+    final i = tunnelList.indexWhere((t) => t.id == tunnelId);
+    return tunnelList[i] = _withActive(tunnelList[i], true);
+  }
+
+  @override
+  Future<void> stopTunnel(String sessionId, String tunnelId) async {
+    calls.add('stopTunnel $sessionId $tunnelId');
+    final i = tunnelList.indexWhere((t) => t.id == tunnelId);
+    tunnelList[i] = _withActive(tunnelList[i], false);
+  }
+
+  @override
+  Future<void> openUrl(String url) async => openedUrls.add(url);
+
   /// Installation de clé : [installHook] remplace la réponse (erreurs) ; mots de passe reçus, décodés.
   String Function(String serverId, String keyId, Uint8List? password)? installHook;
   final installPasswords = <String?>[];

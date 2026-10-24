@@ -8,6 +8,7 @@ import com.mawena.fluluks.remote.Remotes
 import com.mawena.fluluks.remote.Secrets
 import java.io.FileNotFoundException
 import java.util.UUID
+import java.util.concurrent.ConcurrentHashMap
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 
@@ -66,6 +67,7 @@ object TerminalSessions {
         val sec = Remotes.secretsFor(cfg, password)
         try {
             t.connect(sec, SshPromptBridge.prompts, startDir)
+            for (tunnel in store.tunnels.list(serverId).filter { it.auto }) start(t, tunnel)
         } catch (e: Exception) {
             synchronized(this) { sessions.remove(t.info.id) }
             t.close()
@@ -76,6 +78,44 @@ object TerminalSessions {
         }
         changed(t.info)
         return t.info
+    }
+
+    /** Derniers échecs d'ouverture des tunnels, par tunnel. */
+    private val tunnelErrors = ConcurrentHashMap<String, String>()
+
+    /** Tunnels enregistrés de [serverId] et leur état (ouvert sur un terminal, dernier échec). */
+    fun tunnels(serverId: String): List<TunnelState> {
+        val active = synchronized(this) {
+            sessions.values.filter { it.info.serverId == serverId }.flatMap { it.activeTunnels() }.toSet()
+        }
+        return Remotes.servers().tunnels.list(serverId).map { TunnelState(it, it.id in active, tunnelErrors[it.id]) }
+    }
+
+    /** Ouvre le tunnel [tunnelId] sur le terminal [sessionId] (du même serveur). */
+    fun startTunnel(sessionId: String, tunnelId: String): TunnelState {
+        val tunnel = Remotes.servers().tunnels.get(tunnelId) ?: throw FileNotFoundException("Tunnel introuvable")
+        val t = synchronized(this) { sessions[sessionId] } ?: throw FileNotFoundException("Session introuvable")
+        if (t.info.serverId != tunnel.serverId) throw FilesException(EngineError.FL_EINVAL, "Tunnel d'un autre serveur")
+        start(t, tunnel)
+        changed(t.info)
+        tunnelErrors[tunnel.id]?.let { throw com.mawena.fluluks.remote.RemoteIOException(it) }
+        return TunnelState(tunnel, true, null)
+    }
+
+    fun stopTunnel(sessionId: String, tunnelId: String) {
+        val t = synchronized(this) { sessions[sessionId] } ?: return
+        t.stopTunnel(tunnelId)
+        changed(t.info)
+    }
+
+    /** Ouvre [tunnel] sur [t] ; l'échec est retenu pour l'écran des tunnels. */
+    private fun start(t: TerminalSession, tunnel: TunnelConfig) {
+        try {
+            t.startTunnel(tunnel)
+            tunnelErrors.remove(tunnel.id)
+        } catch (e: com.mawena.fluluks.remote.RemoteIOException) {
+            tunnelErrors[tunnel.id] = e.message.orEmpty()
+        }
     }
 
     fun write(id: String, data: ByteArray) {

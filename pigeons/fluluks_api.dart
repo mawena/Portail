@@ -412,6 +412,29 @@ class SnippetMsg {
   bool runNow;
 }
 
+/// Tunnel d'un serveur (phase 13) : `127.0.0.1:[localPort]` sur le téléphone mène à [remoteHost]:[remotePort] vu du
+/// serveur ; [auto] : ouvert avec chaque terminal ; [active] : ouvert sur un terminal ; [error] : dernier échec.
+class TunnelMsg {
+  TunnelMsg({
+    required this.id,
+    required this.serverId,
+    required this.localPort,
+    required this.remoteHost,
+    required this.remotePort,
+    required this.auto,
+    required this.active,
+    this.error,
+  });
+  String id;
+  String serverId;
+  int localPort;
+  String remoteHost;
+  int remotePort;
+  bool auto;
+  bool active;
+  String? error;
+}
+
 /// Clé du trousseau SSH (phase 13) : [type] « ssh-ed25519 »… ; [fingerprint] « SHA256:… » ; [usedBy] : noms des
 /// serveurs qui l'utilisent.
 class SshKeyMsg {
@@ -629,6 +652,16 @@ abstract class FluLuksHostApi {
   List<SnippetMsg> snippets(String? serverId);
   SnippetMsg saveSnippet(SnippetMsg snippet);
   void deleteSnippet(String id);
+
+  /// Phase 13 : tunnels (redirection de port locale, 127.0.0.1 seulement). `startTunnel` : sur le terminal ouvert
+  /// `sessionId` du même serveur. `openUrl` : ouvre une adresse dans le navigateur.
+  List<TunnelMsg> tunnels(String serverId);
+  TunnelMsg saveTunnel(TunnelMsg tunnel);
+  void deleteTunnel(String id);
+  @async
+  TunnelMsg startTunnel(String sessionId, String tunnelId);
+  void stopTunnel(String sessionId, String tunnelId);
+  void openUrl(String url);
 
   /// Clé privée OpenSSH choisie dans le sélecteur d'Android, scellée pour `serverId` ; rend sa description
   /// (« ssh-ed25519 SHA256:… »), ou null si rien n'a été choisi.

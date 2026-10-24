@@ -19,6 +19,7 @@ import 'package:fluluks/src/screens/text_editor_screen.dart';
 import 'package:fluluks/src/screens/trash_screen.dart';
 import 'package:fluluks/src/screens/welcome_screen.dart';
 import 'package:fluluks/src/terminal/terminal_screen.dart';
+import 'package:fluluks/src/terminal/tunnels_screen.dart';
 import 'package:fluluks/src/widgets/mini_player.dart';
 import 'package:fluluks/src/widgets/unlock_dialog.dart';
 
@@ -33,7 +34,7 @@ void main() {
     'settings': SettingsScreen, 'about': AboutScreen, 'help': HelpScreen, 'welcome': WelcomeScreen,
     'unlock': UnlockDialog, 'format': FormatScreen, 'editor': TextEditorScreen, 'serverForm': ServerFormScreen,
     'nowPlaying': NowPlayingScreen, 'terminal': TerminalScreen,
-    'sshKeys': SshKeysScreen,
+    'sshKeys': SshKeysScreen, 'tunnels': TunnelsScreen,
   };
   testWidgets('harnessShowsEachScreen', (t) async {
     for (final screen in screens) {

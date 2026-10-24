@@ -56,6 +56,8 @@ import com.mawena.fluluks.remote.ssh.SshFailure
 import com.mawena.fluluks.remote.ssh.SshPromptBridge
 import com.mawena.fluluks.remote.ssh.KeyInstaller
 import com.mawena.fluluks.remote.ssh.Snippet
+import com.mawena.fluluks.remote.ssh.TunnelConfig
+import com.mawena.fluluks.remote.ssh.TunnelState
 import com.mawena.fluluks.remote.ssh.SshKeyInfo
 import com.mawena.fluluks.remote.ssh.SshPrompts
 import com.mawena.fluluks.remote.ssh.TerminalInfo
@@ -521,6 +523,49 @@ class HostApiImpl(
     }
 
     override fun deleteSnippet(id: String) = keyOp { Remotes.servers().snippets.delete(id) }
+
+    private fun tunnelMsg(t: TunnelState) = TunnelMsg(
+        t.config.id, t.config.serverId, t.config.localPort.toLong(), t.config.remoteHost, t.config.remotePort.toLong(),
+        t.config.auto, t.active, t.error,
+    )
+
+    override fun tunnels(serverId: String): List<TunnelMsg> = keyOp { TerminalSessions.tunnels(serverId).map(::tunnelMsg) }
+
+    override fun saveTunnel(tunnel: TunnelMsg): TunnelMsg = keyOp {
+        try {
+            val saved = Remotes.servers().tunnels.save(
+                TunnelConfig(tunnel.id, tunnel.serverId, tunnel.localPort.toInt(), tunnel.remoteHost,
+                    tunnel.remotePort.toInt(), tunnel.auto),
+            )
+            TerminalSessions.tunnels(saved.serverId).first { it.config.id == saved.id }.let(::tunnelMsg)
+        } catch (e: IllegalArgumentException) {
+            throw FilesException(EngineError.FL_EINVAL, e.message ?: "Tunnel invalide")
+        }
+    }
+
+    override fun deleteTunnel(id: String) = keyOp {
+        val t = Remotes.servers().tunnels.get(id)
+        if (t != null) {
+            for (s in TerminalSessions.list().filter { it.serverId == t.serverId }) TerminalSessions.stopTunnel(s.id, id)
+        }
+        Remotes.servers().tunnels.delete(id)
+    }
+
+    override fun startTunnel(sessionId: String, tunnelId: String, callback: (Result<TunnelMsg>) -> Unit) =
+        io(callback) { keyOp { tunnelMsg(TerminalSessions.startTunnel(sessionId, tunnelId)) } }
+
+    override fun stopTunnel(sessionId: String, tunnelId: String) {
+        scope.launch(Dispatchers.IO) { TerminalSessions.stopTunnel(sessionId, tunnelId) }
+    }
+
+    override fun openUrl(url: String) {
+        val view = Intent(Intent.ACTION_VIEW, android.net.Uri.parse(url)).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+        try {
+            context.startActivity(view)
+        } catch (e: ActivityNotFoundException) {
+            throw FlutterError(EngineError.FL_ENOTSUP.toString(), "Aucun navigateur pour ouvrir cette adresse")
+        }
+    }
 
     override fun shareText(text: String) {
         val send = Intent(Intent.ACTION_SEND).setType("text/plain").putExtra(Intent.EXTRA_TEXT, text)

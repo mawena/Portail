@@ -39,8 +39,17 @@ object SshServiceLogic {
 
     fun title(n: Int) = if (n <= 1) "$n session SSH ouverte" else "$n sessions SSH ouvertes"
 
-    /** Noms des sessions en cours, dans l'ordre d'ouverture. */
-    fun text(sessions: List<TerminalInfo>) = active(sessions).joinToString(", ") { it.title }
+    /** Noms des sessions en cours, dans l'ordre d'ouverture, puis le nombre de tunnels ouverts (phase 13, T10). */
+    fun text(sessions: List<TerminalInfo>): String {
+        val a = active(sessions)
+        val names = a.joinToString(", ") { it.title }
+        val n = a.sumOf { it.tunnels }
+        return when (n) {
+            0 -> names
+            1 -> "$names · 1 tunnel actif"
+            else -> "$names · $n tunnels actifs"
+        }
+    }
 
     /** Action d'un intent : « Tout fermer » ferme toutes les sessions ; rend vrai si l'action est connue. */
     fun onAction(action: String?, closeAll: () -> Unit = TerminalSessions::closeAll): Boolean {

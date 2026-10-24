@@ -255,6 +255,28 @@ class Fr {
   static const snippetRun = 'Exécuter';
   static const noSnippets = 'Aucune commande enregistrée';
   static const saveAsSnippet = 'Enregistrer comme commande';
+  // tunnels
+  static const tunnels = 'Tunnels';
+  static const addTunnel = 'Ajouter un tunnel';
+  static const newTunnel = 'Nouveau tunnel';
+  static const editTunnel = 'Modifier le tunnel';
+  static const tunnelOptions = 'Options du tunnel';
+  static const tunnelLocalPort = 'Port du téléphone';
+  static const tunnelRemoteHost = 'Hôte vu du serveur';
+  static const tunnelRemotePort = 'Port distant';
+  static const tunnelAuto = 'Ouvrir avec chaque terminal';
+  static const tunnelAutoOn = 'Ouvert avec chaque terminal';
+  static const tunnelActive = 'Actif';
+  static String tunnelLine(int local, String host, int remote) => '127.0.0.1:$local → $host:$remote';
+  static const openInBrowser = 'Ouvrir dans le navigateur';
+  static const noTunnels = 'Aucun tunnel';
+  static const noTunnelsBody =
+      'Un tunnel mène un port du téléphone (127.0.0.1) vers un service du serveur, une page d\'administration par exemple.';
+  static const tunnelsNeedTerminal = 'Ouvrez un terminal sur ce serveur pour activer un tunnel.';
+  static const tunnelLocalPortRange = 'Port du téléphone entre 1024 et 65535';
+  static const tunnelRemotePortRange = 'Port distant entre 1 et 65535';
+  static const tunnelHostInvalid = 'Hôte distant invalide';
+  static const deleteTunnelAsk = 'Supprimer ce tunnel\u202F?';
   static const editServer = 'Modifier';
   static const disconnect = 'Déconnecter';
   static const serverForm = 'Serveur distant';

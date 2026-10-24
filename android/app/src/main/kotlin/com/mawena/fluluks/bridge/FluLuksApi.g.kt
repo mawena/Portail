@@ -1590,6 +1590,76 @@ data class SnippetMsg (
 }
 
 /**
+ * Tunnel d'un serveur (phase 13) : `127.0.0.1:[localPort]` sur le téléphone mène à [remoteHost]:[remotePort] vu du
+ * serveur ; [auto] : ouvert avec chaque terminal ; [active] : ouvert sur un terminal ; [error] : dernier échec.
+ *
+ * Generated class from Pigeon that represents data sent in messages.
+ */
+data class TunnelMsg (
+  val id: String,
+  val serverId: String,
+  val localPort: Long,
+  val remoteHost: String,
+  val remotePort: Long,
+  val auto: Boolean,
+  val active: Boolean,
+  val error: String? = null
+)
+ {
+  companion object {
+    fun fromList(pigeonVar_list: List<Any?>): TunnelMsg {
+      val id = pigeonVar_list[0] as String
+      val serverId = pigeonVar_list[1] as String
+      val localPort = pigeonVar_list[2] as Long
+      val remoteHost = pigeonVar_list[3] as String
+      val remotePort = pigeonVar_list[4] as Long
+      val auto = pigeonVar_list[5] as Boolean
+      val active = pigeonVar_list[6] as Boolean
+      val error = pigeonVar_list[7] as String?
+      return TunnelMsg(id, serverId, localPort, remoteHost, remotePort, auto, active, error)
+    }
+  }
+  fun toList(): List<Any?> {
+    return listOf(
+      id,
+      serverId,
+      localPort,
+      remoteHost,
+      remotePort,
+      auto,
+      active,
+      error,
+    )
+  }
+  override fun equals(other: Any?): Boolean {
+    if (other == null || other.javaClass != javaClass) {
+      return false
+    }
+    if (this === other) {
+      return true
+    }
+    val other = other as TunnelMsg
+    return FluLuksApiPigeonUtils.deepEquals(this.id, other.id) && FluLuksApiPigeonUtils.deepEquals(this.serverId, other.serverId) && FluLuksApiPigeonUtils.deepEquals(this.localPort, other.localPort) && FluLuksApiPigeonUtils.deepEquals(this.remoteHost, other.remoteHost) && FluLuksApiPigeonUtils.deepEquals(this.remotePort, other.remotePort) && FluLuksApiPigeonUtils.deepEquals(this.auto, other.auto) && FluLuksApiPigeonUtils.deepEquals(this.active, other.active) && FluLuksApiPigeonUtils.deepEquals(this.error, other.error)
+  }
+
+  override fun hashCode(): Int {
+    var result = javaClass.hashCode()
+    result = 31 * result + FluLuksApiPigeonUtils.deepHash(this.id)
+    result = 31 * result + FluLuksApiPigeonUtils.deepHash(this.serverId)
+    result = 31 * result + FluLuksApiPigeonUtils.deepHash(this.localPort)
+    result = 31 * result + FluLuksApiPigeonUtils.deepHash(this.remoteHost)
+    result = 31 * result + FluLuksApiPigeonUtils.deepHash(this.remotePort)
+    result = 31 * result + FluLuksApiPigeonUtils.deepHash(this.auto)
+    result = 31 * result + FluLuksApiPigeonUtils.deepHash(this.active)
+    result = 31 * result + FluLuksApiPigeonUtils.deepHash(this.error)
+    return result
+  }
+  override fun toString(): String {
+    return "TunnelMsg(id=$id, serverId=$serverId, localPort=$localPort, remoteHost=$remoteHost, remotePort=$remotePort, auto=$auto, active=$active, error=$error)"
+  }
+}
+
+/**
  * Clé du trousseau SSH (phase 13) : [type] « ssh-ed25519 »… ; [fingerprint] « SHA256:… » ; [usedBy] : noms des
  * serveurs qui l'utilisent.
  *
@@ -1988,25 +2058,30 @@ private open class FluLuksApiPigeonCodec : StandardMessageCodec() {
       }
       151.toByte() -> {
         return (readValue(buffer) as? List<Any?>)?.let {
-          SshKeyMsg.fromList(it)
+          TunnelMsg.fromList(it)
         }
       }
       152.toByte() -> {
         return (readValue(buffer) as? List<Any?>)?.let {
-          ViewPrefsMsg.fromList(it)
+          SshKeyMsg.fromList(it)
         }
       }
       153.toByte() -> {
         return (readValue(buffer) as? List<Any?>)?.let {
-          UiPrefsMsg.fromList(it)
+          ViewPrefsMsg.fromList(it)
         }
       }
       154.toByte() -> {
         return (readValue(buffer) as? List<Any?>)?.let {
-          AppInfoMsg.fromList(it)
+          UiPrefsMsg.fromList(it)
         }
       }
       155.toByte() -> {
+        return (readValue(buffer) as? List<Any?>)?.let {
+          AppInfoMsg.fromList(it)
+        }
+      }
+      156.toByte() -> {
         return (readValue(buffer) as? List<Any?>)?.let {
           FavoriteMsg.fromList(it)
         }
@@ -2104,24 +2179,28 @@ private open class FluLuksApiPigeonCodec : StandardMessageCodec() {
         stream.write(150)
         writeValue(stream, value.toList())
       }
-      is SshKeyMsg -> {
+      is TunnelMsg -> {
         stream.write(151)
         writeValue(stream, value.toList())
       }
-      is ViewPrefsMsg -> {
+      is SshKeyMsg -> {
         stream.write(152)
         writeValue(stream, value.toList())
       }
-      is UiPrefsMsg -> {
+      is ViewPrefsMsg -> {
         stream.write(153)
         writeValue(stream, value.toList())
       }
-      is AppInfoMsg -> {
+      is UiPrefsMsg -> {
         stream.write(154)
         writeValue(stream, value.toList())
       }
-      is FavoriteMsg -> {
+      is AppInfoMsg -> {
         stream.write(155)
+        writeValue(stream, value.toList())
+      }
+      is FavoriteMsg -> {
+        stream.write(156)
         writeValue(stream, value.toList())
       }
       else -> super.writeValue(stream, value)
@@ -2246,6 +2325,16 @@ interface FluLuksHostApi {
   fun snippets(serverId: String?): List<SnippetMsg>
   fun saveSnippet(snippet: SnippetMsg): SnippetMsg
   fun deleteSnippet(id: String)
+  /**
+   * Phase 13 : tunnels (redirection de port locale, 127.0.0.1 seulement). `startTunnel` : sur le terminal ouvert
+   * `sessionId` du même serveur. `openUrl` : ouvre une adresse dans le navigateur.
+   */
+  fun tunnels(serverId: String): List<TunnelMsg>
+  fun saveTunnel(tunnel: TunnelMsg): TunnelMsg
+  fun deleteTunnel(id: String)
+  fun startTunnel(sessionId: String, tunnelId: String, callback: (Result<TunnelMsg>) -> Unit)
+  fun stopTunnel(sessionId: String, tunnelId: String)
+  fun openUrl(url: String)
   /**
    * Clé privée OpenSSH choisie dans le sélecteur d'Android, scellée pour `serverId` ; rend sa description
    * (« ssh-ed25519 SHA256:… »), ou null si rien n'a été choisi.
@@ -3555,6 +3644,116 @@ interface FluLuksHostApi {
             val idArg = args[0] as String
             val wrapped: List<Any?> = try {
               api.deleteSnippet(idArg)
+              listOf(null)
+            } catch (exception: Throwable) {
+              FluLuksApiPigeonUtils.wrapError(exception)
+            }
+            reply.reply(wrapped)
+          }
+        } else {
+          channel.setMessageHandler(null)
+        }
+      }
+      run {
+        val channel = BasicMessageChannel<Any?>(binaryMessenger, "dev.flutter.pigeon.fluluks.FluLuksHostApi.tunnels$separatedMessageChannelSuffix", codec)
+        if (api != null) {
+          channel.setMessageHandler { message, reply ->
+            val args = message as List<Any?>
+            val serverIdArg = args[0] as String
+            val wrapped: List<Any?> = try {
+              listOf(api.tunnels(serverIdArg))
+            } catch (exception: Throwable) {
+              FluLuksApiPigeonUtils.wrapError(exception)
+            }
+            reply.reply(wrapped)
+          }
+        } else {
+          channel.setMessageHandler(null)
+        }
+      }
+      run {
+        val channel = BasicMessageChannel<Any?>(binaryMessenger, "dev.flutter.pigeon.fluluks.FluLuksHostApi.saveTunnel$separatedMessageChannelSuffix", codec)
+        if (api != null) {
+          channel.setMessageHandler { message, reply ->
+            val args = message as List<Any?>
+            val tunnelArg = args[0] as TunnelMsg
+            val wrapped: List<Any?> = try {
+              listOf(api.saveTunnel(tunnelArg))
+            } catch (exception: Throwable) {
+              FluLuksApiPigeonUtils.wrapError(exception)
+            }
+            reply.reply(wrapped)
+          }
+        } else {
+          channel.setMessageHandler(null)
+        }
+      }
+      run {
+        val channel = BasicMessageChannel<Any?>(binaryMessenger, "dev.flutter.pigeon.fluluks.FluLuksHostApi.deleteTunnel$separatedMessageChannelSuffix", codec)
+        if (api != null) {
+          channel.setMessageHandler { message, reply ->
+            val args = message as List<Any?>
+            val idArg = args[0] as String
+            val wrapped: List<Any?> = try {
+              api.deleteTunnel(idArg)
+              listOf(null)
+            } catch (exception: Throwable) {
+              FluLuksApiPigeonUtils.wrapError(exception)
+            }
+            reply.reply(wrapped)
+          }
+        } else {
+          channel.setMessageHandler(null)
+        }
+      }
+      run {
+        val channel = BasicMessageChannel<Any?>(binaryMessenger, "dev.flutter.pigeon.fluluks.FluLuksHostApi.startTunnel$separatedMessageChannelSuffix", codec)
+        if (api != null) {
+          channel.setMessageHandler { message, reply ->
+            val args = message as List<Any?>
+            val sessionIdArg = args[0] as String
+            val tunnelIdArg = args[1] as String
+            api.startTunnel(sessionIdArg, tunnelIdArg) { result: Result<TunnelMsg> ->
+              val error = result.exceptionOrNull()
+              if (error != null) {
+                reply.reply(FluLuksApiPigeonUtils.wrapError(error))
+              } else {
+                val data = result.getOrNull()
+                reply.reply(FluLuksApiPigeonUtils.wrapResult(data))
+              }
+            }
+          }
+        } else {
+          channel.setMessageHandler(null)
+        }
+      }
+      run {
+        val channel = BasicMessageChannel<Any?>(binaryMessenger, "dev.flutter.pigeon.fluluks.FluLuksHostApi.stopTunnel$separatedMessageChannelSuffix", codec)
+        if (api != null) {
+          channel.setMessageHandler { message, reply ->
+            val args = message as List<Any?>
+            val sessionIdArg = args[0] as String
+            val tunnelIdArg = args[1] as String
+            val wrapped: List<Any?> = try {
+              api.stopTunnel(sessionIdArg, tunnelIdArg)
+              listOf(null)
+            } catch (exception: Throwable) {
+              FluLuksApiPigeonUtils.wrapError(exception)
+            }
+            reply.reply(wrapped)
+          }
+        } else {
+          channel.setMessageHandler(null)
+        }
+      }
+      run {
+        val channel = BasicMessageChannel<Any?>(binaryMessenger, "dev.flutter.pigeon.fluluks.FluLuksHostApi.openUrl$separatedMessageChannelSuffix", codec)
+        if (api != null) {
+          channel.setMessageHandler { message, reply ->
+            val args = message as List<Any?>
+            val urlArg = args[0] as String
+            val wrapped: List<Any?> = try {
+              api.openUrl(urlArg)
               listOf(null)
             } catch (exception: Throwable) {
               FluLuksApiPigeonUtils.wrapError(exception)

@@ -14,8 +14,9 @@ import 'key_bar.dart';
 import 'snippets_sheet.dart';
 import 'terminal_hub.dart';
 import 'terminal_theme.dart';
+import 'tunnels_screen.dart';
 
-enum _Menu { paste, snippets, fontSize, close }
+enum _Menu { paste, snippets, tunnels, fontSize, close }
 
 /// Ouvre un terminal sur le serveur SFTP [s] (mot de passe, empreinte et échecs comme pour l'explorateur), puis son
 /// écran ; [startDir] : dossier de départ (« Ouvrir un terminal ici »).
@@ -285,12 +286,16 @@ class _TerminalScreenState extends State<TerminalScreen> {
             onSelected: (m) => switch (m) {
               _Menu.paste => _paste(e),
               _Menu.snippets => _snippets(e),
+              _Menu.tunnels => Navigator.of(context).push(MaterialPageRoute<void>(
+                  builder: (_) =>
+                      TunnelsScreen(state: _state, serverId: e.info.serverId, sessionId: e.isOpen ? e.info.id : null))),
               _Menu.fontSize => _chooseFontSize(),
               _Menu.close => _close(e),
             },
             itemBuilder: (_) => [
               PopupMenuItem(value: _Menu.paste, enabled: e.isOpen, child: const Text(Fr.terminalPaste)),
               PopupMenuItem(value: _Menu.snippets, enabled: e.isOpen, child: const Text(Fr.snippets)),
+              const PopupMenuItem(value: _Menu.tunnels, child: Text(Fr.tunnels)),
               const PopupMenuItem(value: _Menu.fontSize, child: Text(Fr.terminalFontSize)),
               const PopupMenuItem(value: _Menu.close, child: Text(Fr.closeSession)),
             ],

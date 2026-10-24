@@ -6,6 +6,7 @@ import 'package:flutter/services.dart';
 import '../bridge/fluluks_api.g.dart';
 import '../state/app_state.dart';
 import '../strings_fr.dart';
+import '../terminal/tunnels_screen.dart';
 import '../ui/dialogs.dart';
 import '../ui/feedback.dart';
 import '../ui/tokens.dart';
@@ -264,6 +265,11 @@ class _ServerFormScreenState extends State<ServerFormScreen> {
               Wrap(spacing: Space.s, children: [
                 TextButton(onPressed: _chooseKey, child: const Text(Fr.chooseKey)),
                 TextButton(onPressed: _installKey, child: const Text(Fr.installKeyHere)),
+                TextButton(
+                  onPressed: () => Navigator.of(context).push(MaterialPageRoute<void>(
+                      builder: (_) => TunnelsScreen(state: widget.state, serverId: widget.server!.id))),
+                  child: const Text(Fr.tunnels),
+                ),
                 TextButton(onPressed: _importKey, child: const Text(Fr.importKey)),
                 if (_keyInfo != null) TextButton(onPressed: _removeKey, child: const Text(Fr.removeKey)),
               ]),
