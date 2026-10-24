@@ -374,7 +374,7 @@ dans le même commit que le travail.
 - [x] T9 — Commandes enregistrées
 - [x] T10 — Tunnels (redirection de port locale)
 - [x] T11 — Documentation
-- [ ] T12 — Essais instrumentés sur le Pixel
+- [x] T12 — Essais instrumentés sur le Pixel *(5/5 : mot de passe, keyboard-interactive, clé Ed25519 générée et installée, tunnel, service 2 min)*
 - [ ] *(utilisateur)* T13 — Essais sur le Pixel
 - [ ] Relecture finale de toute la branche
 - [ ] Fusion `feature/ssh` → `develop`
