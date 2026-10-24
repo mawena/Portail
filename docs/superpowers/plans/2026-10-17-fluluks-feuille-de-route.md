@@ -376,7 +376,7 @@ dans le même commit que le travail.
 - [x] T11 — Documentation
 - [x] T12 — Essais instrumentés sur le Pixel *(5/5 : mot de passe, keyboard-interactive, clé Ed25519 générée et installée, tunnel, service 2 min)*
 - [ ] *(utilisateur)* T13 — Essais sur le Pixel
-- [ ] Relecture finale de toute la branche
+- [x] Relecture finale de toute la branche *(3 constats importants corrigés, 7 mineurs notés)*
 - [ ] Fusion `feature/ssh` → `develop`
 - [ ] Version `v1.6.0`
 
