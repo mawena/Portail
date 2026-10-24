@@ -70,6 +70,9 @@ abstract class HostApi {
   Future<void> setServerKey(String serverId, String? keyId);
   Future<void> shareText(String text);
   Future<String> installPublicKey(String serverId, String keyId, Uint8List? password);
+  Future<List<SnippetMsg>> snippets(String? serverId);
+  Future<SnippetMsg> saveSnippet(SnippetMsg snippet);
+  Future<void> deleteSnippet(String id);
   Future<String?> importPrivateKey(String serverId);
   Future<void> forgetPrivateKey(String serverId);
   Future<Uint8List> readImage(String sourceId, String path);
@@ -243,6 +246,12 @@ class PigeonHostApi implements HostApi {
   @override
   Future<String> installPublicKey(String serverId, String keyId, Uint8List? password) =>
       _api.installPublicKey(serverId, keyId, password);
+  @override
+  Future<List<SnippetMsg>> snippets(String? serverId) => _api.snippets(serverId);
+  @override
+  Future<SnippetMsg> saveSnippet(SnippetMsg snippet) => _api.saveSnippet(snippet);
+  @override
+  Future<void> deleteSnippet(String id) => _api.deleteSnippet(id);
   @override
   Future<String?> importPrivateKey(String serverId) => _api.importPrivateKey(serverId);
   @override

@@ -242,6 +242,19 @@ class Fr {
   static const useKey = 'Utiliser';
   static String useKeyFor(String server) => 'Utiliser cette clé pour $server\u202F?';
   static const useKeyHelp = 'Les connexions à ce serveur se feront par cette clé.';
+  // commandes enregistrées
+  static const snippets = 'Commandes';
+  static const addSnippet = 'Ajouter une commande';
+  static const newSnippet = 'Nouvelle commande';
+  static const editSnippet = 'Modifier la commande';
+  static const snippetName = 'Nom';
+  static const snippetCommand = 'Commande';
+  static const snippetRunNow = 'Exécuter aussitôt';
+  static const snippetRunNowHelp = 'Sinon, la commande est seulement tapée';
+  static String snippetThisServer(String server) => 'Pour $server seulement';
+  static const snippetRun = 'Exécuter';
+  static const noSnippets = 'Aucune commande enregistrée';
+  static const saveAsSnippet = 'Enregistrer comme commande';
   static const editServer = 'Modifier';
   static const disconnect = 'Déconnecter';
   static const serverForm = 'Serveur distant';

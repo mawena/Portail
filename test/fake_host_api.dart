@@ -413,6 +413,36 @@ class FakeHostApi implements HostApi {
   @override
   Future<void> shareText(String text) async => sharedTexts.add(text);
 
+  /// Commandes enregistrées factices (celles du serveur puis les communes, comme côté Kotlin).
+  final snippetList = <SnippetMsg>[];
+  var _snippetSeq = 0;
+
+  @override
+  Future<List<SnippetMsg>> snippets(String? serverId) async => [
+        ...snippetList.where((s) => serverId != null && s.serverId == serverId),
+        ...snippetList.where((s) => s.serverId == null),
+      ];
+
+  @override
+  Future<SnippetMsg> saveSnippet(SnippetMsg snippet) async {
+    final saved = SnippetMsg(
+        id: snippet.id.isEmpty ? 'c${++_snippetSeq}' : snippet.id,
+        serverId: snippet.serverId,
+        name: snippet.name,
+        command: snippet.command,
+        runNow: snippet.runNow);
+    final i = snippetList.indexWhere((s) => s.id == saved.id);
+    if (i >= 0) {
+      snippetList[i] = saved;
+    } else {
+      snippetList.add(saved);
+    }
+    return saved;
+  }
+
+  @override
+  Future<void> deleteSnippet(String id) async => snippetList.removeWhere((s) => s.id == id);
+
   /// Installation de clé : [installHook] remplace la réponse (erreurs) ; mots de passe reçus, décodés.
   String Function(String serverId, String keyId, Uint8List? password)? installHook;
   final installPasswords = <String?>[];

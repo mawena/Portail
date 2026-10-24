@@ -1675,6 +1675,73 @@ class RemoteServerMsg {
   }
 }
 
+/// Commande enregistrée du terminal (phase 13) : [serverId] null pour une commande commune ; [runNow] : suivie
+/// d'Entrée.
+class SnippetMsg {
+  SnippetMsg({
+    required this.id,
+    this.serverId,
+    required this.name,
+    required this.command,
+    required this.runNow,
+  });
+
+  String id;
+
+  String? serverId;
+
+  String name;
+
+  String command;
+
+  bool runNow;
+
+  List<Object?> _toList() {
+    return <Object?>[
+      id,
+      serverId,
+      name,
+      command,
+      runNow,
+    ];
+  }
+
+  Object encode() {
+    return _toList();  }
+
+  static SnippetMsg decode(Object result) {
+    result as List<Object?>;
+    return SnippetMsg(
+      id: result[0]! as String,
+      serverId: result[1] as String?,
+      name: result[2]! as String,
+      command: result[3]! as String,
+      runNow: result[4]! as bool,
+    );
+  }
+
+  @override
+  // ignore: avoid_equals_and_hash_code_on_mutable_classes
+  bool operator ==(Object other) {
+    if (other is! SnippetMsg || other.runtimeType != runtimeType) {
+      return false;
+    }
+    if (identical(this, other)) {
+      return true;
+    }
+    return _deepEquals(id, other.id) && _deepEquals(serverId, other.serverId) && _deepEquals(name, other.name) && _deepEquals(command, other.command) && _deepEquals(runNow, other.runNow);
+  }
+
+  @override
+  // ignore: avoid_equals_and_hash_code_on_mutable_classes
+  int get hashCode => _deepHash(<Object?>[runtimeType, ..._toList()]);
+
+  @override
+  String toString() {
+    return 'SnippetMsg(id: $id, serverId: $serverId, name: $name, command: $command, runNow: $runNow)';
+  }
+}
+
 /// Clé du trousseau SSH (phase 13) : [type] « ssh-ed25519 »… ; [fingerprint] « SHA256:… » ; [usedBy] : noms des
 /// serveurs qui l'utilisent.
 class SshKeyMsg {
@@ -2075,20 +2142,23 @@ class _PigeonCodec extends StandardMessageCodec {
     }    else if (value is RemoteServerMsg) {
       buffer.putUint8(149);
       writeValue(buffer, value.encode());
-    }    else if (value is SshKeyMsg) {
+    }    else if (value is SnippetMsg) {
       buffer.putUint8(150);
       writeValue(buffer, value.encode());
-    }    else if (value is ViewPrefsMsg) {
+    }    else if (value is SshKeyMsg) {
       buffer.putUint8(151);
       writeValue(buffer, value.encode());
-    }    else if (value is UiPrefsMsg) {
+    }    else if (value is ViewPrefsMsg) {
       buffer.putUint8(152);
       writeValue(buffer, value.encode());
-    }    else if (value is AppInfoMsg) {
+    }    else if (value is UiPrefsMsg) {
       buffer.putUint8(153);
       writeValue(buffer, value.encode());
-    }    else if (value is FavoriteMsg) {
+    }    else if (value is AppInfoMsg) {
       buffer.putUint8(154);
+      writeValue(buffer, value.encode());
+    }    else if (value is FavoriteMsg) {
+      buffer.putUint8(155);
       writeValue(buffer, value.encode());
     } else {
       super.writeValue(buffer, value);
@@ -2141,14 +2211,16 @@ class _PigeonCodec extends StandardMessageCodec {
       case 149:
         return RemoteServerMsg.decode(readValue(buffer)!);
       case 150:
-        return SshKeyMsg.decode(readValue(buffer)!);
+        return SnippetMsg.decode(readValue(buffer)!);
       case 151:
-        return ViewPrefsMsg.decode(readValue(buffer)!);
+        return SshKeyMsg.decode(readValue(buffer)!);
       case 152:
-        return UiPrefsMsg.decode(readValue(buffer)!);
+        return ViewPrefsMsg.decode(readValue(buffer)!);
       case 153:
-        return AppInfoMsg.decode(readValue(buffer)!);
+        return UiPrefsMsg.decode(readValue(buffer)!);
       case 154:
+        return AppInfoMsg.decode(readValue(buffer)!);
+      case 155:
         return FavoriteMsg.decode(readValue(buffer)!);
       default:
         return super.readValueOfType(type, buffer);
@@ -3399,6 +3471,63 @@ class FluLuksHostApi {
     )
     ;
     return pigeonVar_replyValue! as String;
+  }
+
+  /// Phase 13 : commandes enregistrées ; `snippets` : celles du serveur puis les communes.
+  Future<List<SnippetMsg>> snippets(String? serverId) async {
+    final pigeonVar_channelName = 'dev.flutter.pigeon.fluluks.FluLuksHostApi.snippets$pigeonVar_messageChannelSuffix';
+    final pigeonVar_channel = BasicMessageChannel<Object?>(
+      pigeonVar_channelName,
+      pigeonChannelCodec,
+      binaryMessenger: pigeonVar_binaryMessenger,
+    );
+    final Future<Object?> pigeonVar_sendFuture = pigeonVar_channel.send(<Object?>[serverId]);
+    final pigeonVar_replyList = await pigeonVar_sendFuture as List<Object?>?;
+
+    final Object? pigeonVar_replyValue = _extractReplyValueOrThrow(
+        pigeonVar_replyList,
+        pigeonVar_channelName,
+        isNullValid: false,
+    )
+    ;
+    return (pigeonVar_replyValue! as List<Object?>).cast<SnippetMsg>();
+  }
+
+  Future<SnippetMsg> saveSnippet(SnippetMsg snippet) async {
+    final pigeonVar_channelName = 'dev.flutter.pigeon.fluluks.FluLuksHostApi.saveSnippet$pigeonVar_messageChannelSuffix';
+    final pigeonVar_channel = BasicMessageChannel<Object?>(
+      pigeonVar_channelName,
+      pigeonChannelCodec,
+      binaryMessenger: pigeonVar_binaryMessenger,
+    );
+    final Future<Object?> pigeonVar_sendFuture = pigeonVar_channel.send(<Object?>[snippet]);
+    final pigeonVar_replyList = await pigeonVar_sendFuture as List<Object?>?;
+
+    final Object? pigeonVar_replyValue = _extractReplyValueOrThrow(
+        pigeonVar_replyList,
+        pigeonVar_channelName,
+        isNullValid: false,
+    )
+    ;
+    return pigeonVar_replyValue! as SnippetMsg;
+  }
+
+  Future<void> deleteSnippet(String id) async {
+    final pigeonVar_channelName = 'dev.flutter.pigeon.fluluks.FluLuksHostApi.deleteSnippet$pigeonVar_messageChannelSuffix';
+    final pigeonVar_channel = BasicMessageChannel<Object?>(
+      pigeonVar_channelName,
+      pigeonChannelCodec,
+      binaryMessenger: pigeonVar_binaryMessenger,
+    );
+    final Future<Object?> pigeonVar_sendFuture = pigeonVar_channel.send(<Object?>[id]);
+    final pigeonVar_replyList = await pigeonVar_sendFuture as List<Object?>?;
+
+    _extractReplyValueOrThrow(
+        pigeonVar_replyList,
+        pigeonVar_channelName,
+        isNullValid: true,
+    )
+    ;
   }
 
   /// Clé privée OpenSSH choisie dans le sélecteur d'Android, scellée pour `serverId` ; rend sa description

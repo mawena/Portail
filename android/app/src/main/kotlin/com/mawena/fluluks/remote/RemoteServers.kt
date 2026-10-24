@@ -44,6 +44,9 @@ class RemoteServers(private val dir: File, private val box: SecretBox) {
         com.mawena.fluluks.remote.ssh.SshKeys(dir, box) { id -> list().filter { it.keyId == id }.map { it.name } }
     }
 
+    /** Commandes enregistrées du terminal (phase 13), dans le même dossier. */
+    val snippets: com.mawena.fluluks.remote.ssh.Snippets by lazy { com.mawena.fluluks.remote.ssh.Snippets(dir) }
+
     /** Fait utiliser au serveur [id] la clé [keyId] du trousseau (null : aucune) ; sa description suit. */
     @Synchronized
     fun setKey(id: String, keyId: String?) {
@@ -127,6 +130,7 @@ class RemoteServers(private val dir: File, private val box: SecretBox) {
     fun delete(id: String) {
         write(list().filter { it.id != id })
         File(secretsDir, id).delete()
+        snippets.dropServer(id)
     }
 
     @Synchronized

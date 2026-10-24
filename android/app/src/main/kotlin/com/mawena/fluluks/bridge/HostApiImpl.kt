@@ -55,6 +55,7 @@ import com.mawena.fluluks.remote.ssh.AttemptLogs
 import com.mawena.fluluks.remote.ssh.SshFailure
 import com.mawena.fluluks.remote.ssh.SshPromptBridge
 import com.mawena.fluluks.remote.ssh.KeyInstaller
+import com.mawena.fluluks.remote.ssh.Snippet
 import com.mawena.fluluks.remote.ssh.SshKeyInfo
 import com.mawena.fluluks.remote.ssh.SshPrompts
 import com.mawena.fluluks.remote.ssh.TerminalInfo
@@ -502,6 +503,24 @@ class HostApiImpl(
                 password?.fill(0)
             }
         }
+
+    private fun snippetMsg(s: Snippet) = SnippetMsg(s.id, s.serverId, s.name, s.command, s.runNow)
+
+    override fun snippets(serverId: String?): List<SnippetMsg> = keyOp { Remotes.servers().snippets.list(serverId).map(::snippetMsg) }
+
+    override fun saveSnippet(snippet: SnippetMsg): SnippetMsg = keyOp {
+        try {
+            snippetMsg(
+                Remotes.servers().snippets.save(
+                    Snippet(snippet.id, snippet.serverId, snippet.name, snippet.command, snippet.runNow),
+                ),
+            )
+        } catch (e: IllegalArgumentException) {
+            throw FilesException(EngineError.FL_EINVAL, e.message ?: "Commande invalide")
+        }
+    }
+
+    override fun deleteSnippet(id: String) = keyOp { Remotes.servers().snippets.delete(id) }
 
     override fun shareText(text: String) {
         val send = Intent(Intent.ACTION_SEND).setType("text/plain").putExtra(Intent.EXTRA_TEXT, text)

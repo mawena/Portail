@@ -11,10 +11,11 @@ import '../ui/feedback.dart';
 import '../ui/tokens.dart';
 import '../widgets/server_tile.dart';
 import 'key_bar.dart';
+import 'snippets_sheet.dart';
 import 'terminal_hub.dart';
 import 'terminal_theme.dart';
 
-enum _Menu { paste, fontSize, close }
+enum _Menu { paste, snippets, fontSize, close }
 
 /// Ouvre un terminal sur le serveur SFTP [s] (mot de passe, empreinte et échecs comme pour l'explorateur), puis son
 /// écran ; [startDir] : dossier de départ (« Ouvrir un terminal ici »).
@@ -168,6 +169,20 @@ class _TerminalScreenState extends State<TerminalScreen> {
     e.terminal.paste(text.replaceAll('\r\n', '\r').replaceAll('\n', '\r'));
   }
 
+  Future<void> _snippets(TerminalEntry e) async {
+    final s = await showSnippetsSheet(context, _state, e);
+    if (s != null && mounted) await runSnippet(context, _state, e, s);
+  }
+
+  /// La sélection devient une nouvelle commande enregistrée.
+  Future<void> _saveSelection(TerminalEntry e) async {
+    final range = _controller.selection;
+    if (range == null) return;
+    final text = e.terminal.buffer.getText(range).trim();
+    _controller.clearSelection();
+    await editSnippet(context, _state, e, command: text);
+  }
+
   Future<void> _chooseFontSize() async {
     var value = _state.uiPrefs.terminalFont.toDouble();
     final chosen = await showDialog<double>(
@@ -257,17 +272,25 @@ class _TerminalScreenState extends State<TerminalScreen> {
                   CheckedPopupMenuItem(value: s.info.id, checked: s.info.id == _id, child: Text(s.title)),
               ],
             ),
-          if (_controller.selection != null)
+          if (_controller.selection != null) ...[
             IconButton(tooltip: Fr.copy, icon: const Icon(Icons.copy_rounded), onPressed: () => _copy(e)),
+            IconButton(
+              tooltip: Fr.saveAsSnippet,
+              icon: const Icon(Icons.bookmark_add_rounded),
+              onPressed: () => _saveSelection(e),
+            ),
+          ],
           PopupMenuButton<_Menu>(
             tooltip: Fr.moreOptions,
             onSelected: (m) => switch (m) {
               _Menu.paste => _paste(e),
+              _Menu.snippets => _snippets(e),
               _Menu.fontSize => _chooseFontSize(),
               _Menu.close => _close(e),
             },
             itemBuilder: (_) => [
               PopupMenuItem(value: _Menu.paste, enabled: e.isOpen, child: const Text(Fr.terminalPaste)),
+              PopupMenuItem(value: _Menu.snippets, enabled: e.isOpen, child: const Text(Fr.snippets)),
               const PopupMenuItem(value: _Menu.fontSize, child: Text(Fr.terminalFontSize)),
               const PopupMenuItem(value: _Menu.close, child: Text(Fr.closeSession)),
             ],

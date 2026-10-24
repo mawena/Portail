@@ -401,6 +401,17 @@ class RemoteServerMsg {
   String? keyId;
 }
 
+/// Commande enregistrée du terminal (phase 13) : [serverId] null pour une commande commune ; [runNow] : suivie
+/// d'Entrée.
+class SnippetMsg {
+  SnippetMsg({required this.id, this.serverId, required this.name, required this.command, required this.runNow});
+  String id;
+  String? serverId;
+  String name;
+  String command;
+  bool runNow;
+}
+
 /// Clé du trousseau SSH (phase 13) : [type] « ssh-ed25519 »… ; [fingerprint] « SHA256:… » ; [usedBy] : noms des
 /// serveurs qui l'utilisent.
 class SshKeyMsg {
@@ -613,6 +624,11 @@ abstract class FluLuksHostApi {
   /// seul usage ; mêmes erreurs que `connectServer`) ; rend le message à montrer (« Clé installée sur … »).
   @async
   String installPublicKey(String serverId, String keyId, Uint8List? password);
+
+  /// Phase 13 : commandes enregistrées ; `snippets` : celles du serveur puis les communes.
+  List<SnippetMsg> snippets(String? serverId);
+  SnippetMsg saveSnippet(SnippetMsg snippet);
+  void deleteSnippet(String id);
 
   /// Clé privée OpenSSH choisie dans le sélecteur d'Android, scellée pour `serverId` ; rend sa description
   /// (« ssh-ed25519 SHA256:… »), ou null si rien n'a été choisi.
