@@ -5,6 +5,7 @@ import 'package:xterm/xterm.dart';
 
 import '../bridge/fluluks_api.g.dart';
 import '../state/host_api.dart';
+import 'portail_terminal.dart';
 
 /// Historique gardé par le terminal Dart, en lignes.
 const terminalScrollback = 10000;
@@ -124,7 +125,7 @@ class TerminalHub extends ChangeNotifier {
     }
     final id = msg.id;
     late final TerminalEntry e;
-    final t = Terminal(
+    final t = PortailTerminal(
       maxLines: terminalScrollback,
       onOutput: (data) => send(id, e.inputFilter?.call(data) ?? data),
       onResize: (w, h, pw, ph) {

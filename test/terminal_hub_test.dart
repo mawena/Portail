@@ -4,6 +4,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:fluluks/src/bridge/fluluks_api.g.dart';
 import 'package:fluluks/src/state/app_state.dart';
+import 'package:fluluks/src/terminal/portail_terminal.dart';
 import 'package:fluluks/src/terminal/terminal_hub.dart';
 import 'package:xterm/xterm.dart';
 
@@ -36,6 +37,13 @@ void main() {
     hub.onOutput(e.info.id, Uint8List.fromList([0xa9, 0x74, 0xc3, 0xa9]));
     expect(screen(hub.terminalOf(e.info.id)), 'bonjour lété');
     expect(hub.sessions.single.info.id, e.info.id);
+  });
+
+  test('sessionsUsePortailTerminal', () async {
+    final hub = TerminalHub(FakeHostApi());
+    final e = await hub.open('s1');
+    // `clear` puis copie ou rotation : défauts d'xterm corrigés par PortailTerminal
+    expect(hub.terminalOf(e.info.id), isA<PortailTerminal>());
   });
 
   test('typedBytesReachBridge', () async {
