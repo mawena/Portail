@@ -353,7 +353,7 @@ fonctions choisies par le planificateur ; les lecteurs et stockages distants pas
 
 ## 16. Évolution du 2026-10-22 (suite) : vérification et réparation
 
-Décision de l'utilisateur : la **phase 15** (v1.8.0 ; numérotée 11, puis 12, 13 et 14, avant le 2026-10-23, voir § 19 à § 22) apporte la **réparation des disques** dans
+Décision de l'utilisateur : la **phase 16** (v1.9.0 ; numérotée 11, puis 12, 13, 14 et 15, avant le 2026-10-24, voir § 19 à § 23) apporte la **réparation des disques** dans
 l'application, avec les outils de référence de Linux intégrés au moteur natif.
 - **Vérifier d'abord, en lecture seule**, et montrer un rapport en français ; réparer seulement après
   confirmation, avec le conseil de sauvegarder les données importantes avant.
@@ -368,7 +368,7 @@ l'application, avec les outils de référence de Linux intégrés au moteur nati
 
 ## 17. Évolution du 2026-10-22 (suite) : gestion des partitions
 
-Décision de l'utilisateur : la **phase 16** (v1.9.0 ; numérotée 12, puis 13, 14 et 15, avant le 2026-10-23, voir § 19 à § 22) apporte la **gestion des partitions** d'un disque USB,
+Décision de l'utilisateur : la **phase 17** (v1.10.0 ; numérotée 12, puis 13, 14, 15 et 16, avant le 2026-10-24, voir § 19 à § 23) apporte la **gestion des partitions** d'un disque USB,
 à la manière de GParted, et le choix de la **taille** au formatage.
 - **Choisir la taille** : formater une partition de la taille voulue au lieu de tout le disque ; le reste
   reste libre.
@@ -379,7 +379,7 @@ Décision de l'utilisateur : la **phase 16** (v1.9.0 ; numérotée 12, puis 13, 
   étiquette), **supprimer** une partition, **formater une seule partition**, changer son **étiquette**,
   créer une **nouvelle table** (MBR ou GPT).
 - **Redimensionner** une partition et son système de fichiers, agrandir ou réduire :
-  - ext4 par `resize2fs` (e2fsprogs, déjà intégré en phase 15) ;
+  - ext4 par `resize2fs` (e2fsprogs, déjà intégré en phase 16) ;
   - NTFS par `ntfsresize` (ntfs-3g) ;
   - dans un volume LUKS2, le système de fichiers intérieur (la taille du segment LUKS2 suit la
     partition) ;
@@ -392,7 +392,7 @@ Décision de l'utilisateur : la **phase 16** (v1.9.0 ; numérotée 12, puis 13, 
   - comme dans GParted, les opérations sont préparées, résumées, puis appliquées après confirmation, une
     à la fois ;
   - jamais sur un volume ouvert ;
-  - le système de fichiers est vérifié (outils de la phase 15) avant un redimensionnement ;
+  - le système de fichiers est vérifié (outils de la phase 16) avant un redimensionnement ;
   - avertissement : un débranchement pendant un redimensionnement ou un déplacement peut rendre la
     partition illisible, sauvegardez d'abord ;
   - toutes les opérations sont jugées sur des images par les outils de référence (`sfdisk`, `sgdisk`,
@@ -607,3 +607,36 @@ essais.)*
   libarchive, déjà présents (libarchive branché sur mbedTLS pour le ZIP AES) ; **scrypt** de Tarsnap (fichier de
   référence, BSD à deux clauses), seul code tiers nouveau ; liste de mots **EFF** pour les phrases de passe (CC BY 3.0).
   Aucune nouvelle dépendance Java ni Dart : la biométrie passe par l'API d'Android (`BiometricPrompt`, API 28 et plus).
+
+## 23. Évolution du 2026-10-24 : intégration IA (phase 15)
+
+Demande de l'utilisateur, pendant la phase 14 : une **phase 15** (**v1.8.0**) « Intégration IA » relie Portail à une
+ou plusieurs IA auto-hébergées (VPS, machines locales) pour du chat et des automatisations. La réparation des disques
+devient la phase 16 (v1.9.0, § 16) et la gestion des partitions la phase 17 (v1.10.0, § 17). La phase 15 ne commence
+qu'une fois la phase 14 terminée et validée. Le serveur sera développé à part : Portail est codé contre un **contrat
+d'API** et essayé contre un serveur d'essai.
+*(Valeurs, bibliothèques et fonctions marquées « proposition du planificateur » : décisions du planificateur, à valider
+aux essais ; voir le plan de la phase 15.)*
+- **Serveurs IA (« fournisseurs »)** : ajouter, modifier, supprimer, **tester la connexion** ; nom, URL de base
+  (`http` ou `https`, port), clé API (jeton `Bearer`), serveur par défaut. Clés stockées scellées par le Keystore
+  d'Android, jamais montrées ni renvoyées à l'interface.
+- **Modèles** : liste par `GET /v1/models` pour chaque serveur, modèle par défaut par serveur.
+- **Chat** : conversation à la manière des applications de chat courantes, réponses **en flux** (SSE), rendu Markdown
+  et blocs de code, **historique local** (base Room), arrêter une génération, régénérer, renommer et supprimer une
+  conversation, serveur et modèle choisis par conversation, prompt système facultatif.
+- **Automatisations** : tâches réutilisables (modèle de prompt à variables, modèle cible, déclencheur manuel ou
+  planifié par WorkManager), avec l'historique des exécutions et leurs résultats.
+- **État des serveurs** : en ligne ou hors ligne par `GET /health` ; erreurs réseau, délais et 401 expliqués en
+  français.
+- **Contrat d'API**, compatible OpenAI pour servir aussi Ollama, vLLM ou LocalAI : `GET /health` → `{ status,
+  version }` ; `GET /v1/models` ; `POST /v1/chat/completions` (`model`, `messages`, `stream`, `temperature`,
+  `max_tokens` ; en flux, `data: {…}` jusqu'à `data: [DONE]`) ; `POST /v1/embeddings` facultatif (interface prévue) ;
+  en-tête `Authorization: Bearer <clé>`.
+- **Architecture** : interface `AiProvider` et une implémentation compatible OpenAI, pour ajouter d'autres types de
+  serveurs plus tard ; même découpage que le reste de Portail (réseau, stockage et tâches en Kotlin, écrans en
+  Flutter par Pigeon), même design system.
+- **Tests** : couche réseau et lecture du flux testées contre `MockWebServer` ; serveur d'essai en Python pour le
+  développement et les essais sur le téléphone.
+- **Confidentialité** : ni clé API ni contenu de conversation dans un journal, un message d'erreur ou un rapport ;
+  rien n'est envoyé ailleurs qu'au serveur choisi.
+- **Commits** : signés seulement « mawena », sans mention d'outil d'aide à l'écriture, comme toutes les phases.

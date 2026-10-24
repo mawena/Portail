@@ -283,6 +283,240 @@ class FakeHostApi implements HostApi {
   @override
   Future<void> forgetHostKey(String serverId) async => calls.add('forgetHostKey $serverId');
 
+  /// Phase 13 : réponse de testServer (défaut : un journal d'une ligne) ; journal rendu par lastAttemptLog ;
+  /// réponses reçues aux invites keyboard-interactive (identifiant, réponses décodées ou null si refusée).
+  List<String> Function(String id, Uint8List? password)? test;
+  List<String> attemptLog = [];
+  final promptAnswers = <(String, List<String>?)>[];
+
+  @override
+  Future<List<String>> testServer(String serverId, Uint8List? password) async {
+    calls.add('testServer $serverId');
+    return test?.call(serverId, password) ?? ['Connecté'];
+  }
+
+  @override
+  Future<List<String>> lastAttemptLog(String serverId) async => List.of(attemptLog);
+
+  @override
+  Future<void> answerSshPrompt(String requestId, List<Uint8List>? answers) async =>
+      promptAnswers.add((requestId, answers?.map((a) => utf8.decode(List<int>.of(a))).toList()));
+
+  /// Phase 13 : terminaux factices. [terminals] : sessions connues du côté Kotlin ; [terminalBacklogs] : leur sortie
+  /// récente ; [terminalWrites] : octets écrits (copiés à l'appel) ; [terminalResizes] : (id, colonnes, lignes) ;
+  /// [openTerminalHook] : remplace l'ouverture (erreurs, invites) ; [secureScreen] : dernier FLAG_SECURE demandé.
+  final terminals = <TerminalSessionMsg>[];
+  final terminalBacklogs = <String, Uint8List>{};
+  final terminalWrites = <(String, List<int>)>[];
+  final terminalResizes = <(String, int, int)>[];
+  final closedTerminals = <String>[];
+  FutureOr<TerminalSessionMsg> Function(String serverId, Uint8List? password, String? startDir)? openTerminalHook;
+  bool? secureScreen;
+  var _terminalSeq = 0;
+
+  @override
+  Future<TerminalSessionMsg> openTerminal(String serverId, Uint8List? password, String? startDir) async {
+    calls.add('openTerminal $serverId${startDir == null ? '' : ' $startDir'}');
+    final hook = openTerminalHook;
+    if (hook != null) return await hook(serverId, password, startDir);
+    final name = servers.where((s) => s.id == serverId).map((s) => s.name).firstOrNull ?? serverId;
+    final same = terminals.where((t) => t.serverId == serverId).length; // titres comme côté Kotlin
+    final t = TerminalSessionMsg(
+        id: 't${++_terminalSeq}',
+        serverId: serverId,
+        title: same == 0 ? name : '$name (${same + 1})',
+        state: 'open',
+        cols: 80,
+        rows: 24);
+    terminals.add(t);
+    return t;
+  }
+
+  @override
+  Future<void> terminalWrite(String sessionId, Uint8List data) async =>
+      terminalWrites.add((sessionId, List<int>.of(data)));
+
+  @override
+  Future<void> terminalResize(String sessionId, int cols, int rows) async =>
+      terminalResizes.add((sessionId, cols, rows));
+
+  @override
+  Future<Uint8List> terminalBacklog(String sessionId) async => terminalBacklogs[sessionId] ?? Uint8List(0);
+
+  @override
+  Future<void> closeTerminal(String sessionId) async {
+    closedTerminals.add(sessionId);
+    terminals.removeWhere((t) => t.id == sessionId);
+  }
+
+  @override
+  Future<List<TerminalSessionMsg>> terminalSessions() async => List.of(terminals);
+
+  @override
+  Future<void> setSecureScreen(bool secure) async => secureScreen = secure;
+
+  /// Phase 13 : trousseau factice ; [generatedKeys] : (nom, type, phrase décodée) ; [sharedTexts] : textes partagés.
+  final sshKeyList = <SshKeyMsg>[];
+  final generatedKeys = <(String, String, String?)>[];
+  final sharedTexts = <String>[];
+  var _keySeq = 0;
+
+  @override
+  Future<List<SshKeyMsg>> sshKeys() async => List.of(sshKeyList);
+
+  @override
+  Future<SshKeyMsg> generateSshKey(String name, String type, Uint8List? passphrase) async {
+    generatedKeys.add((name, type, passphrase == null ? null : utf8.decode(List<int>.of(passphrase))));
+    final k = SshKeyMsg(
+        id: 'g${++_keySeq}',
+        name: name,
+        type: type == 'rsa' ? 'ssh-rsa' : 'ssh-ed25519',
+        fingerprint: 'SHA256:gen$_keySeq',
+        encrypted: passphrase != null,
+        usedBy: []);
+    sshKeyList.add(k);
+    return k;
+  }
+
+  @override
+  Future<SshKeyMsg?> importSshKey(String name) async {
+    calls.add('importSshKey $name');
+    final k = SshKeyMsg(
+        id: 'i${++_keySeq}', name: name, type: 'ssh-ed25519', fingerprint: 'SHA256:imp', encrypted: false, usedBy: []);
+    sshKeyList.add(k);
+    return k;
+  }
+
+  @override
+  Future<void> renameSshKey(String keyId, String name) async {
+    final i = sshKeyList.indexWhere((k) => k.id == keyId);
+    final k = sshKeyList[i];
+    sshKeyList[i] = SshKeyMsg(
+        id: k.id, name: name, type: k.type, fingerprint: k.fingerprint, encrypted: k.encrypted, usedBy: k.usedBy);
+  }
+
+  @override
+  Future<void> deleteSshKey(String keyId) async {
+    final k = sshKeyList.firstWhere((k) => k.id == keyId);
+    if (k.usedBy.isNotEmpty) {
+      throw PlatformException(code: '1', message: 'Clé utilisée par\u00A0: ${k.usedBy.join(', ')}');
+    }
+    sshKeyList.remove(k);
+  }
+
+  @override
+  Future<String> sshPublicKey(String keyId) async => 'ssh-ed25519 AAAAC3Nza portail@test';
+
+  @override
+  Future<void> setServerKey(String serverId, String? keyId) async => calls.add('setServerKey $serverId $keyId');
+
+  @override
+  Future<void> shareText(String text) async => sharedTexts.add(text);
+
+  /// Commandes enregistrées factices (celles du serveur puis les communes, comme côté Kotlin).
+  final snippetList = <SnippetMsg>[];
+  var _snippetSeq = 0;
+
+  @override
+  Future<List<SnippetMsg>> snippets(String? serverId) async => [
+        ...snippetList.where((s) => serverId != null && s.serverId == serverId),
+        ...snippetList.where((s) => s.serverId == null),
+      ];
+
+  @override
+  Future<SnippetMsg> saveSnippet(SnippetMsg snippet) async {
+    final saved = SnippetMsg(
+        id: snippet.id.isEmpty ? 'c${++_snippetSeq}' : snippet.id,
+        serverId: snippet.serverId,
+        name: snippet.name,
+        command: snippet.command,
+        runNow: snippet.runNow);
+    final i = snippetList.indexWhere((s) => s.id == saved.id);
+    if (i >= 0) {
+      snippetList[i] = saved;
+    } else {
+      snippetList.add(saved);
+    }
+    return saved;
+  }
+
+  @override
+  Future<void> deleteSnippet(String id) async => snippetList.removeWhere((s) => s.id == id);
+
+  /// Tunnels factices ; [startTunnelHook] remplace l'ouverture (erreurs) ; [openedUrls] : adresses ouvertes.
+  final tunnelList = <TunnelMsg>[];
+  TunnelMsg Function(String sessionId, String tunnelId)? startTunnelHook;
+  final openedUrls = <String>[];
+  var _tunnelSeq = 0;
+
+  TunnelMsg _withActive(TunnelMsg t, bool active, {String? error}) => TunnelMsg(
+      id: t.id,
+      serverId: t.serverId,
+      localPort: t.localPort,
+      remoteHost: t.remoteHost,
+      remotePort: t.remotePort,
+      auto: t.auto,
+      active: active,
+      error: error);
+
+  @override
+  Future<List<TunnelMsg>> tunnels(String serverId) async => tunnelList.where((t) => t.serverId == serverId).toList();
+
+  @override
+  Future<TunnelMsg> saveTunnel(TunnelMsg tunnel) async {
+    if (tunnel.localPort < 1024 || tunnel.localPort > 65535) {
+      throw PlatformException(code: '1', message: 'Port du téléphone entre 1024 et 65535');
+    }
+    final saved = TunnelMsg(
+        id: tunnel.id.isEmpty ? 'u${++_tunnelSeq}' : tunnel.id,
+        serverId: tunnel.serverId,
+        localPort: tunnel.localPort,
+        remoteHost: tunnel.remoteHost,
+        remotePort: tunnel.remotePort,
+        auto: tunnel.auto,
+        active: false);
+    final i = tunnelList.indexWhere((t) => t.id == saved.id);
+    if (i >= 0) {
+      tunnelList[i] = saved;
+    } else {
+      tunnelList.add(saved);
+    }
+    return saved;
+  }
+
+  @override
+  Future<void> deleteTunnel(String id) async => tunnelList.removeWhere((t) => t.id == id);
+
+  @override
+  Future<TunnelMsg> startTunnel(String sessionId, String tunnelId) async {
+    calls.add('startTunnel $sessionId $tunnelId');
+    final hook = startTunnelHook;
+    if (hook != null) return hook(sessionId, tunnelId);
+    final i = tunnelList.indexWhere((t) => t.id == tunnelId);
+    return tunnelList[i] = _withActive(tunnelList[i], true);
+  }
+
+  @override
+  Future<void> stopTunnel(String sessionId, String tunnelId) async {
+    calls.add('stopTunnel $sessionId $tunnelId');
+    final i = tunnelList.indexWhere((t) => t.id == tunnelId);
+    tunnelList[i] = _withActive(tunnelList[i], false);
+  }
+
+  @override
+  Future<void> openUrl(String url) async => openedUrls.add(url);
+
+  /// Installation de clé : [installHook] remplace la réponse (erreurs) ; mots de passe reçus, décodés.
+  String Function(String serverId, String keyId, Uint8List? password)? installHook;
+  final installPasswords = <String?>[];
+
+  @override
+  Future<String> installPublicKey(String serverId, String keyId, Uint8List? password) async {
+    calls.add('installPublicKey $serverId $keyId');
+    installPasswords.add(password == null ? null : utf8.decode(List<int>.of(password)));
+    return installHook?.call(serverId, keyId, password) ?? 'Clé installée sur Maison';
+  }
+
   /// Description rendue par importPrivateKey (null : sélecteur fermé sans choix).
   String? importedKey;
 

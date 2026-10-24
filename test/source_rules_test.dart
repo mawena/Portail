@@ -61,7 +61,12 @@ void main() {
       '(withValues(alpha:) pour la transparence).',
     );
     expectNone(
-      scan('lib', RegExp(r'\bColor\(0x|\bColor\.from(ARGB|RGBO)\('), except: {'lib/src/ui/theme.dart'}),
+      scan(
+        'lib',
+        RegExp(r'\bColor\(0x|\bColor\.from(ARGB|RGBO)\('),
+        // palette ANSI du terminal SSH (phase 13) : 16 couleurs par nature, choisies pour le contraste
+        except: {'lib/src/ui/theme.dart', 'lib/src/terminal/terminal_theme.dart'},
+      ),
       'Couleur en valeur hors de ui/theme.dart : prendre un rôle du ColorScheme.',
     );
   });

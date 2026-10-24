@@ -314,6 +314,7 @@ void main() {
   testWidgets('préférence lue au démarrage', (tester) async {
     await pump(tester, FakeHostApi()..readOnlyPreference = true);
     await openSettings(tester);
+    await tester.scrollUntilVisible(find.text('Ouvrir les disques en lecture seule'), 200);
     expect(
       tester.widget<SwitchListTile>(find.widgetWithText(SwitchListTile, 'Ouvrir les disques en lecture seule')).value,
       isTrue,

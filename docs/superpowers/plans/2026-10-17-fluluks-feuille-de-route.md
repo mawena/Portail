@@ -363,26 +363,26 @@ dans le même commit que le travail.
 
 ### Phase 13 — Connexions SSH : terminal, clés, tunnels ([plan](2026-10-23-phase13-ssh.md))
 - [x] Plan de la phase 13 écrit *(demande du 2026-10-23 ; spec § 21)*
-- [ ] T1 — Connexions SSH fiables et expliquées : messages précis, Tester la connexion, keyboard-interactive, `mawena.cloud:2244`
-- [ ] T2 — Sessions de terminal (Kotlin) : PTY xterm, sortie par lots, 8 sessions
-- [ ] T3 — Sessions gardées en arrière-plan : service et notification « Tout fermer »
-- [ ] T4 — Écran Terminal (xterm) : thème, copier-coller, pincement, Reconnecter
-- [ ] T5 — Barre de touches : Échap, Tab, Ctrl, Alt, flèches
-- [ ] T6 — Sessions multiples, bouton Terminal, Ouvrir un terminal ici
-- [ ] T7 — Trousseau de clés SSH : générer, importer, clé publique
-- [ ] T8 — Installer la clé publique sur le serveur
-- [ ] T9 — Commandes enregistrées
-- [ ] T10 — Tunnels (redirection de port locale)
-- [ ] T11 — Documentation
-- [ ] T12 — Essais instrumentés sur le Pixel
-- [ ] *(utilisateur)* T13 — Essais sur le Pixel
-- [ ] Relecture finale de toute la branche
-- [ ] Fusion `feature/ssh` → `develop`
-- [ ] Version `v1.6.0`
+- [x] T1 — Connexions SSH fiables et expliquées : messages précis, Tester la connexion, keyboard-interactive, `mawena.cloud:2244` *(connexion à mawena.cloud rétablie avant la phase)*
+- [x] T2 — Sessions de terminal (Kotlin) : PTY xterm, sortie par lots, 8 sessions *(MINA : 12 tests, dont 5 Mo de sortie en lots bornés)*
+- [x] T3 — Sessions gardées en arrière-plan : service et notification « Tout fermer »
+- [x] T4 — Écran Terminal (xterm) : thème, copier-coller, pincement, Reconnecter *(xterm 4.0.0 vérifié avec Flutter 3.41)*
+- [x] T5 — Barre de touches : Échap, Tab, Ctrl, Alt, flèches
+- [x] T6 — Sessions multiples, bouton Terminal, Ouvrir un terminal ici
+- [x] T7 — Trousseau de clés SSH : générer, importer, clé publique *(clés de la phase 10 reprises dans le trousseau)*
+- [x] T8 — Installer la clé publique sur le serveur
+- [x] T9 — Commandes enregistrées
+- [x] T10 — Tunnels (redirection de port locale)
+- [x] T11 — Documentation
+- [x] T12 — Essais instrumentés sur le Pixel *(5/5 : mot de passe, keyboard-interactive, clé Ed25519 générée et installée, tunnel, service 2 min)*
+- [x] *(utilisateur)* T13 — Essais sur le Pixel *(2026-10-24 : 35 points sur 38 faits par adb, essai jugé bon par l'utilisateur ; 5 défauts trouvés et corrigés : premier terminal depuis l'accueil, copie et affichage après `clear` (xterm), titres des sessions, message de port de tunnel ; pincement, couleurs à l'œil et journal d'un échec laissés à l'utilisateur ; [fiche](../research/2026-10-24-essais-phase13/essais.md))*
+- [x] Relecture finale de toute la branche *(3 constats importants corrigés, 7 mineurs notés)*
+- [x] Fusion `feature/ssh` → `develop`
+- [x] Version `v1.6.0`
 
 ### Phase 14 — Chiffrement de fichiers, de dossiers et coffres ([plan](2026-10-23-phase14-chiffrement.md))
 - [x] Plan de la phase 14 écrit *(demande du 2026-10-23 ; spec § 22)*
-- [ ] T1 — Moteur : scrypt et format age (chiffrement en flux, lecture à accès aléatoire, juge Python)
+- [x] T1 — Moteur : scrypt et format age (chiffrement en flux, lecture à accès aléatoire, juge Python) *(scrypt de Tarsnap copié sans modification, vecteurs RFC 7914 et C2SP/CCTV, juge agejuge.py ; ctest 46/46 ; essais sur le Pixel en T15)*
 - [ ] T2 — Moteur : ZIP chiffré AES-256 et archives ZIP protégées par mot de passe (libarchive sur mbedTLS)
 - [ ] T3 — Moteur : coffres LUKS2 dans un fichier, formatage sans table, emplacements de clé sûrs en cas de coupure
 - [ ] T4 — Poignées JNI et moteur Kotlin : chiffrement, déchiffrement, coffres en cascade sous leur fichier
@@ -402,24 +402,43 @@ dans le même commit que le travail.
 - [ ] Fusion `feature/chiffrement` → `develop`
 - [ ] Version `v1.7.0`
 
-### Phase 15 — Vérification et réparation des disques
-- [ ] Plan de la phase 15 écrit *(demande du 2026-10-22 ; spec § 16 ; phase 11, puis 12, 13 et 14, jusqu'au 2026-10-23)*
+### Phase 15 — Intégration IA : serveurs auto-hébergés, chat, automatisations ([plan](2026-10-24-phase15-ia.md))
+- [x] Plan de la phase 15 écrit *(demande du 2026-10-24 ; spec § 23 ; commence après la validation de la phase 14)*
+- [ ] T1 — Contrat d'API (compatible OpenAI) et serveur d'essai
+- [ ] T2 — Couche réseau `AiProvider` compatible OpenAI, lecture du flux SSE, erreurs traduites *(MockWebServer)*
+- [ ] T3 — Serveurs IA : stockage, clé API scellée, serveur par défaut, Tester la connexion
+- [ ] T4 — Écrans des serveurs IA : modèles, modèle par défaut, état en ligne ou hors ligne
+- [ ] T5 — Historique local des conversations (Room)
+- [ ] T6 — Réponses en flux vers l'écran, arrêter, régénérer
+- [ ] T7 — Écran de chat : Markdown, blocs de code, serveur, modèle et prompt système par conversation
+- [ ] T8 — Automatisations : modèles de prompt à variables, lancement manuel ou planifié (WorkManager), historique
+- [ ] T9 — Écrans des automatisations
+- [ ] T10 — Certificats auto-signés de confiance, conversations masquées dans les captures
+- [ ] T11 — Documentation
+- [ ] T12 — Essais instrumentés sur le Pixel
+- [ ] *(utilisateur)* T13 — Essais sur le Pixel
+- [ ] Relecture finale de toute la branche
+- [ ] Fusion `feature/ia` → `develop`
+- [ ] Version `v1.8.0`
+
+### Phase 16 — Vérification et réparation des disques
+- [ ] Plan de la phase 16 écrit *(demande du 2026-10-22 ; spec § 16 ; phase 11, puis 12, 13, 14 et 15, jusqu'au 2026-10-24)*
 - [ ] Vérification en lecture seule avec rapport, pour chaque système de fichiers
 - [ ] Réparation ext4 par e2fsck (e2fsprogs, sur l'accès USB du moteur)
 - [ ] Réparation NTFS par ntfsfix (ntfs-3g)
 - [ ] Réparation FAT32 et exFAT par fsck.fat et fsck.exfat
 - [ ] LUKS : vérification des deux en-têtes, sauvegarde et restauration de l'en-tête
-- [ ] Version `v1.8.0`
+- [ ] Version `v1.9.0`
 
-### Phase 16 — Gestion des partitions, comme GParted
-- [ ] Plan de la phase 16 écrit *(demande du 2026-10-22 ; spec § 17 ; phase 12, puis 13, 14 et 15, jusqu'au 2026-10-23)*
+### Phase 17 — Gestion des partitions, comme GParted
+- [ ] Plan de la phase 17 écrit *(demande du 2026-10-22 ; spec § 17 ; phase 12, puis 13, 14, 15 et 16, jusqu'au 2026-10-24)*
 - [ ] Vue du disque : partitions et espace libre à l'échelle, système de fichiers, étiquette, taille, place occupée
 - [ ] Taille choisie au formatage ; créer une partition dans un espace libre, en supprimer une, formater une seule partition
 - [ ] Changer l'étiquette d'une partition ; nouvelle table MBR ou GPT
 - [ ] Redimensionner (agrandir, réduire) : ext4 par resize2fs, NTFS par ntfsresize, système de fichiers dans LUKS2 ; FAT32 et exFAT à étudier
 - [ ] Déplacer une partition, si le plan sait le rendre sûr
 - [ ] Opérations préparées, résumées, puis appliquées après confirmation
-- [ ] Version `v1.9.0`
+- [ ] Version `v1.10.0`
 
 ---
 
