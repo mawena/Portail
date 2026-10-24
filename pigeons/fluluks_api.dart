@@ -382,6 +382,7 @@ class RemoteServerMsg {
     this.keyInfo,
     required this.hasPassword,
     required this.connected,
+    this.keyId,
   });
   String id;
   String protocol;
@@ -395,6 +396,28 @@ class RemoteServerMsg {
   String? keyInfo;
   bool hasPassword;
   bool connected;
+
+  /// Phase 13 : clé du trousseau utilisée pour ce serveur.
+  String? keyId;
+}
+
+/// Clé du trousseau SSH (phase 13) : [type] « ssh-ed25519 »… ; [fingerprint] « SHA256:… » ; [usedBy] : noms des
+/// serveurs qui l'utilisent.
+class SshKeyMsg {
+  SshKeyMsg({
+    required this.id,
+    required this.name,
+    required this.type,
+    required this.fingerprint,
+    required this.encrypted,
+    required this.usedBy,
+  });
+  String id;
+  String name;
+  String type;
+  String fingerprint;
+  bool encrypted;
+  List<String> usedBy;
 }
 
 /// Préférences d'affichage ; `sort` : `name`, `size` ou `date` ; `builtInViewers` : ouvrir images, musique, vidéos et
@@ -570,6 +593,21 @@ abstract class FluLuksHostApi {
   Uint8List terminalBacklog(String sessionId);
   void closeTerminal(String sessionId);
   List<TerminalSessionMsg> terminalSessions();
+
+  /// Phase 13 : trousseau de clés SSH. `generateSshKey` : `type` `ed25519` ou `rsa` (4096 bits), phrase facultative
+  /// (mise à zéro). `importSshKey` : fichier choisi dans le sélecteur d'Android (null : rien de choisi).
+  /// `deleteSshKey` : refusé tant qu'un serveur l'utilise. `sshPublicKey` : ligne OpenSSH. `setServerKey` : clé
+  /// utilisée par un serveur (null : aucune). `shareText` : partage d'un texte (clé publique).
+  List<SshKeyMsg> sshKeys();
+  @async
+  SshKeyMsg generateSshKey(String name, String type, Uint8List? passphrase);
+  @async
+  SshKeyMsg? importSshKey(String name);
+  void renameSshKey(String keyId, String name);
+  void deleteSshKey(String keyId);
+  String sshPublicKey(String keyId);
+  void setServerKey(String serverId, String? keyId);
+  void shareText(String text);
 
   /// Clé privée OpenSSH choisie dans le sélecteur d'Android, scellée pour `serverId` ; rend sa description
   /// (« ssh-ed25519 SHA256:… »), ou null si rien n'a été choisi.

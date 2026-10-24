@@ -18,6 +18,8 @@ data class ServerConfig(
     val id: String, val protocol: String, val name: String, val host: String, val port: Int, val user: String,
     val startPath: String, val remember: Boolean, val hostKey: String?, val keyInfo: String?,
     val hasPassword: Boolean = false,
+    /** Clé du trousseau utilisée pour ce serveur (phase 13), ou null. */
+    val keyId: String? = null,
 )
 
 /** Secrets d'un serveur, en mémoire ; [wipe] les remet à zéro. */
@@ -36,6 +38,45 @@ class Secrets(var password: ByteArray?, var keyPassphrase: ByteArray?, var priva
 class RemoteServers(private val dir: File, private val box: SecretBox) {
     private val file = File(dir, "remote-servers.json")
     private val secretsDir = File(dir, "remote-secrets")
+
+    /** Trousseau de clés SSH (phase 13), dans le même dossier et scellé de même. */
+    val keys: com.mawena.fluluks.remote.ssh.SshKeys by lazy {
+        com.mawena.fluluks.remote.ssh.SshKeys(dir, box) { id -> list().filter { it.keyId == id }.map { it.name } }
+    }
+
+    /** Fait utiliser au serveur [id] la clé [keyId] du trousseau (null : aucune) ; sa description suit. */
+    @Synchronized
+    fun setKey(id: String, keyId: String?) {
+        val info = keyId?.let { k ->
+            val key = keys.list().firstOrNull { it.id == k } ?: throw java.io.FileNotFoundException("Clé introuvable")
+            "${key.type} ${key.fingerprint}".trim()
+        }
+        update(id) { it.copy(keyId = keyId, keyInfo = info) }
+    }
+
+    /**
+     * Phase 13 : une clé importée pour un serveur en phase 10 (dans ses secrets) passe dans le trousseau sous le nom
+     * « Clé de <serveur> », que le serveur désigne ; ses secrets ne gardent que mot de passe et phrase. Sans effet la
+     * fois suivante. Une clé illisible reste où elle est.
+     */
+    @Synchronized
+    fun migrateKeys() {
+        for (s in list()) {
+            val sec = secrets(s.id) ?: continue
+            try {
+                val key = sec.privateKey ?: continue
+                val k = try {
+                    keys.import("Clé de ${s.name}", key.copyOf())
+                } catch (e: java.io.IOException) {
+                    continue
+                }
+                update(s.id) { it.copy(keyId = k.id, keyInfo = it.keyInfo ?: "${k.type} ${k.fingerprint}") }
+                writeSecrets(s.id, Secrets(sec.password, sec.keyPassphrase, null))
+            } finally {
+                sec.wipe()
+            }
+        }
+    }
 
     @Synchronized
     fun list(): List<ServerConfig> {
@@ -177,7 +218,7 @@ class RemoteServers(private val dir: File, private val box: SecretBox) {
         .put("id", c.id).put("protocol", c.protocol).put("name", c.name).put("host", c.host).put("port", c.port)
         .put("user", c.user).put("startPath", c.startPath).put("remember", c.remember)
         .put("hostKey", c.hostKey ?: JSONObject.NULL).put("keyInfo", c.keyInfo ?: JSONObject.NULL)
-        .put("hasPassword", c.hasPassword)
+        .put("hasPassword", c.hasPassword).put("keyId", c.keyId ?: JSONObject.NULL)
 
     private fun fromJson(o: JSONObject): ServerConfig? {
         val id = o.optString("id").ifEmpty { return null }
@@ -187,6 +228,7 @@ class RemoteServers(private val dir: File, private val box: SecretBox) {
             o.optString("hostKey").takeIf { !o.isNull("hostKey") && it.isNotEmpty() },
             o.optString("keyInfo").takeIf { !o.isNull("keyInfo") && it.isNotEmpty() },
             o.optBoolean("hasPassword"),
+            o.optString("keyId").takeIf { !o.isNull("keyId") && it.isNotEmpty() },
         )
     }
 }

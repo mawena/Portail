@@ -355,6 +355,64 @@ class FakeHostApi implements HostApi {
   @override
   Future<void> setSecureScreen(bool secure) async => secureScreen = secure;
 
+  /// Phase 13 : trousseau factice ; [generatedKeys] : (nom, type, phrase décodée) ; [sharedTexts] : textes partagés.
+  final sshKeyList = <SshKeyMsg>[];
+  final generatedKeys = <(String, String, String?)>[];
+  final sharedTexts = <String>[];
+  var _keySeq = 0;
+
+  @override
+  Future<List<SshKeyMsg>> sshKeys() async => List.of(sshKeyList);
+
+  @override
+  Future<SshKeyMsg> generateSshKey(String name, String type, Uint8List? passphrase) async {
+    generatedKeys.add((name, type, passphrase == null ? null : utf8.decode(List<int>.of(passphrase))));
+    final k = SshKeyMsg(
+        id: 'g${++_keySeq}',
+        name: name,
+        type: type == 'rsa' ? 'ssh-rsa' : 'ssh-ed25519',
+        fingerprint: 'SHA256:gen$_keySeq',
+        encrypted: passphrase != null,
+        usedBy: []);
+    sshKeyList.add(k);
+    return k;
+  }
+
+  @override
+  Future<SshKeyMsg?> importSshKey(String name) async {
+    calls.add('importSshKey $name');
+    final k = SshKeyMsg(
+        id: 'i${++_keySeq}', name: name, type: 'ssh-ed25519', fingerprint: 'SHA256:imp', encrypted: false, usedBy: []);
+    sshKeyList.add(k);
+    return k;
+  }
+
+  @override
+  Future<void> renameSshKey(String keyId, String name) async {
+    final i = sshKeyList.indexWhere((k) => k.id == keyId);
+    final k = sshKeyList[i];
+    sshKeyList[i] = SshKeyMsg(
+        id: k.id, name: name, type: k.type, fingerprint: k.fingerprint, encrypted: k.encrypted, usedBy: k.usedBy);
+  }
+
+  @override
+  Future<void> deleteSshKey(String keyId) async {
+    final k = sshKeyList.firstWhere((k) => k.id == keyId);
+    if (k.usedBy.isNotEmpty) {
+      throw PlatformException(code: '1', message: 'Clé utilisée par\u00A0: ${k.usedBy.join(', ')}');
+    }
+    sshKeyList.remove(k);
+  }
+
+  @override
+  Future<String> sshPublicKey(String keyId) async => 'ssh-ed25519 AAAAC3Nza portail@test';
+
+  @override
+  Future<void> setServerKey(String serverId, String? keyId) async => calls.add('setServerKey $serverId $keyId');
+
+  @override
+  Future<void> shareText(String text) async => sharedTexts.add(text);
+
   /// Description rendue par importPrivateKey (null : sélecteur fermé sans choix).
   String? importedKey;
 

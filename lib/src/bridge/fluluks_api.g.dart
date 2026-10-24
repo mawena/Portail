@@ -1583,6 +1583,7 @@ class RemoteServerMsg {
     this.keyInfo,
     required this.hasPassword,
     required this.connected,
+    this.keyId,
   });
 
   String id;
@@ -1609,6 +1610,9 @@ class RemoteServerMsg {
 
   bool connected;
 
+  /// Phase 13 : clé du trousseau utilisée pour ce serveur.
+  String? keyId;
+
   List<Object?> _toList() {
     return <Object?>[
       id,
@@ -1623,6 +1627,7 @@ class RemoteServerMsg {
       keyInfo,
       hasPassword,
       connected,
+      keyId,
     ];
   }
 
@@ -1644,6 +1649,7 @@ class RemoteServerMsg {
       keyInfo: result[9] as String?,
       hasPassword: result[10]! as bool,
       connected: result[11]! as bool,
+      keyId: result[12] as String?,
     );
   }
 
@@ -1656,7 +1662,7 @@ class RemoteServerMsg {
     if (identical(this, other)) {
       return true;
     }
-    return _deepEquals(id, other.id) && _deepEquals(protocol, other.protocol) && _deepEquals(name, other.name) && _deepEquals(host, other.host) && _deepEquals(port, other.port) && _deepEquals(user, other.user) && _deepEquals(startPath, other.startPath) && _deepEquals(remember, other.remember) && _deepEquals(hostKey, other.hostKey) && _deepEquals(keyInfo, other.keyInfo) && _deepEquals(hasPassword, other.hasPassword) && _deepEquals(connected, other.connected);
+    return _deepEquals(id, other.id) && _deepEquals(protocol, other.protocol) && _deepEquals(name, other.name) && _deepEquals(host, other.host) && _deepEquals(port, other.port) && _deepEquals(user, other.user) && _deepEquals(startPath, other.startPath) && _deepEquals(remember, other.remember) && _deepEquals(hostKey, other.hostKey) && _deepEquals(keyInfo, other.keyInfo) && _deepEquals(hasPassword, other.hasPassword) && _deepEquals(connected, other.connected) && _deepEquals(keyId, other.keyId);
   }
 
   @override
@@ -1665,7 +1671,79 @@ class RemoteServerMsg {
 
   @override
   String toString() {
-    return 'RemoteServerMsg(id: $id, protocol: $protocol, name: $name, host: $host, port: $port, user: $user, startPath: $startPath, remember: $remember, hostKey: $hostKey, keyInfo: $keyInfo, hasPassword: $hasPassword, connected: $connected)';
+    return 'RemoteServerMsg(id: $id, protocol: $protocol, name: $name, host: $host, port: $port, user: $user, startPath: $startPath, remember: $remember, hostKey: $hostKey, keyInfo: $keyInfo, hasPassword: $hasPassword, connected: $connected, keyId: $keyId)';
+  }
+}
+
+/// Clé du trousseau SSH (phase 13) : [type] « ssh-ed25519 »… ; [fingerprint] « SHA256:… » ; [usedBy] : noms des
+/// serveurs qui l'utilisent.
+class SshKeyMsg {
+  SshKeyMsg({
+    required this.id,
+    required this.name,
+    required this.type,
+    required this.fingerprint,
+    required this.encrypted,
+    required this.usedBy,
+  });
+
+  String id;
+
+  String name;
+
+  String type;
+
+  String fingerprint;
+
+  bool encrypted;
+
+  List<String> usedBy;
+
+  List<Object?> _toList() {
+    return <Object?>[
+      id,
+      name,
+      type,
+      fingerprint,
+      encrypted,
+      usedBy,
+    ];
+  }
+
+  Object encode() {
+    return _toList();  }
+
+  static SshKeyMsg decode(Object result) {
+    result as List<Object?>;
+    return SshKeyMsg(
+      id: result[0]! as String,
+      name: result[1]! as String,
+      type: result[2]! as String,
+      fingerprint: result[3]! as String,
+      encrypted: result[4]! as bool,
+      usedBy: (result[5]! as List<Object?>).cast<String>(),
+    );
+  }
+
+  @override
+  // ignore: avoid_equals_and_hash_code_on_mutable_classes
+  bool operator ==(Object other) {
+    if (other is! SshKeyMsg || other.runtimeType != runtimeType) {
+      return false;
+    }
+    if (identical(this, other)) {
+      return true;
+    }
+    return _deepEquals(id, other.id) && _deepEquals(name, other.name) && _deepEquals(type, other.type) && _deepEquals(fingerprint, other.fingerprint) && _deepEquals(encrypted, other.encrypted) && _deepEquals(usedBy, other.usedBy);
+  }
+
+  @override
+  // ignore: avoid_equals_and_hash_code_on_mutable_classes
+  int get hashCode => _deepHash(<Object?>[runtimeType, ..._toList()]);
+
+  @override
+  String toString() {
+    return 'SshKeyMsg(id: $id, name: $name, type: $type, fingerprint: $fingerprint, encrypted: $encrypted, usedBy: $usedBy)';
   }
 }
 
@@ -1997,17 +2075,20 @@ class _PigeonCodec extends StandardMessageCodec {
     }    else if (value is RemoteServerMsg) {
       buffer.putUint8(149);
       writeValue(buffer, value.encode());
-    }    else if (value is ViewPrefsMsg) {
+    }    else if (value is SshKeyMsg) {
       buffer.putUint8(150);
       writeValue(buffer, value.encode());
-    }    else if (value is UiPrefsMsg) {
+    }    else if (value is ViewPrefsMsg) {
       buffer.putUint8(151);
       writeValue(buffer, value.encode());
-    }    else if (value is AppInfoMsg) {
+    }    else if (value is UiPrefsMsg) {
       buffer.putUint8(152);
       writeValue(buffer, value.encode());
-    }    else if (value is FavoriteMsg) {
+    }    else if (value is AppInfoMsg) {
       buffer.putUint8(153);
+      writeValue(buffer, value.encode());
+    }    else if (value is FavoriteMsg) {
+      buffer.putUint8(154);
       writeValue(buffer, value.encode());
     } else {
       super.writeValue(buffer, value);
@@ -2060,12 +2141,14 @@ class _PigeonCodec extends StandardMessageCodec {
       case 149:
         return RemoteServerMsg.decode(readValue(buffer)!);
       case 150:
-        return ViewPrefsMsg.decode(readValue(buffer)!);
+        return SshKeyMsg.decode(readValue(buffer)!);
       case 151:
-        return UiPrefsMsg.decode(readValue(buffer)!);
+        return ViewPrefsMsg.decode(readValue(buffer)!);
       case 152:
-        return AppInfoMsg.decode(readValue(buffer)!);
+        return UiPrefsMsg.decode(readValue(buffer)!);
       case 153:
+        return AppInfoMsg.decode(readValue(buffer)!);
+      case 154:
         return FavoriteMsg.decode(readValue(buffer)!);
       default:
         return super.readValueOfType(type, buffer);
@@ -3143,6 +3226,158 @@ class FluLuksHostApi {
     )
     ;
     return (pigeonVar_replyValue! as List<Object?>).cast<TerminalSessionMsg>();
+  }
+
+  /// Phase 13 : trousseau de clés SSH. `generateSshKey` : `type` `ed25519` ou `rsa` (4096 bits), phrase facultative
+  /// (mise à zéro). `importSshKey` : fichier choisi dans le sélecteur d'Android (null : rien de choisi).
+  /// `deleteSshKey` : refusé tant qu'un serveur l'utilise. `sshPublicKey` : ligne OpenSSH. `setServerKey` : clé
+  /// utilisée par un serveur (null : aucune). `shareText` : partage d'un texte (clé publique).
+  Future<List<SshKeyMsg>> sshKeys() async {
+    final pigeonVar_channelName = 'dev.flutter.pigeon.fluluks.FluLuksHostApi.sshKeys$pigeonVar_messageChannelSuffix';
+    final pigeonVar_channel = BasicMessageChannel<Object?>(
+      pigeonVar_channelName,
+      pigeonChannelCodec,
+      binaryMessenger: pigeonVar_binaryMessenger,
+    );
+    final Future<Object?> pigeonVar_sendFuture = pigeonVar_channel.send(null);
+    final pigeonVar_replyList = await pigeonVar_sendFuture as List<Object?>?;
+
+    final Object? pigeonVar_replyValue = _extractReplyValueOrThrow(
+        pigeonVar_replyList,
+        pigeonVar_channelName,
+        isNullValid: false,
+    )
+    ;
+    return (pigeonVar_replyValue! as List<Object?>).cast<SshKeyMsg>();
+  }
+
+  Future<SshKeyMsg> generateSshKey(String name, String type, Uint8List? passphrase) async {
+    final pigeonVar_channelName = 'dev.flutter.pigeon.fluluks.FluLuksHostApi.generateSshKey$pigeonVar_messageChannelSuffix';
+    final pigeonVar_channel = BasicMessageChannel<Object?>(
+      pigeonVar_channelName,
+      pigeonChannelCodec,
+      binaryMessenger: pigeonVar_binaryMessenger,
+    );
+    final Future<Object?> pigeonVar_sendFuture = pigeonVar_channel.send(<Object?>[name, type, passphrase]);
+    final pigeonVar_replyList = await pigeonVar_sendFuture as List<Object?>?;
+
+    final Object? pigeonVar_replyValue = _extractReplyValueOrThrow(
+        pigeonVar_replyList,
+        pigeonVar_channelName,
+        isNullValid: false,
+    )
+    ;
+    return pigeonVar_replyValue! as SshKeyMsg;
+  }
+
+  Future<SshKeyMsg?> importSshKey(String name) async {
+    final pigeonVar_channelName = 'dev.flutter.pigeon.fluluks.FluLuksHostApi.importSshKey$pigeonVar_messageChannelSuffix';
+    final pigeonVar_channel = BasicMessageChannel<Object?>(
+      pigeonVar_channelName,
+      pigeonChannelCodec,
+      binaryMessenger: pigeonVar_binaryMessenger,
+    );
+    final Future<Object?> pigeonVar_sendFuture = pigeonVar_channel.send(<Object?>[name]);
+    final pigeonVar_replyList = await pigeonVar_sendFuture as List<Object?>?;
+
+    final Object? pigeonVar_replyValue = _extractReplyValueOrThrow(
+        pigeonVar_replyList,
+        pigeonVar_channelName,
+        isNullValid: true,
+    )
+    ;
+    return pigeonVar_replyValue as SshKeyMsg?;
+  }
+
+  Future<void> renameSshKey(String keyId, String name) async {
+    final pigeonVar_channelName = 'dev.flutter.pigeon.fluluks.FluLuksHostApi.renameSshKey$pigeonVar_messageChannelSuffix';
+    final pigeonVar_channel = BasicMessageChannel<Object?>(
+      pigeonVar_channelName,
+      pigeonChannelCodec,
+      binaryMessenger: pigeonVar_binaryMessenger,
+    );
+    final Future<Object?> pigeonVar_sendFuture = pigeonVar_channel.send(<Object?>[keyId, name]);
+    final pigeonVar_replyList = await pigeonVar_sendFuture as List<Object?>?;
+
+    _extractReplyValueOrThrow(
+        pigeonVar_replyList,
+        pigeonVar_channelName,
+        isNullValid: true,
+    )
+    ;
+  }
+
+  Future<void> deleteSshKey(String keyId) async {
+    final pigeonVar_channelName = 'dev.flutter.pigeon.fluluks.FluLuksHostApi.deleteSshKey$pigeonVar_messageChannelSuffix';
+    final pigeonVar_channel = BasicMessageChannel<Object?>(
+      pigeonVar_channelName,
+      pigeonChannelCodec,
+      binaryMessenger: pigeonVar_binaryMessenger,
+    );
+    final Future<Object?> pigeonVar_sendFuture = pigeonVar_channel.send(<Object?>[keyId]);
+    final pigeonVar_replyList = await pigeonVar_sendFuture as List<Object?>?;
+
+    _extractReplyValueOrThrow(
+        pigeonVar_replyList,
+        pigeonVar_channelName,
+        isNullValid: true,
+    )
+    ;
+  }
+
+  Future<String> sshPublicKey(String keyId) async {
+    final pigeonVar_channelName = 'dev.flutter.pigeon.fluluks.FluLuksHostApi.sshPublicKey$pigeonVar_messageChannelSuffix';
+    final pigeonVar_channel = BasicMessageChannel<Object?>(
+      pigeonVar_channelName,
+      pigeonChannelCodec,
+      binaryMessenger: pigeonVar_binaryMessenger,
+    );
+    final Future<Object?> pigeonVar_sendFuture = pigeonVar_channel.send(<Object?>[keyId]);
+    final pigeonVar_replyList = await pigeonVar_sendFuture as List<Object?>?;
+
+    final Object? pigeonVar_replyValue = _extractReplyValueOrThrow(
+        pigeonVar_replyList,
+        pigeonVar_channelName,
+        isNullValid: false,
+    )
+    ;
+    return pigeonVar_replyValue! as String;
+  }
+
+  Future<void> setServerKey(String serverId, String? keyId) async {
+    final pigeonVar_channelName = 'dev.flutter.pigeon.fluluks.FluLuksHostApi.setServerKey$pigeonVar_messageChannelSuffix';
+    final pigeonVar_channel = BasicMessageChannel<Object?>(
+      pigeonVar_channelName,
+      pigeonChannelCodec,
+      binaryMessenger: pigeonVar_binaryMessenger,
+    );
+    final Future<Object?> pigeonVar_sendFuture = pigeonVar_channel.send(<Object?>[serverId, keyId]);
+    final pigeonVar_replyList = await pigeonVar_sendFuture as List<Object?>?;
+
+    _extractReplyValueOrThrow(
+        pigeonVar_replyList,
+        pigeonVar_channelName,
+        isNullValid: true,
+    )
+    ;
+  }
+
+  Future<void> shareText(String text) async {
+    final pigeonVar_channelName = 'dev.flutter.pigeon.fluluks.FluLuksHostApi.shareText$pigeonVar_messageChannelSuffix';
+    final pigeonVar_channel = BasicMessageChannel<Object?>(
+      pigeonVar_channelName,
+      pigeonChannelCodec,
+      binaryMessenger: pigeonVar_binaryMessenger,
+    );
+    final Future<Object?> pigeonVar_sendFuture = pigeonVar_channel.send(<Object?>[text]);
+    final pigeonVar_replyList = await pigeonVar_sendFuture as List<Object?>?;
+
+    _extractReplyValueOrThrow(
+        pigeonVar_replyList,
+        pigeonVar_channelName,
+        isNullValid: true,
+    )
+    ;
   }
 
   /// Clé privée OpenSSH choisie dans le sélecteur d'Android, scellée pour `serverId` ; rend sa description

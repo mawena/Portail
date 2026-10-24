@@ -54,6 +54,7 @@ import io.flutter.plugin.common.BinaryMessenger
 import com.mawena.fluluks.remote.ssh.AttemptLogs
 import com.mawena.fluluks.remote.ssh.SshFailure
 import com.mawena.fluluks.remote.ssh.SshPromptBridge
+import com.mawena.fluluks.remote.ssh.SshKeyInfo
 import com.mawena.fluluks.remote.ssh.SshPrompts
 import com.mawena.fluluks.remote.ssh.TerminalInfo
 import com.mawena.fluluks.remote.ssh.TerminalSessions
@@ -279,6 +280,7 @@ class HostApiImpl(
         startPath = c.startPath, remember = c.remember, hostKey = c.hostKey, keyInfo = c.keyInfo,
         hasPassword = c.hasPassword,
         connected = Remotes.isConnected(c.id),
+        keyId = c.keyId,
     )
 
     override fun listServers(): List<RemoteServerMsg> = guardedValue { Remotes.servers().list().map(::serverMsg) }
@@ -288,9 +290,10 @@ class HostApiImpl(
             try {
                 // fiche modifiée : la connexion ouverte avec l'ancienne est fermée
                 if (server.id.isNotEmpty()) Remotes.disconnect(server.id)
+                val old = Remotes.servers().get(server.id)
                 val c = ServerConfig(
                     server.id, server.protocol, server.name, server.host, server.port.toInt(), server.user, server.startPath,
-                    server.remember, Remotes.servers().get(server.id)?.hostKey, Remotes.servers().get(server.id)?.keyInfo,
+                    server.remember, old?.hostKey, old?.keyInfo, keyId = old?.keyId,
                 )
                 serverMsg(Remotes.servers().save(c, password, keyPassphrase))
             } catch (e: IllegalArgumentException) {
@@ -447,6 +450,50 @@ class HostApiImpl(
     }
 
     override fun forgetPrivateKey(serverId: String) = guardedValue { Remotes.forgetPrivateKey(serverId) }
+
+    private fun keyMsg(k: SshKeyInfo) = SshKeyMsg(k.id, k.name, k.type, k.fingerprint, k.encrypted, k.usedBy)
+
+    override fun sshKeys(): List<SshKeyMsg> = keyOp { Remotes.servers().keys.list().map(::keyMsg) }
+
+    /** Opération du trousseau : ses messages (« Clé utilisée par : … ») arrivent tels quels. */
+    private inline fun <T> keyOp(block: () -> T): T = guardedValue { Files.guard("openDocument", block) }
+
+    override fun generateSshKey(name: String, type: String, passphrase: ByteArray?, callback: (Result<SshKeyMsg>) -> Unit) =
+        io(callback) {
+            try {
+                Files.guard("openDocument") { keyMsg(Remotes.servers().keys.generate(name, type, passphrase)) }
+            } finally {
+                passphrase?.fill(0)
+            }
+        }
+
+    override fun importSshKey(name: String, callback: (Result<SshKeyMsg?>) -> Unit) =
+        FilePicker.pick { uri ->
+            if (uri == null) return@pick callback(Result.success(null))
+            io(callback) {
+                Files.guard("openDocument") {
+                    val key = context.contentResolver.openInputStream(uri)?.use { readKeyFile(it) }
+                        ?: throw RemoteIOException(PrivateKeys.MSG_UNREADABLE)
+                    keyMsg(Remotes.servers().keys.import(name, key))
+                }
+            }
+        }
+
+    override fun renameSshKey(keyId: String, name: String) = keyOp { Remotes.servers().keys.rename(keyId, name) }
+
+    override fun deleteSshKey(keyId: String) = keyOp { Remotes.servers().keys.delete(keyId) }
+
+    override fun sshPublicKey(keyId: String): String = keyOp { Remotes.servers().keys.publicKey(keyId) }
+
+    override fun setServerKey(serverId: String, keyId: String?) = keyOp {
+        Remotes.disconnect(serverId) // reconnecté avec la nouvelle clé
+        Remotes.servers().setKey(serverId, keyId)
+    }
+
+    override fun shareText(text: String) {
+        val send = Intent(Intent.ACTION_SEND).setType("text/plain").putExtra(Intent.EXTRA_TEXT, text)
+        context.startActivity(Intent.createChooser(send, null).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
+    }
 
     override fun getAutoLockMinutes(): Long = AutoLock.readPref(context).toLong()
 

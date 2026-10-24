@@ -241,6 +241,12 @@ class AppState extends ChangeNotifier implements FluLuksEventsApi {
     await refreshSources();
   }
 
+  /// Phase 13 : le serveur [serverId] utilise la clé [keyId] du trousseau (null : aucune).
+  Future<void> setServerKey(String serverId, String? keyId) async {
+    await api.setServerKey(serverId, keyId);
+    await refreshSources();
+  }
+
   @override
   void onStateChanged(List<DiskMsg> disks, List<VolumeMsg> volumes) {
     _disks = disks;

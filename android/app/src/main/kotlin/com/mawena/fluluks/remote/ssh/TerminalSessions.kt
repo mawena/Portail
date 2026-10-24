@@ -63,9 +63,7 @@ object TerminalSessions {
                 .also { sessions[info.id] = it }
         }
         changed(t.info)
-        val stored = store.secrets(serverId)
-        val sec = Secrets(password?.copyOf() ?: stored?.password, stored?.keyPassphrase, stored?.privateKey)
-        if (password != null) stored?.password?.fill(0)
+        val sec = Remotes.secretsFor(cfg, password)
         try {
             t.connect(sec, SshPromptBridge.prompts, startDir)
         } catch (e: Exception) {

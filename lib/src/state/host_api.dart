@@ -61,6 +61,14 @@ abstract class HostApi {
   Future<void> closeTerminal(String sessionId);
   Future<List<TerminalSessionMsg>> terminalSessions();
   Future<void> setSecureScreen(bool secure);
+  Future<List<SshKeyMsg>> sshKeys();
+  Future<SshKeyMsg> generateSshKey(String name, String type, Uint8List? passphrase);
+  Future<SshKeyMsg?> importSshKey(String name);
+  Future<void> renameSshKey(String keyId, String name);
+  Future<void> deleteSshKey(String keyId);
+  Future<String> sshPublicKey(String keyId);
+  Future<void> setServerKey(String serverId, String? keyId);
+  Future<void> shareText(String text);
   Future<String?> importPrivateKey(String serverId);
   Future<void> forgetPrivateKey(String serverId);
   Future<Uint8List> readImage(String sourceId, String path);
@@ -214,6 +222,23 @@ class PigeonHostApi implements HostApi {
   Future<List<TerminalSessionMsg>> terminalSessions() => _api.terminalSessions();
   @override
   Future<void> setSecureScreen(bool secure) => _api.setSecureScreen(secure);
+  @override
+  Future<List<SshKeyMsg>> sshKeys() => _api.sshKeys();
+  @override
+  Future<SshKeyMsg> generateSshKey(String name, String type, Uint8List? passphrase) =>
+      _api.generateSshKey(name, type, passphrase);
+  @override
+  Future<SshKeyMsg?> importSshKey(String name) => _api.importSshKey(name);
+  @override
+  Future<void> renameSshKey(String keyId, String name) => _api.renameSshKey(keyId, name);
+  @override
+  Future<void> deleteSshKey(String keyId) => _api.deleteSshKey(keyId);
+  @override
+  Future<String> sshPublicKey(String keyId) => _api.sshPublicKey(keyId);
+  @override
+  Future<void> setServerKey(String serverId, String? keyId) => _api.setServerKey(serverId, keyId);
+  @override
+  Future<void> shareText(String text) => _api.shareText(text);
   @override
   Future<String?> importPrivateKey(String serverId) => _api.importPrivateKey(serverId);
   @override

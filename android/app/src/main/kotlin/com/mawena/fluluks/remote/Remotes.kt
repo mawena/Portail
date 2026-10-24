@@ -29,7 +29,12 @@ object Remotes {
     private val open = ConcurrentHashMap<String, Pair<RemoteSource, Secrets>>()
 
     fun init(context: Context) {
-        if (store == null) store = RemoteServers(context.applicationContext.filesDir, KeystoreSecretBox())
+        if (store == null) {
+            com.mawena.fluluks.remote.ssh.SshKeys.defaultComment = "portail@${android.os.Build.MODEL ?: "Android"}"
+            store = RemoteServers(context.applicationContext.filesDir, KeystoreSecretBox()).also {
+                runCatching { it.migrateKeys() } // phase 13 : clés de la phase 10 dans le trousseau
+            }
+        }
     }
 
     fun servers(): RemoteServers = store ?: throw FilesException(EngineError.FL_ENODEV, "Serveurs indisponibles")
@@ -50,13 +55,24 @@ object Remotes {
      * Connecte [serverId] ([password] : saisi à l'instant, sinon celui mémorisé) ; déjà connecté : la même source.
      * Lève [HostKeyUnknown], [HostKeyChanged] ou [AuthFailed] selon le cas.
      */
+    /**
+     * Secrets d'une connexion à [cfg] : [password] (copié) sinon celui mémorisé, la phrase mémorisée, la clé du
+     * trousseau désignée par le serveur (sinon une clé de la phase 10 pas encore migrée). À remettre à zéro.
+     */
+    fun secretsFor(cfg: ServerConfig, password: ByteArray?): Secrets {
+        val s = servers()
+        val stored = s.secrets(cfg.id)
+        val fromRing = cfg.keyId?.let { runCatching { s.keys.privateKey(it) }.getOrNull() }
+        if (password != null) stored?.password?.fill(0)
+        if (fromRing != null) stored?.privateKey?.fill(0)
+        return Secrets(password?.copyOf() ?: stored?.password, stored?.keyPassphrase, fromRing ?: stored?.privateKey)
+    }
+
     fun connect(serverId: String, password: ByteArray?): RemoteSource {
         open[serverId]?.let { return it.first }
         val s = servers()
         val cfg = s.get(serverId) ?: throw FileNotFoundException("Serveur introuvable")
-        val stored = s.secrets(serverId)
-        val sec = Secrets(password?.copyOf() ?: stored?.password, stored?.keyPassphrase, stored?.privateKey)
-        if (password != null) stored?.password?.fill(0)
+        val sec = secretsFor(cfg, password)
         val client = try {
             net { factory.connect(cfg, sec) }
         } catch (e: Exception) {
@@ -75,9 +91,7 @@ object Remotes {
     fun testServer(serverId: String, password: ByteArray?) {
         val s = servers()
         val cfg = s.get(serverId) ?: throw FileNotFoundException("Serveur introuvable")
-        val stored = s.secrets(serverId)
-        val sec = Secrets(password?.copyOf() ?: stored?.password, stored?.keyPassphrase, stored?.privateKey)
-        if (password != null) stored?.password?.fill(0)
+        val sec = secretsFor(cfg, password)
         try {
             val client = net { factory.connect(cfg, sec) }
             runCatching { client.close() }
@@ -103,19 +117,22 @@ object Remotes {
     fun forgetHostKey(serverId: String) = servers().setHostKey(serverId, null)
 
     /**
-     * Clé privée OpenSSH [key] importée pour [serverId], scellée avec ses secrets ; rend sa description (« ssh-ed25519
-     * SHA256:… »). [key] est remise à zéro dans tous les cas ; un fichier qui n'est pas une clé ne change rien.
+     * Clé privée OpenSSH [key] importée pour [serverId] : rangée dans le trousseau (« Clé de <serveur> », phase 13)
+     * et désignée par le serveur ; rend sa description (« ssh-ed25519 SHA256:… »). [key] est remise à zéro dans tous
+     * les cas ; un fichier qui n'est pas une clé ne change rien.
      */
     fun importPrivateKey(serverId: String, key: ByteArray): String {
         try {
             val info = PrivateKeys.describe(net { PrivateKeys.inspect(key) })
-            servers().get(serverId) ?: throw FileNotFoundException("Serveur introuvable")
-            servers().setPrivateKey(serverId, key, info)
+            val cfg = servers().get(serverId) ?: throw FileNotFoundException("Serveur introuvable")
+            val k = net { servers().keys.import("Clé de ${cfg.name}", key.copyOf()) }
+            servers().setKey(serverId, k.id)
             return info
         } finally {
             key.fill(0)
         }
     }
 
-    fun forgetPrivateKey(serverId: String) = servers().setPrivateKey(serverId, null, null)
+    /** Le serveur n'utilise plus de clé ; elle reste dans le trousseau. */
+    fun forgetPrivateKey(serverId: String) = servers().setKey(serverId, null)
 }

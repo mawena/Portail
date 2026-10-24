@@ -106,6 +106,40 @@ class _ServerFormScreenState extends State<ServerFormScreen> {
     }
   }
 
+  /// Clé du trousseau pour ce serveur (phase 13).
+  Future<void> _chooseKey() async {
+    final keys = await widget.state.api.sshKeys();
+    if (!mounted) return;
+    final k = await showDialog<SshKeyMsg>(
+      context: context,
+      builder: (ctx) => SimpleDialog(
+        title: const Text(Fr.chooseKey),
+        children: [
+          if (keys.isEmpty)
+            const Padding(padding: EdgeInsets.all(Space.l), child: Text(Fr.noKeysBody))
+          else
+            for (final k in keys)
+              SimpleDialogOption(
+                onPressed: () => Navigator.pop(ctx, k),
+                child: ListTile(
+                  contentPadding: EdgeInsets.zero,
+                  leading: const Icon(Icons.key_rounded),
+                  title: Text(k.name),
+                  subtitle: Text('${k.type} ${k.fingerprint}'),
+                ),
+              ),
+        ],
+      ),
+    );
+    if (k == null || !mounted) return;
+    try {
+      await widget.state.setServerKey(widget.server!.id, k.id);
+      if (mounted) setState(() => _keyInfo = '${k.type} ${k.fingerprint}');
+    } on PlatformException catch (e) {
+      if (mounted) _snack(e.message ?? Fr.genericError);
+    }
+  }
+
   Future<void> _removeKey() async {
     await widget.state.forgetPrivateKey(widget.server!.id);
     if (mounted) setState(() => _keyInfo = null);
@@ -236,6 +270,7 @@ class _ServerFormScreenState extends State<ServerFormScreen> {
               if (_keyInfo != null)
                 _field(_keyPassphrase, Fr.keyPassphrase, obscure: true, helper: Fr.keyPassphraseHelp),
               Wrap(spacing: Space.s, children: [
+                TextButton(onPressed: _chooseKey, child: const Text(Fr.chooseKey)),
                 TextButton(onPressed: _importKey, child: const Text(Fr.importKey)),
                 if (_keyInfo != null) TextButton(onPressed: _removeKey, child: const Text(Fr.removeKey)),
               ]),

@@ -15,6 +15,7 @@ import 'package:fluluks/src/screens/search_screen.dart';
 import 'package:fluluks/src/screens/server_form_screen.dart';
 import 'package:fluluks/src/screens/settings_screen.dart';
 import 'package:fluluks/src/screens/space_screen.dart';
+import 'package:fluluks/src/screens/ssh_keys_screen.dart';
 import 'package:fluluks/src/screens/text_editor_screen.dart';
 import 'package:fluluks/src/screens/trash_screen.dart';
 import 'package:fluluks/src/state/app_state.dart';
@@ -29,7 +30,7 @@ import 'fake_host_api.dart';
 /// Écrans que [pumpScreen] sait afficher, sur les données de [demoApi].
 const screens = [
   'home', 'explorerList', 'explorerGrid', 'filterGrid', 'search', 'globalSearch', 'trash', 'space', 'settings', //
-  'about', 'help', 'welcome', 'unlock', 'format', 'editor', 'serverForm', 'nowPlaying', 'terminal',
+  'about', 'help', 'welcome', 'unlock', 'format', 'editor', 'serverForm', 'nowPlaying', 'terminal', 'sshKeys',
 ];
 
 /// Pont et état du dernier [pumpScreen] (pour les tests qui agissent ensuite sur l'écran).
@@ -62,6 +63,14 @@ Future<void> pumpScreen(
   final api = demoApi();
   if (screen == 'explorerGrid' || screen == 'filterGrid') {
     api.viewPrefs = ViewPrefsMsg(sort: 'name', ascending: true, grid: true, showHidden: false, builtInViewers: true);
+  }
+  if (screen == 'sshKeys') {
+    api.sshKeyList.addAll([
+      SshKeyMsg(id: 'k1', name: 'Pixel', type: 'ssh-ed25519', fingerprint: 'SHA256:3Fq0gJx9yKp2', encrypted: false,
+          usedBy: ['Maison']),
+      SshKeyMsg(id: 'k2', name: 'Ancien portable', type: 'ssh-rsa', fingerprint: 'SHA256:Zt8mWq1bLc7r', encrypted: true,
+          usedBy: []),
+    ]);
   }
   if (screen == 'welcome') api.uiPrefs = UiPrefsMsg(theme: 'system', haptics: true, welcomeSeen: false);
   final state = AppState(api);
@@ -103,6 +112,7 @@ Future<void> pumpScreen(
     'editor' => TextEditorScreen(state: state, sourceId: 'phone', path: '/notes-1.txt', name: 'notes-1.txt'),
     'serverForm' => ServerFormScreen(state: state, server: api.servers.single),
     'terminal' => TerminalScreen(state: state, sessionId: terminalId!),
+    'sshKeys' => SshKeysScreen(state: state),
     'unlock' || 'nowPlaying' => null,
     _ => throw ArgumentError.value(screen, 'screen'),
   };

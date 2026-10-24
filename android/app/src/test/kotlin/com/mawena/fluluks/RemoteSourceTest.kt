@@ -167,7 +167,11 @@ class RemoteSourceTest {
         val info = Remotes.importPrivateKey(saved.id, key)
         assertEquals("ssh-ed25519 ${kp.fingerPrint}", info)
         assertEquals(info, store.get(saved.id)!!.keyInfo)
-        assertArrayEquals(keep, store.secrets(saved.id)!!.privateKey)
+        // phase 13 : la clé va dans le trousseau, « Clé de <serveur> », et le serveur la désigne
+        val keyId = store.get(saved.id)!!.keyId!!
+        assertArrayEquals(keep, store.keys.privateKey(keyId))
+        assertEquals("Clé de ${saved.name}", store.keys.list().single().name)
+        assertNull(store.secrets(saved.id)?.privateKey)
         assertTrue(key.all { it == 0.toByte() }) // copie reçue remise à zéro
         // fichier qui n'est pas une clé : refusé, rien de changé
         try {
@@ -179,7 +183,8 @@ class RemoteSourceTest {
         assertEquals(info, store.get(saved.id)!!.keyInfo)
         Remotes.forgetPrivateKey(saved.id)
         assertNull(store.get(saved.id)!!.keyInfo)
-        assertNull(store.secrets(saved.id)?.privateKey)
+        assertNull(store.get(saved.id)!!.keyId)
+        assertEquals(1, store.keys.list().size) // oubliée par le serveur, gardée dans le trousseau
     }
 
     /** Relecture finale (I1) : les messages des clients distants arrivent tels quels, pas « L'opération a échoué ». */
