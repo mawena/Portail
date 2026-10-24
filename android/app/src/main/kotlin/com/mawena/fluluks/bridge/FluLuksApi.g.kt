@@ -195,6 +195,131 @@ class FlutterError (
   val details: Any? = null
 ) : RuntimeException()
 
+/**
+ * Invite keyboard-interactive (phase 13) : [name] (serveur ou titre de l'invite), [instruction], une saisie par
+ * élément de [prompts] ; [echo] faux : saisie masquée.
+ *
+ * Generated class from Pigeon that represents data sent in messages.
+ */
+data class SshPromptMsg (
+  val requestId: String,
+  val name: String,
+  val instruction: String,
+  val prompts: List<String>,
+  val echo: List<Boolean>
+)
+ {
+  companion object {
+    fun fromList(pigeonVar_list: List<Any?>): SshPromptMsg {
+      val requestId = pigeonVar_list[0] as String
+      val name = pigeonVar_list[1] as String
+      val instruction = pigeonVar_list[2] as String
+      val prompts = pigeonVar_list[3] as List<String>
+      val echo = pigeonVar_list[4] as List<Boolean>
+      return SshPromptMsg(requestId, name, instruction, prompts, echo)
+    }
+  }
+  fun toList(): List<Any?> {
+    return listOf(
+      requestId,
+      name,
+      instruction,
+      prompts,
+      echo,
+    )
+  }
+  override fun equals(other: Any?): Boolean {
+    if (other == null || other.javaClass != javaClass) {
+      return false
+    }
+    if (this === other) {
+      return true
+    }
+    val other = other as SshPromptMsg
+    return FluLuksApiPigeonUtils.deepEquals(this.requestId, other.requestId) && FluLuksApiPigeonUtils.deepEquals(this.name, other.name) && FluLuksApiPigeonUtils.deepEquals(this.instruction, other.instruction) && FluLuksApiPigeonUtils.deepEquals(this.prompts, other.prompts) && FluLuksApiPigeonUtils.deepEquals(this.echo, other.echo)
+  }
+
+  override fun hashCode(): Int {
+    var result = javaClass.hashCode()
+    result = 31 * result + FluLuksApiPigeonUtils.deepHash(this.requestId)
+    result = 31 * result + FluLuksApiPigeonUtils.deepHash(this.name)
+    result = 31 * result + FluLuksApiPigeonUtils.deepHash(this.instruction)
+    result = 31 * result + FluLuksApiPigeonUtils.deepHash(this.prompts)
+    result = 31 * result + FluLuksApiPigeonUtils.deepHash(this.echo)
+    return result
+  }
+  override fun toString(): String {
+    return "SshPromptMsg(requestId=$requestId, name=$name, instruction=$instruction, prompts=$prompts, echo=$echo)"
+  }
+}
+
+/**
+ * Session de terminal (phase 13) : [state] ∈ `connecting`, `open`, `closed`, `gone` (retirée : fermée à la demande
+ * ou jamais ouverte) ; [error] : pourquoi elle s'est fermée
+ * (null : fermeture normale ou demandée) ; [cols] × [rows] : taille du PTY.
+ *
+ * Generated class from Pigeon that represents data sent in messages.
+ */
+data class TerminalSessionMsg (
+  val id: String,
+  val serverId: String,
+  val title: String,
+  val state: String,
+  val error: String? = null,
+  val cols: Long,
+  val rows: Long
+)
+ {
+  companion object {
+    fun fromList(pigeonVar_list: List<Any?>): TerminalSessionMsg {
+      val id = pigeonVar_list[0] as String
+      val serverId = pigeonVar_list[1] as String
+      val title = pigeonVar_list[2] as String
+      val state = pigeonVar_list[3] as String
+      val error = pigeonVar_list[4] as String?
+      val cols = pigeonVar_list[5] as Long
+      val rows = pigeonVar_list[6] as Long
+      return TerminalSessionMsg(id, serverId, title, state, error, cols, rows)
+    }
+  }
+  fun toList(): List<Any?> {
+    return listOf(
+      id,
+      serverId,
+      title,
+      state,
+      error,
+      cols,
+      rows,
+    )
+  }
+  override fun equals(other: Any?): Boolean {
+    if (other == null || other.javaClass != javaClass) {
+      return false
+    }
+    if (this === other) {
+      return true
+    }
+    val other = other as TerminalSessionMsg
+    return FluLuksApiPigeonUtils.deepEquals(this.id, other.id) && FluLuksApiPigeonUtils.deepEquals(this.serverId, other.serverId) && FluLuksApiPigeonUtils.deepEquals(this.title, other.title) && FluLuksApiPigeonUtils.deepEquals(this.state, other.state) && FluLuksApiPigeonUtils.deepEquals(this.error, other.error) && FluLuksApiPigeonUtils.deepEquals(this.cols, other.cols) && FluLuksApiPigeonUtils.deepEquals(this.rows, other.rows)
+  }
+
+  override fun hashCode(): Int {
+    var result = javaClass.hashCode()
+    result = 31 * result + FluLuksApiPigeonUtils.deepHash(this.id)
+    result = 31 * result + FluLuksApiPigeonUtils.deepHash(this.serverId)
+    result = 31 * result + FluLuksApiPigeonUtils.deepHash(this.title)
+    result = 31 * result + FluLuksApiPigeonUtils.deepHash(this.state)
+    result = 31 * result + FluLuksApiPigeonUtils.deepHash(this.error)
+    result = 31 * result + FluLuksApiPigeonUtils.deepHash(this.cols)
+    result = 31 * result + FluLuksApiPigeonUtils.deepHash(this.rows)
+    return result
+  }
+  override fun toString(): String {
+    return "TerminalSessionMsg(id=$id, serverId=$serverId, title=$title, state=$state, error=$error, cols=$cols, rows=$rows)"
+  }
+}
+
 /** Generated class from Pigeon that represents data sent in messages. */
 data class PartitionMsg (
   val index: Long,
@@ -1334,7 +1459,9 @@ data class RemoteServerMsg (
   val hostKey: String? = null,
   val keyInfo: String? = null,
   val hasPassword: Boolean,
-  val connected: Boolean
+  val connected: Boolean,
+  /** Phase 13 : clé du trousseau utilisée pour ce serveur. */
+  val keyId: String? = null
 )
  {
   companion object {
@@ -1351,7 +1478,8 @@ data class RemoteServerMsg (
       val keyInfo = pigeonVar_list[9] as String?
       val hasPassword = pigeonVar_list[10] as Boolean
       val connected = pigeonVar_list[11] as Boolean
-      return RemoteServerMsg(id, protocol, name, host, port, user, startPath, remember, hostKey, keyInfo, hasPassword, connected)
+      val keyId = pigeonVar_list[12] as String?
+      return RemoteServerMsg(id, protocol, name, host, port, user, startPath, remember, hostKey, keyInfo, hasPassword, connected, keyId)
     }
   }
   fun toList(): List<Any?> {
@@ -1368,6 +1496,7 @@ data class RemoteServerMsg (
       keyInfo,
       hasPassword,
       connected,
+      keyId,
     )
   }
   override fun equals(other: Any?): Boolean {
@@ -1378,7 +1507,7 @@ data class RemoteServerMsg (
       return true
     }
     val other = other as RemoteServerMsg
-    return FluLuksApiPigeonUtils.deepEquals(this.id, other.id) && FluLuksApiPigeonUtils.deepEquals(this.protocol, other.protocol) && FluLuksApiPigeonUtils.deepEquals(this.name, other.name) && FluLuksApiPigeonUtils.deepEquals(this.host, other.host) && FluLuksApiPigeonUtils.deepEquals(this.port, other.port) && FluLuksApiPigeonUtils.deepEquals(this.user, other.user) && FluLuksApiPigeonUtils.deepEquals(this.startPath, other.startPath) && FluLuksApiPigeonUtils.deepEquals(this.remember, other.remember) && FluLuksApiPigeonUtils.deepEquals(this.hostKey, other.hostKey) && FluLuksApiPigeonUtils.deepEquals(this.keyInfo, other.keyInfo) && FluLuksApiPigeonUtils.deepEquals(this.hasPassword, other.hasPassword) && FluLuksApiPigeonUtils.deepEquals(this.connected, other.connected)
+    return FluLuksApiPigeonUtils.deepEquals(this.id, other.id) && FluLuksApiPigeonUtils.deepEquals(this.protocol, other.protocol) && FluLuksApiPigeonUtils.deepEquals(this.name, other.name) && FluLuksApiPigeonUtils.deepEquals(this.host, other.host) && FluLuksApiPigeonUtils.deepEquals(this.port, other.port) && FluLuksApiPigeonUtils.deepEquals(this.user, other.user) && FluLuksApiPigeonUtils.deepEquals(this.startPath, other.startPath) && FluLuksApiPigeonUtils.deepEquals(this.remember, other.remember) && FluLuksApiPigeonUtils.deepEquals(this.hostKey, other.hostKey) && FluLuksApiPigeonUtils.deepEquals(this.keyInfo, other.keyInfo) && FluLuksApiPigeonUtils.deepEquals(this.hasPassword, other.hasPassword) && FluLuksApiPigeonUtils.deepEquals(this.connected, other.connected) && FluLuksApiPigeonUtils.deepEquals(this.keyId, other.keyId)
   }
 
   override fun hashCode(): Int {
@@ -1395,10 +1524,201 @@ data class RemoteServerMsg (
     result = 31 * result + FluLuksApiPigeonUtils.deepHash(this.keyInfo)
     result = 31 * result + FluLuksApiPigeonUtils.deepHash(this.hasPassword)
     result = 31 * result + FluLuksApiPigeonUtils.deepHash(this.connected)
+    result = 31 * result + FluLuksApiPigeonUtils.deepHash(this.keyId)
     return result
   }
   override fun toString(): String {
-    return "RemoteServerMsg(id=$id, protocol=$protocol, name=$name, host=$host, port=$port, user=$user, startPath=$startPath, remember=$remember, hostKey=$hostKey, keyInfo=$keyInfo, hasPassword=$hasPassword, connected=$connected)"
+    return "RemoteServerMsg(id=$id, protocol=$protocol, name=$name, host=$host, port=$port, user=$user, startPath=$startPath, remember=$remember, hostKey=$hostKey, keyInfo=$keyInfo, hasPassword=$hasPassword, connected=$connected, keyId=$keyId)"
+  }
+}
+
+/**
+ * Commande enregistrée du terminal (phase 13) : [serverId] null pour une commande commune ; [runNow] : suivie
+ * d'Entrée.
+ *
+ * Generated class from Pigeon that represents data sent in messages.
+ */
+data class SnippetMsg (
+  val id: String,
+  val serverId: String? = null,
+  val name: String,
+  val command: String,
+  val runNow: Boolean
+)
+ {
+  companion object {
+    fun fromList(pigeonVar_list: List<Any?>): SnippetMsg {
+      val id = pigeonVar_list[0] as String
+      val serverId = pigeonVar_list[1] as String?
+      val name = pigeonVar_list[2] as String
+      val command = pigeonVar_list[3] as String
+      val runNow = pigeonVar_list[4] as Boolean
+      return SnippetMsg(id, serverId, name, command, runNow)
+    }
+  }
+  fun toList(): List<Any?> {
+    return listOf(
+      id,
+      serverId,
+      name,
+      command,
+      runNow,
+    )
+  }
+  override fun equals(other: Any?): Boolean {
+    if (other == null || other.javaClass != javaClass) {
+      return false
+    }
+    if (this === other) {
+      return true
+    }
+    val other = other as SnippetMsg
+    return FluLuksApiPigeonUtils.deepEquals(this.id, other.id) && FluLuksApiPigeonUtils.deepEquals(this.serverId, other.serverId) && FluLuksApiPigeonUtils.deepEquals(this.name, other.name) && FluLuksApiPigeonUtils.deepEquals(this.command, other.command) && FluLuksApiPigeonUtils.deepEquals(this.runNow, other.runNow)
+  }
+
+  override fun hashCode(): Int {
+    var result = javaClass.hashCode()
+    result = 31 * result + FluLuksApiPigeonUtils.deepHash(this.id)
+    result = 31 * result + FluLuksApiPigeonUtils.deepHash(this.serverId)
+    result = 31 * result + FluLuksApiPigeonUtils.deepHash(this.name)
+    result = 31 * result + FluLuksApiPigeonUtils.deepHash(this.command)
+    result = 31 * result + FluLuksApiPigeonUtils.deepHash(this.runNow)
+    return result
+  }
+  override fun toString(): String {
+    return "SnippetMsg(id=$id, serverId=$serverId, name=$name, command=$command, runNow=$runNow)"
+  }
+}
+
+/**
+ * Tunnel d'un serveur (phase 13) : `127.0.0.1:[localPort]` sur le téléphone mène à [remoteHost]:[remotePort] vu du
+ * serveur ; [auto] : ouvert avec chaque terminal ; [active] : ouvert sur un terminal ; [error] : dernier échec.
+ *
+ * Generated class from Pigeon that represents data sent in messages.
+ */
+data class TunnelMsg (
+  val id: String,
+  val serverId: String,
+  val localPort: Long,
+  val remoteHost: String,
+  val remotePort: Long,
+  val auto: Boolean,
+  val active: Boolean,
+  val error: String? = null
+)
+ {
+  companion object {
+    fun fromList(pigeonVar_list: List<Any?>): TunnelMsg {
+      val id = pigeonVar_list[0] as String
+      val serverId = pigeonVar_list[1] as String
+      val localPort = pigeonVar_list[2] as Long
+      val remoteHost = pigeonVar_list[3] as String
+      val remotePort = pigeonVar_list[4] as Long
+      val auto = pigeonVar_list[5] as Boolean
+      val active = pigeonVar_list[6] as Boolean
+      val error = pigeonVar_list[7] as String?
+      return TunnelMsg(id, serverId, localPort, remoteHost, remotePort, auto, active, error)
+    }
+  }
+  fun toList(): List<Any?> {
+    return listOf(
+      id,
+      serverId,
+      localPort,
+      remoteHost,
+      remotePort,
+      auto,
+      active,
+      error,
+    )
+  }
+  override fun equals(other: Any?): Boolean {
+    if (other == null || other.javaClass != javaClass) {
+      return false
+    }
+    if (this === other) {
+      return true
+    }
+    val other = other as TunnelMsg
+    return FluLuksApiPigeonUtils.deepEquals(this.id, other.id) && FluLuksApiPigeonUtils.deepEquals(this.serverId, other.serverId) && FluLuksApiPigeonUtils.deepEquals(this.localPort, other.localPort) && FluLuksApiPigeonUtils.deepEquals(this.remoteHost, other.remoteHost) && FluLuksApiPigeonUtils.deepEquals(this.remotePort, other.remotePort) && FluLuksApiPigeonUtils.deepEquals(this.auto, other.auto) && FluLuksApiPigeonUtils.deepEquals(this.active, other.active) && FluLuksApiPigeonUtils.deepEquals(this.error, other.error)
+  }
+
+  override fun hashCode(): Int {
+    var result = javaClass.hashCode()
+    result = 31 * result + FluLuksApiPigeonUtils.deepHash(this.id)
+    result = 31 * result + FluLuksApiPigeonUtils.deepHash(this.serverId)
+    result = 31 * result + FluLuksApiPigeonUtils.deepHash(this.localPort)
+    result = 31 * result + FluLuksApiPigeonUtils.deepHash(this.remoteHost)
+    result = 31 * result + FluLuksApiPigeonUtils.deepHash(this.remotePort)
+    result = 31 * result + FluLuksApiPigeonUtils.deepHash(this.auto)
+    result = 31 * result + FluLuksApiPigeonUtils.deepHash(this.active)
+    result = 31 * result + FluLuksApiPigeonUtils.deepHash(this.error)
+    return result
+  }
+  override fun toString(): String {
+    return "TunnelMsg(id=$id, serverId=$serverId, localPort=$localPort, remoteHost=$remoteHost, remotePort=$remotePort, auto=$auto, active=$active, error=$error)"
+  }
+}
+
+/**
+ * Clé du trousseau SSH (phase 13) : [type] « ssh-ed25519 »… ; [fingerprint] « SHA256:… » ; [usedBy] : noms des
+ * serveurs qui l'utilisent.
+ *
+ * Generated class from Pigeon that represents data sent in messages.
+ */
+data class SshKeyMsg (
+  val id: String,
+  val name: String,
+  val type: String,
+  val fingerprint: String,
+  val encrypted: Boolean,
+  val usedBy: List<String>
+)
+ {
+  companion object {
+    fun fromList(pigeonVar_list: List<Any?>): SshKeyMsg {
+      val id = pigeonVar_list[0] as String
+      val name = pigeonVar_list[1] as String
+      val type = pigeonVar_list[2] as String
+      val fingerprint = pigeonVar_list[3] as String
+      val encrypted = pigeonVar_list[4] as Boolean
+      val usedBy = pigeonVar_list[5] as List<String>
+      return SshKeyMsg(id, name, type, fingerprint, encrypted, usedBy)
+    }
+  }
+  fun toList(): List<Any?> {
+    return listOf(
+      id,
+      name,
+      type,
+      fingerprint,
+      encrypted,
+      usedBy,
+    )
+  }
+  override fun equals(other: Any?): Boolean {
+    if (other == null || other.javaClass != javaClass) {
+      return false
+    }
+    if (this === other) {
+      return true
+    }
+    val other = other as SshKeyMsg
+    return FluLuksApiPigeonUtils.deepEquals(this.id, other.id) && FluLuksApiPigeonUtils.deepEquals(this.name, other.name) && FluLuksApiPigeonUtils.deepEquals(this.type, other.type) && FluLuksApiPigeonUtils.deepEquals(this.fingerprint, other.fingerprint) && FluLuksApiPigeonUtils.deepEquals(this.encrypted, other.encrypted) && FluLuksApiPigeonUtils.deepEquals(this.usedBy, other.usedBy)
+  }
+
+  override fun hashCode(): Int {
+    var result = javaClass.hashCode()
+    result = 31 * result + FluLuksApiPigeonUtils.deepHash(this.id)
+    result = 31 * result + FluLuksApiPigeonUtils.deepHash(this.name)
+    result = 31 * result + FluLuksApiPigeonUtils.deepHash(this.type)
+    result = 31 * result + FluLuksApiPigeonUtils.deepHash(this.fingerprint)
+    result = 31 * result + FluLuksApiPigeonUtils.deepHash(this.encrypted)
+    result = 31 * result + FluLuksApiPigeonUtils.deepHash(this.usedBy)
+    return result
+  }
+  override fun toString(): String {
+    return "SshKeyMsg(id=$id, name=$name, type=$type, fingerprint=$fingerprint, encrypted=$encrypted, usedBy=$usedBy)"
   }
 }
 
@@ -1468,7 +1788,10 @@ data class ViewPrefsMsg (
 data class UiPrefsMsg (
   val theme: String,
   val haptics: Boolean,
-  val welcomeSeen: Boolean
+  val welcomeSeen: Boolean,
+  /** Phase 13 : taille du texte du terminal (8 à 32 ; null : 13) ; terminal masqué dans les captures (null : non). */
+  val terminalFontSize: Long? = null,
+  val terminalSecure: Boolean? = null
 )
  {
   companion object {
@@ -1476,7 +1799,9 @@ data class UiPrefsMsg (
       val theme = pigeonVar_list[0] as String
       val haptics = pigeonVar_list[1] as Boolean
       val welcomeSeen = pigeonVar_list[2] as Boolean
-      return UiPrefsMsg(theme, haptics, welcomeSeen)
+      val terminalFontSize = pigeonVar_list[3] as Long?
+      val terminalSecure = pigeonVar_list[4] as Boolean?
+      return UiPrefsMsg(theme, haptics, welcomeSeen, terminalFontSize, terminalSecure)
     }
   }
   fun toList(): List<Any?> {
@@ -1484,6 +1809,8 @@ data class UiPrefsMsg (
       theme,
       haptics,
       welcomeSeen,
+      terminalFontSize,
+      terminalSecure,
     )
   }
   override fun equals(other: Any?): Boolean {
@@ -1494,7 +1821,7 @@ data class UiPrefsMsg (
       return true
     }
     val other = other as UiPrefsMsg
-    return FluLuksApiPigeonUtils.deepEquals(this.theme, other.theme) && FluLuksApiPigeonUtils.deepEquals(this.haptics, other.haptics) && FluLuksApiPigeonUtils.deepEquals(this.welcomeSeen, other.welcomeSeen)
+    return FluLuksApiPigeonUtils.deepEquals(this.theme, other.theme) && FluLuksApiPigeonUtils.deepEquals(this.haptics, other.haptics) && FluLuksApiPigeonUtils.deepEquals(this.welcomeSeen, other.welcomeSeen) && FluLuksApiPigeonUtils.deepEquals(this.terminalFontSize, other.terminalFontSize) && FluLuksApiPigeonUtils.deepEquals(this.terminalSecure, other.terminalSecure)
   }
 
   override fun hashCode(): Int {
@@ -1502,10 +1829,12 @@ data class UiPrefsMsg (
     result = 31 * result + FluLuksApiPigeonUtils.deepHash(this.theme)
     result = 31 * result + FluLuksApiPigeonUtils.deepHash(this.haptics)
     result = 31 * result + FluLuksApiPigeonUtils.deepHash(this.welcomeSeen)
+    result = 31 * result + FluLuksApiPigeonUtils.deepHash(this.terminalFontSize)
+    result = 31 * result + FluLuksApiPigeonUtils.deepHash(this.terminalSecure)
     return result
   }
   override fun toString(): String {
-    return "UiPrefsMsg(theme=$theme, haptics=$haptics, welcomeSeen=$welcomeSeen)"
+    return "UiPrefsMsg(theme=$theme, haptics=$haptics, welcomeSeen=$welcomeSeen, terminalFontSize=$terminalFontSize, terminalSecure=$terminalSecure)"
   }
 }
 
@@ -1620,115 +1949,140 @@ private open class FluLuksApiPigeonCodec : StandardMessageCodec() {
     return when (type) {
       129.toByte() -> {
         return (readValue(buffer) as? List<Any?>)?.let {
-          PartitionMsg.fromList(it)
+          SshPromptMsg.fromList(it)
         }
       }
       130.toByte() -> {
         return (readValue(buffer) as? List<Any?>)?.let {
-          DiskMsg.fromList(it)
+          TerminalSessionMsg.fromList(it)
         }
       }
       131.toByte() -> {
         return (readValue(buffer) as? List<Any?>)?.let {
-          VolumeMsg.fromList(it)
+          PartitionMsg.fromList(it)
         }
       }
       132.toByte() -> {
         return (readValue(buffer) as? List<Any?>)?.let {
-          SourceMsg.fromList(it)
+          DiskMsg.fromList(it)
         }
       }
       133.toByte() -> {
         return (readValue(buffer) as? List<Any?>)?.let {
-          EntryMsg.fromList(it)
+          VolumeMsg.fromList(it)
         }
       }
       134.toByte() -> {
         return (readValue(buffer) as? List<Any?>)?.let {
-          PlayerMsg.fromList(it)
+          SourceMsg.fromList(it)
         }
       }
       135.toByte() -> {
         return (readValue(buffer) as? List<Any?>)?.let {
-          TransferMsg.fromList(it)
+          EntryMsg.fromList(it)
         }
       }
       136.toByte() -> {
         return (readValue(buffer) as? List<Any?>)?.let {
-          TrashItemMsg.fromList(it)
+          PlayerMsg.fromList(it)
         }
       }
       137.toByte() -> {
         return (readValue(buffer) as? List<Any?>)?.let {
-          DetailsMsg.fromList(it)
+          TransferMsg.fromList(it)
         }
       }
       138.toByte() -> {
         return (readValue(buffer) as? List<Any?>)?.let {
-          TextFileMsg.fromList(it)
+          TrashItemMsg.fromList(it)
         }
       }
       139.toByte() -> {
         return (readValue(buffer) as? List<Any?>)?.let {
-          TextSaveMsg.fromList(it)
+          DetailsMsg.fromList(it)
         }
       }
       140.toByte() -> {
         return (readValue(buffer) as? List<Any?>)?.let {
-          RenameRuleMsg.fromList(it)
+          TextFileMsg.fromList(it)
         }
       }
       141.toByte() -> {
         return (readValue(buffer) as? List<Any?>)?.let {
-          RenamePreviewMsg.fromList(it)
+          TextSaveMsg.fromList(it)
         }
       }
       142.toByte() -> {
         return (readValue(buffer) as? List<Any?>)?.let {
-          FilterItemMsg.fromList(it)
+          RenameRuleMsg.fromList(it)
         }
       }
       143.toByte() -> {
         return (readValue(buffer) as? List<Any?>)?.let {
-          FolderSizeMsg.fromList(it)
+          RenamePreviewMsg.fromList(it)
         }
       }
       144.toByte() -> {
         return (readValue(buffer) as? List<Any?>)?.let {
-          SpaceItemMsg.fromList(it)
+          FilterItemMsg.fromList(it)
         }
       }
       145.toByte() -> {
         return (readValue(buffer) as? List<Any?>)?.let {
-          SpaceReportMsg.fromList(it)
+          FolderSizeMsg.fromList(it)
         }
       }
       146.toByte() -> {
         return (readValue(buffer) as? List<Any?>)?.let {
-          SearchResultMsg.fromList(it)
+          SpaceItemMsg.fromList(it)
         }
       }
       147.toByte() -> {
         return (readValue(buffer) as? List<Any?>)?.let {
-          RemoteServerMsg.fromList(it)
+          SpaceReportMsg.fromList(it)
         }
       }
       148.toByte() -> {
         return (readValue(buffer) as? List<Any?>)?.let {
-          ViewPrefsMsg.fromList(it)
+          SearchResultMsg.fromList(it)
         }
       }
       149.toByte() -> {
         return (readValue(buffer) as? List<Any?>)?.let {
-          UiPrefsMsg.fromList(it)
+          RemoteServerMsg.fromList(it)
         }
       }
       150.toByte() -> {
         return (readValue(buffer) as? List<Any?>)?.let {
-          AppInfoMsg.fromList(it)
+          SnippetMsg.fromList(it)
         }
       }
       151.toByte() -> {
+        return (readValue(buffer) as? List<Any?>)?.let {
+          TunnelMsg.fromList(it)
+        }
+      }
+      152.toByte() -> {
+        return (readValue(buffer) as? List<Any?>)?.let {
+          SshKeyMsg.fromList(it)
+        }
+      }
+      153.toByte() -> {
+        return (readValue(buffer) as? List<Any?>)?.let {
+          ViewPrefsMsg.fromList(it)
+        }
+      }
+      154.toByte() -> {
+        return (readValue(buffer) as? List<Any?>)?.let {
+          UiPrefsMsg.fromList(it)
+        }
+      }
+      155.toByte() -> {
+        return (readValue(buffer) as? List<Any?>)?.let {
+          AppInfoMsg.fromList(it)
+        }
+      }
+      156.toByte() -> {
         return (readValue(buffer) as? List<Any?>)?.let {
           FavoriteMsg.fromList(it)
         }
@@ -1738,96 +2092,116 @@ private open class FluLuksApiPigeonCodec : StandardMessageCodec() {
   }
   override fun writeValue(stream: ByteArrayOutputStream, value: Any?)   {
     when (value) {
-      is PartitionMsg -> {
+      is SshPromptMsg -> {
         stream.write(129)
         writeValue(stream, value.toList())
       }
-      is DiskMsg -> {
+      is TerminalSessionMsg -> {
         stream.write(130)
         writeValue(stream, value.toList())
       }
-      is VolumeMsg -> {
+      is PartitionMsg -> {
         stream.write(131)
         writeValue(stream, value.toList())
       }
-      is SourceMsg -> {
+      is DiskMsg -> {
         stream.write(132)
         writeValue(stream, value.toList())
       }
-      is EntryMsg -> {
+      is VolumeMsg -> {
         stream.write(133)
         writeValue(stream, value.toList())
       }
-      is PlayerMsg -> {
+      is SourceMsg -> {
         stream.write(134)
         writeValue(stream, value.toList())
       }
-      is TransferMsg -> {
+      is EntryMsg -> {
         stream.write(135)
         writeValue(stream, value.toList())
       }
-      is TrashItemMsg -> {
+      is PlayerMsg -> {
         stream.write(136)
         writeValue(stream, value.toList())
       }
-      is DetailsMsg -> {
+      is TransferMsg -> {
         stream.write(137)
         writeValue(stream, value.toList())
       }
-      is TextFileMsg -> {
+      is TrashItemMsg -> {
         stream.write(138)
         writeValue(stream, value.toList())
       }
-      is TextSaveMsg -> {
+      is DetailsMsg -> {
         stream.write(139)
         writeValue(stream, value.toList())
       }
-      is RenameRuleMsg -> {
+      is TextFileMsg -> {
         stream.write(140)
         writeValue(stream, value.toList())
       }
-      is RenamePreviewMsg -> {
+      is TextSaveMsg -> {
         stream.write(141)
         writeValue(stream, value.toList())
       }
-      is FilterItemMsg -> {
+      is RenameRuleMsg -> {
         stream.write(142)
         writeValue(stream, value.toList())
       }
-      is FolderSizeMsg -> {
+      is RenamePreviewMsg -> {
         stream.write(143)
         writeValue(stream, value.toList())
       }
-      is SpaceItemMsg -> {
+      is FilterItemMsg -> {
         stream.write(144)
         writeValue(stream, value.toList())
       }
-      is SpaceReportMsg -> {
+      is FolderSizeMsg -> {
         stream.write(145)
         writeValue(stream, value.toList())
       }
-      is SearchResultMsg -> {
+      is SpaceItemMsg -> {
         stream.write(146)
         writeValue(stream, value.toList())
       }
-      is RemoteServerMsg -> {
+      is SpaceReportMsg -> {
         stream.write(147)
         writeValue(stream, value.toList())
       }
-      is ViewPrefsMsg -> {
+      is SearchResultMsg -> {
         stream.write(148)
         writeValue(stream, value.toList())
       }
-      is UiPrefsMsg -> {
+      is RemoteServerMsg -> {
         stream.write(149)
         writeValue(stream, value.toList())
       }
-      is AppInfoMsg -> {
+      is SnippetMsg -> {
         stream.write(150)
         writeValue(stream, value.toList())
       }
-      is FavoriteMsg -> {
+      is TunnelMsg -> {
         stream.write(151)
+        writeValue(stream, value.toList())
+      }
+      is SshKeyMsg -> {
+        stream.write(152)
+        writeValue(stream, value.toList())
+      }
+      is ViewPrefsMsg -> {
+        stream.write(153)
+        writeValue(stream, value.toList())
+      }
+      is UiPrefsMsg -> {
+        stream.write(154)
+        writeValue(stream, value.toList())
+      }
+      is AppInfoMsg -> {
+        stream.write(155)
+        writeValue(stream, value.toList())
+      }
+      is FavoriteMsg -> {
+        stream.write(156)
         writeValue(stream, value.toList())
       }
       else -> super.writeValue(stream, value)
@@ -1899,7 +2273,8 @@ interface FluLuksHostApi {
    * sauf `force`.
    * Dossiers distants (phase 10). `saveServer` : identifiant vide pour un nouveau serveur ; mots de passe null :
    * ceux mémorisés sont gardés. `connectServer` échoue avec le code `auth` (mot de passe requis ou refusé ; détails :
-   * vrai s'il manquait), `hostkey-unknown` (détails : l'empreinte à montrer) ou `hostkey-changed`.
+   * vrai s'il manquait), `hostkey-unknown` (détails : l'empreinte à montrer), `hostkey-changed` ou `ssh` (phase 13 :
+   * message précis en français ; détails : la cause technique ; journal : `lastAttemptLog`).
    */
   fun listServers(): List<RemoteServerMsg>
   fun saveServer(server: RemoteServerMsg, password: ByteArray?, keyPassphrase: ByteArray?): RemoteServerMsg
@@ -1908,6 +2283,59 @@ interface FluLuksHostApi {
   fun disconnectServer(serverId: String)
   fun trustHostKey(serverId: String, fingerprint: String)
   fun forgetHostKey(serverId: String)
+  /**
+   * Phase 13 : « Tester la connexion » : connecte puis déconnecte aussitôt, sans ouvrir la source ; mêmes erreurs que
+   * `connectServer` ; rend le journal de la tentative. `lastAttemptLog` : journal de la dernière tentative du serveur
+   * (SFTP), sans aucun secret. `answerSshPrompt` : réponses à une invite `onSshPrompt` (null : refusée), mises à zéro.
+   */
+  fun testServer(serverId: String, password: ByteArray?, callback: (Result<List<String>>) -> Unit)
+  fun lastAttemptLog(serverId: String): List<String>
+  fun answerSshPrompt(requestId: String, answers: List<ByteArray>?)
+  /**
+   * Phase 13 : terminaux SSH sur un serveur SFTP enregistré (8 au plus). `openTerminal` : mêmes erreurs que
+   * `connectServer`, puis `cd` vers `startDir` s'il est donné ; la sortie arrive par `onTerminalOutput` (octets bruts,
+   * par lots), les changements d'état par `onTerminalChanged`. `terminalWrite` : octets tapés, mis à zéro après envoi.
+   * `terminalBacklog` : sortie récente (256 Kio au plus) pour rouvrir l'écran. `closeTerminal` : ferme et oublie.
+   */
+  fun openTerminal(serverId: String, password: ByteArray?, startDir: String?, callback: (Result<TerminalSessionMsg>) -> Unit)
+  fun terminalWrite(sessionId: String, data: ByteArray)
+  fun terminalResize(sessionId: String, cols: Long, rows: Long)
+  fun terminalBacklog(sessionId: String): ByteArray
+  fun closeTerminal(sessionId: String)
+  fun terminalSessions(): List<TerminalSessionMsg>
+  /**
+   * Phase 13 : trousseau de clés SSH. `generateSshKey` : `type` `ed25519` ou `rsa` (4096 bits), phrase facultative
+   * (mise à zéro). `importSshKey` : fichier choisi dans le sélecteur d'Android (null : rien de choisi).
+   * `deleteSshKey` : refusé tant qu'un serveur l'utilise. `sshPublicKey` : ligne OpenSSH. `setServerKey` : clé
+   * utilisée par un serveur (null : aucune). `shareText` : partage d'un texte (clé publique).
+   */
+  fun sshKeys(): List<SshKeyMsg>
+  fun generateSshKey(name: String, type: String, passphrase: ByteArray?, callback: (Result<SshKeyMsg>) -> Unit)
+  fun importSshKey(name: String, callback: (Result<SshKeyMsg?>) -> Unit)
+  fun renameSshKey(keyId: String, name: String)
+  fun deleteSshKey(keyId: String)
+  fun sshPublicKey(keyId: String): String
+  fun setServerKey(serverId: String, keyId: String?)
+  fun shareText(text: String)
+  /**
+   * Phase 13 : installe la clé publique `keyId` dans `~/.ssh/authorized_keys` de `serverId` (mot de passe pour ce
+   * seul usage ; mêmes erreurs que `connectServer`) ; rend le message à montrer (« Clé installée sur … »).
+   */
+  fun installPublicKey(serverId: String, keyId: String, password: ByteArray?, callback: (Result<String>) -> Unit)
+  /** Phase 13 : commandes enregistrées ; `snippets` : celles du serveur puis les communes. */
+  fun snippets(serverId: String?): List<SnippetMsg>
+  fun saveSnippet(snippet: SnippetMsg): SnippetMsg
+  fun deleteSnippet(id: String)
+  /**
+   * Phase 13 : tunnels (redirection de port locale, 127.0.0.1 seulement). `startTunnel` : sur le terminal ouvert
+   * `sessionId` du même serveur. `openUrl` : ouvre une adresse dans le navigateur.
+   */
+  fun tunnels(serverId: String): List<TunnelMsg>
+  fun saveTunnel(tunnel: TunnelMsg): TunnelMsg
+  fun deleteTunnel(id: String)
+  fun startTunnel(sessionId: String, tunnelId: String, callback: (Result<TunnelMsg>) -> Unit)
+  fun stopTunnel(sessionId: String, tunnelId: String)
+  fun openUrl(url: String)
   /**
    * Clé privée OpenSSH choisie dans le sélecteur d'Android, scellée pour `serverId` ; rend sa description
    * (« ssh-ed25519 SHA256:… »), ou null si rien n'a été choisi.
@@ -1930,6 +2358,8 @@ interface FluLuksHostApi {
   fun removeFavorite(key: String, path: String)
   fun getUiPrefs(): UiPrefsMsg
   fun setUiPrefs(prefs: UiPrefsMsg)
+  /** Phase 13 : FLAG_SECURE sur la fenêtre de Portail (terminal masqué dans les captures et les applications récentes). */
+  fun setSecureScreen(secure: Boolean)
   fun getAppInfo(): AppInfoMsg
   /** Formate tout le disque : fs parmi fat32, exfat, ext4, ntfs ; passphrase si encrypted (mise à zéro). */
   fun formatDisk(diskId: String, fs: String, encrypted: Boolean, label: String, passphrase: ByteArray?, callback: (Result<Unit>) -> Unit)
@@ -2836,6 +3266,506 @@ interface FluLuksHostApi {
         }
       }
       run {
+        val channel = BasicMessageChannel<Any?>(binaryMessenger, "dev.flutter.pigeon.fluluks.FluLuksHostApi.testServer$separatedMessageChannelSuffix", codec)
+        if (api != null) {
+          channel.setMessageHandler { message, reply ->
+            val args = message as List<Any?>
+            val serverIdArg = args[0] as String
+            val passwordArg = args[1] as ByteArray?
+            api.testServer(serverIdArg, passwordArg) { result: Result<List<String>> ->
+              val error = result.exceptionOrNull()
+              if (error != null) {
+                reply.reply(FluLuksApiPigeonUtils.wrapError(error))
+              } else {
+                val data = result.getOrNull()
+                reply.reply(FluLuksApiPigeonUtils.wrapResult(data))
+              }
+            }
+          }
+        } else {
+          channel.setMessageHandler(null)
+        }
+      }
+      run {
+        val channel = BasicMessageChannel<Any?>(binaryMessenger, "dev.flutter.pigeon.fluluks.FluLuksHostApi.lastAttemptLog$separatedMessageChannelSuffix", codec)
+        if (api != null) {
+          channel.setMessageHandler { message, reply ->
+            val args = message as List<Any?>
+            val serverIdArg = args[0] as String
+            val wrapped: List<Any?> = try {
+              listOf(api.lastAttemptLog(serverIdArg))
+            } catch (exception: Throwable) {
+              FluLuksApiPigeonUtils.wrapError(exception)
+            }
+            reply.reply(wrapped)
+          }
+        } else {
+          channel.setMessageHandler(null)
+        }
+      }
+      run {
+        val channel = BasicMessageChannel<Any?>(binaryMessenger, "dev.flutter.pigeon.fluluks.FluLuksHostApi.answerSshPrompt$separatedMessageChannelSuffix", codec)
+        if (api != null) {
+          channel.setMessageHandler { message, reply ->
+            val args = message as List<Any?>
+            val requestIdArg = args[0] as String
+            val answersArg = args[1] as List<ByteArray>?
+            val wrapped: List<Any?> = try {
+              api.answerSshPrompt(requestIdArg, answersArg)
+              listOf(null)
+            } catch (exception: Throwable) {
+              FluLuksApiPigeonUtils.wrapError(exception)
+            }
+            reply.reply(wrapped)
+          }
+        } else {
+          channel.setMessageHandler(null)
+        }
+      }
+      run {
+        val channel = BasicMessageChannel<Any?>(binaryMessenger, "dev.flutter.pigeon.fluluks.FluLuksHostApi.openTerminal$separatedMessageChannelSuffix", codec)
+        if (api != null) {
+          channel.setMessageHandler { message, reply ->
+            val args = message as List<Any?>
+            val serverIdArg = args[0] as String
+            val passwordArg = args[1] as ByteArray?
+            val startDirArg = args[2] as String?
+            api.openTerminal(serverIdArg, passwordArg, startDirArg) { result: Result<TerminalSessionMsg> ->
+              val error = result.exceptionOrNull()
+              if (error != null) {
+                reply.reply(FluLuksApiPigeonUtils.wrapError(error))
+              } else {
+                val data = result.getOrNull()
+                reply.reply(FluLuksApiPigeonUtils.wrapResult(data))
+              }
+            }
+          }
+        } else {
+          channel.setMessageHandler(null)
+        }
+      }
+      run {
+        val channel = BasicMessageChannel<Any?>(binaryMessenger, "dev.flutter.pigeon.fluluks.FluLuksHostApi.terminalWrite$separatedMessageChannelSuffix", codec)
+        if (api != null) {
+          channel.setMessageHandler { message, reply ->
+            val args = message as List<Any?>
+            val sessionIdArg = args[0] as String
+            val dataArg = args[1] as ByteArray
+            val wrapped: List<Any?> = try {
+              api.terminalWrite(sessionIdArg, dataArg)
+              listOf(null)
+            } catch (exception: Throwable) {
+              FluLuksApiPigeonUtils.wrapError(exception)
+            }
+            reply.reply(wrapped)
+          }
+        } else {
+          channel.setMessageHandler(null)
+        }
+      }
+      run {
+        val channel = BasicMessageChannel<Any?>(binaryMessenger, "dev.flutter.pigeon.fluluks.FluLuksHostApi.terminalResize$separatedMessageChannelSuffix", codec)
+        if (api != null) {
+          channel.setMessageHandler { message, reply ->
+            val args = message as List<Any?>
+            val sessionIdArg = args[0] as String
+            val colsArg = args[1] as Long
+            val rowsArg = args[2] as Long
+            val wrapped: List<Any?> = try {
+              api.terminalResize(sessionIdArg, colsArg, rowsArg)
+              listOf(null)
+            } catch (exception: Throwable) {
+              FluLuksApiPigeonUtils.wrapError(exception)
+            }
+            reply.reply(wrapped)
+          }
+        } else {
+          channel.setMessageHandler(null)
+        }
+      }
+      run {
+        val channel = BasicMessageChannel<Any?>(binaryMessenger, "dev.flutter.pigeon.fluluks.FluLuksHostApi.terminalBacklog$separatedMessageChannelSuffix", codec)
+        if (api != null) {
+          channel.setMessageHandler { message, reply ->
+            val args = message as List<Any?>
+            val sessionIdArg = args[0] as String
+            val wrapped: List<Any?> = try {
+              listOf(api.terminalBacklog(sessionIdArg))
+            } catch (exception: Throwable) {
+              FluLuksApiPigeonUtils.wrapError(exception)
+            }
+            reply.reply(wrapped)
+          }
+        } else {
+          channel.setMessageHandler(null)
+        }
+      }
+      run {
+        val channel = BasicMessageChannel<Any?>(binaryMessenger, "dev.flutter.pigeon.fluluks.FluLuksHostApi.closeTerminal$separatedMessageChannelSuffix", codec)
+        if (api != null) {
+          channel.setMessageHandler { message, reply ->
+            val args = message as List<Any?>
+            val sessionIdArg = args[0] as String
+            val wrapped: List<Any?> = try {
+              api.closeTerminal(sessionIdArg)
+              listOf(null)
+            } catch (exception: Throwable) {
+              FluLuksApiPigeonUtils.wrapError(exception)
+            }
+            reply.reply(wrapped)
+          }
+        } else {
+          channel.setMessageHandler(null)
+        }
+      }
+      run {
+        val channel = BasicMessageChannel<Any?>(binaryMessenger, "dev.flutter.pigeon.fluluks.FluLuksHostApi.terminalSessions$separatedMessageChannelSuffix", codec)
+        if (api != null) {
+          channel.setMessageHandler { _, reply ->
+            val wrapped: List<Any?> = try {
+              listOf(api.terminalSessions())
+            } catch (exception: Throwable) {
+              FluLuksApiPigeonUtils.wrapError(exception)
+            }
+            reply.reply(wrapped)
+          }
+        } else {
+          channel.setMessageHandler(null)
+        }
+      }
+      run {
+        val channel = BasicMessageChannel<Any?>(binaryMessenger, "dev.flutter.pigeon.fluluks.FluLuksHostApi.sshKeys$separatedMessageChannelSuffix", codec)
+        if (api != null) {
+          channel.setMessageHandler { _, reply ->
+            val wrapped: List<Any?> = try {
+              listOf(api.sshKeys())
+            } catch (exception: Throwable) {
+              FluLuksApiPigeonUtils.wrapError(exception)
+            }
+            reply.reply(wrapped)
+          }
+        } else {
+          channel.setMessageHandler(null)
+        }
+      }
+      run {
+        val channel = BasicMessageChannel<Any?>(binaryMessenger, "dev.flutter.pigeon.fluluks.FluLuksHostApi.generateSshKey$separatedMessageChannelSuffix", codec)
+        if (api != null) {
+          channel.setMessageHandler { message, reply ->
+            val args = message as List<Any?>
+            val nameArg = args[0] as String
+            val typeArg = args[1] as String
+            val passphraseArg = args[2] as ByteArray?
+            api.generateSshKey(nameArg, typeArg, passphraseArg) { result: Result<SshKeyMsg> ->
+              val error = result.exceptionOrNull()
+              if (error != null) {
+                reply.reply(FluLuksApiPigeonUtils.wrapError(error))
+              } else {
+                val data = result.getOrNull()
+                reply.reply(FluLuksApiPigeonUtils.wrapResult(data))
+              }
+            }
+          }
+        } else {
+          channel.setMessageHandler(null)
+        }
+      }
+      run {
+        val channel = BasicMessageChannel<Any?>(binaryMessenger, "dev.flutter.pigeon.fluluks.FluLuksHostApi.importSshKey$separatedMessageChannelSuffix", codec)
+        if (api != null) {
+          channel.setMessageHandler { message, reply ->
+            val args = message as List<Any?>
+            val nameArg = args[0] as String
+            api.importSshKey(nameArg) { result: Result<SshKeyMsg?> ->
+              val error = result.exceptionOrNull()
+              if (error != null) {
+                reply.reply(FluLuksApiPigeonUtils.wrapError(error))
+              } else {
+                val data = result.getOrNull()
+                reply.reply(FluLuksApiPigeonUtils.wrapResult(data))
+              }
+            }
+          }
+        } else {
+          channel.setMessageHandler(null)
+        }
+      }
+      run {
+        val channel = BasicMessageChannel<Any?>(binaryMessenger, "dev.flutter.pigeon.fluluks.FluLuksHostApi.renameSshKey$separatedMessageChannelSuffix", codec)
+        if (api != null) {
+          channel.setMessageHandler { message, reply ->
+            val args = message as List<Any?>
+            val keyIdArg = args[0] as String
+            val nameArg = args[1] as String
+            val wrapped: List<Any?> = try {
+              api.renameSshKey(keyIdArg, nameArg)
+              listOf(null)
+            } catch (exception: Throwable) {
+              FluLuksApiPigeonUtils.wrapError(exception)
+            }
+            reply.reply(wrapped)
+          }
+        } else {
+          channel.setMessageHandler(null)
+        }
+      }
+      run {
+        val channel = BasicMessageChannel<Any?>(binaryMessenger, "dev.flutter.pigeon.fluluks.FluLuksHostApi.deleteSshKey$separatedMessageChannelSuffix", codec)
+        if (api != null) {
+          channel.setMessageHandler { message, reply ->
+            val args = message as List<Any?>
+            val keyIdArg = args[0] as String
+            val wrapped: List<Any?> = try {
+              api.deleteSshKey(keyIdArg)
+              listOf(null)
+            } catch (exception: Throwable) {
+              FluLuksApiPigeonUtils.wrapError(exception)
+            }
+            reply.reply(wrapped)
+          }
+        } else {
+          channel.setMessageHandler(null)
+        }
+      }
+      run {
+        val channel = BasicMessageChannel<Any?>(binaryMessenger, "dev.flutter.pigeon.fluluks.FluLuksHostApi.sshPublicKey$separatedMessageChannelSuffix", codec)
+        if (api != null) {
+          channel.setMessageHandler { message, reply ->
+            val args = message as List<Any?>
+            val keyIdArg = args[0] as String
+            val wrapped: List<Any?> = try {
+              listOf(api.sshPublicKey(keyIdArg))
+            } catch (exception: Throwable) {
+              FluLuksApiPigeonUtils.wrapError(exception)
+            }
+            reply.reply(wrapped)
+          }
+        } else {
+          channel.setMessageHandler(null)
+        }
+      }
+      run {
+        val channel = BasicMessageChannel<Any?>(binaryMessenger, "dev.flutter.pigeon.fluluks.FluLuksHostApi.setServerKey$separatedMessageChannelSuffix", codec)
+        if (api != null) {
+          channel.setMessageHandler { message, reply ->
+            val args = message as List<Any?>
+            val serverIdArg = args[0] as String
+            val keyIdArg = args[1] as String?
+            val wrapped: List<Any?> = try {
+              api.setServerKey(serverIdArg, keyIdArg)
+              listOf(null)
+            } catch (exception: Throwable) {
+              FluLuksApiPigeonUtils.wrapError(exception)
+            }
+            reply.reply(wrapped)
+          }
+        } else {
+          channel.setMessageHandler(null)
+        }
+      }
+      run {
+        val channel = BasicMessageChannel<Any?>(binaryMessenger, "dev.flutter.pigeon.fluluks.FluLuksHostApi.shareText$separatedMessageChannelSuffix", codec)
+        if (api != null) {
+          channel.setMessageHandler { message, reply ->
+            val args = message as List<Any?>
+            val textArg = args[0] as String
+            val wrapped: List<Any?> = try {
+              api.shareText(textArg)
+              listOf(null)
+            } catch (exception: Throwable) {
+              FluLuksApiPigeonUtils.wrapError(exception)
+            }
+            reply.reply(wrapped)
+          }
+        } else {
+          channel.setMessageHandler(null)
+        }
+      }
+      run {
+        val channel = BasicMessageChannel<Any?>(binaryMessenger, "dev.flutter.pigeon.fluluks.FluLuksHostApi.installPublicKey$separatedMessageChannelSuffix", codec)
+        if (api != null) {
+          channel.setMessageHandler { message, reply ->
+            val args = message as List<Any?>
+            val serverIdArg = args[0] as String
+            val keyIdArg = args[1] as String
+            val passwordArg = args[2] as ByteArray?
+            api.installPublicKey(serverIdArg, keyIdArg, passwordArg) { result: Result<String> ->
+              val error = result.exceptionOrNull()
+              if (error != null) {
+                reply.reply(FluLuksApiPigeonUtils.wrapError(error))
+              } else {
+                val data = result.getOrNull()
+                reply.reply(FluLuksApiPigeonUtils.wrapResult(data))
+              }
+            }
+          }
+        } else {
+          channel.setMessageHandler(null)
+        }
+      }
+      run {
+        val channel = BasicMessageChannel<Any?>(binaryMessenger, "dev.flutter.pigeon.fluluks.FluLuksHostApi.snippets$separatedMessageChannelSuffix", codec)
+        if (api != null) {
+          channel.setMessageHandler { message, reply ->
+            val args = message as List<Any?>
+            val serverIdArg = args[0] as String?
+            val wrapped: List<Any?> = try {
+              listOf(api.snippets(serverIdArg))
+            } catch (exception: Throwable) {
+              FluLuksApiPigeonUtils.wrapError(exception)
+            }
+            reply.reply(wrapped)
+          }
+        } else {
+          channel.setMessageHandler(null)
+        }
+      }
+      run {
+        val channel = BasicMessageChannel<Any?>(binaryMessenger, "dev.flutter.pigeon.fluluks.FluLuksHostApi.saveSnippet$separatedMessageChannelSuffix", codec)
+        if (api != null) {
+          channel.setMessageHandler { message, reply ->
+            val args = message as List<Any?>
+            val snippetArg = args[0] as SnippetMsg
+            val wrapped: List<Any?> = try {
+              listOf(api.saveSnippet(snippetArg))
+            } catch (exception: Throwable) {
+              FluLuksApiPigeonUtils.wrapError(exception)
+            }
+            reply.reply(wrapped)
+          }
+        } else {
+          channel.setMessageHandler(null)
+        }
+      }
+      run {
+        val channel = BasicMessageChannel<Any?>(binaryMessenger, "dev.flutter.pigeon.fluluks.FluLuksHostApi.deleteSnippet$separatedMessageChannelSuffix", codec)
+        if (api != null) {
+          channel.setMessageHandler { message, reply ->
+            val args = message as List<Any?>
+            val idArg = args[0] as String
+            val wrapped: List<Any?> = try {
+              api.deleteSnippet(idArg)
+              listOf(null)
+            } catch (exception: Throwable) {
+              FluLuksApiPigeonUtils.wrapError(exception)
+            }
+            reply.reply(wrapped)
+          }
+        } else {
+          channel.setMessageHandler(null)
+        }
+      }
+      run {
+        val channel = BasicMessageChannel<Any?>(binaryMessenger, "dev.flutter.pigeon.fluluks.FluLuksHostApi.tunnels$separatedMessageChannelSuffix", codec)
+        if (api != null) {
+          channel.setMessageHandler { message, reply ->
+            val args = message as List<Any?>
+            val serverIdArg = args[0] as String
+            val wrapped: List<Any?> = try {
+              listOf(api.tunnels(serverIdArg))
+            } catch (exception: Throwable) {
+              FluLuksApiPigeonUtils.wrapError(exception)
+            }
+            reply.reply(wrapped)
+          }
+        } else {
+          channel.setMessageHandler(null)
+        }
+      }
+      run {
+        val channel = BasicMessageChannel<Any?>(binaryMessenger, "dev.flutter.pigeon.fluluks.FluLuksHostApi.saveTunnel$separatedMessageChannelSuffix", codec)
+        if (api != null) {
+          channel.setMessageHandler { message, reply ->
+            val args = message as List<Any?>
+            val tunnelArg = args[0] as TunnelMsg
+            val wrapped: List<Any?> = try {
+              listOf(api.saveTunnel(tunnelArg))
+            } catch (exception: Throwable) {
+              FluLuksApiPigeonUtils.wrapError(exception)
+            }
+            reply.reply(wrapped)
+          }
+        } else {
+          channel.setMessageHandler(null)
+        }
+      }
+      run {
+        val channel = BasicMessageChannel<Any?>(binaryMessenger, "dev.flutter.pigeon.fluluks.FluLuksHostApi.deleteTunnel$separatedMessageChannelSuffix", codec)
+        if (api != null) {
+          channel.setMessageHandler { message, reply ->
+            val args = message as List<Any?>
+            val idArg = args[0] as String
+            val wrapped: List<Any?> = try {
+              api.deleteTunnel(idArg)
+              listOf(null)
+            } catch (exception: Throwable) {
+              FluLuksApiPigeonUtils.wrapError(exception)
+            }
+            reply.reply(wrapped)
+          }
+        } else {
+          channel.setMessageHandler(null)
+        }
+      }
+      run {
+        val channel = BasicMessageChannel<Any?>(binaryMessenger, "dev.flutter.pigeon.fluluks.FluLuksHostApi.startTunnel$separatedMessageChannelSuffix", codec)
+        if (api != null) {
+          channel.setMessageHandler { message, reply ->
+            val args = message as List<Any?>
+            val sessionIdArg = args[0] as String
+            val tunnelIdArg = args[1] as String
+            api.startTunnel(sessionIdArg, tunnelIdArg) { result: Result<TunnelMsg> ->
+              val error = result.exceptionOrNull()
+              if (error != null) {
+                reply.reply(FluLuksApiPigeonUtils.wrapError(error))
+              } else {
+                val data = result.getOrNull()
+                reply.reply(FluLuksApiPigeonUtils.wrapResult(data))
+              }
+            }
+          }
+        } else {
+          channel.setMessageHandler(null)
+        }
+      }
+      run {
+        val channel = BasicMessageChannel<Any?>(binaryMessenger, "dev.flutter.pigeon.fluluks.FluLuksHostApi.stopTunnel$separatedMessageChannelSuffix", codec)
+        if (api != null) {
+          channel.setMessageHandler { message, reply ->
+            val args = message as List<Any?>
+            val sessionIdArg = args[0] as String
+            val tunnelIdArg = args[1] as String
+            val wrapped: List<Any?> = try {
+              api.stopTunnel(sessionIdArg, tunnelIdArg)
+              listOf(null)
+            } catch (exception: Throwable) {
+              FluLuksApiPigeonUtils.wrapError(exception)
+            }
+            reply.reply(wrapped)
+          }
+        } else {
+          channel.setMessageHandler(null)
+        }
+      }
+      run {
+        val channel = BasicMessageChannel<Any?>(binaryMessenger, "dev.flutter.pigeon.fluluks.FluLuksHostApi.openUrl$separatedMessageChannelSuffix", codec)
+        if (api != null) {
+          channel.setMessageHandler { message, reply ->
+            val args = message as List<Any?>
+            val urlArg = args[0] as String
+            val wrapped: List<Any?> = try {
+              api.openUrl(urlArg)
+              listOf(null)
+            } catch (exception: Throwable) {
+              FluLuksApiPigeonUtils.wrapError(exception)
+            }
+            reply.reply(wrapped)
+          }
+        } else {
+          channel.setMessageHandler(null)
+        }
+      }
+      run {
         val channel = BasicMessageChannel<Any?>(binaryMessenger, "dev.flutter.pigeon.fluluks.FluLuksHostApi.importPrivateKey$separatedMessageChannelSuffix", codec)
         if (api != null) {
           channel.setMessageHandler { message, reply ->
@@ -3148,6 +4078,24 @@ interface FluLuksHostApi {
         }
       }
       run {
+        val channel = BasicMessageChannel<Any?>(binaryMessenger, "dev.flutter.pigeon.fluluks.FluLuksHostApi.setSecureScreen$separatedMessageChannelSuffix", codec)
+        if (api != null) {
+          channel.setMessageHandler { message, reply ->
+            val args = message as List<Any?>
+            val secureArg = args[0] as Boolean
+            val wrapped: List<Any?> = try {
+              api.setSecureScreen(secureArg)
+              listOf(null)
+            } catch (exception: Throwable) {
+              FluLuksApiPigeonUtils.wrapError(exception)
+            }
+            reply.reply(wrapped)
+          }
+        } else {
+          channel.setMessageHandler(null)
+        }
+      }
+      run {
         val channel = BasicMessageChannel<Any?>(binaryMessenger, "dev.flutter.pigeon.fluluks.FluLuksHostApi.getAppInfo$separatedMessageChannelSuffix", codec)
         if (api != null) {
           channel.setMessageHandler { _, reply ->
@@ -3292,6 +4240,63 @@ class FluLuksEventsApi(private val binaryMessenger: BinaryMessenger, private val
     val channelName = "dev.flutter.pigeon.fluluks.FluLuksEventsApi.onPlayerChanged$separatedMessageChannelSuffix"
     val channel = BasicMessageChannel<Any?>(binaryMessenger, channelName, codec)
     channel.send(listOf(playerArg, messageArg)) {
+      if (it is List<*>) {
+        if (it.size > 1) {
+          callback(Result.failure(FlutterError(it[0] as String, it[1] as String, it[2] as String?)))
+        } else {
+          callback(Result.success(Unit))
+        }
+      } else {
+        callback(Result.failure(FluLuksApiPigeonUtils.createConnectionError(channelName)))
+      } 
+    }
+  }
+  /**
+   * Phase 13 : invite keyboard-interactive d'un serveur SSH (code de vérification…), à poser à l'utilisateur ; réponse
+   * par `answerSshPrompt` dans les 120 s.
+   */
+  fun onSshPrompt(promptArg: SshPromptMsg, callback: (Result<Unit>) -> Unit)
+{
+    val separatedMessageChannelSuffix = if (messageChannelSuffix.isNotEmpty()) ".$messageChannelSuffix" else ""
+    val channelName = "dev.flutter.pigeon.fluluks.FluLuksEventsApi.onSshPrompt$separatedMessageChannelSuffix"
+    val channel = BasicMessageChannel<Any?>(binaryMessenger, channelName, codec)
+    channel.send(listOf(promptArg)) {
+      if (it is List<*>) {
+        if (it.size > 1) {
+          callback(Result.failure(FlutterError(it[0] as String, it[1] as String, it[2] as String?)))
+        } else {
+          callback(Result.success(Unit))
+        }
+      } else {
+        callback(Result.failure(FluLuksApiPigeonUtils.createConnectionError(channelName)))
+      } 
+    }
+  }
+  /** Phase 13 : sortie d'un terminal, par lots (au plus un toutes les 16 ms, 64 Kio au plus). */
+  fun onTerminalOutput(sessionIdArg: String, dataArg: ByteArray, callback: (Result<Unit>) -> Unit)
+{
+    val separatedMessageChannelSuffix = if (messageChannelSuffix.isNotEmpty()) ".$messageChannelSuffix" else ""
+    val channelName = "dev.flutter.pigeon.fluluks.FluLuksEventsApi.onTerminalOutput$separatedMessageChannelSuffix"
+    val channel = BasicMessageChannel<Any?>(binaryMessenger, channelName, codec)
+    channel.send(listOf(sessionIdArg, dataArg)) {
+      if (it is List<*>) {
+        if (it.size > 1) {
+          callback(Result.failure(FlutterError(it[0] as String, it[1] as String, it[2] as String?)))
+        } else {
+          callback(Result.success(Unit))
+        }
+      } else {
+        callback(Result.failure(FluLuksApiPigeonUtils.createConnectionError(channelName)))
+      } 
+    }
+  }
+  /** Phase 13 : état d'un terminal changé (ouvert, fermé par le serveur, connexion perdue, fermé à la demande). */
+  fun onTerminalChanged(sessionArg: TerminalSessionMsg, callback: (Result<Unit>) -> Unit)
+{
+    val separatedMessageChannelSuffix = if (messageChannelSuffix.isNotEmpty()) ".$messageChannelSuffix" else ""
+    val channelName = "dev.flutter.pigeon.fluluks.FluLuksEventsApi.onTerminalChanged$separatedMessageChannelSuffix"
+    val channel = BasicMessageChannel<Any?>(binaryMessenger, channelName, codec)
+    channel.send(listOf(sessionArg)) {
       if (it is List<*>) {
         if (it.size > 1) {
           callback(Result.failure(FlutterError(it[0] as String, it[1] as String, it[2] as String?)))

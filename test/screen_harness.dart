@@ -1,3 +1,6 @@
+import 'dart:convert';
+import 'dart:typed_data';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:fluluks/src/app.dart';
@@ -12,9 +15,12 @@ import 'package:fluluks/src/screens/search_screen.dart';
 import 'package:fluluks/src/screens/server_form_screen.dart';
 import 'package:fluluks/src/screens/settings_screen.dart';
 import 'package:fluluks/src/screens/space_screen.dart';
+import 'package:fluluks/src/screens/ssh_keys_screen.dart';
 import 'package:fluluks/src/screens/text_editor_screen.dart';
 import 'package:fluluks/src/screens/trash_screen.dart';
 import 'package:fluluks/src/state/app_state.dart';
+import 'package:fluluks/src/terminal/terminal_screen.dart';
+import 'package:fluluks/src/terminal/tunnels_screen.dart';
 import 'package:fluluks/src/ui/root.dart';
 import 'package:fluluks/src/widgets/mini_player.dart';
 import 'package:fluluks/src/widgets/unlock_dialog.dart';
@@ -25,7 +31,7 @@ import 'fake_host_api.dart';
 /// Écrans que [pumpScreen] sait afficher, sur les données de [demoApi].
 const screens = [
   'home', 'explorerList', 'explorerGrid', 'filterGrid', 'search', 'globalSearch', 'trash', 'space', 'settings', //
-  'about', 'help', 'welcome', 'unlock', 'format', 'editor', 'serverForm', 'nowPlaying',
+  'about', 'help', 'welcome', 'unlock', 'format', 'editor', 'serverForm', 'nowPlaying', 'terminal', 'sshKeys', 'tunnels',
 ];
 
 /// Pont et état du dernier [pumpScreen] (pour les tests qui agissent ensuite sur l'écran).
@@ -59,6 +65,14 @@ Future<void> pumpScreen(
   if (screen == 'explorerGrid' || screen == 'filterGrid') {
     api.viewPrefs = ViewPrefsMsg(sort: 'name', ascending: true, grid: true, showHidden: false, builtInViewers: true);
   }
+  if (screen == 'sshKeys') {
+    api.sshKeyList.addAll([
+      SshKeyMsg(id: 'k1', name: 'Pixel', type: 'ssh-ed25519', fingerprint: 'SHA256:3Fq0gJx9yKp2', encrypted: false,
+          usedBy: ['Maison']),
+      SshKeyMsg(id: 'k2', name: 'Ancien portable', type: 'ssh-rsa', fingerprint: 'SHA256:Zt8mWq1bLc7r', encrypted: true,
+          usedBy: []),
+    ]);
+  }
   if (screen == 'welcome') api.uiPrefs = UiPrefsMsg(theme: 'system', haptics: true, welcomeSeen: false);
   final state = AppState(api);
   await state.loadUiPrefs();
@@ -69,6 +83,21 @@ Future<void> pumpScreen(
     state.onPlayerChanged(
       PlayerMsg(sourceId: 'v1', title: 'Morceau 2.mp3', index: 1, count: 6, playing: true, positionMs: 83000, durationMs: 245000),
       null,
+    );
+  }
+  String? terminalId;
+  if (screen == 'tunnels') {
+    api.tunnelList.addAll([
+      TunnelMsg(id: 'u1', serverId: 's1', localPort: 8080, remoteHost: 'localhost', remotePort: 80, auto: true, active: true),
+      TunnelMsg(id: 'u2', serverId: 's1', localPort: 5433, remoteHost: 'db', remotePort: 5432, auto: false, active: false),
+    ]);
+  }
+  if (screen == 'terminal' || screen == 'tunnels') {
+    terminalId = (await state.terminals.open('s1')).info.id;
+    state.onTerminalOutput(
+      terminalId,
+      Uint8List.fromList(utf8.encode('charles@maison:~\$ ls --color\r\n\x1b[1;34mDocuments\x1b[0m  '
+          '\x1b[1;32mscript.sh\x1b[0m  notes.txt\r\ncharles@maison:~\$ ')),
     );
   }
   await t.pumpWidget(const SizedBox.shrink()); // arbre neuf : rien ne reste d'un écran précédent
@@ -89,6 +118,9 @@ Future<void> pumpScreen(
     'format' => FormatScreen(state: state, disk: api.disks.single),
     'editor' => TextEditorScreen(state: state, sourceId: 'phone', path: '/notes-1.txt', name: 'notes-1.txt'),
     'serverForm' => ServerFormScreen(state: state, server: api.servers.single),
+    'terminal' => TerminalScreen(state: state, sessionId: terminalId!),
+    'sshKeys' => SshKeysScreen(state: state),
+    'tunnels' => TunnelsScreen(state: state, serverId: 's1', sessionId: terminalId),
     'unlock' || 'nowPlaying' => null,
     _ => throw ArgumentError.value(screen, 'screen'),
   };

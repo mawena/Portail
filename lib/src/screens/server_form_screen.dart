@@ -6,10 +6,14 @@ import 'package:flutter/services.dart';
 import '../bridge/fluluks_api.g.dart';
 import '../state/app_state.dart';
 import '../strings_fr.dart';
+import '../terminal/tunnels_screen.dart';
 import '../ui/dialogs.dart';
 import '../ui/feedback.dart';
 import '../ui/tokens.dart';
 import '../ui/widgets.dart';
+import '../widgets/connection_details_sheet.dart';
+import '../widgets/key_install.dart';
+import '../widgets/server_tile.dart';
 
 /// Fiche d'un serveur distant (phase 10) : protocole, nom, adresse, port (21 ou 22 par défaut), utilisateur, mot de
 /// passe (mémorisé seulement si coché), dossier de départ. FTP : avertissement « en clair ». Un serveur existant
@@ -104,6 +108,31 @@ class _ServerFormScreenState extends State<ServerFormScreen> {
     }
   }
 
+  /// Clé du trousseau pour ce serveur (phase 13).
+  Future<void> _chooseKey() async {
+    final keys = await widget.state.api.sshKeys();
+    if (!mounted) return;
+    final k = await pickSshKey(context, keys);
+    if (k == null || !mounted) return;
+    try {
+      await widget.state.setServerKey(widget.server!.id, k.id);
+      if (mounted) setState(() => _keyInfo = '${k.type} ${k.fingerprint}');
+    } on PlatformException catch (e) {
+      if (mounted) _snack(e.message ?? Fr.genericError);
+    }
+  }
+
+  /// Installe une clé du trousseau sur ce serveur, puis propose de l'utiliser (phase 13).
+  Future<void> _installKey() async {
+    final keys = await widget.state.api.sshKeys();
+    if (!mounted) return;
+    final k = await pickSshKey(context, keys);
+    if (k == null || !mounted) return;
+    if (await installKeyOnServer(context, widget.state, widget.server!, k) && mounted) {
+      setState(() => _keyInfo = '${k.type} ${k.fingerprint}');
+    }
+  }
+
   Future<void> _removeKey() async {
     await widget.state.forgetPrivateKey(widget.server!.id);
     if (mounted) setState(() => _keyInfo = null);
@@ -126,6 +155,25 @@ class _ServerFormScreenState extends State<ServerFormScreen> {
     if (!ok || !mounted) return;
     await widget.state.deleteServer(s.id);
     if (mounted) Navigator.of(context).pop();
+  }
+
+  /// « Tester la connexion » (phase 13) : la fiche enregistrée, avec le mot de passe saisi s'il y en a un.
+  Future<void> _test() async {
+    final s = widget.server!;
+    final pw = _password.text.isEmpty ? null : Uint8List.fromList(utf8.encode(_password.text));
+    try {
+      final log = await withServerAuth(context, widget.state, s, (p) => widget.state.testServer(s.id, p), password: pw);
+      if (log == null || !mounted) return;
+      showMessage(
+        context,
+        Fr.connectionOk,
+        kind: MessageKind.success,
+        actionLabel: Fr.details,
+        onAction: () => showConnectionDetails(context, widget.state, s.id),
+      );
+    } finally {
+      pw?.fillRange(0, pw.length, 0);
+    }
   }
 
   Future<void> _copyHostKey() async {
@@ -215,6 +263,13 @@ class _ServerFormScreenState extends State<ServerFormScreen> {
               if (_keyInfo != null)
                 _field(_keyPassphrase, Fr.keyPassphrase, obscure: true, helper: Fr.keyPassphraseHelp),
               Wrap(spacing: Space.s, children: [
+                TextButton(onPressed: _chooseKey, child: const Text(Fr.chooseKey)),
+                TextButton(onPressed: _installKey, child: const Text(Fr.installKeyHere)),
+                TextButton(
+                  onPressed: () => Navigator.of(context).push(MaterialPageRoute<void>(
+                      builder: (_) => TunnelsScreen(state: widget.state, serverId: widget.server!.id))),
+                  child: const Text(Fr.tunnels),
+                ),
                 TextButton(onPressed: _importKey, child: const Text(Fr.importKey)),
                 if (_keyInfo != null) TextButton(onPressed: _removeKey, child: const Text(Fr.removeKey)),
               ]),
@@ -238,6 +293,14 @@ class _ServerFormScreenState extends State<ServerFormScreen> {
               ),
             ],
             const SizedBox(height: Space.l),
+            if (s != null) ...[
+              OutlinedButton.icon(
+                onPressed: _test,
+                icon: const Icon(Icons.network_check_rounded),
+                label: const Text(Fr.testConnection),
+              ),
+              const SizedBox(height: Space.s),
+            ],
             FilledButton(onPressed: _save, child: const Text(Fr.save)),
           ]),
         ),

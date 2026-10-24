@@ -1,0 +1,11 @@
+# Essais instrumentés de la phase 13 sur le Pixel 4 XL (2026-10-24 01:02)
+# APK de débogage de feature/ssh (950d42d et le serveur d'essai de T12), installée par adb install -r -t ; am instrument ; serveur d'essai tools/ssh/serveur-essai.sh --reverse
+
+## SshInstrumentedTest
+INSTRUMENTATION_STATUS: class=com.mawena.fluluks.SshInstrumentedTest
+INSTRUMENTATION_STATUS: test=passwordTerminalEchoAndResize
+INSTRUMENTATION_STATUS: test=serviceKeepsSessionTwoMinutes
+INSTRUMENTATION_STATUS: test=ed25519GeneratedInstalledThenKeyLogin
+INSTRUMENTATION_STATUS: test=keyboardInteractiveCode
+INSTRUMENTATION_STATUS: test=tunnelToEcho
+OK (5 tests)

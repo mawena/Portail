@@ -53,6 +53,7 @@ class MainActivity : FlutterActivity() {
     override fun onResume() {
         super.onResume()
         VolumeManager.ensureService()
+        com.mawena.fluluks.service.SshService.startIfNeeded(this)
     }
 
     override fun onNewIntent(intent: Intent) {

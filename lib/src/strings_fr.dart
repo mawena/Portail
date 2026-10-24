@@ -157,6 +157,126 @@ class Fr {
   // Dossiers distants (phase 10)
   static const remoteFolders = 'Dossiers distants';
   static const addServer = 'Ajouter un serveur';
+
+  // --- connexions SSH (phase 13)
+  static const testConnection = 'Tester la connexion';
+  static const connectionOk = 'Connexion réussie';
+  static const details = 'Détails';
+  static const connectionDetails = 'Détails de la connexion';
+  static const detailsCopied = 'Détails copiés';
+  static const noAttemptLog = 'Aucun journal pour ce serveur';
+  static const sshPromptTitle = 'Le serveur demande';
+  static const sendAnswer = 'Envoyer';
+
+  // --- terminal SSH (phase 13)
+  static String terminalOf(String server) => 'Terminal de $server';
+  static const terminal = 'Terminal';
+  static const sshSessions = 'Sessions SSH';
+  static const openTerminalHere = 'Ouvrir un terminal ici';
+  static const sessionConnecting = 'Connexion…';
+  static const sessionOpen = 'Ouverte';
+  static String sessionClosedBecause(String? why) => why == null ? sessionClosed : 'Fermée\u00A0: $why';
+  static const terminalPaste = 'Coller';
+  static String pasteLines(int n) => 'Coller ${count(n, 'ligne', 'lignes')}\u202F?';
+  static const pasteLinesHelp = 'Chaque ligne sera exécutée comme si vous la tapiez.';
+  static const terminalCopied = 'Copié';
+  static const terminalFontSize = 'Taille du texte';
+  static String terminalFontValue(int size) => '$size points';
+  static const closeSession = 'Fermer la session';
+  static const closeSessionAsk = 'Fermer la session\u202F?';
+  static const closeSessionHelp = 'Les programmes lancés dans ce terminal seront arrêtés.';
+  static const sessionClosed = 'Session fermée';
+  static const reconnect = 'Reconnecter';
+  static const terminalSecure = 'Masquer le terminal';
+  static const terminalSecureHelp = 'Dans les captures d\'écran et les applications récentes';
+  // barre de touches : noms lus par TalkBack
+  static const keyEsc = 'Échap';
+  static const keyTab = 'Tabulation';
+  static const keyCtrl = 'Contrôle';
+  static const keyAlt = 'Alt';
+  static const keyUp = 'Flèche haut';
+  static const keyDown = 'Flèche bas';
+  static const keyLeft = 'Flèche gauche';
+  static const keyRight = 'Flèche droite';
+  static const keyHome = 'Début';
+  static const keyEnd = 'Fin';
+  static const keyPageUp = 'Page précédente';
+  static const keyPageDown = 'Page suivante';
+  static const keyTilde = 'Tilde';
+  static const keyPipe = 'Barre verticale';
+  static const keySlash = 'Barre oblique';
+  static const keyDash = 'Tiret';
+  static const modifierOnce = 'Pour la prochaine touche';
+  static const modifierLocked = 'Verrouillée';
+  // trousseau de clés SSH
+  static const sshKeys = 'Clés SSH';
+  static const sshKeysHelp = 'Générer, importer et partager vos clés';
+  static const generateKey = 'Générer';
+  static const importKeyShort = 'Importer';
+  static const generateKeyTitle = 'Nouvelle clé SSH';
+  static const keyName = 'Nom de la clé';
+  static const keyTypeEd25519 = 'Ed25519';
+  static const keyTypeRsa = 'RSA 4096';
+  static const keyTypeHelp = 'Ed25519 convient à tous les serveurs récents ; RSA aux plus anciens.';
+  static const keyPassphraseOptional = 'Phrase de la clé (facultative)';
+  static const keyPassphraseConfirm = 'Confirmer la phrase';
+  static const keyPassphraseHelpNew = 'Demandée à chaque connexion, sauf si le serveur la mémorise';
+  static const generatingKey = 'Génération de la clé…';
+  static const importedKeyName = 'Clé importée';
+  static String keyOptions(String name) => 'Options de $name';
+  static const copyPublicKey = 'Copier la clé publique';
+  static const sharePublicKey = 'Partager la clé publique';
+  static const publicKeyCopied = 'Clé publique copiée';
+  static String deleteKeyAsk(String name) => 'Supprimer la clé «\u00A0$name\u00A0»\u202F?';
+  static const deleteKeyHelp = 'Elle sera effacée de ce téléphone.';
+  static String keyUsedBy(List<String> servers) => 'Utilisée par\u00A0: ${servers.join(', ')}';
+  static const keyUnused = 'Utilisée par aucun serveur';
+  static const keyEncrypted = 'Protégée par une phrase';
+  static const noKeysTitle = 'Aucune clé';
+  static const noKeysBody = 'Générez une clé sur ce téléphone ou importez-en une (OpenSSH\u00A0: Ed25519, ECDSA ou RSA).';
+  static const chooseKey = 'Choisir une clé';
+  static const installKey = 'Installer sur un serveur';
+  static const installKeyHere = 'Installer une clé sur ce serveur';
+  static const chooseServer = 'Choisir un serveur';
+  static const noSftpServer = 'Aucun serveur SFTP enregistré';
+  static const useKey = 'Utiliser';
+  static String useKeyFor(String server) => 'Utiliser cette clé pour $server\u202F?';
+  static const useKeyHelp = 'Les connexions à ce serveur se feront par cette clé.';
+  // commandes enregistrées
+  static const snippets = 'Commandes';
+  static const addSnippet = 'Ajouter une commande';
+  static const newSnippet = 'Nouvelle commande';
+  static const editSnippet = 'Modifier la commande';
+  static const snippetName = 'Nom';
+  static const snippetCommand = 'Commande';
+  static const snippetRunNow = 'Exécuter aussitôt';
+  static const snippetRunNowHelp = 'Sinon, la commande est seulement tapée';
+  static String snippetThisServer(String server) => 'Pour $server seulement';
+  static const snippetRun = 'Exécuter';
+  static const noSnippets = 'Aucune commande enregistrée';
+  static const saveAsSnippet = 'Enregistrer comme commande';
+  // tunnels
+  static const tunnels = 'Tunnels';
+  static const addTunnel = 'Ajouter un tunnel';
+  static const newTunnel = 'Nouveau tunnel';
+  static const editTunnel = 'Modifier le tunnel';
+  static const tunnelOptions = 'Options du tunnel';
+  static const tunnelLocalPort = 'Port du téléphone';
+  static const tunnelRemoteHost = 'Hôte vu du serveur';
+  static const tunnelRemotePort = 'Port distant';
+  static const tunnelAuto = 'Ouvrir avec chaque terminal';
+  static const tunnelAutoOn = 'Ouvert avec chaque terminal';
+  static const tunnelActive = 'Actif';
+  static String tunnelLine(int local, String host, int remote) => '127.0.0.1:$local → $host:$remote';
+  static const openInBrowser = 'Ouvrir dans le navigateur';
+  static const noTunnels = 'Aucun tunnel';
+  static const noTunnelsBody =
+      'Un tunnel mène un port du téléphone (127.0.0.1) vers un service du serveur, une page d\'administration par exemple.';
+  static const tunnelsNeedTerminal = 'Ouvrez un terminal sur ce serveur pour activer un tunnel.';
+  static const tunnelLocalPortRange = 'Port du téléphone entre 1024 et 65535';
+  static const tunnelRemotePortRange = 'Port distant entre 1 et 65535';
+  static const tunnelHostInvalid = 'Hôte distant invalide';
+  static const deleteTunnelAsk = 'Supprimer ce tunnel\u202F?';
   static const editServer = 'Modifier';
   static const disconnect = 'Déconnecter';
   static const serverForm = 'Serveur distant';
@@ -318,6 +438,18 @@ class Fr {
           'si vous le voulez, le chiffrement LUKS2. Tout le contenu du disque est effacé : éjectez d\'abord ses '
           'volumes ouverts, puis tapez son nom pour confirmer. Gardez Portail ouvert jusqu\'à la fin du formatage.'
     ),
+    (
+      'Ouvrir un terminal SSH',
+      'Touchez Terminal sur la tuile d\'un serveur SFTP, ou Ouvrir un terminal ici dans le menu d\'un dossier '
+          'distant. La barre au-dessus du clavier donne Échap, Tab, Ctrl, Alt et les flèches ; pincez pour changer '
+          'la taille du texte. Les sessions restent ouvertes en arrière-plan, jusqu\'à Tout fermer dans la notification.'
+    ),
+    (
+      'Se connecter avec une clé SSH',
+      'Réglages, Clés SSH : générez une clé sur le téléphone ou importez-en une, puis Installer sur un serveur '
+          'l\'ajoute à ses clés autorisées. Acceptez ensuite d\'utiliser cette clé pour ce serveur : les connexions '
+          'ne demandent plus le mot de passe.'
+    ),
   ];
   static const addFavorite = 'Ajouter aux favoris';
   static const add = 'Ajouter';
@@ -377,7 +509,8 @@ class Fr {
 
   static String readOnlyText(String reason) => 'Lecture seule\u00A0: $reason';
   static String serverLine(String protocol, String user, String host, int port, bool connected) =>
-      '${protocol.toUpperCase()} · ${user.isEmpty ? '' : '$user@'}$host:$port${connected ? ' · connecté' : ''}';
+      '${protocol.toUpperCase()}${protocol == 'sftp' ? ' · SSH' : ''} · ${user.isEmpty ? '' : '$user@'}$host:$port'
+      '${connected ? ' · connecté' : ''}';
   static String passwordFor(String name) => 'Mot de passe de $name';
   static String trustBody(String fingerprint) =>
       "Première connexion à ce serveur. Vérifiez que son empreinte est bien celle-ci avant de lui faire confiance\u00A0:\n\n$fingerprint";

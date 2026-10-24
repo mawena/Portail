@@ -7,6 +7,7 @@ import '../state/prefs.dart';
 import '../file_types.dart';
 import '../state/sorting.dart';
 import '../strings_fr.dart';
+import '../terminal/terminal_screen.dart';
 import '../ui/dialogs.dart';
 import '../ui/feedback.dart';
 import '../ui/sheets.dart';
@@ -273,6 +274,16 @@ class _ExplorerScreenState extends State<ExplorerScreen> {
   /// Dossier distant : pas de corbeille, suppression toujours définitive.
   bool get _remote => _source?.kind == 'remote';
 
+  /// Serveur SFTP de ce dossier distant (« Ouvrir un terminal ici », phase 13), sinon null.
+  RemoteServerMsg? get _sshServer {
+    if (!_remote || !widget.sourceId.startsWith('remote:')) return null;
+    final id = widget.sourceId.substring('remote:'.length);
+    for (final s in state.servers) {
+      if (s.id == id && s.protocol == 'sftp') return s;
+    }
+    return null;
+  }
+
   /// Supprimer : à la corbeille du stockage, ou définitivement au choix ; dans la corbeille ou sur un dossier distant,
   /// toujours définitif. Mise à la corbeille : le message propose « Annuler ».
   Future<void> _delete(List<String> paths) async {
@@ -498,6 +509,7 @@ class _ExplorerScreenState extends State<ExplorerScreen> {
             'desc' => _setPrefs(ascending: false),
             'trash' => openTrash(context, state, widget.sourceId),
             'space' => openSpace(context, state, widget.sourceId),
+            'terminal' => openTerminal(context, state, _sshServer!, startDir: _path),
             _ => _setPrefs(showHidden: !v.showHidden),
           },
           itemBuilder: (_) => [
@@ -513,6 +525,10 @@ class _ExplorerScreenState extends State<ExplorerScreen> {
               const PopupMenuDivider(),
               if (!_remote) const PopupMenuItem(value: 'trash', child: Text(Fr.trash)),
               const PopupMenuItem(value: 'space', child: Text(Fr.spaceAnalysis)),
+            ],
+            if (_sshServer != null) ...[
+              const PopupMenuDivider(),
+              const PopupMenuItem(value: 'terminal', child: Text(Fr.openTerminalHere)),
             ],
           ],
         ),

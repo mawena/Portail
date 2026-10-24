@@ -30,6 +30,8 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
+  # Terminal SSH (phase 13) : émulation xterm et affichage ; version exacte, MIT.
+  xterm: 4.0.0
 
 dev_dependencies:
   flutter_test:

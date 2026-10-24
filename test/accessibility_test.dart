@@ -14,9 +14,12 @@ import 'package:fluluks/src/screens/search_screen.dart';
 import 'package:fluluks/src/screens/server_form_screen.dart';
 import 'package:fluluks/src/screens/settings_screen.dart';
 import 'package:fluluks/src/screens/space_screen.dart';
+import 'package:fluluks/src/screens/ssh_keys_screen.dart';
 import 'package:fluluks/src/screens/text_editor_screen.dart';
 import 'package:fluluks/src/screens/trash_screen.dart';
 import 'package:fluluks/src/screens/welcome_screen.dart';
+import 'package:fluluks/src/terminal/terminal_screen.dart';
+import 'package:fluluks/src/terminal/tunnels_screen.dart';
 import 'package:fluluks/src/widgets/mini_player.dart';
 import 'package:fluluks/src/widgets/unlock_dialog.dart';
 
@@ -30,7 +33,8 @@ void main() {
     'search': SearchScreen, 'globalSearch': GlobalSearchScreen, 'trash': TrashScreen, 'space': SpaceScreen,
     'settings': SettingsScreen, 'about': AboutScreen, 'help': HelpScreen, 'welcome': WelcomeScreen,
     'unlock': UnlockDialog, 'format': FormatScreen, 'editor': TextEditorScreen, 'serverForm': ServerFormScreen,
-    'nowPlaying': NowPlayingScreen,
+    'nowPlaying': NowPlayingScreen, 'terminal': TerminalScreen,
+    'sshKeys': SshKeysScreen, 'tunnels': TunnelsScreen,
   };
   testWidgets('harnessShowsEachScreen', (t) async {
     for (final screen in screens) {

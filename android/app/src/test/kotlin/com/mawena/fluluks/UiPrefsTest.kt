@@ -36,4 +36,19 @@ class UiPrefsTest {
         UiPrefs(store).set(UiSettings(theme = "violet"))
         assertEquals("system", store.m["ui_theme"]) // une valeur inconnue n'est jamais écrite
     }
+
+    @Test fun terminalPrefsDefaultsAndBounds() {
+        val d = UiPrefs(store).get()
+        assertEquals(13, d.terminalFontSize)
+        assertEquals(false, d.terminalSecure)
+        UiPrefs(store).set(UiSettings(terminalFontSize = 20, terminalSecure = true))
+        assertEquals(20, UiPrefs(store).get().terminalFontSize)
+        assertEquals(true, UiPrefs(store).get().terminalSecure)
+        UiPrefs(store).set(UiSettings(terminalFontSize = 99))
+        assertEquals(32, UiPrefs(store).get().terminalFontSize) // bornes 8 à 32
+        store.m["ui_terminal_font"] = "abc"
+        assertEquals(13, UiPrefs(store).get().terminalFontSize)
+        store.m["ui_terminal_font"] = "2"
+        assertEquals(8, UiPrefs(store).get().terminalFontSize)
+    }
 }

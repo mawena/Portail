@@ -51,6 +51,34 @@ abstract class HostApi {
   Future<void> disconnectServer(String serverId);
   Future<void> trustHostKey(String serverId, String fingerprint);
   Future<void> forgetHostKey(String serverId);
+  Future<List<String>> testServer(String serverId, Uint8List? password);
+  Future<List<String>> lastAttemptLog(String serverId);
+  Future<void> answerSshPrompt(String requestId, List<Uint8List>? answers);
+  Future<TerminalSessionMsg> openTerminal(String serverId, Uint8List? password, String? startDir);
+  Future<void> terminalWrite(String sessionId, Uint8List data);
+  Future<void> terminalResize(String sessionId, int cols, int rows);
+  Future<Uint8List> terminalBacklog(String sessionId);
+  Future<void> closeTerminal(String sessionId);
+  Future<List<TerminalSessionMsg>> terminalSessions();
+  Future<void> setSecureScreen(bool secure);
+  Future<List<SshKeyMsg>> sshKeys();
+  Future<SshKeyMsg> generateSshKey(String name, String type, Uint8List? passphrase);
+  Future<SshKeyMsg?> importSshKey(String name);
+  Future<void> renameSshKey(String keyId, String name);
+  Future<void> deleteSshKey(String keyId);
+  Future<String> sshPublicKey(String keyId);
+  Future<void> setServerKey(String serverId, String? keyId);
+  Future<void> shareText(String text);
+  Future<String> installPublicKey(String serverId, String keyId, Uint8List? password);
+  Future<List<SnippetMsg>> snippets(String? serverId);
+  Future<SnippetMsg> saveSnippet(SnippetMsg snippet);
+  Future<void> deleteSnippet(String id);
+  Future<List<TunnelMsg>> tunnels(String serverId);
+  Future<TunnelMsg> saveTunnel(TunnelMsg tunnel);
+  Future<void> deleteTunnel(String id);
+  Future<TunnelMsg> startTunnel(String sessionId, String tunnelId);
+  Future<void> stopTunnel(String sessionId, String tunnelId);
+  Future<void> openUrl(String url);
   Future<String?> importPrivateKey(String serverId);
   Future<void> forgetPrivateKey(String serverId);
   Future<Uint8List> readImage(String sourceId, String path);
@@ -182,6 +210,66 @@ class PigeonHostApi implements HostApi {
   Future<void> trustHostKey(String serverId, String fingerprint) => _api.trustHostKey(serverId, fingerprint);
   @override
   Future<void> forgetHostKey(String serverId) => _api.forgetHostKey(serverId);
+  @override
+  Future<List<String>> testServer(String serverId, Uint8List? password) => _api.testServer(serverId, password);
+  @override
+  Future<List<String>> lastAttemptLog(String serverId) => _api.lastAttemptLog(serverId);
+  @override
+  Future<void> answerSshPrompt(String requestId, List<Uint8List>? answers) =>
+      _api.answerSshPrompt(requestId, answers);
+  @override
+  Future<TerminalSessionMsg> openTerminal(String serverId, Uint8List? password, String? startDir) =>
+      _api.openTerminal(serverId, password, startDir);
+  @override
+  Future<void> terminalWrite(String sessionId, Uint8List data) => _api.terminalWrite(sessionId, data);
+  @override
+  Future<void> terminalResize(String sessionId, int cols, int rows) => _api.terminalResize(sessionId, cols, rows);
+  @override
+  Future<Uint8List> terminalBacklog(String sessionId) => _api.terminalBacklog(sessionId);
+  @override
+  Future<void> closeTerminal(String sessionId) => _api.closeTerminal(sessionId);
+  @override
+  Future<List<TerminalSessionMsg>> terminalSessions() => _api.terminalSessions();
+  @override
+  Future<void> setSecureScreen(bool secure) => _api.setSecureScreen(secure);
+  @override
+  Future<List<SshKeyMsg>> sshKeys() => _api.sshKeys();
+  @override
+  Future<SshKeyMsg> generateSshKey(String name, String type, Uint8List? passphrase) =>
+      _api.generateSshKey(name, type, passphrase);
+  @override
+  Future<SshKeyMsg?> importSshKey(String name) => _api.importSshKey(name);
+  @override
+  Future<void> renameSshKey(String keyId, String name) => _api.renameSshKey(keyId, name);
+  @override
+  Future<void> deleteSshKey(String keyId) => _api.deleteSshKey(keyId);
+  @override
+  Future<String> sshPublicKey(String keyId) => _api.sshPublicKey(keyId);
+  @override
+  Future<void> setServerKey(String serverId, String? keyId) => _api.setServerKey(serverId, keyId);
+  @override
+  Future<void> shareText(String text) => _api.shareText(text);
+  @override
+  Future<String> installPublicKey(String serverId, String keyId, Uint8List? password) =>
+      _api.installPublicKey(serverId, keyId, password);
+  @override
+  Future<List<SnippetMsg>> snippets(String? serverId) => _api.snippets(serverId);
+  @override
+  Future<SnippetMsg> saveSnippet(SnippetMsg snippet) => _api.saveSnippet(snippet);
+  @override
+  Future<void> deleteSnippet(String id) => _api.deleteSnippet(id);
+  @override
+  Future<List<TunnelMsg>> tunnels(String serverId) => _api.tunnels(serverId);
+  @override
+  Future<TunnelMsg> saveTunnel(TunnelMsg tunnel) => _api.saveTunnel(tunnel);
+  @override
+  Future<void> deleteTunnel(String id) => _api.deleteTunnel(id);
+  @override
+  Future<TunnelMsg> startTunnel(String sessionId, String tunnelId) => _api.startTunnel(sessionId, tunnelId);
+  @override
+  Future<void> stopTunnel(String sessionId, String tunnelId) => _api.stopTunnel(sessionId, tunnelId);
+  @override
+  Future<void> openUrl(String url) => _api.openUrl(url);
   @override
   Future<String?> importPrivateKey(String serverId) => _api.importPrivateKey(serverId);
   @override

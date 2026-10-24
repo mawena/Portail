@@ -157,6 +157,8 @@ internal inline fun <T> net(block: () -> T): T = try {
     throw e
 } catch (e: RemoteIOException) {
     throw e
+} catch (e: com.mawena.fluluks.remote.ssh.SshFailure) {
+    throw e // message précis et détail technique gardés jusqu'au pont (code `ssh`)
 } catch (e: java.io.InterruptedIOException) {
     throw e
 } catch (e: java.io.IOException) {
