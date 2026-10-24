@@ -25,6 +25,7 @@ adb_() { "$ADB" -s "$SERIAL" "$@"; }
 REMOTE=/data/local/tmp/fluluks
 BUILD_DIR="$ROOT/build/android-arm64"
 FIX_SRC="${FL_FIXTURES_SRC:-$ROOT/build/native/fixtures}"
+ARC_SRC="$(dirname "$FIX_SRC")/fixtures-archives"
 
 if [ "$CLEAN" = 1 ]; then
   adb_ shell "rm -rf $REMOTE"
@@ -42,7 +43,7 @@ fi
 # Tests, dans l'ordre ; test_luks2_lent est le plus long (Argon2 aux paramètres exacts du disque).
 # Une entrée peut porter un argument après le nom du binaire (comme dans CTest : test_crc32c_debit).
 TESTS=(test_error test_crypto test_luks1 test_luks2 test_crc32c "test_crc32c debit" test_ext4 test_fat test_fat_hostile test_ntfs test_ntfs_dev test_ntfs_hostile test_usb
-       test_cache test_banc test_luks2_lent test_scrypt "test_scrypt debit" test_age)
+       test_cache test_banc test_luks2_lent test_scrypt "test_scrypt debit" test_age test_archive_crypt)
 # Binaires à pousser, sans doublon.
 BINS=()
 for t in "${TESTS[@]}"; do
@@ -64,11 +65,14 @@ FIXTURES=(ext4-plain.img ext4-rw-1k.img gpt-luks2.img whole-luks2-4k.img whole-l
           ntfs-hostile-attr-longueur.img ntfs-hostile-lznt1.img ntfs-hostile-index-zero.img
           ntfs-hostile-index-boucle.img ntfs-hostile-utf16.img ntfs-hostile-attrlist-zero.img
           ntfs-hostile-attrlist-boucle.img ntfs-rapide.img ntfs-tronque.img)
+# Archives chiffrées lues par test_archive_crypt (phase 14 ; ctest -R generate_archive_fixtures les produit).
+ARC_FIXTURES=(chiffre.zip test_read_format_7zip_encryption.7z test_read_format_rar_encryption_data.rar)
 # Arborescences entières (modèles des tests FAT et NTFS : tm_from_dir).
 TREES=(tree-fat tree-exfat tree-ntfs)
 
 for b in "${BINS[@]}"; do [ -x "$BUILD_DIR/$b" ] || { echo "binaire absent : $BUILD_DIR/$b" >&2; exit 1; }; done
 for f in "${FIXTURES[@]}"; do [ -e "$FIX_SRC/$f" ] || { echo "fixture absente : $FIX_SRC/$f (lancer ctest -R generate_fixtures)" >&2; exit 1; }; done
+for f in "${ARC_FIXTURES[@]}"; do [ -e "$ARC_SRC/$f" ] || { echo "archive absente : $ARC_SRC/$f (lancer ctest -R generate_archive_fixtures)" >&2; exit 1; }; done
 
 adb_ get-state >/dev/null
 echo "Téléphone : $(adb_ shell getprop ro.product.model | tr -d '\r') (Android $(adb_ shell getprop ro.build.version.release | tr -d '\r'), $(adb_ shell getprop ro.product.cpu.abi | tr -d '\r'))"
@@ -98,13 +102,15 @@ done
 # Vecteurs age du testkit C2SP/CCTV (phase 14), lus par test_age dans $REMOTE/fixtures/age.
 adb_ shell "mkdir -p $REMOTE/fixtures/age"
 adb_ push "$ROOT/native/tests/data/age/." "$REMOTE/fixtures/age/" >/dev/null
+adb_ shell "mkdir -p $REMOTE/fixtures/archives"
+for f in "${ARC_FIXTURES[@]}"; do adb_ push "$ARC_SRC/$f" "$REMOTE/fixtures/archives/$f" >/dev/null; done
 
 FAILED=0; SUMMARY=()
 for t in "${TESTS[@]}"; do
   echo "=== $t"
   start=$(date +%s.%N)
   set +e
-  out=$(adb_ shell "cd $REMOTE/tmp && FL_FIXTURES=$REMOTE/fixtures TMPDIR=$REMOTE/tmp $REMOTE/bin/$t 2>&1; echo __EXIT=\$?")
+  out=$(adb_ shell "cd $REMOTE/tmp && FL_FIXTURES=$REMOTE/fixtures FL_ARC_FIXTURES=$REMOTE/fixtures/archives TMPDIR=$REMOTE/tmp $REMOTE/bin/$t 2>&1; echo __EXIT=\$?")
   set -e
   secs=$(awk -v s="$start" -v e="$(date +%s.%N)" 'BEGIN{printf "%.1f", e - s}')
   code=$(printf '%s\n' "$out" | tr -d '\r' | sed -n 's/^__EXIT=//p' | tail -1)

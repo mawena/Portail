@@ -565,6 +565,12 @@ formatage dans le même processus : use-after-free vu par ASan). Appelé par `fl
 - Cible `fl_libarchive` : tous les sources sauf ceux de Windows et des ACL, compilés avec `-w`, en gnu11 ;
   seuls les formats activés par notre code sont liés. Les noms sont lus dans une locale UTF-8 (`C.UTF-8`) :
   sous « C », libarchive refuse de convertir les noms UTF-8 d'un ZIP.
+- Phase 14, chiffrement ZIP par mbedTLS : `HAVE_LIBMBEDCRYPTO`, `HAVE_MBEDTLS_AES_H`, `HAVE_MBEDTLS_MD_H` et
+  `HAVE_MBEDTLS_PKCS5_H` (et `HAVE_MBEDTLS_VERSION_H`) ajoutés à la main à la fin des deux `config.h` ; `fl_libarchive` lié à `fl_mbedcrypto`
+  et compilé avec `-fno-builtin-memset`, pour que l'effacement des phrases de passe par `archive_read_free` et
+  `archive_write_free` (memset avant free) ne puisse pas être retiré. Le PBKDF2 de WinZip AES passe par
+  `mbedtls_pkcs5_pbkdf2_hmac`, dépréciée mais présente dans mbedTLS 3.6.5 (sans `MBEDTLS_DEPRECATED_REMOVED`).
+  Toujours aucun correctif du code d'amont.
 
 ## liblzma de xz (phase 9)
 

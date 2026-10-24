@@ -185,18 +185,18 @@ JUnit 4, AndroidX Test.
   et `int fl_arcw_open_age(const fl_arc_out *out, const void *pass, size_t passlen, uint8_t log2n, fl_arc_writer **w)`
   (ZIP en clair à l'intérieur d'un flux age, sans intermédiaire).
 
-- [ ] **Step 1 : tests en échec** : `zipAesJudgedByPython` (fichiers de 0 à 5 Mio, noms UTF-8, dossier vide :
+- [x] **Step 1 : tests en échec** : `zipAesJudgedByPython` (fichiers de 0 à 5 Mio, noms UTF-8, dossier vide :
   le juge relit tout), `judgeZipAesReadByEngine`, `zipCryptoReadWithPassword`, `zipAesWrongPasswordRefused`
   (`FL_EBADPASS`, aucun octet rendu), `noPasswordStillSaysEncrypted` (comportement de la phase 9 inchangé),
   `zipInsideAgeRoundTrip` (dossier de 200 fichiers ; le juge age puis `zipfile` de Python relisent),
   `sevenZipEncryptedStillRefused`, `passphraseCopyWiped` (libarchive efface sa copie : relu dans le code d'amont et
   vérifié par un crochet `free`).
-- [ ] **Step 2 : implémentation** : options `zip:encryption=aes256` et `archive_write_set_passphrase` ;
+- [x] **Step 2 : implémentation** : options `zip:encryption=aes256` et `archive_write_set_passphrase` ;
   `archive_read_add_passphrase` ; les phrases passent en C par une copie terminée par NUL en mémoire sécurisée.
   `mbedtls_pkcs5_pbkdf2_hmac` (dépréciée mais présente dans 3.6.5, sans `MBEDTLS_DEPRECATED_REMOVED`) noté dans
   `PATCHES.md`.
-- [ ] **Step 3 :** `ctest` vert (archives de la phase 9 comprises), tests natifs sur le Pixel verts.
-- [ ] **Step 4 : commit** `feat(moteur): ZIP chiffré AES-256 et archives ZIP protégées par mot de passe`.
+- [x] **Step 3 :** `ctest` vert (archives de la phase 9 comprises), tests natifs sur le Pixel verts.
+- [x] **Step 4 : commit** `feat(moteur): ZIP chiffré AES-256 et archives ZIP protégées par mot de passe`.
 
 ### Task 3 : coffres dans le moteur (disque sur un fichier, formatage sans table, emplacements LUKS2)
 

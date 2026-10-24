@@ -266,6 +266,8 @@ if(ANDROID)
   target_include_directories(fl_libarchive SYSTEM PUBLIC ${LIBARCHIVE_CONFIG})
 endif()
 target_compile_definitions(fl_libarchive PRIVATE HAVE_CONFIG_H _GNU_SOURCE _FILE_OFFSET_BITS=64)
-target_link_libraries(fl_libarchive PUBLIC fl_lzma ZLIB::ZLIB)
+# Phase 14 : chiffrement ZIP (WinZip AES) par mbedTLS ; -fno-builtin-memset : l'effacement des phrases de passe
+# par libarchive (memset avant free) ne peut pas être retiré par l'optimiseur.
+target_link_libraries(fl_libarchive PUBLIC fl_lzma ZLIB::ZLIB fl_mbedcrypto)
 set_target_properties(fl_libarchive PROPERTIES C_EXTENSIONS ON)
-target_compile_options(fl_libarchive PRIVATE -w)
+target_compile_options(fl_libarchive PRIVATE -w -fno-builtin-memset)
