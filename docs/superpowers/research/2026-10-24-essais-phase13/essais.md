@@ -10,31 +10,43 @@ d'administration sur `localhost:80`, ou `python3 -m http.server 8000` lancé dan
 
 ## 1. Connexion et Tester la connexion
 
-- [ ] Toucher la tuile de `mawena.cloud` : l'explorateur SFTP s'ouvre comme avant. La tuile affiche « SFTP · SSH ».
-- [ ] Fiche du serveur (crayon) → **Tester la connexion** : « Connexion réussie », sans ouvrir de dossier.
-- [ ] Changer le mot de passe pour un faux, enregistrer, **Tester la connexion** : le mot de passe est redemandé
+- [x] Toucher la tuile de `mawena.cloud` : l'explorateur SFTP s'ouvre comme avant. La tuile affiche « SFTP · SSH ».
+      → Essai par Claude (adb, 24/10) : l'explorateur s'ouvre, en une dizaine de secondes sur le partage de connexion.
+- [x] Fiche du serveur (crayon) → **Tester la connexion** : « Connexion réussie », sans ouvrir de dossier.
+      → Essai par Claude : « Connexion réussie » en une dizaine de secondes.
+- [x] Changer le mot de passe pour un faux, enregistrer, **Tester la connexion** : le mot de passe est redemandé
       (« Mot de passe refusé »). Remettre le bon mot de passe.
+      → Essai par Claude : faux mot de passe tapé sans enregistrer la fiche (le vrai, mémorisé, n'est pas connu de Claude) → « Mot de passe refusé ».
 - [ ] Après un échec (par exemple Wi-Fi coupé), **Détails** montre le journal de la tentative ; **Copier** le copie.
       Aucun mot de passe n'y figure.
 
 ## 2. Terminal
 
 - [ ] Tuile du serveur → bouton **Terminal** (icône d'invite) : le terminal s'ouvre, l'invite du shell s'affiche.
+      → Défaut trouvé par Claude : la session s'ouvrait mais l'écran restait sur l'accueil (premier terminal ouvert depuis l'accueil ; la demande de mot de passe aurait été perdue de même). Corrigé (24b4adf), à refaire sur la nouvelle APK.
 - [ ] Taper `ls -la --color` : couleurs lisibles, en thème clair puis en thème sombre (Réglages → Apparence).
-- [ ] `htop` : l'écran se dessine en entier ; **F10** n'existe pas sur le clavier : quitter par `q`.
-- [ ] `nano essai.txt` : écrire deux lignes, puis **Ctrl** de la barre de touches et `o` du clavier (enregistrer),
+      → Essai par Claude : sortie correcte ; contrastes calculés ≥ 4,2:1 en clair et en sombre (sauf blanc vif sur fond clair, 2,9:1). Lisibilité à l'œil à confirmer par vous.
+- [x] `htop` : l'écran se dessine en entier ; **F10** n'existe pas sur le clavier : quitter par `q`.
+      → Essai par Claude : écran complet, colonnes alignées ; `q` quitte.
+- [x] `nano essai.txt` : écrire deux lignes, puis **Ctrl** de la barre de touches et `o` du clavier (enregistrer),
       Entrée, puis **Ctrl** et `x` (quitter). Les flèches de la barre déplacent le curseur dans nano.
-- [ ] **Ctrl** touché deux fois : la touche reste allumée (verrouillée) ; `c` puis `d` donnent Ctrl+C puis Ctrl+D ;
+      → Essai par Claude : `essai-portail.txt` (dans votre dossier personnel du serveur) enregistré avec ses deux lignes ; les quatre flèches déplacent le curseur.
+- [x] **Ctrl** touché deux fois : la touche reste allumée (verrouillée) ; `c` puis `d` donnent Ctrl+C puis Ctrl+D ;
       un troisième toucher la relâche.
-- [ ] Tourner le téléphone en paysage pendant `htop` : l'affichage se redessine à la nouvelle largeur ; revenir en
+      → Essai par Claude : « Verrouillée », `^C` puis Ctrl+D (sortie d'un bash imbriqué), relâchée au troisième toucher.
+- [x] Tourner le téléphone en paysage pendant `htop` : l'affichage se redessine à la nouvelle largeur ; revenir en
       portrait.
+      → Essai par Claude : 71×38 → 152×24 en paysage (clavier fermé), htop redessiné ; retour en portrait, rotation automatique remise.
 - [ ] Pincer l'écran du terminal : le texte grossit ou rapetisse (8 à 32) ; la taille est gardée à la réouverture.
+      → Claude ne peut pas pincer (injection à deux doigts refusée par Android) : taille changée par « Taille du texte » (16 points, gardée à la réouverture, remise à 13). Le pincement reste à faire par vous.
 - [ ] `yes` (flot continu) : l'écran reste fluide ; **Ctrl** puis `c` l'arrête aussitôt.
+      → Essai par Claude : mémoire stable (≈ 440 Mo en débogage) ; mais Ctrl+C n'a pris effet qu'au bout de ≈ 45 s : le partage de connexion perdait 50 % des paquets vers mawena.cloud et le serveur avait déjà envoyé ce qui restait. À refaire sur un bon réseau.
 
 ## 3. Copier-coller
 
 - [ ] Appui long sur un mot de la sortie : il se sélectionne ; le bouton **Copier** de la barre de titre le copie
       (« Copié »).
+      → Défaut trouvé par Claude : après `clear`, la copie était vide (ou d'une autre ligne), et changer la largeur remplissait l'écran d'anciennes lignes (défauts du paquet xterm). Corrigé (25354bb), à refaire sur la nouvelle APK.
 - [ ] Menu ⋮ → **Coller** d'une seule ligne : elle est tapée directement.
 - [ ] Copier deux lignes ailleurs (par exemple `echo un` et `echo deux` sur deux lignes), puis **Coller** : Portail
       demande « Coller 2 lignes ? » avant de les envoyer.
