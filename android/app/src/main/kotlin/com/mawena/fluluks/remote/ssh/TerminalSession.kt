@@ -81,7 +81,10 @@ internal class TerminalSession(
         try {
             s.setPortForwardingL(LOOPBACK, t.localPort, t.remoteHost, t.remotePort)
         } catch (e: JSchException) {
-            val taken = e.cause is java.net.BindException || e.message.orEmpty().contains("cannot be bound")
+            // port pris par un autre programme (« cannot be bound ») ou par un autre tunnel de Portail (« already
+            // registered », registre de JSch commun à toutes les sessions)
+            val msg = e.message.orEmpty()
+            val taken = e.cause is java.net.BindException || "cannot be bound" in msg || "already registered" in msg
             throw RemoteIOException(
                 if (taken) "Le port ${t.localPort} est déjà utilisé sur ce téléphone" else "Tunnel impossible\u00A0: ${e.message.orEmpty()}",
                 e,

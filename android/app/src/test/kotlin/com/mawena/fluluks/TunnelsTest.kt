@@ -170,6 +170,19 @@ class TunnelsTest {
         assertEquals(e.message, TerminalSessions.tunnels(id).single().error)
     }
 
+    @Test fun samePortTwiceSaysSo() {
+        // deux tunnels enregistrés sur le même port du téléphone : JSch refuse le second en anglais (« already
+        // registered »), vu sur le Pixel
+        val id = serverId()
+        val port = freePort()
+        val first = tunnel(id, local = port)
+        val second = tunnel(id, local = port)
+        val session = open(id)
+        TerminalSessions.startTunnel(session.id, first.id)
+        val e = assertThrows(RemoteIOException::class.java) { TerminalSessions.startTunnel(session.id, second.id) }
+        assertEquals("Le port $port est déjà utilisé sur ce téléphone", e.message)
+    }
+
     @Test fun portRangeValidated() {
         val id = serverId()
         for (bad in listOf(
