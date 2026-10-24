@@ -310,7 +310,7 @@ class FakeHostApi implements HostApi {
   final terminalWrites = <(String, List<int>)>[];
   final terminalResizes = <(String, int, int)>[];
   final closedTerminals = <String>[];
-  TerminalSessionMsg Function(String serverId, Uint8List? password, String? startDir)? openTerminalHook;
+  FutureOr<TerminalSessionMsg> Function(String serverId, Uint8List? password, String? startDir)? openTerminalHook;
   bool? secureScreen;
   var _terminalSeq = 0;
 
@@ -318,7 +318,7 @@ class FakeHostApi implements HostApi {
   Future<TerminalSessionMsg> openTerminal(String serverId, Uint8List? password, String? startDir) async {
     calls.add('openTerminal $serverId${startDir == null ? '' : ' $startDir'}');
     final hook = openTerminalHook;
-    if (hook != null) return hook(serverId, password, startDir);
+    if (hook != null) return await hook(serverId, password, startDir);
     final name = servers.where((s) => s.id == serverId).map((s) => s.name).firstOrNull ?? serverId;
     final same = terminals.where((t) => t.serverId == serverId).length; // titres comme côté Kotlin
     final t = TerminalSessionMsg(

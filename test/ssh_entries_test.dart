@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 
 import 'package:flutter/material.dart';
@@ -5,6 +6,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:fluluks/src/bridge/fluluks_api.g.dart';
 import 'package:fluluks/src/screens/explorer_screen.dart';
+import 'package:fluluks/src/state/app_state.dart';
 import 'package:fluluks/src/strings_fr.dart';
 import 'package:fluluks/src/terminal/terminal_screen.dart';
 import 'package:fluluks/src/widgets/ssh_sessions_card.dart';
@@ -163,5 +165,55 @@ void main() {
     await tapTerminal(tester);
     expect(find.text('8 sessions au plus'), findsOneWidget);
     expect(find.byType(TerminalScreen), findsNothing);
+  });
+
+  // Comme sur le téléphone : Kotlin annonce la session (« connecting ») avant de répondre ; l'accueil se redessine avec
+  // la carte des sessions pendant la connexion, au-dessus de la tuile qui a lancé l'ouverture.
+  TerminalSessionMsg msg(String id, String state) =>
+      TerminalSessionMsg(id: id, serverId: 's1', title: 'Maison', state: state, cols: 80, rows: 24);
+
+  testWidgets('terminalShownWhenAnnouncedWhileConnecting', (tester) async {
+    final api = api0();
+    late final AppState state;
+    final reply = Completer<void>();
+    api.openTerminalHook = (id, pw, dir) async {
+      state.onTerminalChanged(msg('tc', 'connecting'));
+      await reply.future;
+      state.onTerminalChanged(msg('tc', 'open'));
+      return msg('tc', 'open');
+    };
+    state = await pump(tester, api);
+    await showServer(tester);
+    await tester.tap(find.byTooltip(Fr.terminal));
+    await tester.pump();
+    await tester.pump(); // accueil redessiné pendant la connexion
+    reply.complete();
+    await tester.pumpAndSettle();
+    expect(find.byType(TerminalScreen), findsOneWidget);
+  });
+
+  testWidgets('passwordAskedAfterAnnouncedAttempt', (tester) async {
+    final api = api0();
+    late final AppState state;
+    final failed = Completer<void>();
+    api.openTerminalHook = (id, pw, dir) async {
+      if (pw != null) return msg('tb', 'open');
+      state.onTerminalChanged(msg('ta', 'connecting'));
+      await failed.future;
+      state.onTerminalChanged(msg('ta', 'gone'));
+      throw PlatformException(code: 'auth', message: 'Mot de passe requis', details: true);
+    };
+    state = await pump(tester, api);
+    await showServer(tester);
+    await tester.tap(find.byTooltip(Fr.terminal));
+    await tester.pump();
+    await tester.pump(); // carte des sessions affichée pendant la tentative
+    failed.complete();
+    await tester.pumpAndSettle();
+    expect(find.text(Fr.passwordFor('Maison')), findsOneWidget);
+    await tester.enterText(find.byType(TextField), 'secret');
+    await tester.tap(find.text(Fr.connect));
+    await tester.pumpAndSettle();
+    expect(find.byType(TerminalScreen), findsOneWidget);
   });
 }

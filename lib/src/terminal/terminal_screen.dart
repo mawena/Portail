@@ -21,6 +21,9 @@ enum _Menu { paste, snippets, tunnels, fontSize, close }
 /// Ouvre un terminal sur le serveur SFTP [s] (mot de passe, empreinte et échecs comme pour l'explorateur), puis son
 /// écran ; [startDir] : dossier de départ (« Ouvrir un terminal ici »).
 Future<void> openTerminal(BuildContext context, AppState state, RemoteServerMsg s, {String? startDir}) async {
+  // contexte du Navigator : la session, annoncée pendant la connexion, ajoute la carte des sessions à l'accueil et la
+  // tuile qui a lancé l'ouverture est reconstruite ; dialogues (mot de passe, empreinte) et écran partent d'ici
+  context = Navigator.of(context).context;
   final e = await withServerAuth(
     context,
     state,
