@@ -64,7 +64,8 @@ récupérable**.
       → piloté par adb, emplacement Download/portail-tests/phase14 : la progression s'affiche (« Création du coffre de Essai.luks · 79 % ») avec **Annuler** ; « Coffre « Essai » créé », tuile « 256 Mio · exFAT · Fermé ». Annulation essayée sur un coffre de 4 Gio : « Création du coffre annulée », aucun fichier laissé. 16 Gio grisé (12,4 Go libres).
 - [x] **Ouvrir** → mot de passe : l'explorateur s'ouvre à la racine du coffre ; y copier quelques photos et une vidéo.
       → piloté par adb : l'explorateur s'ouvre à la racine (titre « Essai ») ; photo.jpg et video.mp4 copiés (Copier puis « Coller ici »). **Défaut trouvé** : à la première ouverture d'un coffre, l'explorateur ne s'ouvrait pas si le coffre changeait de place dans la liste ; corrigé (b0dc8de), vérifié sur le Pixel. Ouverture refusée « Mémoire insuffisante » tant que moins de ~1,3 Go étaient libres (voir Remarques).
-- [ ] L'application **Fichiers** d'Android montre une racine « Coffre Essai » ; la vidéo du coffre se lit dans VLC.
+- [x] L'application **Fichiers** d'Android montre une racine « Coffre Essai » ; la vidéo du coffre se lit dans VLC.
+      → piloté par adb : Fichiers montre les racines « Coffre Essai » et « Coffre Annule » (pas « Course », fermé) ; « Ouvrir avec » → VLC lit video.mp4 du coffre (session média : lecture, vitesse 1, sans erreur). La visionneuse Google Drive, ouverte par défaut, échoue (« Permission Denial ») : elle ajoute « ?cpn=… » à l'adresse du document et perd l'accès accordé ; défaut de Drive, pas de Portail.
 - [ ] **Fermer** depuis la tuile : le coffre redevient « Fermé », sa racine disparaît de Fichiers.
 - [ ] Tant qu'il est ouvert, essayer de supprimer, renommer ou copier `Essai.luks` dans l'explorateur : refusé
       (« Fermez d'abord le coffre »).
