@@ -102,7 +102,8 @@ récupérable**.
       → piloté par adb : « Utiliser la clé de secours » change le champ (« Afficher la clé ») ; la clé tapée en minuscules sans tirets ouvre « Course » (explorateur à sa racine).
 - [x] Sous Ubuntu, la clé tapée telle quelle (tirets compris) à la place de la phrase ouvre aussi le coffre.
       → contrôlé sur le PC (en-tête de Course.luks, `cryptsetup luksOpen --test-passphrase`, sans root) : la clé avec ses tirets ouvre le coffre (code 0), le mot de passe aussi ; la forme minuscule sans tirets est refusée sous Linux, comme attendu (seul Portail la normalise). Emplacements 0 et 1.
-- [ ] **Changer le mot de passe** en donnant la clé de secours comme mot de passe actuel : accepté.
+- [x] **Changer le mot de passe** en donnant la clé de secours comme mot de passe actuel : accepté.
+      → piloté par adb : la clé (avec tirets) donnée comme mot de passe actuel est acceptée ; contrôle sur le PC : le nouveau mot de passe ouvre, l'ancien est refusé, la clé ouvre toujours (emplacements 0 et 1).
 - [ ] **Retirer la clé de secours** : la clé n'ouvre plus le coffre, le mot de passe si.
 
 ## 6. Déverrouillage biométrique
