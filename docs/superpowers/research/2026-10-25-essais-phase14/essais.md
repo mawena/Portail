@@ -67,8 +67,9 @@ récupérable**.
 - [x] L'application **Fichiers** d'Android montre une racine « Coffre Essai » ; la vidéo du coffre se lit dans VLC.
       → piloté par adb : Fichiers montre les racines « Coffre Essai » et « Coffre Annule » (pas « Course », fermé) ; « Ouvrir avec » → VLC lit video.mp4 du coffre (session média : lecture, vitesse 1, sans erreur). La visionneuse Google Drive, ouverte par défaut, échoue (« Permission Denial ») : elle ajoute « ?cpn=… » à l'adresse du document et perd l'accès accordé ; défaut de Drive, pas de Portail.
 - [ ] **Fermer** depuis la tuile : le coffre redevient « Fermé », sa racine disparaît de Fichiers.
-- [ ] Tant qu'il est ouvert, essayer de supprimer, renommer ou copier `Essai.luks` dans l'explorateur : refusé
+- [x] Tant qu'il est ouvert, essayer de supprimer, renommer ou copier `Essai.luks` dans l'explorateur : refusé
       (« Fermez d'abord le coffre »).
+      → piloté par adb : Supprimer (après confirmation), Renommer (en Essai2.luks) et Copier puis « Coller ici » sont tous refusés par « Fermez d'abord le coffre » ; Essai.luks reste intact (256 Mio).
 - [ ] Sur le disque USB déverrouillé : bouton **Créer** de l'explorateur → **Nouveau coffre…** → 1 Gio, ext4
       (l'explication sur l'utilisateur 1000 s'affiche). Ouvrir, écrire un fichier.
 - [ ] Avec ce coffre ouvert, **Éjecter** le disque : le coffre se ferme d'abord, puis le disque s'éjecte.
