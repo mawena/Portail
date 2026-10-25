@@ -72,8 +72,9 @@ récupérable**.
 - [ ] Avec ce coffre ouvert, **Éjecter** le disque : le coffre se ferme d'abord, puis le disque s'éjecte.
 - [ ] Débrancher le disque avec le coffre ouvert (sans éjecter) : avertissement, le coffre est fermé.
 - [ ] Verrouillage automatique à 5 min (Réglages → Disques) : un coffre ouvert et inactif se ferme après 5 min.
-- [ ] **Retirer de la liste** : le coffre disparaît de l'accueil ; le fichier `.luks` est toujours là ; le toucher
+- [x] **Retirer de la liste** : le coffre disparaît de l'accueil ; le fichier `.luks` est toujours là ; le toucher
       dans l'explorateur propose de l'ouvrir et le remet dans la liste.
+      → piloté par adb (coffre « Annule », 1 Gio) : confirmation « Le fichier du coffre reste à sa place » ; le coffre disparaît de l'accueil, Annule.luks reste (1,1 Go) ; touché dans l'explorateur, il ouvre « Ouvrir le coffre Annule », puis l'explorateur à sa racine, et le coffre revient dans la liste.
 
 ## 4. Coffre sous Ubuntu
 
