@@ -119,8 +119,9 @@ récupérable**.
 - [ ] **Fermer les coffres quand l'écran s'éteint** activé : coffre ouvert, éteindre l'écran, le rallumer : le coffre
       est fermé. Pendant une longue copie vers le coffre, éteindre l'écran : la copie se termine, puis le coffre se
       ferme (si l'écran est resté éteint).
-- [ ] **Masquer les coffres et les fichiers déchiffrés** activé : en parcourant un coffre, l'aperçu des applications
+- [x] **Masquer les coffres et les fichiers déchiffrés** activé : en parcourant un coffre, l'aperçu des applications
       récentes est masqué ; sur l'accueil, il ne l'est plus. Même chose pour une photo chiffrée ouverte.
+      → piloté par adb, vérifié sur le drapeau FLAG_SECURE de la fenêtre (dumpsys window, sans capture) : explorateur du coffre « Essai » → masquée ; accueil et réglages → non masquée ; photo.jpg.age ouverte dans la visionneuse → masquée ; dossier ordinaire ensuite → non masquée.
 
 ## Remarques
 
