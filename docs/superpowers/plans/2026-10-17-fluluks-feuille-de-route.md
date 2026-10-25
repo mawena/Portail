@@ -408,7 +408,7 @@ dans le même commit que le travail.
 - [x] T2 — Couche réseau `AiProvider` compatible OpenAI, lecture du flux SSE, erreurs traduites *(MockWebServer)*
 - [x] T3 — Serveurs IA : stockage, clé API scellée, serveur par défaut, Tester la connexion
 - [x] T4 — Écrans des serveurs IA : modèles, modèle par défaut, état en ligne ou hors ligne
-- [ ] T5 — Historique local des conversations (Room)
+- [x] T5 — Historique local des conversations (Room) *(Room 2.7.2 et KSP, schéma exporté, réponses interrompues retrouvées au démarrage)*
 - [ ] T6 — Réponses en flux vers l'écran, arrêter, régénérer
 - [ ] T7 — Écran de chat : Markdown, blocs de code, serveur, modèle et prompt système par conversation
 - [ ] T8 — Automatisations : modèles de prompt à variables, lancement manuel ou planifié (WorkManager), historique
