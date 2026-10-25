@@ -397,8 +397,8 @@ dans le même commit que le travail.
 - [x] T13 — Coffres fermés à l'écran éteint, masqués dans les captures *(VaultPrivacyTest 4 ; réglages Confidentialité désactivés par défaut ; 640 tests Flutter, 512 Kotlin)*
 - [x] T14 — Documentation *(README : chiffrement et coffres, lire sur un ordinateur, limites, licences de scrypt et de la liste EFF ; aide : trois questions ; fiche d'essai de la phase 14)*
 - [x] T15 — Essais instrumentés sur le Pixel *(9/9 : coffres, LUKS1 de Linux, dossier de 200 fichiers en age et ZIP AES relus par les juges, clé du Keystore ; coffre 128 Mio créé en 4,4 s, ouvert en 3,8 s, 87 Mo/s ; deux défauts trouvés et corrigés : clé de secours vide, Tout éjecter)*
-- [ ] *(utilisateur)* T16 — Essais sur le Pixel
-- [ ] Relecture finale de toute la branche
+- [x] *(utilisateur)* T16 — Essais sur le Pixel *(fiche : 41 lignes réussies, 2 facultatives non faites ; coffres du Pixel vérifiés par le noyau ; trois défauts trouvés et corrigés : mot de passe copié jamais effacé du presse-papiers, explorateur non ouvert à la première ouverture d'un coffre, chemin du manifeste dans le script de vérification)*
+- [x] Relecture finale de toute la branche *(relue par l'auteur, sans relecteur neuf ; points mineurs reportés au registre)*
 - [ ] Fusion `feature/chiffrement` → `develop`
 - [ ] Version `v1.7.0`
 
