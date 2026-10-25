@@ -46,7 +46,8 @@ récupérable**.
 
 ## 2. Sur le PC
 
-- [ ] Le ZIP chiffré, copié sur le PC : `7z x fichier.zip` demande le mot de passe et extrait les fichiers.
+- [x] Le ZIP chiffré, copié sur le PC : `7z x fichier.zip` demande le mot de passe et extrait les fichiers.
+      → `7z` absent du PC : Essai.zip et photo.zip relus par le juge indépendant `tools/fixtures/zipaesjuge.py` (WinZip AES-256) : 6 entrées AES, toutes identiques aux originaux (SHA-256) ; mauvais mot de passe refusé.
 - [x] `age -d photo.jpg.age > photo.jpg` demande le mot de passe ; la photo s'ouvre.
       → `age` absent du PC : déchiffré par le juge indépendant `tools/fixtures/agejuge.py`, photo identique (SHA-256), mauvais mot de passe refusé.
 - [x] `age -d Essai.zip.age | bsdtar -xf -` rend le dossier.
