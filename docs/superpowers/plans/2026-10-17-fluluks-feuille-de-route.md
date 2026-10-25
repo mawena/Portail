@@ -392,7 +392,7 @@ dans le même commit que le travail.
 - [x] T8 — Écrans Chiffrer et Déchiffrer dans l'explorateur, ZIP protégés, partage d'un fichier chiffré *(encrypt_screens_test 16 ; écrans au banc d'accessibilité ; 590 tests Flutter)*
 - [x] T9 — Coffres (Kotlin) : création, ouverture comme un stockage, fermeture avant le stockage porteur *(VaultsTest 21, VaultStoreTest 2 ; conteneur LUKS1 de Linux à essayer sur le Pixel avec T15)*
 - [x] T10 — Coffres (écrans) : création, section « Coffres » de l'accueil, ouvrir, fermer, parcourir *(vault_screens_test 15 ; écrans vaultCreate et homeVaults au banc d'accessibilité ; 625 tests Flutter)*
-- [ ] T11 — Mot de passe et clé de secours d'un coffre
+- [x] T11 — Mot de passe et clé de secours d'un coffre *(VaultsTest 29 ; vault_keys_test 6 ; clé de secours Crockford 24 caractères, emplacements inconnus jamais touchés ; 631 tests Flutter, 496 Kotlin)*
 - [ ] T12 — Déverrouillage biométrique d'un coffre (visage ou empreinte)
 - [ ] T13 — Coffres fermés à l'écran éteint, masqués dans les captures
 - [ ] T14 — Documentation
