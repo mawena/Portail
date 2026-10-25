@@ -2353,7 +2353,8 @@ data class ConversationMsg (
 
 /**
  * Message : [role] `user` ou `assistant` ; [state] ∈ `done`, `streaming`, `stopped`, `failed`, `interrupted` (Portail
- * fermé pendant la génération) ; [error] : message français d'un échec.
+ * fermé pendant la génération) ; [error] : message français d'un échec (dit quoi faire) ; [errorDetail] : message
+ * du serveur tel quel.
  *
  * Generated class from Pigeon that represents data sent in messages.
  */
@@ -2364,6 +2365,7 @@ data class ChatMessageMsg (
   val content: String,
   val state: String,
   val error: String? = null,
+  val errorDetail: String? = null,
   val createdAt: Long
 )
  {
@@ -2375,8 +2377,9 @@ data class ChatMessageMsg (
       val content = pigeonVar_list[3] as String
       val state = pigeonVar_list[4] as String
       val error = pigeonVar_list[5] as String?
-      val createdAt = pigeonVar_list[6] as Long
-      return ChatMessageMsg(id, conversationId, role, content, state, error, createdAt)
+      val errorDetail = pigeonVar_list[6] as String?
+      val createdAt = pigeonVar_list[7] as Long
+      return ChatMessageMsg(id, conversationId, role, content, state, error, errorDetail, createdAt)
     }
   }
   fun toList(): List<Any?> {
@@ -2387,6 +2390,7 @@ data class ChatMessageMsg (
       content,
       state,
       error,
+      errorDetail,
       createdAt,
     )
   }
@@ -2398,7 +2402,7 @@ data class ChatMessageMsg (
       return true
     }
     val other = other as ChatMessageMsg
-    return FluLuksApiPigeonUtils.deepEquals(this.id, other.id) && FluLuksApiPigeonUtils.deepEquals(this.conversationId, other.conversationId) && FluLuksApiPigeonUtils.deepEquals(this.role, other.role) && FluLuksApiPigeonUtils.deepEquals(this.content, other.content) && FluLuksApiPigeonUtils.deepEquals(this.state, other.state) && FluLuksApiPigeonUtils.deepEquals(this.error, other.error) && FluLuksApiPigeonUtils.deepEquals(this.createdAt, other.createdAt)
+    return FluLuksApiPigeonUtils.deepEquals(this.id, other.id) && FluLuksApiPigeonUtils.deepEquals(this.conversationId, other.conversationId) && FluLuksApiPigeonUtils.deepEquals(this.role, other.role) && FluLuksApiPigeonUtils.deepEquals(this.content, other.content) && FluLuksApiPigeonUtils.deepEquals(this.state, other.state) && FluLuksApiPigeonUtils.deepEquals(this.error, other.error) && FluLuksApiPigeonUtils.deepEquals(this.errorDetail, other.errorDetail) && FluLuksApiPigeonUtils.deepEquals(this.createdAt, other.createdAt)
   }
 
   override fun hashCode(): Int {
@@ -2409,11 +2413,12 @@ data class ChatMessageMsg (
     result = 31 * result + FluLuksApiPigeonUtils.deepHash(this.content)
     result = 31 * result + FluLuksApiPigeonUtils.deepHash(this.state)
     result = 31 * result + FluLuksApiPigeonUtils.deepHash(this.error)
+    result = 31 * result + FluLuksApiPigeonUtils.deepHash(this.errorDetail)
     result = 31 * result + FluLuksApiPigeonUtils.deepHash(this.createdAt)
     return result
   }
   override fun toString(): String {
-    return "ChatMessageMsg(id=$id, conversationId=$conversationId, role=$role, content=$content, state=$state, error=$error, createdAt=$createdAt)"
+    return "ChatMessageMsg(id=$id, conversationId=$conversationId, role=$role, content=$content, state=$state, error=$error, errorDetail=$errorDetail, createdAt=$createdAt)"
   }
 }
 
@@ -5410,6 +5415,17 @@ interface AiHostApi {
   fun setConversationModel(id: Long, serverId: String?, model: String?, callback: (Result<Unit>) -> Unit)
   /** Vide ou null : aucun prompt système. */
   fun setSystemPrompt(id: Long, prompt: String?, callback: (Result<Unit>) -> Unit)
+  /**
+   * Écrit le message et la réponse vide (`streaming`), puis lance la génération ; rend la réponse vide. Le texte
+   * arrive par `AiEventsApi.onChatDelta`, la fin par `onChatState`.
+   */
+  fun sendChatMessage(conversationId: Long, text: String, callback: (Result<ChatMessageMsg>) -> Unit)
+  /** Arrête la réponse en cours : le texte reçu est gardé, état `stopped`. */
+  fun stopGeneration(conversationId: Long)
+  /** Remplace la dernière réponse par une nouvelle (même historique, même modèle) ; sert aussi à « Réessayer ». */
+  fun regenerate(conversationId: Long, callback: (Result<ChatMessageMsg>) -> Unit)
+  /** Conversations dont une réponse est en cours. */
+  fun runningChats(): List<Long>
 
   companion object {
     /** The codec used by AiHostApi. */
@@ -5742,6 +5758,132 @@ interface AiHostApi {
           channel.setMessageHandler(null)
         }
       }
+      run {
+        val channel = BasicMessageChannel<Any?>(binaryMessenger, "dev.flutter.pigeon.fluluks.AiHostApi.sendChatMessage$separatedMessageChannelSuffix", codec)
+        if (api != null) {
+          channel.setMessageHandler { message, reply ->
+            val args = message as List<Any?>
+            val conversationIdArg = args[0] as Long
+            val textArg = args[1] as String
+            api.sendChatMessage(conversationIdArg, textArg) { result: Result<ChatMessageMsg> ->
+              val error = result.exceptionOrNull()
+              if (error != null) {
+                reply.reply(FluLuksApiPigeonUtils.wrapError(error))
+              } else {
+                val data = result.getOrNull()
+                reply.reply(FluLuksApiPigeonUtils.wrapResult(data))
+              }
+            }
+          }
+        } else {
+          channel.setMessageHandler(null)
+        }
+      }
+      run {
+        val channel = BasicMessageChannel<Any?>(binaryMessenger, "dev.flutter.pigeon.fluluks.AiHostApi.stopGeneration$separatedMessageChannelSuffix", codec)
+        if (api != null) {
+          channel.setMessageHandler { message, reply ->
+            val args = message as List<Any?>
+            val conversationIdArg = args[0] as Long
+            val wrapped: List<Any?> = try {
+              api.stopGeneration(conversationIdArg)
+              listOf(null)
+            } catch (exception: Throwable) {
+              FluLuksApiPigeonUtils.wrapError(exception)
+            }
+            reply.reply(wrapped)
+          }
+        } else {
+          channel.setMessageHandler(null)
+        }
+      }
+      run {
+        val channel = BasicMessageChannel<Any?>(binaryMessenger, "dev.flutter.pigeon.fluluks.AiHostApi.regenerate$separatedMessageChannelSuffix", codec)
+        if (api != null) {
+          channel.setMessageHandler { message, reply ->
+            val args = message as List<Any?>
+            val conversationIdArg = args[0] as Long
+            api.regenerate(conversationIdArg) { result: Result<ChatMessageMsg> ->
+              val error = result.exceptionOrNull()
+              if (error != null) {
+                reply.reply(FluLuksApiPigeonUtils.wrapError(error))
+              } else {
+                val data = result.getOrNull()
+                reply.reply(FluLuksApiPigeonUtils.wrapResult(data))
+              }
+            }
+          }
+        } else {
+          channel.setMessageHandler(null)
+        }
+      }
+      run {
+        val channel = BasicMessageChannel<Any?>(binaryMessenger, "dev.flutter.pigeon.fluluks.AiHostApi.runningChats$separatedMessageChannelSuffix", codec)
+        if (api != null) {
+          channel.setMessageHandler { _, reply ->
+            val wrapped: List<Any?> = try {
+              listOf(api.runningChats())
+            } catch (exception: Throwable) {
+              FluLuksApiPigeonUtils.wrapError(exception)
+            }
+            reply.reply(wrapped)
+          }
+        } else {
+          channel.setMessageHandler(null)
+        }
+      }
+    }
+  }
+}
+/**
+ * Réponses en flux (phase 15, T6), poussées par Kotlin.
+ *
+ * Generated class from Pigeon that represents Flutter messages that can be called from Kotlin.
+ */
+class AiEventsApi(private val binaryMessenger: BinaryMessenger, private val messageChannelSuffix: String = "") {
+  companion object {
+    /** The codec used by AiEventsApi. */
+    val codec: MessageCodec<Any?> by lazy {
+      FluLuksApiPigeonCodec()
+    }
+  }
+  /**
+   * Texte reçu pour la réponse [messageId], par lots (au plus un toutes les 50 ms, 16 Kio au plus) ; la réponse
+   * (acquittement) permet le lot suivant, 4 lots en route au plus.
+   */
+  fun onChatDelta(conversationIdArg: Long, messageIdArg: Long, textArg: String, callback: (Result<Unit>) -> Unit)
+{
+    val separatedMessageChannelSuffix = if (messageChannelSuffix.isNotEmpty()) ".$messageChannelSuffix" else ""
+    val channelName = "dev.flutter.pigeon.fluluks.AiEventsApi.onChatDelta$separatedMessageChannelSuffix"
+    val channel = BasicMessageChannel<Any?>(binaryMessenger, channelName, codec)
+    channel.send(listOf(conversationIdArg, messageIdArg, textArg)) {
+      if (it is List<*>) {
+        if (it.size > 1) {
+          callback(Result.failure(FlutterError(it[0] as String, it[1] as String, it[2] as String?)))
+        } else {
+          callback(Result.success(Unit))
+        }
+      } else {
+        callback(Result.failure(FluLuksApiPigeonUtils.createConnectionError(channelName)))
+      } 
+    }
+  }
+  /** Réponse terminée (`done`, `stopped`, `failed`), avec tout son texte : aucun lot ne suit. */
+  fun onChatState(messageArg: ChatMessageMsg, callback: (Result<Unit>) -> Unit)
+{
+    val separatedMessageChannelSuffix = if (messageChannelSuffix.isNotEmpty()) ".$messageChannelSuffix" else ""
+    val channelName = "dev.flutter.pigeon.fluluks.AiEventsApi.onChatState$separatedMessageChannelSuffix"
+    val channel = BasicMessageChannel<Any?>(binaryMessenger, channelName, codec)
+    channel.send(listOf(messageArg)) {
+      if (it is List<*>) {
+        if (it.size > 1) {
+          callback(Result.failure(FlutterError(it[0] as String, it[1] as String, it[2] as String?)))
+        } else {
+          callback(Result.success(Unit))
+        }
+      } else {
+        callback(Result.failure(FluLuksApiPigeonUtils.createConnectionError(channelName)))
+      } 
     }
   }
 }

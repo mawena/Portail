@@ -22,32 +22,36 @@ class ChatStoreTest {
     class MemChatDao : ChatDao {
         val convs = linkedMapOf<Long, Conversation>()
         val msgs = linkedMapOf<Long, Message>()
+
+        /** Identifiants des messages modifiés, un par écriture. */
+        val messageUpdates = java.util.Collections.synchronizedList(mutableListOf<Long>())
         private var nextC = 1L
         private var nextM = 1L
 
-        override fun conversations() = convs.values.sortedWith(compareByDescending<Conversation> { it.updatedAt }.thenByDescending { it.id })
-        override fun conversation(id: Long) = convs[id]
-        override fun insertConversation(c: Conversation): Long = nextC++.also { convs[it] = c.copy(id = it) }
-        override fun updateConversation(c: Conversation) {
+        @Synchronized override fun conversations() = convs.values.sortedWith(compareByDescending<Conversation> { it.updatedAt }.thenByDescending { it.id })
+        @Synchronized override fun conversation(id: Long) = convs[id]
+        @Synchronized override fun insertConversation(c: Conversation): Long = nextC++.also { convs[it] = c.copy(id = it) }
+        @Synchronized override fun updateConversation(c: Conversation) {
             if (c.id in convs) convs[c.id] = c
         }
-        override fun deleteConversation(id: Long): Int {
+        @Synchronized override fun deleteConversation(id: Long): Int {
             msgs.values.removeAll { it.conversationId == id }
             return if (convs.remove(id) != null) 1 else 0
         }
-        override fun messages(conversationId: Long) = msgs.values.filter { it.conversationId == conversationId }.sortedBy { it.id }
-        override fun message(id: Long) = msgs[id]
-        override fun insertMessage(m: Message): Long = nextM++.also { msgs[it] = m.copy(id = it) }
-        override fun updateMessage(m: Message) {
+        @Synchronized override fun messages(conversationId: Long) = msgs.values.filter { it.conversationId == conversationId }.sortedBy { it.id }
+        @Synchronized override fun message(id: Long) = msgs[id]
+        @Synchronized override fun insertMessage(m: Message): Long = nextM++.also { msgs[it] = m.copy(id = it) }
+        @Synchronized override fun updateMessage(m: Message) {
+            messageUpdates += m.id
             if (m.id in msgs) msgs[m.id] = m
         }
-        override fun deleteMessage(id: Long) {
+        @Synchronized override fun deleteMessage(id: Long) {
             msgs.remove(id)
         }
-        override fun deleteMessages(conversationId: Long) {
+        @Synchronized override fun deleteMessages(conversationId: Long) {
             msgs.values.removeAll { it.conversationId == conversationId }
         }
-        override fun markInterrupted(error: String): Int {
+        @Synchronized override fun markInterrupted(error: String): Int {
             var n = 0
             for ((k, m) in msgs) {
                 if (m.state == Message.STREAMING) {

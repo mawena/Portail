@@ -101,9 +101,9 @@ class ChatStore(
     }
 
     /** Réponse terminée (une seule écriture, à la fin) : [state] parmi done, stopped, failed. */
-    fun finishReply(messageId: Long, content: String, state: String, error: String?) {
-        val m = dao.message(messageId) ?: return
-        dao.updateMessage(m.copy(content = content, state = state, error = error))
+    fun finishReply(messageId: Long, content: String, state: String, error: String?, errorDetail: String? = null): Message? {
+        val m = dao.message(messageId) ?: return null
+        return m.copy(content = content, state = state, error = error, errorDetail = errorDetail).also(dao::updateMessage)
     }
 
     fun deleteMessage(messageId: Long) = dao.deleteMessage(messageId)
@@ -134,13 +134,18 @@ class ChatStore(
 object Chats {
     @Volatile private var store: ChatStore? = null
     @Volatile private var recovered = false
+    @Volatile private var sessions: ChatSessions? = null
 
     @Synchronized
     fun init(context: Context) {
         if (store != null) return
         val db = Room.databaseBuilder(context.applicationContext, ChatDatabase::class.java, ChatDatabase.NAME).build()
         store = ChatStore(db.chatDao(), { Ai.servers().list() }, { block -> db.runInTransaction(block) })
+        sessions = ChatSessions({ store() }, { id -> Ai.servers().provider(id) })
     }
+
+    /** Générations en cours, pour tout le processus (elles continuent quand l'écran se ferme). */
+    fun sessions(): ChatSessions = sessions ?: throw FilesException(EngineError.FL_ENODEV, "Historique indisponible")
 
     fun store(): ChatStore {
         val s = store ?: throw FilesException(EngineError.FL_ENODEV, "Historique indisponible")

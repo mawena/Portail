@@ -5,6 +5,7 @@ import com.mawena.fluluks.ai.Ai
 import com.mawena.fluluks.ai.AiException
 import com.mawena.fluluks.ai.AiHealth
 import com.mawena.fluluks.ai.AiServerConfig
+import com.mawena.fluluks.ai.chat.ChatSink
 import com.mawena.fluluks.ai.chat.Chats
 import com.mawena.fluluks.ai.chat.Conversation
 import com.mawena.fluluks.ai.chat.Message
@@ -24,14 +25,29 @@ import kotlinx.coroutines.launch
 class AiHostApiImpl(private val context: Context) : AiHostApi {
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Main.immediate)
 
+    private var sink: ChatSink? = null
+
     fun attach(messenger: BinaryMessenger) {
         Ai.init(context)
         Chats.init(context)
         AiHostApi.setUp(messenger, this)
+        val events = AiEventsApi(messenger)
+        // Lots et fins de réponse envoyés sur le fil principal, dans l'ordre ; la réponse de Dart acquitte le lot.
+        sink = object : ChatSink {
+            override fun delta(conversationId: Long, messageId: Long, text: String, delivered: () -> Unit) {
+                scope.launch { events.onChatDelta(conversationId, messageId, text) { delivered() } }
+            }
+
+            override fun state(m: com.mawena.fluluks.ai.chat.Message) {
+                scope.launch { events.onChatState(messageMsg(m)) { /* réponse ignorée */ } }
+            }
+        }.also { Chats.sessions().sink = it }
     }
 
     fun detach(messenger: BinaryMessenger) {
         AiHostApi.setUp(messenger, null)
+        if (Chats.sessions().sink === sink) Chats.sessions().sink = null
+        sink = null
         scope.cancel()
     }
 
@@ -103,6 +119,18 @@ class AiHostApiImpl(private val context: Context) : AiHostApi {
     override fun setSystemPrompt(id: Long, prompt: String?, callback: (Result<Unit>) -> Unit) =
         io(callback) { Chats.store().setSystemPrompt(id, prompt) }
 
+    // --- réponses en flux (T6)
+
+    override fun sendChatMessage(conversationId: Long, text: String, callback: (Result<ChatMessageMsg>) -> Unit) =
+        io(callback) { messageMsg(Chats.sessions().send(conversationId, text)) }
+
+    override fun stopGeneration(conversationId: Long) = sync { Chats.sessions().stop(conversationId) }
+
+    override fun regenerate(conversationId: Long, callback: (Result<ChatMessageMsg>) -> Unit) =
+        io(callback) { messageMsg(Chats.sessions().regenerate(conversationId)) }
+
+    override fun runningChats(): List<Long> = sync { Chats.sessions().running().toList() }
+
     // --- utilitaires
 
     private fun <T> io(callback: (Result<T>) -> Unit, block: suspend () -> T) {
@@ -129,7 +157,7 @@ class AiHostApiImpl(private val context: Context) : AiHostApi {
             ConversationMsg(c.id, c.title, c.serverId, c.model, c.systemPrompt, c.createdAt, c.updatedAt)
 
         internal fun messageMsg(m: Message) =
-            ChatMessageMsg(m.id, m.conversationId, m.role, m.content, m.state, m.error, m.createdAt)
+            ChatMessageMsg(m.id, m.conversationId, m.role, m.content, m.state, m.error, m.errorDetail, m.createdAt)
 
         internal fun toFlutterError(e: Throwable): FlutterError = when (e) {
             is AiException -> FlutterError("ai", e.message, e.serverMessage)

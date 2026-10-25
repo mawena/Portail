@@ -25,7 +25,8 @@ data class Conversation(
 
 /**
  * Message d'une conversation : [role] `user` ou `assistant` ; [state] parmi [Message.DONE], [Message.STREAMING],
- * [Message.STOPPED], [Message.FAILED], [Message.INTERRUPTED] ; [error] : message français d'un échec.
+ * [Message.STOPPED], [Message.FAILED], [Message.INTERRUPTED] ; [error] : message français d'un échec (dit quoi faire),
+ * [errorDetail] : message du serveur tel quel.
  */
 @Entity(
     tableName = "messages",
@@ -47,6 +48,7 @@ data class Message(
     val state: String,
     val error: String?,
     val createdAt: Long,
+    val errorDetail: String? = null,
 ) {
     companion object {
         const val DONE = "done"

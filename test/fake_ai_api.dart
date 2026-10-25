@@ -127,7 +127,7 @@ mixin FakeAiApi implements AiApi {
 
   ConversationMsg _conv(int id) => chatConversations.firstWhere(
         (c) => c.id == id,
-        orElse: () => throw PlatformException(code: '-2', message: 'Cette conversation n\'existe plus'),
+        orElse: () => throw PlatformException(code: '-8', message: 'Cette conversation n\'existe plus'),
       );
 
   void _replaceConv(ConversationMsg c) => chatConversations[chatConversations.indexWhere((x) => x.id == c.id)] = c;
@@ -205,6 +205,73 @@ mixin FakeAiApi implements AiApi {
       createdAt: c.createdAt,
       updatedAt: c.updatedAt,
     ));
+  }
+
+  // --- réponses en flux (T6) : la réponse reste « en cours » ; le test la termine par [finishFakeReply]
+
+  final chatRunning = <int>{};
+  int _msgNext = 1;
+
+  ChatMessageMsg _msg(int conv, String role, String content, String state) => ChatMessageMsg(
+        id: _msgNext++,
+        conversationId: conv,
+        role: role,
+        content: content,
+        state: state,
+        createdAt: chatClock++,
+      );
+
+  @override
+  Future<ChatMessageMsg> sendChatMessage(int conversationId, String text) async {
+    aiCalls.add('sendChatMessage $conversationId $text');
+    final c = _conv(conversationId);
+    final list = chatMessages.putIfAbsent(conversationId, () => []);
+    list.add(_msg(conversationId, 'user', text, 'done'));
+    if (c.title.isEmpty) _replaceConv(_copyConv(c, title: text.trim()));
+    final reply = _msg(conversationId, 'assistant', '', 'streaming');
+    list.add(reply);
+    chatRunning.add(conversationId);
+    return reply;
+  }
+
+  @override
+  Future<void> stopGeneration(int conversationId) async {
+    aiCalls.add('stopGeneration $conversationId');
+    chatRunning.remove(conversationId);
+  }
+
+  @override
+  Future<ChatMessageMsg> regenerate(int conversationId) async {
+    aiCalls.add('regenerate $conversationId');
+    final list = chatMessages.putIfAbsent(conversationId, () => []);
+    if (list.isNotEmpty && list.last.role == 'assistant') list.removeLast();
+    final reply = _msg(conversationId, 'assistant', '', 'streaming');
+    list.add(reply);
+    chatRunning.add(conversationId);
+    return reply;
+  }
+
+  @override
+  Future<List<int>> runningChats() async => chatRunning.toList();
+
+  /// Termine la réponse en cours de [conversationId] côté faux pont et la rend (à pousser par `onChatState`).
+  ChatMessageMsg finishFakeReply(int conversationId, String content,
+      {String state = 'done', String? error, String? errorDetail}) {
+    chatRunning.remove(conversationId);
+    final list = chatMessages[conversationId]!;
+    final last = list.last;
+    final done = ChatMessageMsg(
+      id: last.id,
+      conversationId: conversationId,
+      role: last.role,
+      content: content,
+      state: state,
+      error: error,
+      errorDetail: errorDetail,
+      createdAt: last.createdAt,
+    );
+    list[list.length - 1] = done;
+    return done;
   }
 }
 

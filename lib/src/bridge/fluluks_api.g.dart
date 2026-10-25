@@ -2626,7 +2626,8 @@ class ConversationMsg {
 }
 
 /// Message : [role] `user` ou `assistant` ; [state] ∈ `done`, `streaming`, `stopped`, `failed`, `interrupted` (Portail
-/// fermé pendant la génération) ; [error] : message français d'un échec.
+/// fermé pendant la génération) ; [error] : message français d'un échec (dit quoi faire) ; [errorDetail] : message
+/// du serveur tel quel.
 class ChatMessageMsg {
   ChatMessageMsg({
     required this.id,
@@ -2635,6 +2636,7 @@ class ChatMessageMsg {
     required this.content,
     required this.state,
     this.error,
+    this.errorDetail,
     required this.createdAt,
   });
 
@@ -2650,6 +2652,8 @@ class ChatMessageMsg {
 
   String? error;
 
+  String? errorDetail;
+
   int createdAt;
 
   List<Object?> _toList() {
@@ -2660,6 +2664,7 @@ class ChatMessageMsg {
       content,
       state,
       error,
+      errorDetail,
       createdAt,
     ];
   }
@@ -2676,7 +2681,8 @@ class ChatMessageMsg {
       content: result[3]! as String,
       state: result[4]! as String,
       error: result[5] as String?,
-      createdAt: result[6]! as int,
+      errorDetail: result[6] as String?,
+      createdAt: result[7]! as int,
     );
   }
 
@@ -2689,7 +2695,7 @@ class ChatMessageMsg {
     if (identical(this, other)) {
       return true;
     }
-    return _deepEquals(id, other.id) && _deepEquals(conversationId, other.conversationId) && _deepEquals(role, other.role) && _deepEquals(content, other.content) && _deepEquals(state, other.state) && _deepEquals(error, other.error) && _deepEquals(createdAt, other.createdAt);
+    return _deepEquals(id, other.id) && _deepEquals(conversationId, other.conversationId) && _deepEquals(role, other.role) && _deepEquals(content, other.content) && _deepEquals(state, other.state) && _deepEquals(error, other.error) && _deepEquals(errorDetail, other.errorDetail) && _deepEquals(createdAt, other.createdAt);
   }
 
   @override
@@ -2698,7 +2704,7 @@ class ChatMessageMsg {
 
   @override
   String toString() {
-    return 'ChatMessageMsg(id: $id, conversationId: $conversationId, role: $role, content: $content, state: $state, error: $error, createdAt: $createdAt)';
+    return 'ChatMessageMsg(id: $id, conversationId: $conversationId, role: $role, content: $content, state: $state, error: $error, errorDetail: $errorDetail, createdAt: $createdAt)';
   }
 }
 
@@ -5693,5 +5699,145 @@ class AiHostApi {
         isNullValid: true,
     )
     ;
+  }
+
+  /// Écrit le message et la réponse vide (`streaming`), puis lance la génération ; rend la réponse vide. Le texte
+  /// arrive par `AiEventsApi.onChatDelta`, la fin par `onChatState`.
+  Future<ChatMessageMsg> sendChatMessage(int conversationId, String text) async {
+    final pigeonVar_channelName = 'dev.flutter.pigeon.fluluks.AiHostApi.sendChatMessage$pigeonVar_messageChannelSuffix';
+    final pigeonVar_channel = BasicMessageChannel<Object?>(
+      pigeonVar_channelName,
+      pigeonChannelCodec,
+      binaryMessenger: pigeonVar_binaryMessenger,
+    );
+    final Future<Object?> pigeonVar_sendFuture = pigeonVar_channel.send(<Object?>[conversationId, text]);
+    final pigeonVar_replyList = await pigeonVar_sendFuture as List<Object?>?;
+
+    final Object? pigeonVar_replyValue = _extractReplyValueOrThrow(
+        pigeonVar_replyList,
+        pigeonVar_channelName,
+        isNullValid: false,
+    )
+    ;
+    return pigeonVar_replyValue! as ChatMessageMsg;
+  }
+
+  /// Arrête la réponse en cours : le texte reçu est gardé, état `stopped`.
+  Future<void> stopGeneration(int conversationId) async {
+    final pigeonVar_channelName = 'dev.flutter.pigeon.fluluks.AiHostApi.stopGeneration$pigeonVar_messageChannelSuffix';
+    final pigeonVar_channel = BasicMessageChannel<Object?>(
+      pigeonVar_channelName,
+      pigeonChannelCodec,
+      binaryMessenger: pigeonVar_binaryMessenger,
+    );
+    final Future<Object?> pigeonVar_sendFuture = pigeonVar_channel.send(<Object?>[conversationId]);
+    final pigeonVar_replyList = await pigeonVar_sendFuture as List<Object?>?;
+
+    _extractReplyValueOrThrow(
+        pigeonVar_replyList,
+        pigeonVar_channelName,
+        isNullValid: true,
+    )
+    ;
+  }
+
+  /// Remplace la dernière réponse par une nouvelle (même historique, même modèle) ; sert aussi à « Réessayer ».
+  Future<ChatMessageMsg> regenerate(int conversationId) async {
+    final pigeonVar_channelName = 'dev.flutter.pigeon.fluluks.AiHostApi.regenerate$pigeonVar_messageChannelSuffix';
+    final pigeonVar_channel = BasicMessageChannel<Object?>(
+      pigeonVar_channelName,
+      pigeonChannelCodec,
+      binaryMessenger: pigeonVar_binaryMessenger,
+    );
+    final Future<Object?> pigeonVar_sendFuture = pigeonVar_channel.send(<Object?>[conversationId]);
+    final pigeonVar_replyList = await pigeonVar_sendFuture as List<Object?>?;
+
+    final Object? pigeonVar_replyValue = _extractReplyValueOrThrow(
+        pigeonVar_replyList,
+        pigeonVar_channelName,
+        isNullValid: false,
+    )
+    ;
+    return pigeonVar_replyValue! as ChatMessageMsg;
+  }
+
+  /// Conversations dont une réponse est en cours.
+  Future<List<int>> runningChats() async {
+    final pigeonVar_channelName = 'dev.flutter.pigeon.fluluks.AiHostApi.runningChats$pigeonVar_messageChannelSuffix';
+    final pigeonVar_channel = BasicMessageChannel<Object?>(
+      pigeonVar_channelName,
+      pigeonChannelCodec,
+      binaryMessenger: pigeonVar_binaryMessenger,
+    );
+    final Future<Object?> pigeonVar_sendFuture = pigeonVar_channel.send(null);
+    final pigeonVar_replyList = await pigeonVar_sendFuture as List<Object?>?;
+
+    final Object? pigeonVar_replyValue = _extractReplyValueOrThrow(
+        pigeonVar_replyList,
+        pigeonVar_channelName,
+        isNullValid: false,
+    )
+    ;
+    return (pigeonVar_replyValue! as List<Object?>).cast<int>();
+  }
+}
+
+/// Réponses en flux (phase 15, T6), poussées par Kotlin.
+abstract class AiEventsApi {
+  static const MessageCodec<Object?> pigeonChannelCodec = _PigeonCodec();
+
+  /// Texte reçu pour la réponse [messageId], par lots (au plus un toutes les 50 ms, 16 Kio au plus) ; la réponse
+  /// (acquittement) permet le lot suivant, 4 lots en route au plus.
+  void onChatDelta(int conversationId, int messageId, String text);
+
+  /// Réponse terminée (`done`, `stopped`, `failed`), avec tout son texte : aucun lot ne suit.
+  void onChatState(ChatMessageMsg message);
+
+  static void setUp(AiEventsApi? api, {BinaryMessenger? binaryMessenger, String messageChannelSuffix = '',}) {
+    messageChannelSuffix = messageChannelSuffix.isNotEmpty ? '.$messageChannelSuffix' : '';
+    {
+      final pigeonVar_channel = BasicMessageChannel<Object?>(
+          'dev.flutter.pigeon.fluluks.AiEventsApi.onChatDelta$messageChannelSuffix', pigeonChannelCodec,
+          binaryMessenger: binaryMessenger);
+      if (api == null) {
+        pigeonVar_channel.setMessageHandler(null);
+      } else {
+        pigeonVar_channel.setMessageHandler((Object? message) async {
+          final List<Object?> args = message! as List<Object?>;
+          final int arg_conversationId = args[0]! as int;
+          final int arg_messageId = args[1]! as int;
+          final String arg_text = args[2]! as String;
+          try {
+            api.onChatDelta(arg_conversationId, arg_messageId, arg_text);
+            return wrapResponse(empty: true);
+          } on PlatformException catch (e) {
+            return wrapResponse(error: e);
+          }          catch (e) {
+            return wrapResponse(error: PlatformException(code: 'error', message: e.toString()));
+          }
+        });
+      }
+    }
+    {
+      final pigeonVar_channel = BasicMessageChannel<Object?>(
+          'dev.flutter.pigeon.fluluks.AiEventsApi.onChatState$messageChannelSuffix', pigeonChannelCodec,
+          binaryMessenger: binaryMessenger);
+      if (api == null) {
+        pigeonVar_channel.setMessageHandler(null);
+      } else {
+        pigeonVar_channel.setMessageHandler((Object? message) async {
+          final List<Object?> args = message! as List<Object?>;
+          final ChatMessageMsg arg_message = args[0]! as ChatMessageMsg;
+          try {
+            api.onChatState(arg_message);
+            return wrapResponse(empty: true);
+          } on PlatformException catch (e) {
+            return wrapResponse(error: e);
+          }          catch (e) {
+            return wrapResponse(error: PlatformException(code: 'error', message: e.toString()));
+          }
+        });
+      }
+    }
   }
 }

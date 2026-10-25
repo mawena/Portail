@@ -44,6 +44,6 @@ interface ChatDao {
     fun deleteMessages(conversationId: Long)
 
     /** Générations laissées « en cours » par un arrêt de Portail : marquées interrompues. */
-    @Query("UPDATE messages SET state = 'interrupted', error = :error WHERE state = 'streaming'")
+    @Query("UPDATE messages SET state = 'interrupted', error = :error, errorDetail = NULL WHERE state = 'streaming'")
     fun markInterrupted(error: String): Int
 }

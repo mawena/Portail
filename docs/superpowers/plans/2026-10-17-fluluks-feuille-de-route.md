@@ -409,7 +409,7 @@ dans le même commit que le travail.
 - [x] T3 — Serveurs IA : stockage, clé API scellée, serveur par défaut, Tester la connexion
 - [x] T4 — Écrans des serveurs IA : modèles, modèle par défaut, état en ligne ou hors ligne
 - [x] T5 — Historique local des conversations (Room) *(Room 2.7.2 et KSP, schéma exporté, réponses interrompues retrouvées au démarrage)*
-- [ ] T6 — Réponses en flux vers l'écran, arrêter, régénérer
+- [x] T6 — Réponses en flux vers l'écran, arrêter, régénérer *(lots de 50 ms ou 16 Kio, 4 en route au plus, réponse écrite une fois à la fin ; 3 générations en parallèle)*
 - [ ] T7 — Écran de chat : Markdown, blocs de code, serveur, modèle et prompt système par conversation
 - [ ] T8 — Automatisations : modèles de prompt à variables, lancement manuel ou planifié (WorkManager), historique
 - [ ] T9 — Écrans des automatisations

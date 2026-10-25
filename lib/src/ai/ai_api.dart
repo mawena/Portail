@@ -24,6 +24,12 @@ abstract class AiApi {
   Future<void> deleteConversation(int id);
   Future<void> setConversationModel(int id, String? serverId, String? model);
   Future<void> setSystemPrompt(int id, String? prompt);
+
+  // réponses en flux (T6)
+  Future<ChatMessageMsg> sendChatMessage(int conversationId, String text);
+  Future<void> stopGeneration(int conversationId);
+  Future<ChatMessageMsg> regenerate(int conversationId);
+  Future<List<int>> runningChats();
 }
 
 /// Implémentation réelle : délègue au client Pigeon `AiHostApi`.
@@ -66,4 +72,12 @@ mixin PigeonAiApi implements AiApi {
       _ai.setConversationModel(id, serverId, model);
   @override
   Future<void> setSystemPrompt(int id, String? prompt) => _ai.setSystemPrompt(id, prompt);
+  @override
+  Future<ChatMessageMsg> sendChatMessage(int conversationId, String text) => _ai.sendChatMessage(conversationId, text);
+  @override
+  Future<void> stopGeneration(int conversationId) => _ai.stopGeneration(conversationId);
+  @override
+  Future<ChatMessageMsg> regenerate(int conversationId) => _ai.regenerate(conversationId);
+  @override
+  Future<List<int>> runningChats() => _ai.runningChats();
 }

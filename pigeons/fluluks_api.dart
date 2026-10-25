@@ -964,7 +964,8 @@ class ConversationMsg {
 }
 
 /// Message : [role] `user` ou `assistant` ; [state] ∈ `done`, `streaming`, `stopped`, `failed`, `interrupted` (Portail
-/// fermé pendant la génération) ; [error] : message français d'un échec.
+/// fermé pendant la génération) ; [error] : message français d'un échec (dit quoi faire) ; [errorDetail] : message
+/// du serveur tel quel.
 class ChatMessageMsg {
   ChatMessageMsg({
     required this.id,
@@ -973,6 +974,7 @@ class ChatMessageMsg {
     required this.content,
     required this.state,
     this.error,
+    this.errorDetail,
     required this.createdAt,
   });
   int id;
@@ -981,6 +983,7 @@ class ChatMessageMsg {
   String content;
   String state;
   String? error;
+  String? errorDetail;
   int createdAt;
 }
 
@@ -1040,4 +1043,32 @@ abstract class AiHostApi {
   /// Vide ou null : aucun prompt système.
   @async
   void setSystemPrompt(int id, String? prompt);
+
+  // --- réponses en flux (T6) ; erreur FL_EBUSY : réponse déjà en cours dans la conversation, ou trois en tout
+
+  /// Écrit le message et la réponse vide (`streaming`), puis lance la génération ; rend la réponse vide. Le texte
+  /// arrive par `AiEventsApi.onChatDelta`, la fin par `onChatState`.
+  @async
+  ChatMessageMsg sendChatMessage(int conversationId, String text);
+
+  /// Arrête la réponse en cours : le texte reçu est gardé, état `stopped`.
+  void stopGeneration(int conversationId);
+
+  /// Remplace la dernière réponse par une nouvelle (même historique, même modèle) ; sert aussi à « Réessayer ».
+  @async
+  ChatMessageMsg regenerate(int conversationId);
+
+  /// Conversations dont une réponse est en cours.
+  List<int> runningChats();
+}
+
+/// Réponses en flux (phase 15, T6), poussées par Kotlin.
+@FlutterApi()
+abstract class AiEventsApi {
+  /// Texte reçu pour la réponse [messageId], par lots (au plus un toutes les 50 ms, 16 Kio au plus) ; la réponse
+  /// (acquittement) permet le lot suivant, 4 lots en route au plus.
+  void onChatDelta(int conversationId, int messageId, String text);
+
+  /// Réponse terminée (`done`, `stopped`, `failed`), avec tout son texte : aucun lot ne suit.
+  void onChatState(ChatMessageMsg message);
 }
