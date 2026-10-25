@@ -386,7 +386,7 @@ dans le même commit que le travail.
 - [x] T2 — Moteur : ZIP chiffré AES-256 et archives ZIP protégées par mot de passe (libarchive sur mbedTLS) *(juge zipaesjuge.py ; ctest 47/47 ; tests natifs verts sur le Pixel)*
 - [x] T3 — Moteur : coffres LUKS2 dans un fichier, formatage sans table, emplacements de clé sûrs en cas de coupure *(verrou commun et récursif des systèmes de fichiers ; ctest 49/49 ; tests natifs verts sur le Pixel ; vérification par le noyau à lancer avec sudo)*
 - [x] T4 — Poignées JNI et moteur Kotlin : chiffrement, déchiffrement, coffres en cascade sous leur fichier *(ctest 49/49 ; EngineTest 17/17 sur le Pixel : age 2^18 en 1,0 s, coffre Argon2 64 Mio en 0,66 s)*
-- [ ] T5 — Chiffrer, déchiffrer, vérifier, changer le mot de passe d'un fichier ; original supprimé après vérification
+- [x] T5 — Chiffrer, déchiffrer, vérifier, changer le mot de passe d'un fichier ; original supprimé après vérification *(CryptTest 21, CryptFormatsTest 7, PasswordsTest 3 ; erreur « badPassword » à part dans le pont)*
 - [ ] T6 — Ouvrir un fichier chiffré sans copie en clair (source déchiffrée en mémoire, fournisseur de flux)
 - [ ] T7 — Saisie des mots de passe : force, générateur de mots de passe et de phrases, copie protégée
 - [ ] T8 — Écrans Chiffrer et Déchiffrer dans l'explorateur, ZIP protégés, partage d'un fichier chiffré
