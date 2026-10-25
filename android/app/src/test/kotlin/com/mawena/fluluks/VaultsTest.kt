@@ -12,6 +12,9 @@ import com.mawena.fluluks.files.LocalSource
 import com.mawena.fluluks.files.Sources
 import com.mawena.fluluks.files.TransferState
 import com.mawena.fluluks.files.Transfers
+import com.mawena.fluluks.vaults.BiometricBox
+import com.mawena.fluluks.vaults.BiometricCancelled
+import com.mawena.fluluks.vaults.BiometricInvalidated
 import com.mawena.fluluks.vaults.VaultStore
 import com.mawena.fluluks.vaults.Vaults
 import com.mawena.fluluks.volumes.VolumeManager
@@ -80,6 +83,9 @@ class VaultsTest {
         /** Disques dont un volume est monté (emplacements intouchables, comme le moteur : FL_EBUSY). */
         private val mountedDisks = HashMap<Long, Long>()
         var lastKdfKib = 0
+        var lastKdfTime = 0
+        /** Phrases posées par luksSlotSet (copies), pour vérifier ce qui entre dans un emplacement. */
+        val setPasses = HashMap<Int, ByteArray>()
 
         fun slotsOf(f: File): Map<Int, String> {
             val o = hdrOf(f.readBytes())!!.getJSONObject("slots")
@@ -201,6 +207,8 @@ class VaultsTest {
             if (disk in mountedDisks.values) return EngineError.FL_EBUSY
             if (!opens(h, auth)) return EngineError.FL_EBADPASS
             lastKdfKib = kdfMemKib
+            lastKdfTime = kdfTime
+            setPasses[slot] = new.copyOf()
             h.getJSONObject("slots").put(slot.toString(), tag(new))
             writeHdr(d.back, h)
             return 0
@@ -250,6 +258,9 @@ class VaultsTest {
     private var sdPresent = true
     private val warnings = ArrayList<String>()
     private val pw = "mot de passe du coffre"
+    private val bioKeys = SoftBioKeys()
+    private val bioPrompt = FakeBioPrompt()
+    private lateinit var bioDir: File
 
     private fun sources(): List<FileSource> = buildList {
         add(phone)
@@ -271,6 +282,8 @@ class VaultsTest {
         Transfers.resetForTests()
         Archives.resetForTests(e, e::openFd, null)
         Vaults.resetForTests(VaultStore(tmp.newFolder("donnees")), ::sources, e::openFd)
+        bioDir = tmp.newFolder("bio")
+        Vaults.setBiometricForTests(BiometricBox(bioDir, bioKeys, bioPrompt))
         Files.setResolverForTests { id -> sources().firstOrNull { it.id == id } }
     }
 
@@ -278,6 +291,7 @@ class VaultsTest {
         Transfers.resetForTests()
         Archives.resetForTests(null, null, null)
         Vaults.resetForTests(null, null, null)
+        Vaults.setBiometricForTests(null)
         Files.setResolverForTests(null)
     }
 
@@ -582,7 +596,7 @@ class VaultsTest {
     /** Coffre « C.luks » du téléphone, connu (ouvert une fois) puis fermé. */
     private fun knownClosed(file: File = fakeVault(phoneRoot, "C.luks")): String {
         open("phone", "/${file.name}")
-        val id = known()
+        val id = Vaults.list().single { it.path == "/${file.name}" }.id
         Vaults.close(id)
         return id
     }
@@ -697,5 +711,114 @@ class VaultsTest {
         assertEquals(foreign, e.slotsOf(f).filterKeys { it == 1 || it == 5 }) // intacts
         assertEquals(setOf(0, 1, 5), e.slotsOf(f).keys)
         assertFalse(opensWith(id, key, recovery = true))
+    }
+
+    // --- T12 : déverrouillage biométrique ---------------------------------------------------------------------
+
+    private fun openBio(id: String) = runBlocking { Vaults.openBiometric(id, writable = true) }
+
+    @Test fun enableAddsSlot2AndSealsSecret() {
+        val f = fakeVault(phoneRoot, "C.luks")
+        val id = knownClosed(f)
+        val p = pw.toByteArray()
+        runBlocking { Vaults.enableBiometric(id, p) }
+        assertTrue(p.all { it == 0.toByte() })
+        assertEquals(setOf(0, 2), e.slotsOf(f).keys) // emplacement 2 : biométrie
+        assertEquals(64 * 1024, e.lastKdfKib) // Argon2 de 64 Mio, une passe
+        assertEquals(1, e.lastKdfTime)
+        assertTrue(File(bioDir, "$id.bio").exists())
+        assertTrue(Vaults.get(id)!!.biometric)
+        assertEquals(listOf(BiometricBox.enableTitle("C")), bioPrompt.titles) // la clé sert dès le scellement
+        val v = openBio(id)
+        assertEquals("Ouvrir le coffre C", bioPrompt.titles.last())
+        assertEquals(id, v.vaultId)
+        assertEquals(2, e.mountSlots.last()) // seul l'emplacement biométrique est essayé
+        Vaults.close(id)
+        assertTrue(opensWith(id, pw)) // le mot de passe ouvre toujours
+    }
+
+    @Test fun secretNeverEqualsPassword() {
+        val f = fakeVault(phoneRoot, "C.luks")
+        val id = knownClosed(f)
+        runBlocking { Vaults.enableBiometric(id, pw.toByteArray()) }
+        val secret = e.setPasses[2]!!
+        assertEquals(32, secret.size)
+        assertFalse(secret.contentEquals(pw.toByteArray().copyOf(32)))
+        assertTrue(e.slotsOf(f)[2] != e.slotsOf(f)[0])
+        // un second coffre a un autre secret
+        val g = fakeVault(phoneRoot, "D.luks")
+        val id2 = knownClosed(g)
+        runBlocking { Vaults.enableBiometric(id2, pw.toByteArray()) }
+        assertFalse(secret.contentEquals(e.setPasses[2]!!))
+        // le secret n'est écrit nulle part en clair
+        tmp.root.walk().filter { it.isFile && !it.name.endsWith(".luks") }.forEach { file ->
+            assertFalse(file.path, file.readBytes().toList().windowed(32).any { it.toByteArray().contentEquals(secret) })
+        }
+    }
+
+    @Test fun enrollmentChangeDisablesBiometric() {
+        val id = knownClosed()
+        runBlocking { Vaults.enableBiometric(id, pw.toByteArray()) }
+        bioKeys.invalidate(BiometricBox.alias(id)) // nouveau visage ou nouvelle empreinte enregistré
+        try {
+            openBio(id)
+            fail("ouvert")
+        } catch (x: BiometricInvalidated) {
+            assertEquals(BiometricBox.MSG_INVALIDATED, x.message)
+        }
+        assertFalse(Vaults.get(id)!!.biometric)
+        assertFalse(File(bioDir, "$id.bio").exists())
+        assertTrue(opensWith(id, pw)) // ouverture par mot de passe
+    }
+
+    @Test fun cancelFallsBackToPassword() {
+        val f = fakeVault(phoneRoot, "C.luks")
+        val id = knownClosed(f)
+        bioPrompt.cancel = true
+        try {
+            runBlocking { Vaults.enableBiometric(id, pw.toByteArray()) }
+            fail("activé")
+        } catch (_: BiometricCancelled) {
+        }
+        assertEquals(setOf(0), e.slotsOf(f).keys) // rien d'écrit
+        assertFalse(Vaults.get(id)!!.biometric)
+        bioPrompt.cancel = false
+        runBlocking { Vaults.enableBiometric(id, pw.toByteArray()) }
+        bioPrompt.cancel = true
+        try {
+            openBio(id)
+            fail("ouvert")
+        } catch (_: BiometricCancelled) {
+        }
+        assertTrue(Vaults.get(id)!!.biometric) // toujours activée : l'écran propose le mot de passe
+        assertTrue(opensWith(id, pw))
+    }
+
+    @Test fun disableWipesKeyAndSlot() {
+        val f = fakeVault(phoneRoot, "C.luks")
+        val id = knownClosed(f)
+        runBlocking { Vaults.enableBiometric(id, pw.toByteArray()) }
+        runBlocking { Vaults.disableBiometric(id, pw.toByteArray()) }
+        assertEquals(setOf(0), e.slotsOf(f).keys)
+        assertFalse(File(bioDir, "$id.bio").exists())
+        assertTrue(BiometricBox.alias(id) in bioKeys.deleted)
+        assertFalse(Vaults.get(id)!!.biometric)
+        // coffre ouvert : la clé est effacée, l'emplacement (inutilisable sans le secret) attend la prochaine fois
+        runBlocking { Vaults.enableBiometric(id, pw.toByteArray()) }
+        open("phone", "/C.luks")
+        runBlocking { Vaults.disableBiometric(id, null) }
+        assertFalse(File(bioDir, "$id.bio").exists())
+        assertFalse(Vaults.get(id)!!.biometric)
+        Vaults.close(id)
+        runBlocking { Vaults.enableBiometric(id, pw.toByteArray()) } // même emplacement, réécrit
+        assertEquals(setOf(0, 2), e.slotsOf(f).keys)
+    }
+
+    @Test fun forgetVaultWipesKey() {
+        val id = knownClosed()
+        runBlocking { Vaults.enableBiometric(id, pw.toByteArray()) }
+        Vaults.forget(id)
+        assertFalse(File(bioDir, "$id.bio").exists())
+        assertTrue(BiometricBox.alias(id) in bioKeys.deleted)
     }
 }

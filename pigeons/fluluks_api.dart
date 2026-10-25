@@ -682,6 +682,23 @@ abstract class FluLuksHostApi {
   @async
   void removeRecoveryKey(String vaultId, Uint8List password);
 
+  /// Raison pour laquelle la biométrie forte n'est pas utilisable sur ce téléphone (en français), ou null.
+  String? biometricUnavailable();
+
+  /// Active le déverrouillage biométrique d'un coffre fermé (invite biométrique) ; erreur `biometricCancelled` si
+  /// l'invite est annulée.
+  @async
+  void enableBiometric(String vaultId, Uint8List password);
+
+  /// Ouvre un coffre par la biométrie ; erreurs `biometricCancelled` (proposer le mot de passe) et
+  /// `biometricInvalidated` (biométrie du téléphone changée : déverrouillage désactivé).
+  @async
+  VolumeMsg openVaultBiometric(String vaultId, bool writable);
+
+  /// Désactive le déverrouillage biométrique ; avec `password` (coffre fermé), son emplacement est aussi retiré.
+  @async
+  void disableBiometric(String vaultId, Uint8List? password);
+
   /// Retire le coffre de la liste (fermé d'abord) ; son fichier n'est pas touché.
   void forgetVault(String vaultId);
   void cancelTransfer();

@@ -31,6 +31,7 @@ class AppState extends ChangeNotifier implements FluLuksEventsApi {
   String? _ejectError;
   List<SourceMsg> _sources = const [];
   List<VaultMsg> _vaults = const [];
+  String? _biometricUnavailable;
   List<RemoteServerMsg> _servers = const [];
   bool _allFilesAccess = false;
   TransferMsg? _transfer;
@@ -58,6 +59,9 @@ class AppState extends ChangeNotifier implements FluLuksEventsApi {
 
   /// Coffres connus (phase 14) : fermés, ouverts ou indisponibles.
   List<VaultMsg> get vaults => _vaults;
+
+  /// Raison pour laquelle la biométrie forte n'est pas utilisable (null : elle l'est).
+  String? get biometricUnavailable => _biometricUnavailable;
 
   /// Serveurs distants enregistrés (phase 10).
   List<RemoteServerMsg> get servers => _servers;
@@ -194,6 +198,7 @@ class AppState extends ChangeNotifier implements FluLuksEventsApi {
       _favorites = await api.listFavorites();
       _servers = await api.listServers();
       _vaults = await api.listVaults();
+      _biometricUnavailable = await api.biometricUnavailable();
       notifyListeners();
       await terminals.restore(); // sessions gardées par le service pendant que l'application était fermée
     } on PlatformException catch (e) {
@@ -515,6 +520,38 @@ class AppState extends ChangeNotifier implements FluLuksEventsApi {
       await refreshSources();
     } finally {
       password.fillRange(0, password.length, 0);
+    }
+  }
+
+  /// Active le déverrouillage biométrique (invite biométrique côté Android) ; erreur `biometricCancelled` si elle est
+  /// annulée. [password] est mis à zéro.
+  Future<void> enableBiometric(String id, Uint8List password) async {
+    try {
+      await api.enableBiometric(id, password);
+      await refreshSources();
+    } finally {
+      password.fillRange(0, password.length, 0);
+    }
+  }
+
+  /// Ouvre le coffre par la biométrie ; erreurs `biometricCancelled` et `biometricInvalidated` rendues telles quelles.
+  Future<VolumeMsg> openVaultBiometric(String id, {required bool writable}) async {
+    try {
+      final v = await api.openVaultBiometric(id, writable);
+      await refresh();
+      return v;
+    } on PlatformException {
+      await refreshSources(); // biométrie peut-être désactivée
+      rethrow;
+    }
+  }
+
+  Future<void> disableBiometric(String id, Uint8List? password) async {
+    try {
+      await api.disableBiometric(id, password);
+      await refreshSources();
+    } finally {
+      password?.fillRange(0, password.length, 0);
     }
   }
 

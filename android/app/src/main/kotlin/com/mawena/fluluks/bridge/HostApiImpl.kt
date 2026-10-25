@@ -49,6 +49,9 @@ import com.mawena.fluluks.remote.RemoteIOException
 import com.mawena.fluluks.remote.Remotes
 import com.mawena.fluluks.remote.ServerConfig
 import com.mawena.fluluks.vaults.VaultInfo
+import com.mawena.fluluks.vaults.BiometricCancelled
+import com.mawena.fluluks.vaults.BiometricInvalidated
+import com.mawena.fluluks.vaults.BiometricUnavailable
 import com.mawena.fluluks.vaults.Vaults
 import com.mawena.fluluks.volumes.AutoLock
 import com.mawena.fluluks.volumes.DiskState
@@ -778,6 +781,17 @@ class HostApiImpl(
     override fun removeRecoveryKey(vaultId: String, password: ByteArray, callback: (Result<Unit>) -> Unit) =
         vaultKeys(callback, password) { Vaults.removeRecoveryKey(vaultId, password) }
 
+    override fun biometricUnavailable(): String? = guardedValue { Vaults.biometricUnavailable() }
+
+    override fun enableBiometric(vaultId: String, password: ByteArray, callback: (Result<Unit>) -> Unit) =
+        vaultKeys(callback, password) { Vaults.enableBiometric(vaultId, password) }
+
+    override fun openVaultBiometric(vaultId: String, writable: Boolean, callback: (Result<VolumeMsg>) -> Unit) =
+        vaultKeys(callback) { volumeMsg(Vaults.openBiometric(vaultId, writable)) }
+
+    override fun disableBiometric(vaultId: String, password: ByteArray?, callback: (Result<Unit>) -> Unit) =
+        vaultKeys(callback, *listOfNotNull(password).toTypedArray()) { Vaults.disableBiometric(vaultId, password) }
+
     override fun forgetVault(vaultId: String) = guarded { Vaults.forget(vaultId) }
 
     override fun changeFilePassword(
@@ -981,6 +995,9 @@ class HostApiImpl(
         /** Erreur rendue à Flutter : code fl_err et message français, jamais le détail d'une exception. */
         internal fun toFlutterError(e: Throwable): FlutterError = when (e) {
             is FlutterError -> e // déjà en français (« Aucune application… »)
+            is BiometricCancelled -> FlutterError(CODE_BIOMETRIC_CANCELLED, e.message)
+            is BiometricInvalidated -> FlutterError(CODE_BIOMETRIC_INVALIDATED, e.message)
+            is BiometricUnavailable -> FlutterError(EngineError.FL_ENOTSUP.toString(), e.message)
             is EngineError -> FlutterError(codeOf(e.code), e.message)
             is FilesException -> FlutterError(codeOf(e.code), e.message)
             is ActivityNotFoundException -> FlutterError(EngineError.FL_ENOTSUP.toString(), Files.MSG_NO_VIEWER)
@@ -989,6 +1006,8 @@ class HostApiImpl(
 
         const val MSG_NO_PARTITION = "Aucune partition reconnue"
         const val CODE_BAD_PASSWORD = "badPassword"
+        const val CODE_BIOMETRIC_CANCELLED = "biometricCancelled"
+        const val CODE_BIOMETRIC_INVALIDATED = "biometricInvalidated"
 
         /** Code fl_err, sauf le mauvais mot de passe : code à part, l'écran le redemande au lieu d'afficher une erreur. */
         private fun codeOf(code: Int) = if (code == EngineError.FL_EBADPASS) CODE_BAD_PASSWORD else code.toString()

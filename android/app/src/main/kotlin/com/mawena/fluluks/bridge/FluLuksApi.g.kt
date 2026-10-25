@@ -2467,6 +2467,20 @@ interface FluLuksHostApi {
   fun addRecoveryKey(vaultId: String, password: ByteArray, callback: (Result<ByteArray>) -> Unit)
   /** Retire la clé de secours d'un coffre fermé. */
   fun removeRecoveryKey(vaultId: String, password: ByteArray, callback: (Result<Unit>) -> Unit)
+  /** Raison pour laquelle la biométrie forte n'est pas utilisable sur ce téléphone (en français), ou null. */
+  fun biometricUnavailable(): String?
+  /**
+   * Active le déverrouillage biométrique d'un coffre fermé (invite biométrique) ; erreur `biometricCancelled` si
+   * l'invite est annulée.
+   */
+  fun enableBiometric(vaultId: String, password: ByteArray, callback: (Result<Unit>) -> Unit)
+  /**
+   * Ouvre un coffre par la biométrie ; erreurs `biometricCancelled` (proposer le mot de passe) et
+   * `biometricInvalidated` (biométrie du téléphone changée : déverrouillage désactivé).
+   */
+  fun openVaultBiometric(vaultId: String, writable: Boolean, callback: (Result<VolumeMsg>) -> Unit)
+  /** Désactive le déverrouillage biométrique ; avec `password` (coffre fermé), son emplacement est aussi retiré. */
+  fun disableBiometric(vaultId: String, password: ByteArray?, callback: (Result<Unit>) -> Unit)
   /** Retire le coffre de la liste (fermé d'abord) ; son fichier n'est pas touché. */
   fun forgetVault(vaultId: String)
   fun cancelTransfer()
@@ -3466,6 +3480,82 @@ interface FluLuksHostApi {
             val vaultIdArg = args[0] as String
             val passwordArg = args[1] as ByteArray
             api.removeRecoveryKey(vaultIdArg, passwordArg) { result: Result<Unit> ->
+              val error = result.exceptionOrNull()
+              if (error != null) {
+                reply.reply(FluLuksApiPigeonUtils.wrapError(error))
+              } else {
+                reply.reply(FluLuksApiPigeonUtils.wrapResult(null))
+              }
+            }
+          }
+        } else {
+          channel.setMessageHandler(null)
+        }
+      }
+      run {
+        val channel = BasicMessageChannel<Any?>(binaryMessenger, "dev.flutter.pigeon.fluluks.FluLuksHostApi.biometricUnavailable$separatedMessageChannelSuffix", codec)
+        if (api != null) {
+          channel.setMessageHandler { _, reply ->
+            val wrapped: List<Any?> = try {
+              listOf(api.biometricUnavailable())
+            } catch (exception: Throwable) {
+              FluLuksApiPigeonUtils.wrapError(exception)
+            }
+            reply.reply(wrapped)
+          }
+        } else {
+          channel.setMessageHandler(null)
+        }
+      }
+      run {
+        val channel = BasicMessageChannel<Any?>(binaryMessenger, "dev.flutter.pigeon.fluluks.FluLuksHostApi.enableBiometric$separatedMessageChannelSuffix", codec)
+        if (api != null) {
+          channel.setMessageHandler { message, reply ->
+            val args = message as List<Any?>
+            val vaultIdArg = args[0] as String
+            val passwordArg = args[1] as ByteArray
+            api.enableBiometric(vaultIdArg, passwordArg) { result: Result<Unit> ->
+              val error = result.exceptionOrNull()
+              if (error != null) {
+                reply.reply(FluLuksApiPigeonUtils.wrapError(error))
+              } else {
+                reply.reply(FluLuksApiPigeonUtils.wrapResult(null))
+              }
+            }
+          }
+        } else {
+          channel.setMessageHandler(null)
+        }
+      }
+      run {
+        val channel = BasicMessageChannel<Any?>(binaryMessenger, "dev.flutter.pigeon.fluluks.FluLuksHostApi.openVaultBiometric$separatedMessageChannelSuffix", codec)
+        if (api != null) {
+          channel.setMessageHandler { message, reply ->
+            val args = message as List<Any?>
+            val vaultIdArg = args[0] as String
+            val writableArg = args[1] as Boolean
+            api.openVaultBiometric(vaultIdArg, writableArg) { result: Result<VolumeMsg> ->
+              val error = result.exceptionOrNull()
+              if (error != null) {
+                reply.reply(FluLuksApiPigeonUtils.wrapError(error))
+              } else {
+                val data = result.getOrNull()
+                reply.reply(FluLuksApiPigeonUtils.wrapResult(data))
+              }
+            }
+          }
+        } else {
+          channel.setMessageHandler(null)
+        }
+      }
+      run {
+        val channel = BasicMessageChannel<Any?>(binaryMessenger, "dev.flutter.pigeon.fluluks.FluLuksHostApi.disableBiometric$separatedMessageChannelSuffix", codec)
+        if (api != null) {
+          channel.setMessageHandler { message, reply ->
+            val args = message as List<Any?>
+            val vaultIdArg = args[0] as String
+            val passwordArg = args[1] as ByteArray?
+            api.disableBiometric(vaultIdArg, passwordArg) { result: Result<Unit> ->
               val error = result.exceptionOrNull()
               if (error != null) {
                 reply.reply(FluLuksApiPigeonUtils.wrapError(error))

@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 import '../bridge/fluluks_api.g.dart';
 import '../screens/explorer_screen.dart';
 import '../screens/vault_keys_screen.dart';
 import '../state/app_state.dart';
 import '../strings_fr.dart';
+import '../ui/feedback.dart';
 import '../ui/tokens.dart';
 import '../ui/widgets.dart';
 import 'source_tile.dart';
@@ -19,8 +21,9 @@ String vaultFsName(String fs) => switch (fs.toLowerCase()) {
 
 /// Un coffre de l'accueil (phase 14) : nom, taille, système de fichiers et emplacement ; état (fermé, ouvert,
 /// indisponible si son stockage n'est pas là) ; Ouvrir, ou Parcourir et Fermer ; menu ⋮ : Ouvrir ou Fermer,
-/// Parcourir, Ouvrir dans Fichiers, Changer le mot de passe, Clé de secours (rien de cela pour un coffre LUKS1),
-/// Afficher l'emplacement, Retirer de la liste (le fichier reste).
+/// Parcourir, Ouvrir dans Fichiers, Changer le mot de passe, Clé de secours, déverrouillage biométrique (rien de cela
+/// pour un coffre LUKS1), Afficher l'emplacement, Retirer de la liste (le fichier reste). Biométrie activée : Ouvrir
+/// passe d'abord par le visage ou l'empreinte, puis par le mot de passe si l'invite est annulée.
 class VaultTile extends StatelessWidget {
   const VaultTile({super.key, required this.state, required this.vault});
 
@@ -39,6 +42,19 @@ class VaultTile extends StatelessWidget {
   }
 
   Future<void> _openVault(BuildContext context) async {
+    if (vault.biometric) {
+      try {
+        final vol = await state.openVaultBiometric(vault.id, writable: !state.readOnlyPreference);
+        if (context.mounted) await openExplorer(context, state, vol.id);
+        return;
+      } on PlatformException catch (e) {
+        // annulée : le mot de passe, sans message ; sinon la raison, puis le mot de passe
+        if (e.code != 'biometricCancelled' && context.mounted) {
+          showMessage(context, e.message ?? Fr.genericError, kind: MessageKind.error);
+        }
+      }
+      if (!context.mounted) return;
+    }
     final vol =
         await openVaultDialog(context, state, name: vault.name, vaultId: vault.id, offerRecovery: vault.hasRecovery);
     if (vol != null && context.mounted) await openExplorer(context, state, vol.id);
@@ -59,6 +75,51 @@ class VaultTile extends StatelessWidget {
     if (ok == true) await state.forgetVault(vault.id);
   }
 
+  Future<void> _enableBiometric(BuildContext context) async {
+    final pw = await askVaultPassword(context, help: Fr.biometricEnableHelp);
+    if (pw == null) return;
+    try {
+      await state.enableBiometric(vault.id, pw);
+      if (context.mounted) showMessage(context, Fr.biometricEnabled, kind: MessageKind.success);
+    } on PlatformException catch (e) {
+      if (e.code != 'biometricCancelled' && context.mounted) {
+        showMessage(context, e.code == 'badPassword' ? Fr.badPassword : e.message ?? Fr.genericError,
+            kind: MessageKind.error);
+      }
+    }
+  }
+
+  /// Coffre fermé : le mot de passe retire aussi l'emplacement ; ouvert : seule la clé du téléphone est effacée.
+  Future<void> _disableBiometric(BuildContext context) async {
+    Uint8List? pw;
+    if (_open) {
+      final ok = await showDialog<bool>(
+        context: context,
+        builder: (c) => AlertDialog(
+          title: const Text(Fr.biometricDisable),
+          content: const Text(Fr.biometricDisableOpenBody),
+          actions: [
+            TextButton(onPressed: () => Navigator.pop(c, false), child: const Text(Fr.cancel)),
+            FilledButton(onPressed: () => Navigator.pop(c, true), child: const Text(Fr.biometricDisableConfirm)),
+          ],
+        ),
+      );
+      if (ok != true) return;
+    } else {
+      pw = await askVaultPassword(context);
+      if (pw == null) return;
+    }
+    try {
+      await state.disableBiometric(vault.id, pw);
+      if (context.mounted) showMessage(context, Fr.biometricDisabled, kind: MessageKind.success);
+    } on PlatformException catch (e) {
+      if (context.mounted) {
+        showMessage(context, e.code == 'badPassword' ? Fr.badPassword : e.message ?? Fr.genericError,
+            kind: MessageKind.error);
+      }
+    }
+  }
+
   void _act(BuildContext context, String action) {
     final vol = vault.volumeId;
     switch (action) {
@@ -77,6 +138,10 @@ class VaultTile extends StatelessWidget {
         changeVaultPassword(context, state, vault);
       case 'recovery':
         openRecoveryKey(context, state, vault.id);
+      case 'bioOn':
+        _enableBiometric(context);
+      case 'bioOff':
+        _disableBiometric(context);
       case 'forget':
         _forget(context);
     }
@@ -128,6 +193,18 @@ class VaultTile extends StatelessWidget {
                 else if (!_unavailable) ...[
                   item('password', Icons.password_rounded, Fr.changePasswordAction),
                   item('recovery', Icons.key_rounded, Fr.recoveryKey),
+                  if (vault.biometric)
+                    item('bioOff', Icons.face_retouching_off_rounded, Fr.biometricDisable)
+                  else if (state.biometricUnavailable == null)
+                    item('bioOn', Icons.face_rounded, Fr.biometricEnable)
+                  else
+                    PopupMenuItem(
+                      enabled: false,
+                      child: ListTile(
+                        leading: const Icon(Icons.face_retouching_off_rounded),
+                        title: Text(state.biometricUnavailable!),
+                      ),
+                    ),
                 ],
                 if (_host != null) item('location', Icons.place_rounded, Fr.showLocation),
                 item('forget', Icons.playlist_remove_rounded, Fr.vaultForget),
@@ -139,6 +216,7 @@ class VaultTile extends StatelessWidget {
               const StatusChip(label: Fr.vaultOpen, icon: Icons.check_rounded, tone: ChipTone.good)
             else if (!_unavailable)
               const StatusChip(label: Fr.vaultClosed, icon: Icons.lock_rounded),
+            if (vault.biometric) const StatusChip(label: Fr.chipBiometric, icon: Icons.face_rounded),
             if (volume != null && volume.readOnly)
               const StatusChip(label: Fr.chipReadOnly, icon: Icons.edit_off_rounded, tone: ChipTone.warning),
           ]),

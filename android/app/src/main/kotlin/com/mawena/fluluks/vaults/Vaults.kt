@@ -100,7 +100,18 @@ object Vaults {
     private val engine: Engine get() = Archives.engine
 
     fun init(context: Context) {
-        if (store == null) store = VaultStore(context.applicationContext.filesDir)
+        val app = context.applicationContext
+        if (store == null) store = VaultStore(app.filesDir)
+        if (bio == null) bio = BiometricBox(File(app.filesDir, "vaults"), KeystoreBioKeys(), BiometricUi)
+        appContext = app
+    }
+
+    @Volatile private var bio: BiometricBox? = null
+    @Volatile private var appContext: Context? = null
+
+    @VisibleForTesting
+    fun setBiometricForTests(box: BiometricBox?) {
+        bio = box
     }
 
     @VisibleForTesting
@@ -246,6 +257,7 @@ object Vaults {
     /** Oublie le coffre (fermé d'abord) : son fichier reste là où il est. */
     fun forget(vaultId: String) {
         close(vaultId)
+        bio?.wipe(vaultId)
         st().remove(vaultId)
     }
 
@@ -433,6 +445,112 @@ object Vaults {
             throw failure(e, "removeRecoveryKey")
         } finally {
             pw.fill(0)
+        }
+    }
+
+    // --- déverrouillage biométrique ---------------------------------------------------------------------------
+
+    private const val BIO_KDF_KIB = 64 * 1024
+    private const val BIO_KDF_TIME = 1
+    private const val BIO_SECRET = 32
+
+    /** Raison pour laquelle la biométrie forte n'est pas utilisable sur ce téléphone, ou null. */
+    fun biometricUnavailable(): String? {
+        if (bio == null) return BiometricBox.MSG_NO_STRONG
+        val c = appContext ?: return null // tests : boîte fournie, biométrie supposée là
+        return BiometricBox.unavailableReason(c)
+    }
+
+    private fun box(): BiometricBox {
+        biometricUnavailable()?.let { throw BiometricUnavailable(it) }
+        return bio!!
+    }
+
+    /**
+     * Active le déverrouillage biométrique du coffre fermé [vaultId] : un secret aléatoire de 32 octets, scellé par
+     * une clé du Keystore (invite biométrique), ouvre l'emplacement 2 (Argon2 de 64 Mio, une passe). [password] est mis
+     * à zéro. Annulé ou refusé : rien n'est gardé.
+     */
+    suspend fun enableBiometric(vaultId: String, password: ByteArray) {
+        val pw = password.copyOf()
+        password.fill(0)
+        val secret = ByteArray(BIO_SECRET).also(rnd::nextBytes)
+        try {
+            val rec = st().get(vaultId) ?: throw FilesException(EngineError.FL_ENOENT, MSG_UNKNOWN)
+            if (VolumeManager.vaultVolume(vaultId) != null) throw FilesException(EngineError.FL_EBUSY, MSG_OPEN)
+            if (rec.luksVersion == 1) throw FilesException(EngineError.FL_ENOTSUP, MSG_LUKS1)
+            val b = box()
+            b.seal(vaultId, BiometricBox.enableTitle(rec.name), secret.copyOf())
+            try {
+                withContext(Dispatchers.IO) {
+                    withClosedDisk(vaultId) { r, h, slots ->
+                        val slot = slotOf(r, "biometric")
+                            ?: if (SLOT_BIOMETRIC !in slots) SLOT_BIOMETRIC
+                            else (SLOT_BIOMETRIC + 1 until 32).firstOrNull { it !in slots && it !in r.slots }
+                                ?: throw FilesException(EngineError.FL_ENOSPC, MSG_SLOTS_FULL)
+                        EngineError.check(engine.luksSlotSet(h, slot, pw, secret, BIO_KDF_KIB, BIO_KDF_TIME))
+                        st().put(r.copy(slots = r.slots + (slot to "biometric"), biometric = true))
+                    }
+                }
+            } catch (e: Throwable) {
+                b.wipe(vaultId)
+                throw e
+            }
+        } catch (e: BiometricCancelled) {
+            throw e
+        } catch (e: BiometricUnavailable) {
+            throw e
+        } catch (e: BiometricInvalidated) {
+            throw e
+        } catch (e: Throwable) {
+            throw failure(e, "enableBiometric")
+        } finally {
+            pw.fill(0)
+            secret.fill(0)
+        }
+    }
+
+    /**
+     * Ouvre le coffre [vaultId] par la biométrie (invite « Ouvrir le coffre <nom> »), par son seul emplacement.
+     * [BiometricCancelled] : l'écran propose le mot de passe ; [BiometricInvalidated] : biométrie désactivée.
+     */
+    suspend fun openBiometric(vaultId: String, writable: Boolean): VolumeState {
+        val rec = st().get(vaultId) ?: throw FilesException(EngineError.FL_ENOENT, MSG_UNKNOWN)
+        if (!rec.biometric) throw FilesException(EngineError.FL_ENOENT, BiometricBox.MSG_OFF)
+        VolumeManager.vaultVolume(vaultId)?.let { return it }
+        val secret = try {
+            box().unseal(vaultId, BiometricBox.openTitle(rec.name))
+        } catch (e: BiometricInvalidated) {
+            st().get(vaultId)?.let { st().put(it.copy(biometric = false)) }
+            throw e
+        }
+        return open(vaultId, null, null, secret, writable, slot = slotOf(rec, "biometric") ?: SLOT_BIOMETRIC)
+    }
+
+    /**
+     * Désactive le déverrouillage biométrique : clé et secret scellé effacés ; avec [password] et le coffre fermé,
+     * son emplacement est aussi retiré (sinon il reste, inutilisable sans le secret, et resservira).
+     */
+    suspend fun disableBiometric(vaultId: String, password: ByteArray?) {
+        val pw = password?.copyOf()
+        password?.fill(0)
+        try {
+            val rec = st().get(vaultId) ?: throw FilesException(EngineError.FL_ENOENT, MSG_UNKNOWN)
+            bio?.wipe(vaultId)
+            st().put(rec.copy(biometric = false))
+            if (pw != null && VolumeManager.vaultVolume(vaultId) == null && rec.luksVersion != 1) {
+                withContext(Dispatchers.IO) {
+                    withClosedDisk(vaultId) { r, h, slots ->
+                        val slot = slotOf(r, "biometric") ?: return@withClosedDisk
+                        if (slot in slots) EngineError.check(engine.luksSlotRemove(h, slot, pw))
+                        st().put(r.copy(slots = r.slots - slot, biometric = false))
+                    }
+                }
+            }
+        } catch (e: Throwable) {
+            throw failure(e, "disableBiometric")
+        } finally {
+            pw?.fill(0)
         }
     }
 

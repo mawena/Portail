@@ -53,7 +53,7 @@ class _RecoveryKeyScreenState extends State<RecoveryKeyScreen> {
 
   /// [action] avec le mot de passe du coffre (demandé d'abord) ; erreurs montrées sur l'écran.
   Future<void> _withPassword(Future<void> Function(Uint8List pw) action) async {
-    final pw = await showDialog<Uint8List>(context: context, builder: (_) => const _VaultPasswordDialog());
+    final pw = await askVaultPassword(context);
     if (pw == null || !mounted) return;
     setState(() {
       _busy = true;
@@ -212,9 +212,15 @@ class _RecoveryKeyShownScreenState extends State<RecoveryKeyShownScreen> {
   }
 }
 
-/// Mot de passe du coffre avant de créer ou retirer la clé de secours ; rend ses octets (l'appelant les met à zéro).
+/// Mot de passe du coffre avant de créer ou retirer la clé de secours, ou de régler la biométrie ; rend ses octets
+/// (l'appelant les met à zéro), ou null si annulé.
+Future<Uint8List?> askVaultPassword(BuildContext context, {String? help}) =>
+    showDialog<Uint8List>(context: context, builder: (_) => _VaultPasswordDialog(help: help));
+
 class _VaultPasswordDialog extends StatefulWidget {
-  const _VaultPasswordDialog();
+  const _VaultPasswordDialog({this.help});
+
+  final String? help;
 
   @override
   State<_VaultPasswordDialog> createState() => _VaultPasswordDialogState();
@@ -249,7 +255,10 @@ class _VaultPasswordDialogState extends State<_VaultPasswordDialog> {
         icon: const Icon(Icons.lock_rounded),
         title: const Text(Fr.vaultPasswordTitle),
         scrollable: true,
-        content: PasswordField(controller: _pass, autofocus: true, onSubmitted: (_) => _ok()),
+        content: Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.stretch, spacing: Space.s, children: [
+          if (widget.help != null) Text(widget.help!),
+          PasswordField(controller: _pass, autofocus: true, onSubmitted: (_) => _ok()),
+        ]),
         actions: [
           TextButton(onPressed: () => Navigator.of(context).pop(), child: const Text(Fr.cancel)),
           FilledButton(onPressed: _pass.text.isEmpty ? null : _ok, child: const Text(Fr.ok)),

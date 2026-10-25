@@ -58,6 +58,10 @@ abstract class HostApi {
   Future<void> changeVaultPassword(String vaultId, Uint8List oldPassword, Uint8List newPassword);
   Future<Uint8List> addRecoveryKey(String vaultId, Uint8List password);
   Future<void> removeRecoveryKey(String vaultId, Uint8List password);
+  Future<String?> biometricUnavailable();
+  Future<void> enableBiometric(String vaultId, Uint8List password);
+  Future<VolumeMsg> openVaultBiometric(String vaultId, bool writable);
+  Future<void> disableBiometric(String vaultId, Uint8List? password);
   Future<void> closeVault(String vaultId);
   Future<void> forgetVault(String vaultId);
   Future<SearchResultMsg> search(String sourceId, String path, String query, bool showHidden);
@@ -242,6 +246,18 @@ class PigeonHostApi implements HostApi {
 
   @override
   Future<void> removeRecoveryKey(String vaultId, Uint8List password) => _api.removeRecoveryKey(vaultId, password);
+
+  @override
+  Future<String?> biometricUnavailable() => _api.biometricUnavailable();
+
+  @override
+  Future<void> enableBiometric(String vaultId, Uint8List password) => _api.enableBiometric(vaultId, password);
+
+  @override
+  Future<VolumeMsg> openVaultBiometric(String vaultId, bool writable) => _api.openVaultBiometric(vaultId, writable);
+
+  @override
+  Future<void> disableBiometric(String vaultId, Uint8List? password) => _api.disableBiometric(vaultId, password);
   @override
   Future<void> closeVault(String vaultId) => _api.closeVault(vaultId);
   @override

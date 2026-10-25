@@ -172,6 +172,19 @@ class Fr {
   static const recoveryKeyNoted = "J'ai noté la clé";
   static const workingOnKeys = 'Calcul de la clé… quelques secondes';
 
+  // déverrouillage biométrique d'un coffre (phase 14)
+  static const biometricEnable = 'Activer le déverrouillage biométrique';
+  static const biometricDisable = 'Désactiver le déverrouillage biométrique';
+  static const biometricEnableHelp =
+      'Le visage ou une empreinte ouvrira ce coffre sur ce téléphone. Le mot de passe reste nécessaire ailleurs, et '
+      "ici si la biométrie du téléphone change. Confirmez d'abord le mot de passe du coffre.";
+  static const biometricEnabled = 'Déverrouillage biométrique activé';
+  static const biometricDisabled = 'Déverrouillage biométrique désactivé';
+  static const biometricDisableOpenBody =
+      'La clé biométrique de ce téléphone sera effacée. Le coffre ne pourra plus être ouvert par le visage ou une empreinte.';
+  static const biometricDisableConfirm = 'Désactiver';
+  static const chipBiometric = 'Biométrie';
+
   /// Taille binaire d'un coffre : « 256 Mio », « 1 Gio », « 1,5 Gio ».
   static String binarySize(int bytes) {
     const m = 1 << 20, g = 1 << 30;

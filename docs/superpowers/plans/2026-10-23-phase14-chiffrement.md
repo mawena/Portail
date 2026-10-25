@@ -503,15 +503,15 @@ dès l'API 30), `setInvalidatedByBiometricEnrollment(true)` ; secret scellé dan
 Pigeon `@async void enableBiometric(String vaultId, Uint8List password)`, `@async VolumeMsg openVaultBiometric(String vaultId, bool writable)`,
 `@async void disableBiometric(String vaultId, Uint8List? password)` ; `bool biometricAvailable()`.
 
-- [ ] **Step 1 : tests en échec** : `hiddenWithoutStrongBiometric` (API < 28 ou aucune biométrie forte : option
+- [x] **Step 1 : tests en échec** : `hiddenWithoutStrongBiometric` (API < 28 ou aucune biométrie forte : option
   absente, avec la raison), `enableAddsSlot2AndSealsSecret`, `secretNeverEqualsPassword`,
   `enrollmentChangeDisablesBiometric` (`KeyPermanentlyInvalidatedException` → biométrie désactivée, message, ouverture
   par mot de passe proposée), `cancelFallsBackToPassword`, `disableWipesKeyAndSlot`, `forgetVaultWipesKey` ;
   instrumenté : `biometricSecretSealedWithAuthKey` (clé matérielle, `isUserAuthenticationRequired`).
-- [ ] **Step 2 : implémentation** par `android.hardware.biometrics.BiometricPrompt` et un `CryptoObject` (Cipher) ;
+- [x] **Step 2 : implémentation** par `android.hardware.biometrics.BiometricPrompt` et un `CryptoObject` (Cipher) ;
   titre « Ouvrir le coffre <nom> » ; ouverture par `mountSlot(…, 2, …)` (Argon2 de 64 Mio seulement). Le Pixel
   4 XL n'a pas de lecteur d'empreinte : son déverrouillage par le visage est une biométrie forte.
-- [ ] **Step 3 : commit** `feat(coffres): déverrouillage biométrique facultatif`.
+- [x] **Step 3 : commit** `feat(coffres): déverrouillage biométrique facultatif`.
 
 ### Task 13 : confidentialité — fermeture à l'écran éteint, masquage dans les captures *(proposition du planificateur)*
 

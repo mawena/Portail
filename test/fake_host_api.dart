@@ -733,6 +733,56 @@ class FakeHostApi implements HostApi {
   final addedRecovery = <(String, String)>[];
   final removedRecovery = <(String, String)>[];
 
+  /// Biométrie (T12) : raison d'indisponibilité (null : disponible), erreur de l'invite, appels reçus.
+  String? biometricReason;
+  PlatformException? biometricError;
+  final enabledBiometric = <(String, String)>[];
+  final biometricOpens = <(String, bool)>[];
+  final disabledBiometric = <(String, String?)>[];
+
+  @override
+  Future<String?> biometricUnavailable() async => biometricReason;
+
+  @override
+  Future<void> enableBiometric(String vaultId, Uint8List password) async {
+    final p = _take(password);
+    if (p != filePassword) throw _bad();
+    if (biometricError != null) throw biometricError!;
+    enabledBiometric.add((vaultId, p));
+    vaults = [
+      for (final v in vaults)
+        if (v.id == vaultId) (VaultMsg.decode(v.encode())..biometric = true) else v,
+    ];
+  }
+
+  @override
+  Future<VolumeMsg> openVaultBiometric(String vaultId, bool writable) async {
+    biometricOpens.add((vaultId, writable));
+    final e = biometricError;
+    if (e != null) {
+      if (e.code == 'biometricInvalidated') {
+        vaults = [
+          for (final v in vaults)
+            if (v.id == vaultId) (VaultMsg.decode(v.encode())..biometric = false) else v,
+        ];
+      }
+      throw e;
+    }
+    // même effet qu'une ouverture par mot de passe
+    return openVault(vaultId, null, null, Uint8List.fromList(utf8.encode(filePassword)), writable);
+  }
+
+  @override
+  Future<void> disableBiometric(String vaultId, Uint8List? password) async {
+    final p = password == null ? null : _take(password);
+    if (p != null && p != filePassword) throw _bad();
+    disabledBiometric.add((vaultId, p));
+    vaults = [
+      for (final v in vaults)
+        if (v.id == vaultId) (VaultMsg.decode(v.encode())..biometric = false) else v,
+    ];
+  }
+
   /// Octets de la dernière clé rendue (le code appelant doit les mettre à zéro).
   Uint8List? lastRecoveryBytes;
 
