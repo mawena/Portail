@@ -32,6 +32,16 @@ class VaultStoreTest {
         assertEquals(setOf("id", "name", "source", "path", "size", "fs", "slots", "biometric", "luks"), o.keys().asSequence().toSet())
     }
 
+    /** Pixel (T16) : un coffre mis à jour à l'ouverture passait en fin de liste, l'accueil changeait d'ordre. */
+    @Test fun updateKeepsPlace() {
+        val s = VaultStore(tmp.root)
+        s.put(r)
+        s.put(r.copy(id = "b2", name = "Papiers"))
+        s.put(r.copy(luksVersion = 1)) // a1 mis à jour
+        assertEquals(listOf("a1", "b2"), s.list().map { it.id })
+        assertEquals(1, s.get("a1")!!.luksVersion)
+    }
+
     @Test fun storeSurvivesDamage() {
         File(tmp.root, "vaults.json").writeText("{\"vaults\": [ {\"id\": tronqué")
         val s = VaultStore(tmp.root)

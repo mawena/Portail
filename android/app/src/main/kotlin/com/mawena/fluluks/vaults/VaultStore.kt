@@ -46,9 +46,12 @@ class VaultStore(private val dir: File) {
     @Synchronized
     fun get(id: String): VaultRecord? = list().firstOrNull { it.id == id }
 
-    /** Ajoute [r], ou remplace le coffre de même identifiant. */
+    /** Ajoute [r] en fin de liste, ou remplace sur place le coffre de même identifiant (l'ordre de l'accueil reste). */
     @Synchronized
-    fun put(r: VaultRecord) = write(list().filter { it.id != r.id } + r)
+    fun put(r: VaultRecord) {
+        val all = list()
+        write(if (all.any { it.id == r.id }) all.map { if (it.id == r.id) r else it } else all + r)
+    }
 
     @Synchronized
     fun remove(id: String) = write(list().filter { it.id != id })

@@ -727,6 +727,12 @@ class FakeHostApi implements HostApi {
   final openedVaults = <(String?, String?, String?, String, bool)>[];
   final recoveryOpens = <bool>[];
 
+  /// Retarde la fin de [openVault] : le test peut pousser entre-temps un changement d'état, comme Kotlin.
+  Completer<void>? openVaultGate;
+
+  /// Comme l'ancien VaultStore : le coffre ouvert passe en fin de liste.
+  bool moveOpenedLast = false;
+
   /// Clé de secours des coffres de ce faux pont (rendue par [addRecoveryKey], acceptée par [openVault]).
   String recoveryKey = 'ABCD-EFGH-JKMN-PQRS-TVWX-YZ01';
   final changedVaultPasswords = <(String, String, String)>[];
@@ -843,6 +849,7 @@ class FakeHostApi implements HostApi {
     final p = _take(password);
     openedVaults.add((vaultId, srcId, path, p, writable));
     recoveryOpens.add(recovery);
+    if (openVaultGate != null) await openVaultGate!.future;
     if (recovery ? p.toUpperCase().replaceAll(RegExp(r'[^0-9A-Z]'), '') != recoveryKey.replaceAll('-', '') : p != filePassword) {
       throw _bad();
     }
@@ -860,6 +867,7 @@ class FakeHostApi implements HostApi {
       for (final v in vaults)
         if (v.id == vid) (VaultMsg.decode(v.encode())..state = 'open'..volumeId = id) else v,
     ];
+    if (moveOpenedLast) vaults = [...vaults.where((v) => v.id != vid), ...vaults.where((v) => v.id == vid)];
     dirs[id] = {'/': []};
     return VolumeMsg(id: id, diskId: 'vault:$vid', partIndex: 0, title: 'Coffre $name',
         totalBytes: 1000, freeBytes: 500, needsRecovery: false, roReason: '', readOnly: !writable, vaultId: vid);

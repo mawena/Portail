@@ -26,10 +26,12 @@ class VaultsSection extends StatelessWidget {
           child: Text(Fr.vaultsEmpty,
               style: theme.textTheme.bodyMedium?.copyWith(color: theme.colorScheme.onSurfaceVariant)),
         ),
+      // clé sur l'élément de la colonne : un coffre qui change de place garde sa tuile (et l'ouverture en cours)
       for (final v in state.vaults)
         Padding(
+          key: ValueKey(v.id),
           padding: const EdgeInsets.only(bottom: Space.s),
-          child: VaultTile(key: ValueKey(v.id), state: state, vault: v),
+          child: VaultTile(state: state, vault: v),
         ),
       Align(
         alignment: AlignmentDirectional.centerStart,

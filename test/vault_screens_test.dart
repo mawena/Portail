@@ -261,6 +261,28 @@ void main() {
     expect(e.sourceId, 'vv2'); // racine du coffre ouvert
   });
 
+  /// Pixel (T16) : à l'ouverture, le coffre passait en fin de liste (annoncé par Kotlin avant la réponse) et
+  /// l'explorateur ne s'ouvrait pas.
+  testWidgets('openBrowsesEvenIfListReorders', (tester) async {
+    final api = api0()
+      ..vaults = [vault('a1', 'Papiers'), vault('a2', 'Courses')]
+      ..openVaultGate = Completer<void>()
+      ..moveOpenedLast = true;
+    final state = await pump(tester, api);
+    await tapVisible(tester, tileButton('Papiers', Fr.open));
+    await tester.enterText(find.descendant(of: find.byType(AlertDialog), matching: find.byType(TextField)), goodPass);
+    await tester.tap(find.descendant(of: find.byType(AlertDialog), matching: find.text(Fr.open)));
+    await tester.pump();
+    api.vaults = [vault('a2', 'Courses'), vault('a1', 'Papiers')]; // la liste de Kotlin, déjà réécrite
+    state.onStateChanged(const [], const [], api.vaults);
+    await tester.pump();
+    final ys = [for (final n in ['Papiers', 'Courses']) tester.getTopLeft(find.text(n, skipOffstage: false)).dy];
+    expect(ys[0] > ys[1], isTrue, reason: 'Papiers est passé après Courses');
+    api.openVaultGate!.complete();
+    await tester.pumpAndSettle();
+    expect(find.byType(ExplorerScreen), findsOneWidget);
+  });
+
   testWidgets('closeFromTile', (tester) async {
     final api = api0()
       ..sources = [
