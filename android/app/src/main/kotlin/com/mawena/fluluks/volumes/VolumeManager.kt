@@ -660,10 +660,11 @@ object VolumeManager {
         _ejectError.value = null
         _ejecting.value = true
         try {
-            // les coffres d'abord, avant le volume qui porte leur fichier
+            // les coffres d'abord, avant le volume qui porte leur fichier, même s'ils sont aussi dans [ids] (Tout
+            // éjecter : l'hôte, ouvert avant, y vient avant ses coffres)
             val order = ArrayList<String>()
             for (id in ids) {
-                for (v in vaultsOn(id)) if (v !in order && v !in ids) order.add(v)
+                for (v in vaultsOn(id)) if (v !in order) order.add(v)
                 if (id !in order) order.add(id)
             }
             for (id in order) {

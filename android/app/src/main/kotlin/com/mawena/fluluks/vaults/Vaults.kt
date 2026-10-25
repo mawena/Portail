@@ -416,7 +416,8 @@ object Vaults {
                         ?: if (SLOT_RECOVERY !in slots) SLOT_RECOVERY
                         else (SLOT_BIOMETRIC + 1 until 32).firstOrNull { it !in slots && it !in r.slots }
                             ?: throw FilesException(EngineError.FL_ENOSPC, MSG_SLOTS_FULL)
-                    EngineError.check(engine.luksSlotSet(h, slot, pw, key, kdfKib(), KDF_TIME))
+                    // copie : le moteur met à zéro les phrases reçues, et la clé doit encore être rendue
+                    EngineError.check(engine.luksSlotSet(h, slot, pw, key.copyOf(), kdfKib(), KDF_TIME))
                     st().put(r.copy(slots = r.slots + (slot to "recovery")))
                 }
             }

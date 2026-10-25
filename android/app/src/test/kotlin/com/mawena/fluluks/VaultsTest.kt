@@ -200,7 +200,23 @@ class VaultsTest {
             return JSONObject().put("version", h.optInt("v", 2)).put("slots", org.json.JSONArray(slots)).toString().toByteArray()
         }
 
-        override fun luksSlotSet(disk: Long, slot: Int, auth: ByteArray, new: ByteArray, kdfMemKib: Int, kdfTime: Int): Int {
+        /** Comme le moteur natif (take_pass) : les tableaux de phrases sont mis à zéro par l'appel. */
+        override fun luksSlotSet(disk: Long, slot: Int, auth: ByteArray, new: ByteArray, kdfMemKib: Int, kdfTime: Int): Int =
+            try {
+                slotSet(disk, slot, auth, new, kdfMemKib, kdfTime)
+            } finally {
+                auth.fill(0)
+                new.fill(0)
+            }
+
+        override fun luksSlotRemove(disk: Long, slot: Int, auth: ByteArray): Int =
+            try {
+                slotRemove(disk, slot, auth)
+            } finally {
+                auth.fill(0)
+            }
+
+        private fun slotSet(disk: Long, slot: Int, auth: ByteArray, new: ByteArray, kdfMemKib: Int, kdfTime: Int): Int {
             val d = vdisks[disk] ?: return EngineError.FL_ENOTSUP
             val h = hdr(d.back) ?: return EngineError.FL_ENOTSUP
             if (h.optInt("v", 2) != 2) return EngineError.FL_ENOTSUP
@@ -214,7 +230,7 @@ class VaultsTest {
             return 0
         }
 
-        override fun luksSlotRemove(disk: Long, slot: Int, auth: ByteArray): Int {
+        private fun slotRemove(disk: Long, slot: Int, auth: ByteArray): Int {
             val d = vdisks[disk] ?: return EngineError.FL_ENOTSUP
             val h = hdr(d.back) ?: return EngineError.FL_ENOTSUP
             if (h.optInt("v", 2) != 2) return EngineError.FL_ENOTSUP
@@ -441,6 +457,18 @@ class VaultsTest {
         assertNotNull(VolumeManager.volume(hostVol))
         assertNotNull(VolumeManager.volume(w.id))
         assertEquals(VolumeManager.msgEjectFailed(VolumeManager.msgVaultOpen("D")), VolumeManager.ejectError.value)
+    }
+
+    @Test fun ejectAllClosesVaultsBeforeHosts() {
+        // « Tout éjecter » reçoit l'hôte avant le coffre (ordre d'ouverture) : le coffre doit partir d'abord
+        e.nodes["/D.luks"] = e.header(pw, "exFAT") + ByteArray(4096)
+        val v = open(hostVol, "/D.luks")
+        val vaultHandle = VolumeManager.nativeVolume(v.id)
+        val hostHandle = VolumeManager.nativeVolume(hostVol)
+        VolumeManager.ejectAll()
+        assertEquals(listOf(vaultHandle, hostHandle), e.unmounted)
+        assertTrue(VolumeManager.volumes.value.isEmpty())
+        assertNull(VolumeManager.ejectError.value)
     }
 
     @Test fun detachHostForceClosesVault() {
