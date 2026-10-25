@@ -8,6 +8,7 @@ import '../strings_fr.dart';
 import '../ui/feedback.dart';
 import '../ui/tokens.dart';
 import '../ui/widgets.dart';
+import 'password_field.dart';
 
 /// Dialogue de saisie de la phrase de passe. Les octets UTF-8 envoyés sont mis à zéro après l'appel
 /// (réussi ou non) et le champ est vidé ; la phrase n'est jamais conservée ailleurs. Afficher ou masquer la phrase
@@ -39,7 +40,6 @@ class _UnlockDialogState extends State<UnlockDialog> {
   final _controller = TextEditingController();
   bool _busy = false;
   String? _error;
-  bool _obscure = true;
   late bool _readOnly = !widget.writable;
 
   @override
@@ -96,24 +96,14 @@ class _UnlockDialogState extends State<UnlockDialog> {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            TextField(
+            // champ de déverrouillage : ni règle, ni force, ni générateur (phrase LUKS existante)
+            PasswordField(
               controller: _controller,
-              obscureText: _obscure,
-              // affichée, elle n'est plus un champ de mot de passe pour le clavier : ni suggestions, ni apprentissage
-              keyboardType: _obscure ? null : TextInputType.visiblePassword,
-              autocorrect: false,
-              enableSuggestions: false,
-              enableIMEPersonalizedLearning: false,
+              label: Fr.passphrase,
+              showLabel: Fr.showPassphrase,
+              hideLabel: Fr.hidePassphrase,
               enabled: !_busy,
               autofocus: true,
-              decoration: InputDecoration(
-                labelText: Fr.passphrase,
-                suffixIcon: IconButton(
-                  tooltip: _obscure ? Fr.showPassphrase : Fr.hidePassphrase,
-                  icon: Icon(_obscure ? Icons.visibility_rounded : Icons.visibility_off_rounded),
-                  onPressed: () => setState(() => _obscure = !_obscure),
-                ),
-              ),
               onSubmitted: (_) => _submit(),
             ),
             const SizedBox(height: Space.s),

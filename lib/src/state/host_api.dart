@@ -36,6 +36,9 @@ abstract class HostApi {
   Future<void> startExtract(String srcId, String archive, String dstId, String dstDir, bool intoNewFolder,
       {Uint8List? password});
   Future<void> cancelTransfer();
+
+  /// Copie protégée d'un mot de passe (effacée après 60 s) ; [text] est mis à zéro par l'appelant.
+  Future<void> copySecret(Uint8List text);
   Future<SearchResultMsg> search(String sourceId, String path, String query, bool showHidden);
   Future<void> cancelSearch();
   Future<SpaceReportMsg> analyzeSpace(String sourceId, String path);
@@ -178,6 +181,8 @@ class PigeonHostApi implements HostApi {
       _api.startExtract(srcId, archive, dstId, dstDir, intoNewFolder, password);
   @override
   Future<void> cancelTransfer() => _api.cancelTransfer();
+  @override
+  Future<void> copySecret(Uint8List text) => _api.copySecret(text);
   @override
   Future<SearchResultMsg> search(String sourceId, String path, String query, bool showHidden) =>
       _api.search(sourceId, path, query, showHidden);

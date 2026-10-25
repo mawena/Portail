@@ -12,6 +12,7 @@ import com.mawena.fluluks.engine.EngineError
 import com.mawena.fluluks.engine.FileType
 import com.mawena.fluluks.crypt.Crypt
 import com.mawena.fluluks.crypt.DecryptedSources
+import com.mawena.fluluks.crypt.SecretClipboard
 import com.mawena.fluluks.files.Archives
 import com.mawena.fluluks.files.BatchRename
 import com.mawena.fluluks.files.Details
@@ -689,6 +690,8 @@ class HostApiImpl(
         io(callback) { sourceMsg(DecryptedSources.open(srcId, path, password), null) }
 
     override fun closeDecrypted(sourceId: String) = guarded { DecryptedSources.close(sourceId) }
+
+    override fun copySecret(text: ByteArray) = guarded { SecretClipboard.copy(context, text) }
 
     override fun changeFilePassword(
         srcId: String, path: String, oldPassword: ByteArray, newPassword: ByteArray, callback: (Result<Unit>) -> Unit,

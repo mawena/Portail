@@ -2344,6 +2344,8 @@ interface FluLuksHostApi {
   fun openDecrypted(srcId: String, path: String, password: ByteArray, callback: (Result<SourceMsg>) -> Unit)
   /** Ferme une vue déchiffrée (clé effacée, liens expirés). */
   fun closeDecrypted(sourceId: String)
+  /** Copie un mot de passe dans le presse-papiers, marqué sensible ; effacé après 60 s s'il n'a pas changé. */
+  fun copySecret(text: ByteArray)
   fun cancelTransfer()
   fun search(sourceId: String, path: String, query: String, showHidden: Boolean, callback: (Result<SearchResultMsg>) -> Unit)
   fun cancelSearch()
@@ -3180,6 +3182,24 @@ interface FluLuksHostApi {
             val sourceIdArg = args[0] as String
             val wrapped: List<Any?> = try {
               api.closeDecrypted(sourceIdArg)
+              listOf(null)
+            } catch (exception: Throwable) {
+              FluLuksApiPigeonUtils.wrapError(exception)
+            }
+            reply.reply(wrapped)
+          }
+        } else {
+          channel.setMessageHandler(null)
+        }
+      }
+      run {
+        val channel = BasicMessageChannel<Any?>(binaryMessenger, "dev.flutter.pigeon.fluluks.FluLuksHostApi.copySecret$separatedMessageChannelSuffix", codec)
+        if (api != null) {
+          channel.setMessageHandler { message, reply ->
+            val args = message as List<Any?>
+            val textArg = args[0] as ByteArray
+            val wrapped: List<Any?> = try {
+              api.copySecret(textArg)
               listOf(null)
             } catch (exception: Throwable) {
               FluLuksApiPigeonUtils.wrapError(exception)

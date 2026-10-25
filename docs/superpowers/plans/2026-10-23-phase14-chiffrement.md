@@ -371,14 +371,14 @@ JUnit 4, AndroidX Test.
   `String generatePassphrase({int words = 6})` (`Random.secure()`) ; `PasswordField(controller, {confirm, showStrength, allowGenerate, onGenerated})` ;
   Pigeon `void copySecret(Uint8List text)` (`ClipDescription.EXTRA_IS_SENSITIVE`, effacé après 60 s s'il n'a pas changé).
 
-- [ ] **Step 1 : tests en échec** : `strengthLevels` (`motdepasse` très faible, `Tr0ub4dour&3` moyen, 6 mots EFF
+- [x] **Step 1 : tests en échec** : `strengthLevels` (`motdepasse` très faible, `Tr0ub4dour&3` moyen, 6 mots EFF
   bon ou excellent, 20 caractères générés excellent), `sequencesPenalized`, `generatorUsesSecureRandomAndAllClasses`,
   `passphraseHasSixDistinctListWords`, `wordListIs7776Unique`, `confirmMismatchBlocks`, `under8Blocks`,
   `generateFillsBothFields`, `copySecretSendsBytes`, `strengthAnnouncedToTalkBack` (« Force : bon »),
   `fieldClearedOnDispose`.
-- [ ] **Step 2 : implémentation** ; avertissement permanent sous le champ de création : « Sans ce mot de passe, rien ne
+- [x] **Step 2 : implémentation** ; avertissement permanent sous le champ de création : « Sans ce mot de passe, rien ne
   pourra être récupéré » ; la phase 5 (déverrouillage) garde son comportement (pas de force ni de générateur).
-- [ ] **Step 3 : commit** `feat(chiffrement): force des mots de passe, générateur et copie protégée`.
+- [x] **Step 3 : commit** `feat(chiffrement): force des mots de passe, générateur et copie protégée`.
 
 ### Task 8 : écrans de chiffrement et de déchiffrement
 

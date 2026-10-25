@@ -616,6 +616,9 @@ abstract class FluLuksHostApi {
 
   /// Ferme une vue déchiffrée (clé effacée, liens expirés).
   void closeDecrypted(String sourceId);
+
+  /// Copie un mot de passe dans le presse-papiers, marqué sensible ; effacé après 60 s s'il n'a pas changé.
+  void copySecret(Uint8List text);
   void cancelTransfer();
   @async
   SearchResultMsg search(String sourceId, String path, String query, bool showHidden);

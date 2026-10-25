@@ -1,0 +1,10 @@
+EFF Large Wordlist for Passphrases
+Copyright (c) 2016 Electronic Frontier Foundation — https://www.eff.org/dice
+
+This wordlist is licensed under the Creative Commons Attribution 3.0 United States License (CC BY 3.0 US):
+https://creativecommons.org/licenses/by/3.0/us/
+
+Source: https://www.eff.org/files/2016/07/18/eff_large_wordlist.txt
+(SHA-256 addd35536511597a02fa0a9ff1e5284677b8883b83e986e43f15a3db996b903e)
+
+Change made for Portail: the dice numbers were removed, leaving one word per line (7776 words, same order).

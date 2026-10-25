@@ -28,6 +28,28 @@ class Fr {
   static const passphrase = 'Phrase de passe';
   static const showPassphrase = 'Afficher la phrase de passe';
   static const hidePassphrase = 'Masquer la phrase de passe';
+
+  // mots de passe des fichiers et des coffres (phase 14) ; libellé du champ : [password]
+  static const passwordConfirm = 'Confirmer le mot de passe';
+  static const showPassword = 'Afficher le mot de passe';
+  static const hidePassword = 'Masquer le mot de passe';
+  static const passwordTooShort = 'Le mot de passe doit faire au moins 8 caractères';
+  static const passwordNul = 'Le mot de passe contient un caractère interdit';
+  static const passwordMismatch = 'Les deux mots de passe diffèrent';
+  static const passwordNoRecovery = 'Sans ce mot de passe, rien ne pourra être récupéré';
+  static const generatePassword = 'Générer un mot de passe';
+  static const generateChars = '20 caractères';
+  static const generateWords = '6 mots';
+  static const copyPassword = 'Copier le mot de passe';
+  static const passwordCopied = 'Mot de passe copié, effacé du presse-papiers dans 60\u00A0s';
+  static const strengthVeryWeak = 'très faible';
+  static const strengthWeak = 'faible';
+  static const strengthFair = 'moyen';
+  static const strengthGood = 'bon';
+  static const strengthExcellent = 'excellent';
+
+  /// « Force : bon ».
+  static String strength(String level) => 'Force\u00A0: $level';
   static const openReadOnly = 'Ouvrir en lecture seule';
   static const unlocking =
       'Déverrouillage en cours… cela peut prendre quelques secondes';

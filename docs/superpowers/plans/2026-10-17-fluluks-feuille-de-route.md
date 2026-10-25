@@ -388,7 +388,7 @@ dans le même commit que le travail.
 - [x] T4 — Poignées JNI et moteur Kotlin : chiffrement, déchiffrement, coffres en cascade sous leur fichier *(ctest 49/49 ; EngineTest 17/17 sur le Pixel : age 2^18 en 1,0 s, coffre Argon2 64 Mio en 0,66 s)*
 - [x] T5 — Chiffrer, déchiffrer, vérifier, changer le mot de passe d'un fichier ; original supprimé après vérification *(CryptTest 21, CryptFormatsTest 7, PasswordsTest 3 ; erreur « badPassword » à part dans le pont)*
 - [x] T6 — Ouvrir un fichier chiffré sans copie en clair (source déchiffrée en mémoire, fournisseur de flux) *(DecryptedSourceTest 8 ; essais instrumentés CryptInstrumentedTest écrits, passage sur le Pixel avec T15)*
-- [ ] T7 — Saisie des mots de passe : force, générateur de mots de passe et de phrases, copie protégée
+- [x] T7 — Saisie des mots de passe : force, générateur de mots de passe et de phrases, copie protégée *(liste de l'EFF, 7776 mots, CC BY 3.0 US ; 554 tests Flutter)*
 - [ ] T8 — Écrans Chiffrer et Déchiffrer dans l'explorateur, ZIP protégés, partage d'un fichier chiffré
 - [ ] T9 — Coffres (Kotlin) : création, ouverture comme un stockage, fermeture avant le stockage porteur
 - [ ] T10 — Coffres (écrans) : création, section « Coffres » de l'accueil, ouvrir, fermer, parcourir

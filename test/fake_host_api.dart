@@ -650,6 +650,12 @@ class FakeHostApi implements HostApi {
           {Uint8List? password}) async =>
       extracts.add((srcId, archive, dstId, dstDir, intoNewFolder));
 
+  /// Copies protégées reçues (copies des octets, l'appelant met les siens à zéro).
+  final secretCopies = <Uint8List>[];
+
+  @override
+  Future<void> copySecret(Uint8List text) async => secretCopies.add(Uint8List.fromList(text));
+
   /// Réponse de [search] selon la requête ; un completer dans [searchGates] la retarde.
   SearchResultMsg Function(String query) searchResult = (_) => SearchResultMsg(entries: [], truncated: false);
 
