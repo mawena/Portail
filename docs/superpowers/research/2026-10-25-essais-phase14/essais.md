@@ -113,7 +113,8 @@ récupérable**.
 
 ## 7. Confidentialité
 
-- [ ] Réglages → **Confidentialité** : les deux réglages sont désactivés par défaut.
+- [x] Réglages → **Confidentialité** : les deux réglages sont désactivés par défaut.
+      → piloté par adb : section « Confidentialité », « Fermer les coffres quand l'écran s'éteint » et « Masquer les coffres et les fichiers déchiffrés » tous deux désactivés (checked=false).
 - [ ] **Fermer les coffres quand l'écran s'éteint** activé : coffre ouvert, éteindre l'écran, le rallumer : le coffre
       est fermé. Pendant une longue copie vers le coffre, éteindre l'écran : la copie se termine, puis le coffre se
       ferme (si l'écran est resté éteint).
