@@ -75,7 +75,8 @@ récupérable**.
       (l'explication sur l'utilisateur 1000 s'affiche). Ouvrir, écrire un fichier.
 - [ ] Avec ce coffre ouvert, **Éjecter** le disque : le coffre se ferme d'abord, puis le disque s'éjecte.
 - [ ] Débrancher le disque avec le coffre ouvert (sans éjecter) : avertissement, le coffre est fermé.
-- [ ] Verrouillage automatique à 5 min (Réglages → Disques) : un coffre ouvert et inactif se ferme après 5 min.
+- [x] Verrouillage automatique à 5 min (Réglages → Disques) : un coffre ouvert et inactif se ferme après 5 min.
+      → piloté par adb : réglage à 5 min ; « Annule », ouvert à 13:59:38 et laissé inactif, est « Fermé » entre 14:05:09 et 14:05:32. Réglage remis ensuite sur « Jamais ».
 - [x] **Retirer de la liste** : le coffre disparaît de l'accueil ; le fichier `.luks` est toujours là ; le toucher
       dans l'explorateur propose de l'ouvrir et le remet dans la liste.
       → piloté par adb (coffre « Annule », 1 Gio) : confirmation « Le fichier du coffre reste à sa place » ; le coffre disparaît de l'accueil, Annule.luks reste (1,1 Go) ; touché dans l'explorateur, il ouvre « Ouvrir le coffre Annule », puis l'explorateur à sa racine, et le coffre revient dans la liste.
