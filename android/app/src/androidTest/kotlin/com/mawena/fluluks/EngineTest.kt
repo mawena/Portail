@@ -373,6 +373,239 @@ class EngineTest {
         }
     }
 
+    /* --- chiffrement et coffres (phase 14, T4) ------------------------------------------------- */
+
+    private val cache get() = InstrumentationRegistry.getInstrumentation().targetContext.cacheDir
+
+    /** Descripteur détaché (il appartient ensuite au moteur). */
+    private fun fd(f: File, write: Boolean): Int {
+        val mode = if (write) {
+            android.os.ParcelFileDescriptor.MODE_READ_WRITE or android.os.ParcelFileDescriptor.MODE_CREATE or
+                android.os.ParcelFileDescriptor.MODE_TRUNCATE
+        } else {
+            android.os.ParcelFileDescriptor.MODE_READ_ONLY
+        }
+        return android.os.ParcelFileDescriptor.open(f, mode).detachFd()
+    }
+
+    private fun assertZeroed(a: ByteArray) = assertTrue("phrase non effacée", a.all { it == 0.toByte() })
+
+    private fun agePreadAll(r: Long, size: Int): ByteArray {
+        val out = ByteArray(size)
+        var done = 0
+        val buf = ByteArray(1 shl 20)
+        while (done < size) {
+            val n = NativeEngine.agePread(r, done.toLong(), buf, minOf(buf.size, size - done))
+            if (n < 0) throw EngineError(n)
+            if (n == 0) break
+            System.arraycopy(buf, 0, out, done, n)
+            done += n
+        }
+        return out.copyOf(done)
+    }
+
+    @Test
+    fun ageRoundTripOnPhone() {
+        val a = File(cache, "essai.age")
+        val b = File(cache, "essai-nouveau.age")
+        val size = 3 shl 20
+        val data = pattern(0, size)
+        try {
+            var pass = utf8("phrase de l'essai")
+            var t0 = System.nanoTime()
+            val w = EngineError.check(NativeEngine.ageWriterOpenFd(fd(a, true), pass, 18))
+            assertZeroed(pass)
+            var off = 0
+            while (off < size) {
+                val n = minOf(1 shl 20, size - off)
+                assertEquals(0, NativeEngine.ageWrite(w, data.copyOfRange(off, off + n), n))
+                off += n
+            }
+            assertEquals(0, NativeEngine.ageWriterClose(w, true))
+            android.util.Log.i("EngineTest", "age : écriture de 3 Mio (scrypt 2^18) en ${(System.nanoTime() - t0) / 1_000_000} ms")
+            android.os.ParcelFileDescriptor.open(a, android.os.ParcelFileDescriptor.MODE_READ_ONLY).use { pf ->
+                assertEquals(18, NativeEngine.agePeekFd(pf.fd)) // le descripteur reste à l'appelant
+            }
+            pass = utf8("faux")
+            assertEquals(FL_EBADPASS.toLong(), NativeEngine.ageReaderOpenFd(fd(a, false), pass))
+            assertZeroed(pass)
+            t0 = System.nanoTime()
+            val r = EngineError.check(NativeEngine.ageReaderOpenFd(fd(a, false), utf8("phrase de l'essai")))
+            android.util.Log.i("EngineTest", "age : ouverture (scrypt 2^18) en ${(System.nanoTime() - t0) / 1_000_000} ms")
+            assertEquals(size.toLong(), NativeEngine.ageSize(r))
+            assertArrayEquals(data, agePreadAll(r, size))
+            val part = ByteArray(1000)
+            assertEquals(1000, NativeEngine.agePread(r, 2_000_123L, part, 1000))
+            assertArrayEquals(data.copyOfRange(2_000_123, 2_001_123), part)
+            assertEquals(0, NativeEngine.ageReaderClose(r))
+            assertEquals(FL_EINVAL, NativeEngine.ageReaderClose(r))
+            // nouvelle phrase, charge utile recopiée
+            val old = utf8("phrase de l'essai")
+            val nw = utf8("autre phrase")
+            assertEquals(0, NativeEngine.ageRewrap(fd(a, false), 0, 0, fd(b, true), 0, old, nw, 18))
+            assertZeroed(old)
+            assertZeroed(nw)
+            val r2 = EngineError.check(NativeEngine.ageReaderOpenFd(fd(b, false), utf8("autre phrase")))
+            assertArrayEquals(data, agePreadAll(r2, size))
+            assertEquals(0, NativeEngine.ageReaderClose(r2))
+        } finally {
+            a.delete()
+            b.delete()
+        }
+    }
+
+    private fun zipWrite(w: Long, data: ByteArray) {
+        assertEquals(0, NativeEngine.arcwAdd(w, utf8("""{"name":"dossier/été.bin","type":"f","size":${data.size},"mtime":1714564800,"store":false}""")))
+        assertEquals(0, NativeEngine.arcwWrite(w, data, data.size))
+    }
+
+    private fun zipRead(r: Long): ByteArray {
+        val e = NativeEngine.arcNext(r)
+        assertNotNull(e)
+        val out = java.io.ByteArrayOutputStream()
+        val buf = ByteArray(65536)
+        while (true) {
+            val n = NativeEngine.arcRead(r, buf, buf.size)
+            if (n < 0) throw EngineError(n)
+            if (n == 0) break
+            out.write(buf, 0, n)
+        }
+        return out.toByteArray()
+    }
+
+    @Test
+    fun zipAesRoundTripOnPhone() {
+        val data = pattern(5, 300_000)
+        for (mode in listOf(com.mawena.fluluks.engine.ArcMode.AES, com.mawena.fluluks.engine.ArcMode.AGE)) {
+            val z = File(cache, "essai-$mode.zip")
+            try {
+                val pass = utf8("mot de passe zip")
+                val w = EngineError.check(NativeEngine.arcwOpenFd(fd(z, true), mode, pass))
+                assertZeroed(pass)
+                zipWrite(w, data)
+                assertEquals(0, NativeEngine.arcwClose(w, true))
+                val r = EngineError.check(NativeEngine.arcOpenFd(fd(z, false), mode, utf8("mot de passe zip")))
+                assertArrayEquals(data, zipRead(r))
+                assertEquals(0, NativeEngine.arcClose(r))
+                if (mode == com.mawena.fluluks.engine.ArcMode.AGE) {
+                    assertEquals(FL_EBADPASS.toLong(), NativeEngine.arcOpenFd(fd(z, false), mode, utf8("faux")))
+                } else {
+                    val rf = EngineError.check(NativeEngine.arcOpenFd(fd(z, false), mode, utf8("faux")))
+                    assertNotNull(NativeEngine.arcNext(rf))
+                    assertEquals(FL_EBADPASS, NativeEngine.arcRead(rf, ByteArray(16), 16))
+                    assertEquals(0, NativeEngine.arcClose(rf))
+                }
+            } finally {
+                z.delete()
+            }
+        }
+    }
+
+    private val vaultOpts = utf8("""{"fs":"exfat","encrypted":true,"table":"none","kdf_mem_kib":65536,"label":"Coffre"}""")
+
+    /** Coffre de 64 Mio dans le dossier privé, formaté ; rend le fichier. */
+    private fun newVault(name: String, pass: String): File {
+        val f = File(cache, name)
+        java.io.RandomAccessFile(f, "rw").use { it.setLength(64L shl 20) }
+        val disk = openVault(f, false)
+        try {
+            val p = utf8(pass)
+            assertEquals(0, NativeEngine.format(disk, vaultOpts, p, null))
+            assertZeroed(p)
+        } finally {
+            NativeEngine.closeDisk(disk)
+        }
+        return f
+    }
+
+    private fun openVault(f: File, readOnly: Boolean): Long {
+        val mode = if (readOnly) android.os.ParcelFileDescriptor.MODE_READ_ONLY else android.os.ParcelFileDescriptor.MODE_READ_WRITE
+        return EngineError.check(NativeEngine.openDiskFd(android.os.ParcelFileDescriptor.open(f, mode).detachFd(), readOnly))
+    }
+
+    @Test
+    fun vaultCreateMountWriteOnPhone() {
+        val f = newVault("essai-coffre.luks", "coffre de l'essai")
+        val data = pattern(9, 2 shl 20)
+        try {
+            var disk = openVault(f, false)
+            try {
+                val scan = ScanResult.parse(NativeEngine.scan(disk))
+                assertEquals("none", scan.table)
+                assertEquals("LUKS2", scan.parts[0].content)
+                val t0 = System.nanoTime()
+                val vol = EngineError.check(NativeEngine.mount(disk, 0, utf8("coffre de l'essai"), true))
+                android.util.Log.i("EngineTest", "coffre : déverrouillage (Argon2 64 Mio) en ${(System.nanoTime() - t0) / 1_000_000} ms")
+                val st = VolumeStat.parse(NativeEngine.statfs(vol))
+                assertFalse(st.readOnly)
+                assertEquals("Coffre", st.label)
+                val h = EngineError.check(NativeEngine.openFile(vol, utf8("/photo.bin"), OpenFlags.RDWR or OpenFlags.CREAT))
+                assertEquals(data.size, NativeEngine.pwrite(h, 0, data, data.size))
+                assertEquals(0, NativeEngine.closeFile(h))
+                assertEquals(0, NativeEngine.unmount(vol, false))
+            } finally {
+                NativeEngine.closeDisk(disk)
+            }
+            disk = openVault(f, true)
+            try {
+                assertEquals(FL_EBADPASS.toLong(), NativeEngine.mount(disk, 0, utf8("faux"), false))
+                val vol = EngineError.check(NativeEngine.mount(disk, 0, utf8("coffre de l'essai"), false))
+                val h = EngineError.check(NativeEngine.openFile(vol, utf8("/photo.bin")))
+                assertArrayEquals(data, readAll(h, 0, data.size))
+                assertEquals(0, NativeEngine.closeFile(h))
+            } finally {
+                NativeEngine.closeDisk(disk)
+            }
+            // le fichier du coffre ne contient pas le clair
+            val raw = f.readBytes()
+            val probe = data.copyOfRange(0, 64)
+            assertFalse((0..raw.size - 64 step 512).any { raw.copyOfRange(it, it + 64).contentEquals(probe) })
+        } finally {
+            f.delete()
+        }
+    }
+
+    @Test
+    fun slotChangeOnPhone() {
+        val f = newVault("essai-emplacements.luks", "mot de passe")
+        val bio = ByteArray(32) { (it * 7 + 1).toByte() }
+        try {
+            val disk = openVault(f, false)
+            try {
+                val vol = EngineError.check(NativeEngine.mount(disk, 0, utf8("mot de passe"), true))
+                assertEquals(FL_EBUSY, NativeEngine.luksSlotSet(disk, 1, utf8("mot de passe"), utf8("SECOURS"), 65536, 1))
+                assertEquals(0, NativeEngine.unmount(vol, false))
+                val auth = utf8("mot de passe")
+                val rec = utf8("ABCD-EFGH-JKMN-PQRS-TVWX-YZ01")
+                assertEquals(0, NativeEngine.luksSlotSet(disk, 1, auth, rec, 65536, 4))
+                assertZeroed(auth)
+                assertZeroed(rec)
+                assertEquals(0, NativeEngine.luksSlotSet(disk, 2, utf8("mot de passe"), bio.copyOf(), 65536, 1))
+                val slots = org.json.JSONObject(String(NativeEngine.luksSlots(disk), Charsets.UTF_8))
+                assertEquals(2, slots.getInt("version"))
+                assertEquals("[0,1,2]", slots.getJSONArray("slots").toString())
+                val t0 = System.nanoTime()
+                var v = EngineError.check(NativeEngine.mountSlot(disk, 0, 2, bio.copyOf(), false))
+                android.util.Log.i("EngineTest", "coffre : biométrie (emplacement 2, Argon2 t=1) en ${(System.nanoTime() - t0) / 1_000_000} ms")
+                assertEquals(0, NativeEngine.unmount(v, false))
+                v = EngineError.check(NativeEngine.mountSlot(disk, 0, 1, utf8("ABCD-EFGH-JKMN-PQRS-TVWX-YZ01"), false))
+                assertEquals(0, NativeEngine.unmount(v, false))
+                assertEquals(FL_EBADPASS.toLong(), NativeEngine.mountSlot(disk, 0, 0, bio.copyOf(), false))
+                // nouveau mot de passe par la clé de secours
+                assertEquals(0, NativeEngine.luksSlotSet(disk, 0, utf8("ABCD-EFGH-JKMN-PQRS-TVWX-YZ01"), utf8("nouveau"), 65536, 4))
+                assertEquals(FL_EBADPASS.toLong(), NativeEngine.mount(disk, 0, utf8("mot de passe"), false))
+                v = EngineError.check(NativeEngine.mount(disk, 0, utf8("nouveau"), false))
+                assertEquals(0, NativeEngine.unmount(v, false))
+                assertEquals(0, NativeEngine.luksSlotRemove(disk, 1, utf8("nouveau")))
+                assertEquals(FL_ENOENT.toLong(), NativeEngine.mountSlot(disk, 0, 1, utf8("ABCD-EFGH-JKMN-PQRS-TVWX-YZ01"), false))
+            } finally {
+                NativeEngine.closeDisk(disk)
+            }
+        } finally {
+            f.delete()
+        }
+    }
+
     private fun compareUtf8(a: String, b: String): Int {
         val x = utf8(a)
         val y = utf8(b)

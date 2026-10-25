@@ -48,6 +48,7 @@ void main() {
       await pumpScreen(t, 'explorerList', textScale: 2.0);
       await harnessState.startTransfer('v1', ['/Sauvegarde.zip'], 'phone', '/', move: false);
       harnessState.onTransferChanged(TransferMsg(
+        badPassword: false,
           kind: 'copy', move: false, currentName: 'Sauvegarde.zip', fileIndex: 1, fileCount: 1, doneBytes: 50,
           totalBytes: 200, finished: false, cancelled: false, elapsedMs: 0));
       await t.pump();
@@ -71,11 +72,14 @@ void main() {
         t.view.padding = const FakeViewPadding(bottom: bar);
         t.view.viewPadding = const FakeViewPadding(bottom: bar);
         await pumpScreen(t, screen);
-        for (final s in t.stateList<ScrollableState>(find.byType(Scrollable))) {
-          final p = s.position;
-          if (p.axis == Axis.vertical && p.hasContentDimensions) p.jumpTo(p.maxScrollExtent); // tout en bas
+        // tout en bas ; une liste construite au fur et à mesure revoit sa longueur après chaque saut
+        for (var i = 0; i < 5; i++) {
+          for (final s in t.stateList<ScrollableState>(find.byType(Scrollable))) {
+            final p = s.position;
+            if (p.axis == Axis.vertical && p.hasContentDimensions) p.jumpTo(p.maxScrollExtent);
+          }
+          await t.pumpAndSettle();
         }
-        await t.pumpAndSettle();
         final size = t.view.physicalSize / t.view.devicePixelRatio;
         final under = <String>[];
         for (final e in [...find.byType(Text).evaluate(), ...find.byType(Icon).evaluate()]) {

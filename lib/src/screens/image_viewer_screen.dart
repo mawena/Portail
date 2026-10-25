@@ -6,6 +6,7 @@ import 'package:flutter/services.dart';
 import '../bridge/fluluks_api.g.dart';
 import '../state/app_state.dart';
 import '../strings_fr.dart';
+import '../ui/dialogs.dart';
 import '../ui/feedback.dart';
 import '../ui/tokens.dart';
 import '../widgets/properties_sheet.dart';
@@ -90,7 +91,10 @@ class _ImageViewerScreenState extends State<ImageViewerScreen> {
         IconButton(
           tooltip: Fr.share,
           icon: const Icon(Icons.share_rounded),
-          onPressed: () => _run(() => widget.state.api.share(widget.sourceId, [e.path])),
+          onPressed: () async {
+            if (!await confirmPlainShare(context, widget.state.sourceById(widget.sourceId)?.kind)) return;
+            await _run(() => widget.state.api.share(widget.sourceId, [e.path]));
+          },
         ),
         IconButton(
           tooltip: Fr.openWith,

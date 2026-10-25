@@ -29,7 +29,12 @@ data class VolumeState(
     val fs: String = "",
     /** Ouvert avec une phrase de passe (LUKS) : seul ce volume est verrouillé automatiquement. */
     val encrypted: Boolean = false,
+    /** Coffre (phase 14) : son identifiant ; null pour un disque. */
+    val vaultId: String? = null,
 )
+
+/** Fichier d'un coffre ouvert : le coffre, la source qui porte son fichier et son chemin (phase 14). */
+data class VaultHost(val vaultId: String, val sourceId: String, val path: String)
 
 /** Options du formatage : `fs` parmi fat32, exfat, ext4, ntfs ; étiquette vide acceptée. */
 data class FormatOptions(val fs: String, val encrypted: Boolean, val label: String)

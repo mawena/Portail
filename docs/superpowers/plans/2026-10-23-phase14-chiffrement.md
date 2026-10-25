@@ -46,7 +46,7 @@ JUnit 4, AndroidX Test.
   tâche coche ses étapes ici et sa ligne dans la feuille de route, sur la branche **et** aussitôt sur `develop`
   (commit `docs(feuille-de-route): phase 14, Tn faite sur feature/chiffrement` qui ne nomme que la feuille de route,
   au texte identique à celui de la branche).
-- **Version :** `v1.7.0`, pubspec `1.7.0+14`.
+- **Version :** `v1.7.0`, pubspec `1.7.0+15` (la v1.6.1, correctif de la permission Internet, porte `1.6.1+14`).
 - **Dépendances :** aucune nouvelle bibliothèque Java, Kotlin ni Dart. Code tiers nouveau : `crypto_scrypt-ref.c` et
   `sysendian.h` de scrypt 1.3.2, copiés **sans modification** dans `native/third_party/scrypt/` avec `COPYRIGHT`,
   empreinte SHA-256 de l'archive d'amont notée dans `native/third_party/PATCHES.md`. Donnée : `assets/words/eff_large.txt`
@@ -137,13 +137,13 @@ JUnit 4, AndroidX Test.
   - `int fl_age_rewrap(const fl_arc_in *in, const fl_arc_out *out, const void *old, size_t oldlen, const void *nw, size_t nwlen, uint8_t log2n)`
     (même clé de fichier, nouvel en-tête, charge utile recopiée sans être déchiffrée, puis vérifiée).
 
-- [ ] **Step 1 : copier scrypt 1.3.2** (`lib/crypto/crypto_scrypt-ref.c`, `sysendian.h`, `COPYRIGHT`) sans
+- [x] **Step 1 : copier scrypt 1.3.2** (`lib/crypto/crypto_scrypt-ref.c`, `sysendian.h`, `COPYRIGHT`) sans
   modification ; si le fichier de référence n'existe plus dans cette version : `Ruling:` et arrêt
   (pas de scrypt écrit à la main). Récupérer `age/testdata/scrypt*` du dépôt C2SP/CCTV et vérifier sa licence ; si
   elle ne convient pas : `Ruling:`, juge Python seul.
-- [ ] **Step 2 : tests en échec** (`test_scrypt`) : `rfc7914Vectors` (les quatre vecteurs du § 12 du RFC 7914, le
+- [x] **Step 2 : tests en échec** (`test_scrypt`) : `rfc7914Vectors` (les quatre vecteurs du § 12 du RFC 7914, le
   dernier sous l'étiquette `lent`), `rejectsBadParams` (log2 N = 0 ou > 22, r ou p nuls).
-- [ ] **Step 3 : tests en échec** (`test_age`) : `roundTripSizes` (0, 1, 65 535, 65 536, 65 537, 3 × 65 536 octets,
+- [x] **Step 3 : tests en échec** (`test_age`) : `roundTripSizes` (0, 1, 65 535, 65 536, 65 537, 3 × 65 536 octets,
   et 5 Mio aléatoires), `ageMatchesPythonJudge` (le juge déchiffre ce que le moteur écrit, et le moteur déchiffre ce
   que le juge écrit), `cctvScryptVectors` (chaque vecteur : succès et contenu attendus, ou échec attendu),
   `wrongPasswordIsBadPass`, `truncatedStreamRejected` (coupé à la fin d'un morceau plein : refusé, le dernier
@@ -153,16 +153,17 @@ JUnit 4, AndroidX Test.
   destinataire), `rewrapKeepsPayload` (charge utile identique octet pour octet, ancien mot de passe refusé),
   `secretsWipedAfterClose` (crochet de test sur `fl_secure_free` : clé de fichier, clé de charge et clé d'enveloppe
   effacées).
-- [ ] **Step 4 : implémentation** selon la spécification age v1 : en-tête `age-encryption.org/v1`, stance
+- [x] **Step 4 : implémentation** selon la spécification age v1 : en-tête `age-encryption.org/v1`, stance
   `-> scrypt <sel b64> <log2N>` (sel = « age-encryption.org/v1/scrypt » ‖ 16 octets), corps = ChaCha20-Poly1305 de la
   clé de fichier (16 octets) sous la clé scrypt et un nonce nul, lignes base64 sans remplissage coupées à 64
   colonnes, MAC HMAC-SHA256 (clé HKDF « header ») sur l'en-tête jusqu'à `---` inclus ; nonce de 16 octets ; clé de
   charge HKDF-SHA256(sel = nonce, info « payload ») ; morceau `i` : nonce de 11 octets gros-boutiste ‖ drapeau de fin.
   Le lecteur vérifie le dernier morceau à l'ouverture (troncature) et chaque morceau lu. Mémoire scrypt et clés en
   mémoire sécurisée.
-- [ ] **Step 5 :** `ctest` vert, `tools/android/run_native_tests.sh` vert (temps de scrypt 2^18 sur le Pixel noté
-  dans le registre).
-- [ ] **Step 6 : commit** `feat(moteur): scrypt et format age, en flux et à accès aléatoire`.
+- [x] **Step 5 :** `ctest` vert, `tools/android/run_native_tests.sh` vert (temps de scrypt 2^18 sur le Pixel noté
+  dans le registre). *(ctest vert, 46/46 ; partie téléphone non faite dans cette session, qui n'avait pas le
+  téléphone : `test_scrypt`, `test_scrypt debit` et `test_age` ajoutés à `run_native_tests.sh`, à lancer en T15)*
+- [x] **Step 6 : commit** `feat(moteur): scrypt et format age, en flux et à accès aléatoire`.
 
 ### Task 2 : ZIP chiffré AES-256 et archives ZIP protégées
 
@@ -184,18 +185,18 @@ JUnit 4, AndroidX Test.
   et `int fl_arcw_open_age(const fl_arc_out *out, const void *pass, size_t passlen, uint8_t log2n, fl_arc_writer **w)`
   (ZIP en clair à l'intérieur d'un flux age, sans intermédiaire).
 
-- [ ] **Step 1 : tests en échec** : `zipAesJudgedByPython` (fichiers de 0 à 5 Mio, noms UTF-8, dossier vide :
+- [x] **Step 1 : tests en échec** : `zipAesJudgedByPython` (fichiers de 0 à 5 Mio, noms UTF-8, dossier vide :
   le juge relit tout), `judgeZipAesReadByEngine`, `zipCryptoReadWithPassword`, `zipAesWrongPasswordRefused`
   (`FL_EBADPASS`, aucun octet rendu), `noPasswordStillSaysEncrypted` (comportement de la phase 9 inchangé),
   `zipInsideAgeRoundTrip` (dossier de 200 fichiers ; le juge age puis `zipfile` de Python relisent),
   `sevenZipEncryptedStillRefused`, `passphraseCopyWiped` (libarchive efface sa copie : relu dans le code d'amont et
   vérifié par un crochet `free`).
-- [ ] **Step 2 : implémentation** : options `zip:encryption=aes256` et `archive_write_set_passphrase` ;
+- [x] **Step 2 : implémentation** : options `zip:encryption=aes256` et `archive_write_set_passphrase` ;
   `archive_read_add_passphrase` ; les phrases passent en C par une copie terminée par NUL en mémoire sécurisée.
   `mbedtls_pkcs5_pbkdf2_hmac` (dépréciée mais présente dans 3.6.5, sans `MBEDTLS_DEPRECATED_REMOVED`) noté dans
   `PATCHES.md`.
-- [ ] **Step 3 :** `ctest` vert (archives de la phase 9 comprises), tests natifs sur le Pixel verts.
-- [ ] **Step 4 : commit** `feat(moteur): ZIP chiffré AES-256 et archives ZIP protégées par mot de passe`.
+- [x] **Step 3 :** `ctest` vert (archives de la phase 9 comprises), tests natifs sur le Pixel verts.
+- [x] **Step 4 : commit** `feat(moteur): ZIP chiffré AES-256 et archives ZIP protégées par mot de passe`.
 
 ### Task 3 : coffres dans le moteur (disque sur un fichier, formatage sans table, emplacements LUKS2)
 
@@ -219,7 +220,7 @@ JUnit 4, AndroidX Test.
     dernier) ; `int fl_luks_slots(fl_bdev *dev, uint32_t *mask)` ; `int fl_luks_unlock_slot(fl_luks *l, int slot, const void *pass, size_t passlen, fl_bdev **decrypted)`
     (`slot` −1 : tous) ; LUKS1 : `FL_ENOTSUP` pour les modifications.
 
-- [ ] **Step 1 : tests en échec** (`test_vault`) : `vaultFormatHasNoTable` (scan : table `none`, partie 0 LUKS2),
+- [x] **Step 1 : tests en échec** (`test_vault`) : `vaultFormatHasNoTable` (scan : table `none`, partie 0 LUKS2),
   `vaultExfatAndExt4MountAndWrite`, `fdBdevOwnsDescriptor`, `vaultOnEngineFileRoundTrip` (coffre de 64 Mio dans un
   fichier d'une image ext4 puis d'une image exFAT : écriture, démontage, `e2fsck -fn` de l'hôte et `fsck.exfat -n`
   du coffre propres), `vaultOnEngineFileNoDeadlock` (4 fils : écritures dans le coffre et dans son hôte en même
@@ -227,7 +228,7 @@ JUnit 4, AndroidX Test.
   (`FL_EFBIG` au-delà de 4 Gio − 1 octet), `cryptsetupOpensVault` (`cryptsetup luksDump` et
   `cryptsetup open --test-passphrase` sur le fichier, sans root ; test ignoré si `cryptsetup` est absent, en le
   disant).
-- [ ] **Step 2 : tests en échec** (`test_luks2_slots`) : `changeSlot0` (nouveau mot de passe ouvre, ancien refusé, données
+- [x] **Step 2 : tests en échec** (`test_luks2_slots`) : `changeSlot0` (nouveau mot de passe ouvre, ancien refusé, données
   intactes), `addRecoveryAndBiometricSlots`, `removeSlot`, `lastSlotNeverRemoved`, `wrongAuthChangesNothing` (en-têtes
   identiques octet pour octet), `slotChangeSurvivesCutAtEveryWrite` (coupure par `fault_bdev` à chaque écriture
   possible : ensuite l'ancien **ou** le nouveau mot de passe ouvre, jamais aucun), `newerSecondaryWins` (primaire
@@ -235,15 +236,15 @@ JUnit 4, AndroidX Test.
   `cryptsetupAcceptsChangedHeader` (`luksDump` et `open --test-passphrase --key-slot n` pour chaque emplacement),
   `unlockSlotSkipsOthers` (l'emplacement 2 s'ouvre sans calculer l'Argon2 de 1 Gio de l'emplacement 0),
   `luks1Refused`, `jsonStaysUnder12KiB`.
-- [ ] **Step 3 : implémentation.** Emplacement écrit dans une zone libre de la zone des emplacements (32 Kio à 16 Mio,
+- [x] **Step 3 : implémentation.** Emplacement écrit dans une zone libre de la zone des emplacements (32 Kio à 16 Mio,
   ≈ 64 emplacements de 252 Kio) ; puis JSON réécrit avec cJSON (emplacement, `digests.0.keyslots`), seqid + 1,
   sommes, en-tête **primaire puis secondaire**, vidage après chaque écriture ; l'ancienne zone n'est effacée
   qu'après. Clé maîtresse obtenue par `auth`, vérifiée par le digest, en mémoire sécurisée, jamais rendue.
   `fl_fsfile_bdev` : lectures et écritures par `fl_file_pread`/`pwrite` du volume hôte (verrou du coffre puis
   verrou de l'hôte, jamais l'inverse).
-- [ ] **Step 4 :** `verify_vault_with_kernel.sh` (sudo, sur le PC) : `cryptsetup open`, `fsck.exfat -n` ou `e2fsck -fn`,
+- [x] **Step 4 :** `verify_vault_with_kernel.sh` (sudo, sur le PC) : `cryptsetup open`, `fsck.exfat -n` ou `e2fsck -fn`,
   montage, comparaison avec le manifeste écrit par `test_vault` ; note dans le registre.
-- [ ] **Step 5 : commit** `feat(moteur): coffres LUKS2 dans un fichier et gestion des emplacements de clé`.
+- [x] **Step 5 : commit** `feat(moteur): coffres LUKS2 dans un fichier et gestion des emplacements de clé`.
 
 ### Task 4 : poignées JNI et moteur Kotlin
 
@@ -270,15 +271,15 @@ JUnit 4, AndroidX Test.
   `luksSlotSet(disk, slot, auth: ByteArray, new: ByteArray, kdfMemKib: Int, kdfTime: Int): Int`,
   `luksSlotRemove(disk, slot, auth): Int`, `mountSlot(disk, part, slot, pass, writable): Long`.
 
-- [ ] **Step 1 : tests en échec** (`test_handles`) : `closingHostFileClosesVaultDisk` (fichier hôte fermé → volume du
+- [x] **Step 1 : tests en échec** (`test_handles`) : `closingHostFileClosesVaultDisk` (fichier hôte fermé → volume du
   coffre démonté et synchronisé, poignées invalides, rien ne fuit), `ejectHostDiskCascades`, `agerChildOfFile`,
   `staleAgeHandleIsEinval`, `slotChangeRefusedWhileMounted`, `passWipedOnEveryPath` (crochet : copie native effacée
   après succès comme après échec).
-- [ ] **Step 2 : implémentation** ; `fj_debug_used` revient à son compte initial dans chaque test.
-- [ ] **Step 3 : essais instrumentés en échec puis verts** (`EngineTest`, sur le Pixel, dossier privé) :
+- [x] **Step 2 : implémentation** ; `fj_debug_used` revient à son compte initial dans chaque test.
+- [x] **Step 3 : essais instrumentés en échec puis verts** (`EngineTest`, sur le Pixel, dossier privé) :
   `ageRoundTripOnPhone`, `zipAesRoundTripOnPhone`, `vaultCreateMountWriteOnPhone` (coffre de 64 Mio par
   `openDiskFd`), `slotChangeOnPhone`.
-- [ ] **Step 4 : commit** `feat(moteur): poignées de chiffrement et de coffres pour Kotlin`.
+- [x] **Step 4 : commit** `feat(moteur): poignées de chiffrement et de coffres pour Kotlin`.
 
 ### Task 5 : chiffrer et déchiffrer fichiers et dossiers (Kotlin)
 
@@ -304,7 +305,7 @@ JUnit 4, AndroidX Test.
   `startExtract` reçoit `Uint8List? password` ; `TransferMsg.kind` ∈ … `encrypt`, `decrypt`, `verify` ;
   erreur `badPassword` (« Mot de passe incorrect ») distincte des autres.
 
-- [ ] **Step 1 : tests en échec** : `encryptFileToAgeSameFolder` (`rapport.pdf` → `rapport.pdf.age`, nom unique),
+- [x] **Step 1 : tests en échec** : `encryptFileToAgeSameFolder` (`rapport.pdf` → `rapport.pdf.age`, nom unique),
   `encryptFolderToZipAge`, `encryptSelectionTogether` (« Archive.zip.age » ou le nom choisi), `encryptToZipAes`,
   `encryptToRemoteDestination` (tube de la phase 10), `noPlaintextOutsideDestination` (seules écritures : le partiel
   puis le nom final sur la destination), `partialRemovedOnFailureAndCancel`, `originalKeptUntilVerified`,
@@ -317,13 +318,13 @@ JUnit 4, AndroidX Test.
   `autoLockWaitsForCrypt` (`Transfers.isBusy`) ; `PasswordsTest` : `minLength8`, `nulRefused` ; `CryptFormatsTest` :
   reconnaissance par les premiers octets (`age-encryption.org/v1`, `PK` + drapeau de chiffrement, `LUKS\xba\xbe`),
   pas seulement l'extension.
-- [ ] **Step 2 : implémentation.** Chiffrement : lecture de la source en flux, empreinte SHA-256 du clair (ou du ZIP en
+- [x] **Step 2 : implémentation.** Chiffrement : lecture de la source en flux, empreinte SHA-256 du clair (ou du ZIP en
   clair) calculée au passage, écriture par `NativeOut` vers le partiel ; vérification : relecture complète du
   chiffré (déchiffrement sans écriture) et comparaison d'empreinte, ZIP relu (entrées et tailles) ; renommage ;
   seulement ensuite, si demandé, suppression **définitive** de l'original (sans corbeille). Déchiffrement : `NativeIn`
   de la phase 9 (descripteur, fichier du moteur, mandataire distant) ; dossier : `fl_arc_open_age` puis l'extraction
   de la phase 9 (chemins hostiles, place, deux passages).
-- [ ] **Step 3 : commit** `feat(chiffrement): chiffrer, déchiffrer, vérifier et changer le mot de passe d'un fichier`.
+- [x] **Step 3 : commit** `feat(chiffrement): chiffrer, déchiffrer, vérifier et changer le mot de passe d'un fichier`.
 
 ### Task 6 : ouvrir un fichier chiffré sans copie en clair
 
@@ -340,18 +341,18 @@ JUnit 4, AndroidX Test.
   `agePread` ; `contentUri` par `StreamProvider` ; Pigeon `@async SourceMsg openDecrypted(String srcId, String path, Uint8List password)`,
   `void closeDecrypted(String sourceId)` ; `SourceMsg.kind` = `decrypted`.
 
-- [ ] **Step 1 : tests en échec** : `decryptedViewReadsAtAnyOffset`, `decryptedViewIsReadOnly` (toute écriture refusée
+- [x] **Step 1 : tests en échec** : `decryptedViewReadsAtAnyOffset`, `decryptedViewIsReadOnly` (toute écriture refusée
   avec le message), `decryptedViewNeverWritesToDisk` (aucune écriture sur aucune source ni dans le cache),
   `decryptedViewDroppedWithSource` (source d'origine fermée, verrouillée ou débranchée → source déchiffrée retirée,
   liens du fournisseur expirés), `closeDecryptedWipes` (lecteur natif fermé), `atMostFourDecryptedViews` (la
   cinquième ferme la plus ancienne), `folderAgeNotOpenable` (un `.zip.age` se déchiffre ou s'extrait, il ne s'ouvre
   pas en vue).
-- [ ] **Step 2 : implémentation** ; les lecteurs de Portail (images, texte en lecture seule, musique, vidéo) et
+- [x] **Step 2 : implémentation** ; les lecteurs de Portail (images, texte en lecture seule, musique, vidéo) et
   « Ouvrir avec » reçoivent `sourceId = dec:…` sans autre changement ; « Partager » demande confirmation (« Le
   destinataire recevra le fichier en clair »).
 - [ ] **Step 3 : essais instrumentés** (`CryptInstrumentedTest`) : `decryptedVideoSeeks` (vidéo de 20 Mio chiffrée, lue
   par le fournisseur de flux à 50 % et 90 %), `decryptedImageViewer`.
-- [ ] **Step 4 : commit** `feat(chiffrement): ouvrir un fichier chiffré sans copie en clair`.
+- [x] **Step 4 : commit** `feat(chiffrement): ouvrir un fichier chiffré sans copie en clair`.
 
 ### Task 7 : saisie des mots de passe — force, générateur, copie sensible *(proposition du planificateur)*
 
@@ -370,14 +371,14 @@ JUnit 4, AndroidX Test.
   `String generatePassphrase({int words = 6})` (`Random.secure()`) ; `PasswordField(controller, {confirm, showStrength, allowGenerate, onGenerated})` ;
   Pigeon `void copySecret(Uint8List text)` (`ClipDescription.EXTRA_IS_SENSITIVE`, effacé après 60 s s'il n'a pas changé).
 
-- [ ] **Step 1 : tests en échec** : `strengthLevels` (`motdepasse` très faible, `Tr0ub4dour&3` moyen, 6 mots EFF
+- [x] **Step 1 : tests en échec** : `strengthLevels` (`motdepasse` très faible, `Tr0ub4dour&3` moyen, 6 mots EFF
   bon ou excellent, 20 caractères générés excellent), `sequencesPenalized`, `generatorUsesSecureRandomAndAllClasses`,
   `passphraseHasSixDistinctListWords`, `wordListIs7776Unique`, `confirmMismatchBlocks`, `under8Blocks`,
   `generateFillsBothFields`, `copySecretSendsBytes`, `strengthAnnouncedToTalkBack` (« Force : bon »),
   `fieldClearedOnDispose`.
-- [ ] **Step 2 : implémentation** ; avertissement permanent sous le champ de création : « Sans ce mot de passe, rien ne
+- [x] **Step 2 : implémentation** ; avertissement permanent sous le champ de création : « Sans ce mot de passe, rien ne
   pourra être récupéré » ; la phase 5 (déverrouillage) garde son comportement (pas de force ni de générateur).
-- [ ] **Step 3 : commit** `feat(chiffrement): force des mots de passe, générateur et copie protégée`.
+- [x] **Step 3 : commit** `feat(chiffrement): force des mots de passe, générateur et copie protégée`.
 
 ### Task 8 : écrans de chiffrement et de déchiffrement
 
@@ -389,16 +390,16 @@ JUnit 4, AndroidX Test.
   `lib/src/state/app_state.dart`, `lib/src/strings_fr.dart`, `test/fake_host_api.dart`
 - Test : `test/encrypt_screens_test.dart`
 
-- [ ] **Step 1 : tests en échec** : `encryptSheetDefaults` (Chiffrement fort, même dossier, original gardé),
+- [x] **Step 1 : tests en échec** : `encryptSheetDefaults` (Chiffrement fort, même dossier, original gardé),
   `zipFormatShowsNamesWarning`, `deleteOriginalExplainsFlash`, `severalSelectedOffersTogether`,
   `destinationPickerIncludesRemote`, `tapAgeFileAsksPasswordThenOffersOpenDecryptVerify`,
   `tapZipAgeOffersExtract`, `tapProtectedZipAsksPassword` (extraction de la phase 9 avec mot de passe),
   `badPasswordStaysInDialog` (champ vidé, message, nouvel essai), `resultOffersShare` (« Partager le fichier
   chiffré » ; rappel « Le destinataire déchiffre avec age » ou « avec 7-Zip »), `passwordBytesZeroedAfterCall`,
   `lockIconOnEncryptedFiles`.
-- [ ] **Step 2 : implémentation** ; écrans ajoutés au banc `test/screen_harness.dart` (`encrypt`, `decrypt`) :
+- [x] **Step 2 : implémentation** ; écrans ajoutés au banc `test/screen_harness.dart` (`encrypt`, `decrypt`) :
   48 dp, contraste, 200 %, TalkBack, pas de texte sous la barre de navigation.
-- [ ] **Step 3 : commit** `feat(chiffrement): Chiffrer et Déchiffrer dans l'explorateur`.
+- [x] **Step 3 : commit** `feat(chiffrement): Chiffrer et Déchiffrer dans l'explorateur`.
 
 ### Task 9 : coffres (Kotlin)
 
@@ -426,7 +427,7 @@ JUnit 4, AndroidX Test.
   `void closeVault(String vaultId)`, `void forgetVault(String vaultId)` ; `VolumeMsg.vaultId` ; FlutterApi
   `onStateChanged` porte aussi la liste des coffres.
 
-- [ ] **Step 1 : tests en échec** : `createWritesZerosThenFormats` (partiel `.nom.luks.portail-partiel`, progression
+- [x] **Step 1 : tests en échec** : `createWritesZerosThenFormats` (partiel `.nom.luks.portail-partiel`, progression
   0 à 80 % pour la place, puis formatage ; renommé seulement à la fin), `createCancelRemovesPartial`,
   `createChecksSizeBounds` (32 Mio, place libre moins la réserve, 4 Gio − 1 sur FAT32), `createRefusedOnRemote`,
   `createRefusedInsideVault`, `openOnPhoneUsesFd`, `openOnDiskUsesEngineFile`, `vaultVolumeIsEncryptedAndListed`
@@ -439,12 +440,12 @@ JUnit 4, AndroidX Test.
   (« Ce fichier n'est pas un coffre »), `linuxLuks1ContainerOpens` (image LUKS1 + ext4 du jeu de tests),
   `dirtyExfatOpensReadOnlyWithAdvice` (raison de la phase 7 complétée : « vérifiez-le sous Linux :
   cryptsetup open, puis fsck.exfat »).
-- [ ] **Step 2 : implémentation.** Un coffre est un `DiskEntry` de plus dans `VolumeManager` (pas de `UsbDevice`),
+- [x] **Step 2 : implémentation.** Un coffre est un `DiskEntry` de plus dans `VolumeManager` (pas de `UsbDevice`),
   ouvert par `openDiskFd` (`ParcelFileDescriptor.open(...).detachFd()` sur le fichier vérifié par `LocalSource`) ou
   `openDiskOnFile` (fichier du volume porteur ouvert en écriture, gardé jusqu'à la fermeture) ; scan, puis
   `mount(part 0)` ; `VolumeService` le garde ouvert comme un disque. Les opérations « éjecter », « débrancher »,
   « verrouiller » d'un volume ferment d'abord les coffres qu'il porte.
-- [ ] **Step 3 : commit** `feat(coffres): créer et ouvrir des coffres comme des stockages`.
+- [x] **Step 3 : commit** `feat(coffres): créer et ouvrir des coffres comme des stockages`.
 
 ### Task 10 : coffres (écrans)
 
@@ -456,16 +457,16 @@ JUnit 4, AndroidX Test.
   `lib/src/state/app_state.dart`, `lib/src/strings_fr.dart`, `test/fake_host_api.dart`
 - Test : `test/vault_screens_test.dart`
 
-- [ ] **Step 1 : tests en échec** : `createFormDefaults` (exFAT, 1 Gio, dossier courant), `sizeChoicesRespectFreeSpace`,
+- [x] **Step 1 : tests en échec** : `createFormDefaults` (exFAT, 1 Gio, dossier courant), `sizeChoicesRespectFreeSpace`,
   `fat32HostCapsSize`, `ext4ExplainsLinuxOwnership`, `noRecoveryWarningAlwaysShown`, `createShowsProgressAndCancel`,
   `homeListsVaultsWithState` (fermé, ouvert, indisponible avec le nom du stockage absent), `openThenBrowse`
   (l'explorateur s'ouvre à la racine du coffre), `closeFromTile`, `forgetKeepsFile` (« Retirer de la liste » ne
   supprime rien), `tapLuksFileOffersOpen`, `readOnlyCheckboxHonoursSetting`.
-- [ ] **Step 2 : implémentation** ; tuile : nom, taille, système de fichiers, emplacement ; menu ⋮ : Ouvrir/Fermer,
+- [x] **Step 2 : implémentation** ; tuile : nom, taille, système de fichiers, emplacement ; menu ⋮ : Ouvrir/Fermer,
   Parcourir, Ouvrir dans Fichiers, Changer le mot de passe (T11), Clé de secours (T11), Déverrouillage biométrique
   (T12), Afficher l'emplacement, Retirer de la liste. Écrans ajoutés au banc d'accessibilité (`vaultCreate`,
   `homeVaults`).
-- [ ] **Step 3 : commit** `feat(coffres): écrans de création, section Coffres de l'accueil`.
+- [x] **Step 3 : commit** `feat(coffres): écrans de création, section Coffres de l'accueil`.
 
 ### Task 11 : mot de passe et clé de secours d'un coffre *(proposition du planificateur)*
 
@@ -478,13 +479,13 @@ Test `VaultsTest.kt` (cas ajoutés), `test/vault_keys_test.dart`
 `@async void removeRecoveryKey(String vaultId, Uint8List password)` ; la clé de secours se saisit dans le dialogue
 d'ouverture (lien « Utiliser la clé de secours »).
 
-- [ ] **Step 1 : tests en échec** : `changePasswordRequiresClosedVault` (« Fermez d'abord le coffre »),
+- [x] **Step 1 : tests en échec** : `changePasswordRequiresClosedVault` (« Fermez d'abord le coffre »),
   `changePasswordKeepsSlot0`, `recoveryKeyFormat` (24 caractères Crockford, groupes de 4, sans I L O U),
   `recoveryKeyOpensVault` (tirets et casse ignorés), `recoveryKeyShownOnce` (écran avec Copier et « J'ai noté la
   clé », jamais réaffichée), `removeRecoveryKeepsPassword`, `luks1VaultOffersNothing` (« Coffre LUKS1 : changez la
   phrase sous Linux »), `foreignSlotsKept` (emplacements inconnus d'un coffre créé sous Linux jamais touchés).
-- [ ] **Step 2 : implémentation** (`luksSlotSet` / `luksSlotRemove` de T4, coffre fermé, progression pendant Argon2).
-- [ ] **Step 3 : commit** `feat(coffres): changer le mot de passe, clé de secours`.
+- [x] **Step 2 : implémentation** (`luksSlotSet` / `luksSlotRemove` de T4, coffre fermé, progression pendant Argon2).
+- [x] **Step 3 : commit** `feat(coffres): changer le mot de passe, clé de secours`.
 
 ### Task 12 : déverrouillage biométrique d'un coffre *(proposition du planificateur)*
 
@@ -502,15 +503,15 @@ dès l'API 30), `setInvalidatedByBiometricEnrollment(true)` ; secret scellé dan
 Pigeon `@async void enableBiometric(String vaultId, Uint8List password)`, `@async VolumeMsg openVaultBiometric(String vaultId, bool writable)`,
 `@async void disableBiometric(String vaultId, Uint8List? password)` ; `bool biometricAvailable()`.
 
-- [ ] **Step 1 : tests en échec** : `hiddenWithoutStrongBiometric` (API < 28 ou aucune biométrie forte : option
+- [x] **Step 1 : tests en échec** : `hiddenWithoutStrongBiometric` (API < 28 ou aucune biométrie forte : option
   absente, avec la raison), `enableAddsSlot2AndSealsSecret`, `secretNeverEqualsPassword`,
   `enrollmentChangeDisablesBiometric` (`KeyPermanentlyInvalidatedException` → biométrie désactivée, message, ouverture
   par mot de passe proposée), `cancelFallsBackToPassword`, `disableWipesKeyAndSlot`, `forgetVaultWipesKey` ;
   instrumenté : `biometricSecretSealedWithAuthKey` (clé matérielle, `isUserAuthenticationRequired`).
-- [ ] **Step 2 : implémentation** par `android.hardware.biometrics.BiometricPrompt` et un `CryptoObject` (Cipher) ;
+- [x] **Step 2 : implémentation** par `android.hardware.biometrics.BiometricPrompt` et un `CryptoObject` (Cipher) ;
   titre « Ouvrir le coffre <nom> » ; ouverture par `mountSlot(…, 2, …)` (Argon2 de 64 Mio seulement). Le Pixel
   4 XL n'a pas de lecteur d'empreinte : son déverrouillage par le visage est une biométrie forte.
-- [ ] **Step 3 : commit** `feat(coffres): déverrouillage biométrique facultatif`.
+- [x] **Step 3 : commit** `feat(coffres): déverrouillage biométrique facultatif`.
 
 ### Task 13 : confidentialité — fermeture à l'écran éteint, masquage dans les captures *(proposition du planificateur)*
 
@@ -519,17 +520,17 @@ Pigeon `@async void enableBiometric(String vaultId, Uint8List password)`, `@asyn
 `pigeons/fluluks_api.dart` (+ générés), `lib/src/strings_fr.dart` ; Test `VaultPrivacyTest.kt`,
 `test/settings_screen_test.dart` (cas ajoutés)
 
-- [ ] **Step 1 : tests en échec** : `screenOffClosesVaultsWhenEnabled`, `screenOffWaitsForRunningOperation` (fermés à
+- [x] **Step 1 : tests en échec** : `screenOffClosesVaultsWhenEnabled`, `screenOffWaitsForRunningOperation` (fermés à
   la fin de l'opération en cours), `screenOffLeavesDisksAlone` (seuls les coffres), `secureFlagWhileVaultOrDecryptedView`
   (posé tant qu'un coffre est parcouru ou qu'une vue déchiffrée est affichée, si le réglage est actif),
   `bothSettingsOffByDefault`.
-- [ ] **Step 2 : implémentation** ; le délai du verrouillage automatique de la phase 7 s'applique déjà aux coffres :
+- [x] **Step 2 : implémentation** ; le délai du verrouillage automatique de la phase 7 s'applique déjà aux coffres :
   son libellé devient « Verrouiller les disques chiffrés et les coffres après ».
-- [ ] **Step 3 : commit** `feat(coffres): fermeture à l'écran éteint et masquage dans les captures`.
+- [x] **Step 3 : commit** `feat(coffres): fermeture à l'écran éteint et masquage dans les captures`.
 
 ### Task 14 : documentation
 
-- [ ] README : section « Chiffrement et coffres (nouveau en 1.7.0) » (formats, un mot de passe par élément, aucune
+- [x] README : section « Chiffrement et coffres (nouveau en 1.7.0) » (formats, un mot de passe par élément, aucune
   récupération sans lui, ouverture sans copie en clair, coffres, clé de secours, biométrie) ; « Lire sur un
   ordinateur » : `age -d fichier.age > fichier`, `age -d dossier.zip.age | bsdtar -xf -`, `7z x fichier.zip`,
   `udisksctl loop-setup -f Coffre.luks` ou `sudo cryptsetup open Coffre.luks coffre && sudo mount /dev/mapper/coffre /mnt` ;
@@ -537,32 +538,32 @@ Pigeon `@async void enableBiometric(String vaultId, Uint8List password)`, `@asyn
   7z et RAR chiffrés refusés, coffre exFAT mal fermé en lecture seule jusqu'à `fsck.exfat`, effacement sur mémoire
   flash) ; « Archives protégées par mot de passe » retiré des limites pour le ZIP ; licences (scrypt, liste EFF) ;
   tableau de la feuille de route ; commandes des juges dans « Tests ».
-- [ ] Aide : trois questions, « Chiffrer un fichier ou un dossier », « Créer et ouvrir un coffre », « J'ai oublié le mot
+- [x] Aide : trois questions, « Chiffrer un fichier ou un dossier », « Créer et ouvrir un coffre », « J'ai oublié le mot
   de passe » ; strings testées.
-- [ ] Fiche d'essai `docs/superpowers/research/<AAAA-MM-JJ>-essais-phase14/essais.md` (T16), copiée sur `develop` et sur le
+- [x] Fiche d'essai `docs/superpowers/research/<AAAA-MM-JJ>-essais-phase14/essais.md` (T16), copiée sur `develop` et sur le
   téléphone (`Download/portail-tests/phase14/`).
-- [ ] Commit `docs: chiffrement et coffres`.
+- [x] Commit `docs: chiffrement et coffres`.
 
 ### Task 15 : essais instrumentés sur le Pixel
 
 **Files :** Create `android/app/src/androidTest/kotlin/com/mawena/fluluks/VaultInstrumentedTest.kt` ; Modify
 `CryptInstrumentedTest.kt`, `Fixtures.kt`
 
-- [ ] **Step 1** : essais sur le téléphone, dans le dossier privé de l'application et sur une image de disque de
+- [x] **Step 1** : essais sur le téléphone, dans le dossier privé de l'application et sur une image de disque de
   `/data/local/tmp/fluluks/` : chiffrer puis déchiffrer un dossier de 200 fichiers (age et ZIP AES), original
   supprimé après vérification, vue déchiffrée d'une vidéo par le fournisseur, coffre de 128 Mio créé puis ouvert, 50
   fichiers écrits, fermé, rouvert, mot de passe changé, clé de secours ; coffre dans un fichier d'un volume ext4
   d'image, éjection de l'image (coffre fermé avant) ; mesure des durées (scrypt, Argon2, débit dans le coffre).
-- [ ] **Step 2** : passage par `am instrument` (jamais `connectedAndroidTest`), journal
+- [x] **Step 2** : passage par `am instrument` (jamais `connectedAndroidTest`), journal
   `docs/superpowers/research/<date>-essais-phase14/instrumentes-<horodatage>.txt` ; les fichiers produits sont relus
   sur le PC par `agejuge.py`, `zipaesjuge.py` et `verify_vault_with_kernel.sh` (`adb pull`).
-- [ ] **Step 3 : commit** `test(chiffrement): essais instrumentés sur le Pixel`.
+- [x] **Step 3 : commit** `test(chiffrement): essais instrumentés sur le Pixel`.
 
 ### Task 16 *(utilisateur)* : essais sur le Pixel
 
-- [ ] Construire et installer l'APK sur le Pixel **avant** de demander l'essai (`adb install -r`, APK de
+- [x] Construire et installer l'APK sur le Pixel **avant** de demander l'essai (`adb install -r`, APK de
   l'utilisateur sauvegardée).
-- [ ] Fiche remplie : chiffrer une photo et un dossier du téléphone (age), puis un dossier du disque LUKS vers le disque ;
+- [x] Fiche remplie : chiffrer une photo et un dossier du téléphone (age), puis un dossier du disque LUKS vers le disque ;
   ouvrir la photo chiffrée dans la visionneuse et une vidéo chiffrée (avance rapide) ; déchiffrer ; mauvais mot de
   passe ; ZIP AES ouvert sur le PC par 7-Zip ou `7z`, fichier `.age` par `age -d` ; coffre créé sur le téléphone et sur
   le disque USB, parcouru dans Portail et dans Fichiers, vidéo lue dans VLC depuis le coffre ; coffre ouvert sous
@@ -571,8 +572,8 @@ Pigeon `@async void enableBiometric(String vaultId, Uint8List password)`, `@asyn
 
 ### Fin de phase
 
-- [ ] Relecture finale de toute la branche.
-- [ ] Fusion `feature/chiffrement` → `develop`, puis `release/1.7.0` (pubspec `1.7.0+14`), `main`, étiquette signée
+- [x] Relecture finale de toute la branche.
+- [ ] Fusion `feature/chiffrement` → `develop`, puis `release/1.7.0` (pubspec `1.7.0+15`), `main`, étiquette signée
   `v1.7.0`. Pas de push sans l'accord de l'utilisateur.
 
 ---

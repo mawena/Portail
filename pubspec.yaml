@@ -61,6 +61,8 @@ flutter:
   # Logo de l'interface (96 dp de base, variantes 2.0x à 4.0x), rendu par tools/logo/render_icons.py --flutter
   assets:
     - assets/logo/
+    # liste de mots de l'EFF : phrases de passe générées et force des mots de passe (phase 14)
+    - assets/words/
     # licences des bibliothèques, montrées par « À propos » (lib/src/licenses.dart)
     - assets/licenses/
     - native/third_party/lwext4/LICENSE

@@ -43,6 +43,7 @@ PlayerMsg playing() =>
     PlayerMsg(sourceId: 'phone', title: 'b.flac', index: 1, count: 2, playing: true, positionMs: 61000, durationMs: 185000);
 
 TransferMsg copying() => TransferMsg(
+        badPassword: false,
       move: false,
       currentName: 'film.mkv',
       fileIndex: 1,

@@ -2,7 +2,8 @@
 /* Écriture de ZIP sur libarchive (phase 9) : entrées poussées une à une, deflate (niveau 6) ou stockage au
  * choix par entrée, noms UTF-8 avec le drapeau UTF-8 (hdrcharset), ZIP64 quand une taille l'exige, champ de
  * date étendu (UTC) en plus de l'heure DOS. Un nom absolu, vide ou avec un segment « . », « .. » ou vide est
- * refusé ; un abandon (close sans commit) n'écrit plus rien sur la destination. */
+ * refusé ; un abandon (close sans commit) n'écrit plus rien sur la destination.
+ * Phase 14 : ZIP chiffré WinZip AES-256 (libarchive sur mbedTLS), et ZIP écrit dans un flux age. */
 #include <archive.h>
 #include <archive_entry.h>
 #include <errno.h>
@@ -10,8 +11,10 @@
 #include <string.h>
 
 #include "archive/arc_internal.h"
+#include "fluluks/age.h"
 #include "fluluks/archive.h"
 #include "fluluks/error.h"
+#include "fluluks/secure.h"
 
 struct fl_arc_writer {
   struct archive *a;
@@ -20,6 +23,8 @@ struct fl_arc_writer {
   int64_t remaining;   /* octets encore attendus pour l'entrée courante */
   bool failed;         /* une erreur a eu lieu : seul close(false) reste permis */
   bool discard;        /* abandon : libarchive termine dans le vide, rien n'atteint la destination */
+  fl_agew *age;        /* flux age sous le ZIP (fl_arcw_open_age), sinon NULL */
+  fl_arc_out age_out;  /* sortie en clair écrite dans `age` */
 };
 
 static la_ssize_t cb_write(struct archive *a, void *data, const void *buf, size_t len) {
@@ -39,22 +44,28 @@ static int err_code(fl_arc_writer *w) {
   return w->io_err ? w->io_err : FL_EIO;
 }
 
-int fl_arcw_open(const fl_arc_out *out, fl_arc_writer **wp) {
-  if (!out || !out->write || !wp) return FL_EINVAL;
-  *wp = NULL;
-  fl_arc_writer *w = calloc(1, sizeof *w);
-  if (!w) return FL_ENOMEM;
-  w->out = out;
+/* Ouvre `w` (déjà alloué, w->out posé) ; libère l'archive en cas d'échec, pas `w`. */
+static int open_writer(fl_arc_writer *w, const void *pass, size_t passlen) {
   w->a = archive_write_new();
-  if (!w->a) {
-    free(w);
-    return FL_ENOMEM;
-  }
+  if (!w->a) return FL_ENOMEM;
   struct archive *a = w->a;
+  char *c = NULL;
+  if (pass) {
+    /* copie terminée par NUL en mémoire sécurisée ; libarchive efface la sienne au archive_write_free */
+    c = fl_secure_alloc(passlen + 1);
+    if (!c) {
+      archive_write_free(a);
+      return FL_ENOMEM;
+    }
+    memcpy(c, pass, passlen);
+  }
   locale_t old = fl_arc_utf8_begin();
   int rc = archive_write_set_format_zip(a);
   if (rc == ARCHIVE_OK) rc = archive_write_set_format_option(a, "zip", "hdrcharset", "UTF-8");
   if (rc == ARCHIVE_OK) rc = archive_write_set_format_option(a, "zip", "compression-level", "6");
+  if (rc == ARCHIVE_OK && c) rc = archive_write_set_format_option(a, "zip", "encryption", "aes256");
+  if (rc == ARCHIVE_OK && c) rc = archive_write_set_passphrase(a, c);
+  if (c) fl_secure_free(c, passlen + 1);
   if (rc == ARCHIVE_OK) rc = archive_write_set_bytes_per_block(a, 64 * 1024);
   if (rc == ARCHIVE_OK) rc = archive_write_set_bytes_in_last_block(a, 1); /* pas de bourrage final */
   if (rc == ARCHIVE_OK) rc = archive_write_open2(a, w, NULL, cb_write, NULL, NULL);
@@ -63,6 +74,45 @@ int fl_arcw_open(const fl_arc_out *out, fl_arc_writer **wp) {
     int code = w->io_err ? w->io_err : FL_EIO;
     archive_write_fail(a);
     archive_write_free(a);
+    w->a = NULL;
+    return code;
+  }
+  return FL_OK;
+}
+
+int fl_arcw_open2(const fl_arc_out *out, const void *pass, size_t passlen, fl_arc_writer **wp) {
+  if (!out || !out->write || !wp) return FL_EINVAL;
+  *wp = NULL;
+  if (pass && (passlen == 0 || memchr(pass, 0, passlen))) return FL_EINVAL;
+  fl_arc_writer *w = calloc(1, sizeof *w);
+  if (!w) return FL_ENOMEM;
+  w->out = out;
+  int code = open_writer(w, pass, passlen);
+  if (code != FL_OK) {
+    free(w);
+    return code;
+  }
+  *wp = w;
+  return FL_OK;
+}
+
+int fl_arcw_open(const fl_arc_out *out, fl_arc_writer **wp) { return fl_arcw_open2(out, NULL, 0, wp); }
+
+static int age_write(void *ctx, const void *buf, size_t len) { return fl_agew_write(ctx, buf, len); }
+
+int fl_arcw_open_age(const fl_arc_out *out, const void *pass, size_t passlen, uint8_t log2n, fl_arc_writer **wp) {
+  if (!out || !out->write || !pass || !wp) return FL_EINVAL;
+  *wp = NULL;
+  fl_arc_writer *w = calloc(1, sizeof *w);
+  if (!w) return FL_ENOMEM;
+  int code = fl_agew_open(out, pass, passlen, log2n, &w->age);
+  if (code == FL_OK) {
+    w->age_out = (fl_arc_out){.ctx = w->age, .write = age_write};
+    w->out = &w->age_out;
+    code = open_writer(w, NULL, 0);
+    if (code != FL_OK) fl_agew_close(w->age, false);
+  }
+  if (code != FL_OK) {
     free(w);
     return code;
   }
@@ -137,6 +187,11 @@ int fl_arcw_close(fl_arc_writer *w, bool commit) {
     }
   }
   archive_write_free(w->a);
+  if (w->age) {
+    /* le flux age se termine seulement si le ZIP est complet ; sinon plus rien n'est écrit */
+    int c = fl_agew_close(w->age, commit && code == FL_OK);
+    if (code == FL_OK && commit) code = c;
+  }
   free(w);
   return code;
 }

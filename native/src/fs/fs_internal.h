@@ -8,6 +8,7 @@
  * (absolus, sans composant vide, "." ni "..", ≤ 4095 octets, composants ≤ 255 octets).
  * Une opération d'écriture NULL signifie « non prise en charge » (FL_EROFS). */
 
+#include <pthread.h>
 #include <stdatomic.h>
 
 #include "fluluks/fs.h"
@@ -77,5 +78,15 @@ void fl_fs_go_read_only(fl_fs *fs, const char *reason);
 
 /* Heure des horodatages (secondes Unix) : l'horloge de fl_fs_set_clock, sinon time(). */
 int64_t fl_fs_now(void);
+
+/* Verrou commun des systèmes de fichiers (phase 14) : ext4_glue.c, fat_glue.c et ntfs_glue.c le prennent
+ * sous leurs anciens noms (g_lock, g_fat_lock, g_ntfs_lock). Il est récursif : le système de fichiers d'un
+ * coffre (fl_fsfile_bdev_new) appelle celui de son volume porteur depuis le même fil, verrou tenu. Un
+ * verrou par type de système de fichiers se bloquerait sur lui-même (exFAT dans exFAT) ou entre deux fils
+ * (exFAT dans ext4 pendant ext4 dans exFAT). lwext4 (tables de montage, règles de création constantes) et
+ * FatFs (noms longs sur le tas) ne modifient d'état global qu'au montage : un appel imbriqué sur un autre
+ * volume est sûr. libntfs-3g en garde davantage, mais un coffre n'est jamais en NTFS : aucun appel NTFS
+ * n'est imbriqué dans un autre appel NTFS. */
+pthread_mutex_t *fl_fs_glue_lock(void);
 
 #endif

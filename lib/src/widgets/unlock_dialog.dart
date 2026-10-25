@@ -3,15 +3,18 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
+import '../bridge/fluluks_api.g.dart';
 import '../state/app_state.dart';
 import '../strings_fr.dart';
 import '../ui/feedback.dart';
 import '../ui/tokens.dart';
 import '../ui/widgets.dart';
+import 'password_field.dart';
 
 /// Dialogue de saisie de la phrase de passe. Les octets UTF-8 envoyés sont mis à zéro après l'appel
 /// (réussi ou non) et le champ est vidé ; la phrase n'est jamais conservée ailleurs. Afficher ou masquer la phrase
 /// ne change que son rendu (aucune copie). La case « Ouvrir en lecture seule » fixe l'écriture demandée.
+/// Variante coffre ([UnlockDialog.vault], phase 14) : mot de passe du coffre, rend son volume en se fermant.
 class UnlockDialog extends StatefulWidget {
   const UnlockDialog({
     super.key,
@@ -20,12 +23,38 @@ class UnlockDialog extends StatefulWidget {
     required this.partIndex,
     required this.partitionName,
     this.writable = true,
-  });
+  })  : vaultId = null,
+        vaultSourceId = null,
+        vaultPath = null,
+        offerRecovery = false,
+        _vault = false;
+
+  /// Ouvre le coffre connu [vaultId], ou le fichier [vaultPath] de [vaultSourceId] ; [name] : nom montré.
+  const UnlockDialog.vault({
+    super.key,
+    required this.state,
+    required String name,
+    this.vaultId,
+    this.vaultSourceId,
+    this.vaultPath,
+    this.writable = true,
+    this.offerRecovery = true,
+  })  : diskId = '',
+        partIndex = 0,
+        partitionName = name,
+        _vault = true;
 
   final AppState state;
   final String diskId;
   final int partIndex;
   final String partitionName;
+  final String? vaultId;
+  final String? vaultSourceId;
+  final String? vaultPath;
+
+  /// Coffre : lien « Utiliser la clé de secours » (la clé se tape à la place du mot de passe).
+  final bool offerRecovery;
+  final bool _vault;
 
   /// Écriture demandée au départ (faux si « Ouvrir les disques en lecture seule » est actif) : la case
   /// « Ouvrir en lecture seule » en part, et l'utilisateur peut la changer.
@@ -39,8 +68,8 @@ class _UnlockDialogState extends State<UnlockDialog> {
   final _controller = TextEditingController();
   bool _busy = false;
   String? _error;
-  bool _obscure = true;
   late bool _readOnly = !widget.writable;
+  bool _recovery = false;
 
   @override
   void dispose() {
@@ -60,8 +89,20 @@ class _UnlockDialogState extends State<UnlockDialog> {
     });
     String? error;
     var ok = false;
+    Object result = true;
     try {
-      await widget.state.unlock(widget.diskId, widget.partIndex, pass, writable: !_readOnly);
+      final w = widget;
+      if (w._vault) {
+        result = await w.state.openVault(
+            vaultId: w.vaultId,
+            srcId: w.vaultSourceId,
+            path: w.vaultPath,
+            password: pass,
+            writable: !_readOnly,
+            recovery: _recovery);
+      } else {
+        await w.state.unlock(w.diskId, w.partIndex, pass, writable: !_readOnly);
+      }
       ok = true;
     } on PlatformException catch (e) {
       error = e.message ?? Fr.genericError;
@@ -74,7 +115,7 @@ class _UnlockDialogState extends State<UnlockDialog> {
     if (!mounted) return;
     if (ok) {
       AppHaptics.success(widget.state);
-      Navigator.of(context).pop(true);
+      Navigator.of(context).pop(result);
     } else {
       AppHaptics.warning(widget.state);
       setState(() {
@@ -90,32 +131,37 @@ class _UnlockDialogState extends State<UnlockDialog> {
       canPop: !_busy,
       child: AlertDialog(
         icon: const Icon(Icons.lock_rounded),
-        title: Text(Fr.unlockTitle(widget.partitionName)),
+        title: Text(widget._vault ? Fr.vaultOpenTitle(widget.partitionName) : Fr.unlockTitle(widget.partitionName)),
         scrollable: true, // texte à 200 % : le contenu défile, les boutons restent visibles
         content: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            TextField(
+            // champ de déverrouillage : ni règle, ni force, ni générateur (phrase LUKS existante)
+            PasswordField(
+              key: ValueKey(_recovery), // champ neuf en changeant de mode
               controller: _controller,
-              obscureText: _obscure,
-              // affichée, elle n'est plus un champ de mot de passe pour le clavier : ni suggestions, ni apprentissage
-              keyboardType: _obscure ? null : TextInputType.visiblePassword,
-              autocorrect: false,
-              enableSuggestions: false,
-              enableIMEPersonalizedLearning: false,
+              label: _recovery ? Fr.recoveryKey : (widget._vault ? Fr.password : Fr.passphrase),
+              showLabel: _recovery ? Fr.showRecoveryKey : (widget._vault ? Fr.showPassword : Fr.showPassphrase),
+              hideLabel: _recovery ? Fr.hideRecoveryKey : (widget._vault ? Fr.hidePassword : Fr.hidePassphrase),
               enabled: !_busy,
               autofocus: true,
-              decoration: InputDecoration(
-                labelText: Fr.passphrase,
-                suffixIcon: IconButton(
-                  tooltip: _obscure ? Fr.showPassphrase : Fr.hidePassphrase,
-                  icon: Icon(_obscure ? Icons.visibility_rounded : Icons.visibility_off_rounded),
-                  onPressed: () => setState(() => _obscure = !_obscure),
-                ),
-              ),
               onSubmitted: (_) => _submit(),
             ),
+            if (widget._vault && widget.offerRecovery)
+              Align(
+                alignment: AlignmentDirectional.centerStart,
+                child: TextButton(
+                  onPressed: _busy
+                      ? null
+                      : () => setState(() {
+                            _controller.clear();
+                            _error = null;
+                            _recovery = !_recovery;
+                          }),
+                  child: Text(_recovery ? Fr.usePassword : Fr.useRecoveryKey),
+                ),
+              ),
             const SizedBox(height: Space.s),
             CheckboxListTile(
               contentPadding: EdgeInsets.zero,
@@ -128,7 +174,7 @@ class _UnlockDialogState extends State<UnlockDialog> {
               const SizedBox(height: Space.s),
               const LinearProgressIndicator(),
               const SizedBox(height: Space.s),
-              const Text(Fr.unlocking),
+              Text(widget._vault ? Fr.vaultOpening : Fr.unlocking),
             ],
             if (_error != null) ...[
               const SizedBox(height: Space.s),
@@ -143,10 +189,27 @@ class _UnlockDialogState extends State<UnlockDialog> {
           ),
           FilledButton(
             onPressed: _busy ? null : _submit,
-            child: const Text(Fr.unlock),
+            child: Text(widget._vault ? Fr.open : Fr.unlock),
           ),
         ],
       ),
     );
   }
 }
+
+/// Demande le mot de passe d'un coffre et l'ouvre ; rend son volume (stockage du même identifiant), ou null.
+Future<VolumeMsg?> openVaultDialog(BuildContext context, AppState state,
+        {required String name, String? vaultId, String? srcId, String? path, bool offerRecovery = true}) =>
+    showDialog<Object>(
+      context: context,
+      barrierDismissible: false,
+      builder: (_) => UnlockDialog.vault(
+        state: state,
+        name: name,
+        vaultId: vaultId,
+        vaultSourceId: srcId,
+        vaultPath: path,
+        writable: !state.readOnlyPreference,
+        offerRecovery: offerRecovery,
+      ),
+    ).then((r) => r is VolumeMsg ? r : null);

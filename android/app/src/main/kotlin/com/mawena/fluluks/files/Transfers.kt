@@ -6,6 +6,7 @@ import com.mawena.fluluks.engine.FileType
 import com.mawena.fluluks.provider.DocNames
 import com.mawena.fluluks.provider.DocumentIds
 import com.mawena.fluluks.provider.WriteOps
+import com.mawena.fluluks.vaults.Vaults
 import com.mawena.fluluks.volumes.VolumeManager
 import java.io.FileNotFoundException
 import java.io.OutputStream
@@ -34,8 +35,10 @@ data class TransferState(
     val error: String? = null,
     /** Durée de l'opération (ms), connue à la fin. */
     val elapsedMs: Long = 0,
-    /** `copy`, `move`, `compress` ou `extract`. */
+    /** `copy`, `move`, `compress`, `extract`, `encrypt`, `decrypt` ou `verify`. */
     val kind: String = if (move) "move" else "copy",
+    /** L'opération a échoué sur un mot de passe incorrect (phase 14) : l'écran le redemande. */
+    val badPassword: Boolean = false,
 )
 
 /**
@@ -138,8 +141,8 @@ object Transfers {
             }
         }
 
-        fun finish(error: String? = null, cancelled: Boolean = false) {
-            st = st.copy(finished = true, cancelled = cancelled, error = error, elapsedMs = clock() - startMs)
+        fun finish(error: String? = null, cancelled: Boolean = false, badPassword: Boolean = false) {
+            st = st.copy(finished = true, cancelled = cancelled, error = error, elapsedMs = clock() - startMs, badPassword = badPassword)
             _state.value = st
         }
 
@@ -216,6 +219,7 @@ object Transfers {
             val d = dst.stat(dir) ?: throw FileNotFoundException("Dossier introuvable")
             if (!d.type.isDir()) throw FileNotFoundException("Ce n'est pas un dossier")
             if (tops.any { it == "/" }) throw FileNotFoundException("La racine ne peut pas être copiée")
+            tops.forEach { Vaults.requireClosed(srcId, it) } // copie d'un coffre ouvert : incohérente
             if (srcId == dstId && tops.any { dir == it || DocumentIds.isDescendant(it, dir) }) {
                 throw FilesException(EngineError.FL_EINVAL, MSG_INTO_ITSELF)
             }

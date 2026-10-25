@@ -98,6 +98,7 @@ class VolumeMsg {
     required this.needsRecovery,
     required this.roReason,
     required this.readOnly,
+    this.vaultId,
   });
   String id;
   String diskId;
@@ -108,9 +109,44 @@ class VolumeMsg {
   bool needsRecovery;
   String roReason;
   bool readOnly;
+
+  /// Coffre ouvert (phase 14) : son identifiant ; null pour un volume de disque.
+  String? vaultId;
 }
 
-/// Un stockage du gestionnaire de fichiers. `kind` : `phone`, `sd` ou `disk`.
+/// Coffre connu (phase 14) : `state` vaut `closed`, `open` ou `unavailable` (son stockage n'est pas là) ;
+/// `volumeId` quand il est ouvert ; `sourceLabel` : stockage qui porte son fichier.
+class VaultMsg {
+  VaultMsg({
+    required this.id,
+    required this.name,
+    required this.sourceKey,
+    required this.sourceLabel,
+    required this.path,
+    required this.sizeBytes,
+    required this.fs,
+    required this.state,
+    this.volumeId,
+    required this.hasRecovery,
+    required this.biometric,
+    required this.luksVersion,
+  });
+  String id;
+  String name;
+  String sourceKey;
+  String sourceLabel;
+  String path;
+  int sizeBytes;
+  String fs;
+  String state;
+  String? volumeId;
+  bool hasRecovery;
+  bool biometric;
+  int luksVersion;
+}
+
+/// Un stockage du gestionnaire de fichiers. `kind` : `phone`, `removable`, `disk`, `remote` ou `decrypted` (vue
+/// déchiffrée d'un fichier age, en lecture seule, ouverte par `openDecrypted`).
 class SourceMsg {
   SourceMsg({
     required this.id,
@@ -187,6 +223,7 @@ class TransferMsg {
     required this.cancelled,
     this.error,
     required this.elapsedMs,
+    required this.badPassword,
   });
   bool move;
   String currentName;
@@ -201,8 +238,19 @@ class TransferMsg {
   /// Durée de l'opération en millisecondes (débit affiché à la fin).
   int elapsedMs;
 
-  /// `copy`, `move`, `compress` ou `extract`.
+  /// `copy`, `move`, `compress`, `extract`, `encrypt`, `decrypt` ou `verify`.
   String kind;
+
+  /// Échec sur un mot de passe incorrect : l'écran redemande le mot de passe.
+  bool badPassword;
+}
+
+/// Fichier chiffré reconnu par ses premiers octets : `format` vaut `age`, `zip-aes`, `zip-legacy`, `luks` ou
+/// `none` ; `folder` pour un `.zip.age` (dossier ou sélection chiffrés ensemble).
+class EncryptedInfoMsg {
+  EncryptedInfoMsg({required this.format, required this.folder});
+  String format;
+  bool folder;
 }
 
 /// Élément de la corbeille d'un stockage : `id` est son nom dans la corbeille, `name` et `originalPath` disent
@@ -480,6 +528,8 @@ class UiPrefsMsg {
     required this.welcomeSeen,
     this.terminalFontSize,
     this.terminalSecure,
+    this.closeVaultsOnScreenOff,
+    this.hideVaults,
   });
   String theme;
   bool haptics;
@@ -488,6 +538,11 @@ class UiPrefsMsg {
   /// Phase 13 : taille du texte du terminal (8 à 32 ; null : 13) ; terminal masqué dans les captures (null : non).
   int? terminalFontSize;
   bool? terminalSecure;
+
+  /// Phase 14 : coffres fermés à l'extinction de l'écran ; coffres parcourus et fichiers déchiffrés masqués dans les
+  /// captures et les applications récentes (null : non).
+  bool? closeVaultsOnScreenOff;
+  bool? hideVaults;
 }
 
 /// Version de Portail (`versionName`, `versionCode` du paquet) et appareil (`Build.VERSION.RELEASE`, `Build.MODEL`),
@@ -569,8 +624,90 @@ abstract class FluLuksHostApi {
   /// Compresse `paths` dans un ZIP `name` sous `dstDir` (même stockage) ; même créneau que les copies.
   void startCompress(String srcId, List<String> paths, String dstDir, String name);
 
-  /// Extrait `archive` sous `dstDir` de `dstId`, dans un dossier au nom de l'archive si `intoNewFolder`.
-  void startExtract(String srcId, String archive, String dstId, String dstDir, bool intoNewFolder);
+  /// Extrait `archive` sous `dstDir` de `dstId`, dans un dossier au nom de l'archive si `intoNewFolder` ;
+  /// `password` pour un ZIP chiffré (mis à zéro après usage).
+  void startExtract(String srcId, String archive, String dstId, String dstDir, bool intoNewFolder, Uint8List? password);
+
+  /// Format chiffré d'un fichier, reconnu par ses premiers octets.
+  @async
+  EncryptedInfoMsg encryptedInfo(String sourceId, String path);
+
+  /// Chiffre `paths` vers `dstDir` de `dstId` ; `format` : `age` ou `zip` (ZIP AES-256) ; `together` réunit la
+  /// sélection dans un seul fichier (`name`, sinon « Archive ») ; l'original n'est supprimé, définitivement, qu'après
+  /// vérification du chiffré si `deleteOriginal`. Même créneau que les copies.
+  void startEncrypt(String srcId, List<String> paths, String dstId, String dstDir, String format, bool together, String? name,
+      bool deleteOriginal, Uint8List password);
+
+  /// Déchiffre `path` vers `dstDir` de `dstId` ; un `.zip.age` est extrait, sauf si `extractFolder` est faux (le ZIP
+  /// est alors gardé).
+  void startDecrypt(String srcId, String path, String dstId, String dstDir, bool extractFolder, Uint8List password);
+
+  /// Relit entièrement un fichier chiffré sans rien écrire ; le résultat arrive par `TransferMsg` (`verify`).
+  void startVerify(String srcId, String path, Uint8List password);
+
+  /// Change le mot de passe d'un fichier `.age` (nouveau fichier, puis remplacement) ; erreur `badPassword` si
+  /// l'ancien est incorrect.
+  @async
+  void changeFilePassword(String srcId, String path, Uint8List oldPassword, Uint8List newPassword);
+
+  /// Ouvre `path` (fichier age) en vue déchiffrée : une source en lecture seule qui contient le fichier en clair,
+  /// lu en mémoire seulement (lecteurs, « Ouvrir avec ») ; quatre au plus, la plus ancienne est fermée. Erreur
+  /// `badPassword` si le mot de passe est faux ; un `.zip.age` ne s'ouvre pas (le déchiffrer ou l'extraire).
+  @async
+  SourceMsg openDecrypted(String srcId, String path, Uint8List password);
+
+  /// Ferme une vue déchiffrée (clé effacée, liens expirés).
+  void closeDecrypted(String sourceId);
+
+  /// Copie un mot de passe dans le presse-papiers, marqué sensible ; effacé après 60 s s'il n'a pas changé.
+  void copySecret(Uint8List text);
+
+  // --- coffres (phase 14)
+  List<VaultMsg> listVaults();
+
+  /// Crée le coffre `name.luks` sous `dir` de `srcId` (`fs` : `exfat` ou `ext4`) ; progression par TransferMsg
+  /// (`vault`), annulable ; le mot de passe est mis à zéro.
+  @async
+  VaultMsg createVault(String srcId, String dir, String name, int sizeBytes, String fs, Uint8List password);
+
+  /// Ouvre un coffre connu (`vaultId`), ou le fichier `path` de `srcId` ; erreur `badPassword` si le mot de passe est
+  /// faux. `recovery` : `password` est la clé de secours (tirets, espaces et casse ignorés).
+  @async
+  VolumeMsg openVault(String? vaultId, String? srcId, String? path, Uint8List password, bool writable, bool recovery);
+  void closeVault(String vaultId);
+
+  /// Change le mot de passe d'un coffre fermé (`oldPassword` : mot de passe ou clé de secours) ; erreur
+  /// `badPassword` si l'ancien est faux.
+  @async
+  void changeVaultPassword(String vaultId, Uint8List oldPassword, Uint8List newPassword);
+
+  /// Crée (ou remplace) la clé de secours d'un coffre fermé et la rend, une seule fois (24 caractères en groupes).
+  @async
+  Uint8List addRecoveryKey(String vaultId, Uint8List password);
+
+  /// Retire la clé de secours d'un coffre fermé.
+  @async
+  void removeRecoveryKey(String vaultId, Uint8List password);
+
+  /// Raison pour laquelle la biométrie forte n'est pas utilisable sur ce téléphone (en français), ou null.
+  String? biometricUnavailable();
+
+  /// Active le déverrouillage biométrique d'un coffre fermé (invite biométrique) ; erreur `biometricCancelled` si
+  /// l'invite est annulée.
+  @async
+  void enableBiometric(String vaultId, Uint8List password);
+
+  /// Ouvre un coffre par la biométrie ; erreurs `biometricCancelled` (proposer le mot de passe) et
+  /// `biometricInvalidated` (biométrie du téléphone changée : déverrouillage désactivé).
+  @async
+  VolumeMsg openVaultBiometric(String vaultId, bool writable);
+
+  /// Désactive le déverrouillage biométrique ; avec `password` (coffre fermé), son emplacement est aussi retiré.
+  @async
+  void disableBiometric(String vaultId, Uint8List? password);
+
+  /// Retire le coffre de la liste (fermé d'abord) ; son fichier n'est pas touché.
+  void forgetVault(String vaultId);
   void cancelTransfer();
   @async
   SearchResultMsg search(String sourceId, String path, String query, bool showHidden);
@@ -719,7 +856,7 @@ abstract class FluLuksHostApi {
 
 @FlutterApi()
 abstract class FluLuksEventsApi {
-  void onStateChanged(List<DiskMsg> disks, List<VolumeMsg> volumes);
+  void onStateChanged(List<DiskMsg> disks, List<VolumeMsg> volumes, List<VaultMsg> vaults);
 
   /// Éjection en cours (synchronisation, démontage) et dernier échec (« Éjection impossible : … »).
   void onEjectStateChanged(bool ejecting, String? error);

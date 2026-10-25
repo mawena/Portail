@@ -18,13 +18,25 @@ const _documents = {'pdf', 'doc', 'docx', 'odt', 'ods', 'odp', 'xls', 'xlsx', 'p
 /// Extensions des archives que le moteur sait extraire (les doubles d'abord).
 const _archiveExtensions = ['.tar.gz', '.tar.xz', '.tgz', '.txz', '.zip', '.7z', '.rar', '.tar', '.gz', '.xz'];
 
-enum FileKind { folder, image, video, audio, text, document, archive, package, link, other }
+enum FileKind { folder, image, video, audio, text, document, archive, encrypted, vault, package, link, other }
 
 /// Extension de [name] en minuscules ; « .gitignore » compte comme l'extension « gitignore ».
 String? _ext(String name) {
   final dot = name.lastIndexOf('.');
   if (dot < 0 || dot == name.length - 1) return null;
   return name.substring(dot + 1).toLowerCase();
+}
+
+/// Fichier chiffré au format age (`.age`, `.zip.age` pour un dossier) : un tap demande son mot de passe.
+bool isEncryptedName(String name) {
+  final n = name.toLowerCase();
+  return n.length > 4 && n.endsWith('.age');
+}
+
+/// Coffre (`nom.luks`, phase 14) : un tap demande son mot de passe et l'ouvre comme un stockage.
+bool isVaultName(String name) {
+  final n = name.toLowerCase();
+  return n.length > 5 && n.endsWith('.luks');
 }
 
 /// Archive reconnue à l'extension : un tap propose de l'extraire.
@@ -36,6 +48,8 @@ bool isArchiveName(String name) {
 FileKind kindOf(EntryMsg e) {
   if (e.type == 'dir') return FileKind.folder;
   if (e.type == 'link') return FileKind.link;
+  if (isEncryptedName(e.name)) return FileKind.encrypted;
+  if (isVaultName(e.name)) return FileKind.vault;
   if (isArchiveName(e.name)) return FileKind.archive;
   final x = _ext(e.name);
   if (x == 'apk') return FileKind.package;
@@ -55,6 +69,8 @@ IconData kindIcon(FileKind k) => switch (k) {
       FileKind.text => Icons.article_rounded,
       FileKind.document => Icons.description_rounded,
       FileKind.archive => Icons.folder_zip_rounded,
+      FileKind.encrypted => Icons.lock_rounded,
+      FileKind.vault => Icons.enhanced_encryption_rounded,
       FileKind.package => Icons.android_rounded,
       FileKind.link => Icons.link_rounded,
       FileKind.other => Icons.insert_drive_file_rounded,
@@ -63,7 +79,7 @@ IconData kindIcon(FileKind k) => switch (k) {
 /// Couleur par rôle (direction visuelle) : dossiers et archives `primary`, images et vidéos `tertiary`, musique,
 /// textes et documents `secondary`, le reste `onSurfaceVariant`.
 Color kindColor(FileKind k, ColorScheme s) => switch (k) {
-      FileKind.folder || FileKind.archive => s.primary,
+      FileKind.folder || FileKind.archive || FileKind.encrypted || FileKind.vault => s.primary,
       FileKind.image || FileKind.video => s.tertiary,
       FileKind.audio || FileKind.text || FileKind.document => s.secondary,
       _ => s.onSurfaceVariant,
@@ -78,6 +94,8 @@ String kindLabel(FileKind k) => switch (k) {
       FileKind.text => Fr.kindText,
       FileKind.document => Fr.kindDocument,
       FileKind.archive => Fr.kindArchive,
+      FileKind.encrypted => Fr.kindEncrypted,
+      FileKind.vault => Fr.kindVault,
       FileKind.package => Fr.kindPackage,
       FileKind.link => Fr.kindLink,
       FileKind.other => Fr.kindOther,

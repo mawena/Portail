@@ -4,7 +4,10 @@
  * future partition (calculée par fl_part_layout) face au minimum du système de fichiers (plus 16 Mio
  * d'en-tête LUKS2). Les premier et dernier Mio du disque (fl_part_write_single), puis de la partition, sont
  * effacés : anciens GPT, LUKS, superblocs btrfs, étiquettes ZFS. La phrase de passe n'est pas copiée ; la
- * clé maîtresse reste dans le volume déchiffré (mémoire sécurisée) jusqu'à sa fermeture ici. */
+ * clé maîtresse reste dans le volume déchiffré (mémoire sécurisée) jusqu'à sa fermeture ici.
+ *
+ * Sans table (no_table, coffres de la phase 14) : LUKS2 ou système de fichiers sur tout le disque, seul le
+ * Mio de tête est effacé. */
 #include "fluluks/error.h"
 #include "fluluks/format.h"
 #include "format/format_internal.h"
@@ -34,10 +37,12 @@ int fl_format(fl_bdev *disk, const fl_fmt_opts *o, const void *pass, size_t pass
   int rc = fl_fmt_check_label(o->fs, o->label);
   if (rc != FL_OK) return rc;
   if (o->encrypted && (!pass || passlen == 0 || o->kdf_mem_kib < 8192)) return FL_EINVAL;
-  uint64_t first, count;
+  uint64_t first = 0, count = disk->sector_count;
   bool gpt;
-  rc = fl_part_layout(disk, &first, &count, &gpt);
-  if (rc != FL_OK) return rc;
+  if (!o->no_table) {
+    rc = fl_part_layout(disk, &first, &count, &gpt);
+    if (rc != FL_OK) return rc;
+  }
   uint64_t bytes = count * disk->sector_size;
   if (bytes < min_fs(o->fs, disk->sector_size) + (o->encrypted ? LUKS_HDR : 0)) return FL_ENOSPC;
   /* FatFs : FAT32 sous 2^32 secteurs (2 Tio en secteurs de 512 octets) ; les secteurs chiffrés sont ceux du disque */
@@ -45,14 +50,17 @@ int fl_format(fl_bdev *disk, const fl_fmt_opts *o, const void *pass, size_t pass
   if (o->fs == FL_FMT_FAT32 && vol_sectors >= (1ull << 32)) return FL_EFBIG;
   report(progress, arg, 0);
 
-  rc = fl_part_write_single(disk, o->fs, o->encrypted, &first, &count);
-  if (rc != FL_OK) return rc;
+  if (!o->no_table) {
+    rc = fl_part_write_single(disk, o->fs, o->encrypted, &first, &count);
+    if (rc != FL_OK) return rc;
+  }
   fl_bdev *part = NULL, *vol = NULL;
   rc = fl_slice_bdev_new(disk, first, count, &part);
   if (rc != FL_OK) return rc;
   uint64_t align = MIB / disk->sector_size;
+  /* anciennes signatures du début ; sans table, la fin (GPT de secours d'un disque) n'est pas touchée */
   rc = fl_fmt_zero(part, 0, align);
-  if (rc == FL_OK) rc = fl_fmt_zero(part, count - align, align);
+  if (rc == FL_OK && !o->no_table) rc = fl_fmt_zero(part, count - align, align);
   report(progress, arg, 10);
 
   if (rc == FL_OK && o->encrypted) {

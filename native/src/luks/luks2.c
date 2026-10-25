@@ -23,11 +23,7 @@ static uint64_t be64(const uint8_t *p) {
   return v;
 }
 
-typedef struct {
-  uint8_t *buf; /* hdr_size octets, vérifiés */
-  size_t size;
-  uint64_t seqid;
-} hdr_img;
+typedef l2_img hdr_img;
 
 /* Charge et vérifie (magic, version, taille, somme de contrôle, zone JSON) l'en-tête à `off`. */
 static int load_hdr(fl_bdev *dev, uint64_t off, bool secondary, hdr_img *out) {
@@ -63,21 +59,31 @@ static int load_hdr(fl_bdev *dev, uint64_t off, bool secondary, hdr_img *out) {
   out->buf = buf;
   out->size = (size_t)hs;
   out->seqid = be64(buf + 16);
+  out->off = off;
   return FL_OK;
 }
 
 static const fl_luks_ops luks2_ops;
 
-int fl_luks2_open(struct fl_luks *l, bool primary_ok) {
+void fl_luks2_hdrs_free(l2_hdrs *h) {
+  for (int i = 0; i < 2; i++) {
+    free(h->hdr[i].buf);
+    h->hdr[i].buf = NULL;
+  }
+}
+
+int fl_luks2_load(fl_bdev *dev, bool primary_ok, l2_hdrs *h, luks2 *x) {
+  memset(h, 0, sizeof *h);
+  h->cur = -1;
   hdr_img pri, sec;
-  int rp = load_hdr(l->dev, 0, false, &pri);
+  int rp = load_hdr(dev, 0, false, &pri);
   if (rp == FL_ENOMEM) return rp;
 
   /* l'en-tête secondaire se trouve à hdr_size ; sinon on essaie les décalages usuels */
   uint64_t offs[1 + sizeof k_sec_offsets / sizeof k_sec_offsets[0]];
   size_t no = 0;
   uint8_t bin[BIN_HDR];
-  if (fl_bdev_size_bytes(l->dev) >= BIN_HDR && fl_bdev_read_bytes(l->dev, 0, BIN_HDR, bin) == FL_OK) {
+  if (fl_bdev_size_bytes(dev) >= BIN_HDR && fl_bdev_read_bytes(dev, 0, BIN_HDR, bin) == FL_OK) {
     uint64_t hs = be64(bin + 8);
     if (hs >= HDR_MIN && hs <= HDR_MAX) offs[no++] = hs;
   }
@@ -90,7 +96,7 @@ int fl_luks2_open(struct fl_luks *l, bool primary_ok) {
   bool io_error = rp == FL_EIO;
   memset(&sec, 0, sizeof sec);
   for (size_t i = 0; i < no; i++) {
-    rs = load_hdr(l->dev, offs[i], true, &sec);
+    rs = load_hdr(dev, offs[i], true, &sec);
     if (rs == FL_OK || rs == FL_ENOMEM) break;
     if (rs == FL_EIO) io_error = true; /* un secteur illisible n'interdit pas les autres décalages */
   }
@@ -119,21 +125,30 @@ int fl_luks2_open(struct fl_luks *l, bool primary_ok) {
     rc = FL_EIO;
   else
     rc = primary_ok ? FL_ECORRUPT : FL_ENOTSUP;
-  luks2 *x = n ? calloc(1, sizeof *x) : NULL;
-  if (n && !x) rc = FL_ENOMEM;
-  for (int i = 0; x && i < n; i++) {
+  for (int i = 0; i < n; i++) {
     const char *json = (const char *)order[i]->buf + BIN_HDR;
-    rc = fl_luks2_parse_json(json, fl_bdev_size_bytes(l->dev), x);
+    rc = fl_luks2_parse_json(json, fl_bdev_size_bytes(dev), x);
+    if (rc == FL_OK) h->cur = order[i] == &pri ? 0 : 1;
     /* on ne se rabat sur l'autre en-tête que si celui-ci est corrompu : un en-tête valide mais non
      * pris en charge (ex. réchiffrement en cours) ne doit jamais céder la place à des métadonnées périmées */
     if (rc != FL_ECORRUPT) break;
   }
-  free(pri.buf);
-  free(sec.buf);
+  h->hdr[0] = rp == FL_OK ? pri : (hdr_img){0};
+  h->hdr[1] = rs == FL_OK ? sec : (hdr_img){0};
+  if (rc != FL_OK) fl_luks2_hdrs_free(h);
+  return rc;
+}
+
+int fl_luks2_open(struct fl_luks *l, bool primary_ok) {
+  luks2 *x = calloc(1, sizeof *x);
+  if (!x) return FL_ENOMEM;
+  l2_hdrs h;
+  int rc = fl_luks2_load(l->dev, primary_ok, &h, x);
   if (rc != FL_OK) {
     free(x);
     return rc;
   }
+  fl_luks2_hdrs_free(&h);
   memcpy(l->cipher, x->seg_enc, sizeof l->cipher);
   l->ops = &luks2_ops;
   l->impl = x;
@@ -145,7 +160,7 @@ static bool equal(const uint8_t *a, const uint8_t *b, size_t n) { return memcmp(
 static size_t round512(size_t n) { return (n + 511) & ~(size_t)511; }
 
 /* FL_OK = bon slot (mk rempli) ; FL_EBADPASS = slot suivant ; autre = erreur fatale. */
-static int try_slot(const fl_luks *l, const luks2 *x, const l2_slot *s, const void *pass, size_t passlen,
+static int try_slot(fl_bdev *dev, const luks2 *x, const l2_slot *s, const void *pass, size_t passlen,
                     uint8_t *mk) {
   size_t kb = s->area_key_size, mkl = s->key_size;
   size_t alen = round512(mkl * s->stripes);
@@ -165,7 +180,7 @@ static int try_slot(const fl_luks *l, const luks2 *x, const l2_slot *s, const vo
                    s->time, s->memory, s->cpus, k, kb);
   if (rc == FL_EINVAL) rc = FL_ECORRUPT;
   if (rc != FL_OK) goto out;
-  rc = fl_bdev_read_bytes(l->dev, s->area_off, alen, raw);
+  rc = fl_bdev_read_bytes(dev, s->area_off, alen, raw);
   if (rc != FL_OK) goto out;
   rc = fl_sector_cipher_new(s->area_enc, k, kb, 512, &c);
   if (rc == FL_EINVAL) rc = FL_ECORRUPT;
@@ -194,28 +209,38 @@ static int err_rank(int rc) {
   return 1;
 }
 
-static int luks2_unlock(struct fl_luks *l, const void *pass, size_t passlen, fl_bdev **decrypted) {
-  const luks2 *x = l->impl;
-  uint8_t *mk = fl_secure_alloc(64);
-  if (!mk) return FL_ENOMEM;
+int fl_luks2_recover_mk(fl_bdev *dev, const luks2 *x, int slot, const void *pass, size_t passlen, uint8_t *mk,
+                        size_t *mkl, int *digest) {
   static const uint8_t none = 0;
   if (!pass) pass = &none;
   int best = 0;
-  bool ok = false;
-  size_t mkl = 0;
+  bool found = false;
   for (int i = 0; i < x->nslots; i++) {
     const l2_slot *s = &x->slots[i];
     if (!s->supported || s->priority == 0 || s->digest < 0) continue;
-    int rc = try_slot(l, x, s, pass, passlen, mk);
+    /* priorité 0 (« jamais ») : ignoré, même demandé ; seul l'emplacement demandé est essayé */
+    if (slot >= 0 && s->id != (uint32_t)slot) continue;
+    found = true;
+    int rc = try_slot(dev, x, s, pass, passlen, mk);
     if (rc == FL_OK) {
-      mkl = s->key_size;
-      ok = true;
-      break;
+      *mkl = s->key_size;
+      *digest = s->digest;
+      return FL_OK;
     }
     if (!best || err_rank(rc) > err_rank(best)) best = rc; /* on continue avec les slots suivants */
   }
-  int rc = best ? best : FL_EBADPASS;
-  if (ok) {
+  if (!found) return slot >= 0 ? FL_ENOENT : FL_EBADPASS;
+  return best ? best : FL_EBADPASS;
+}
+
+static int luks2_unlock(struct fl_luks *l, int slot, const void *pass, size_t passlen, fl_bdev **decrypted) {
+  const luks2 *x = l->impl;
+  uint8_t *mk = fl_secure_alloc(64);
+  if (!mk) return FL_ENOMEM;
+  size_t mkl = 0;
+  int digest = -1;
+  int rc = fl_luks2_recover_mk(l->dev, x, slot, pass, passlen, mk, &mkl, &digest);
+  if (rc == FL_OK) {
     rc = fl_crypt_bdev_new(l->dev, x->seg_off, x->seg_size, x->seg_enc, mk, mkl, x->sector_size,
                            false /* IV en unités de 512 octets, comme cryptsetup */, x->iv_tweak, decrypted);
     if (rc != FL_OK) *decrypted = NULL;
@@ -242,4 +267,12 @@ static void luks2_destroy(struct fl_luks *l) {
   l->impl = NULL;
 }
 
-static const fl_luks_ops luks2_ops = {luks2_unlock, luks2_destroy};
+static uint32_t luks2_slot_mask(const struct fl_luks *l) {
+  const luks2 *x = l->impl;
+  uint32_t m = 0;
+  for (int i = 0; i < x->nslots; i++)
+    if (x->slots[i].id < 32) m |= 1u << x->slots[i].id;
+  return m;
+}
+
+static const fl_luks_ops luks2_ops = {luks2_unlock, luks2_destroy, luks2_slot_mask};

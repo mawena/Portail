@@ -353,7 +353,7 @@ fonctions choisies par le planificateur ; les lecteurs et stockages distants pas
 
 ## 16. Évolution du 2026-10-22 (suite) : vérification et réparation
 
-Décision de l'utilisateur : la **phase 17** (v1.10.0 ; numérotée 11, puis 12, 13, 14, 15 et 16, avant le 2026-10-25, voir § 19 à § 25) apporte la **réparation des disques** dans
+Décision de l'utilisateur : la **phase 18** (v1.11.0 ; numérotée 11, puis 12, 13, 14, 15, 16 et 17, avant l'analyseur de stockage du 2026-10-25, voir § 19 à § 26) apporte la **réparation des disques** dans
 l'application, avec les outils de référence de Linux intégrés au moteur natif.
 - **Vérifier d'abord, en lecture seule**, et montrer un rapport en français ; réparer seulement après
   confirmation, avec le conseil de sauvegarder les données importantes avant.
@@ -368,7 +368,7 @@ l'application, avec les outils de référence de Linux intégrés au moteur nati
 
 ## 17. Évolution du 2026-10-22 (suite) : gestion des partitions
 
-Décision de l'utilisateur : la **phase 16** (v1.9.0 ; numérotée 12, puis 13, 14, 15, 16, 17 et 15, avant le 2026-10-25, voir § 19 à § 25) apporte la **gestion des partitions** d'un disque USB,
+Décision de l'utilisateur : la **phase 17** (v1.10.0 ; numérotée 12, puis 13, 14, 15, 16, 17, 15 et 16, avant l'analyseur de stockage du 2026-10-25, voir § 19 à § 26) apporte la **gestion des partitions** d'un disque USB,
 à la manière de GParted, et le choix de la **taille** au formatage.
 - **Choisir la taille** : formater une partition de la taille voulue au lieu de tout le disque ; le reste
   reste libre.
@@ -379,7 +379,7 @@ Décision de l'utilisateur : la **phase 16** (v1.9.0 ; numérotée 12, puis 13, 
   étiquette), **supprimer** une partition, **formater une seule partition**, changer son **étiquette**,
   créer une **nouvelle table** (MBR ou GPT).
 - **Redimensionner** une partition et son système de fichiers, agrandir ou réduire :
-  - ext4 par `resize2fs` (e2fsprogs, intégré par cette phase ; la phase 17 s'en sert ensuite pour réparer) ;
+  - ext4 par `resize2fs` (e2fsprogs, intégré par cette phase ; la phase 18 s'en sert ensuite pour réparer) ;
   - NTFS par `ntfsresize` (ntfs-3g) ;
   - dans un volume LUKS2, le système de fichiers intérieur (la taille du segment LUKS2 suit la
     partition) ;
@@ -393,7 +393,7 @@ Décision de l'utilisateur : la **phase 16** (v1.9.0 ; numérotée 12, puis 13, 
     à la fois ;
   - jamais sur un volume ouvert ;
   - le système de fichiers est vérifié en lecture seule avant un redimensionnement (`e2fsck -n`, `ntfsfix -n`,
-    apportés par cette phase ; la réparation reste celle de la phase 17) ;
+    apportés par cette phase ; la réparation reste celle de la phase 18) ;
   - avertissement : un débranchement pendant un redimensionnement ou un déplacement peut rendre la
     partition illisible, sauvegardez d'abord ;
   - toutes les opérations sont jugées sur des images par les outils de référence (`sfdisk`, `sgdisk`,
@@ -664,3 +664,60 @@ Le serveur IA de l'utilisateur est en service sur son VPS, à **`https://atelier
 réel des essais de la phase 15 (le serveur d'essai local reste celui du développement et des tests). Constat du
 2026-10-25 : `GET /health` rend `{"status":"ok","version":"0.1.0"}`, `GET /v1/models` sans clé rend 401 avec une
 erreur au format du contrat (`{"error":{"message","type","code"}}`).
+
+## 26. Évolution du 2026-10-25 (suite) : analyseur de stockage (phase 16)
+
+Demande de l'utilisateur : « base toi sur l'analyseur de stockage de Ubuntu pour construire la même chose dans
+l'application ». L'analyseur d'Ubuntu est **Baobab** (« Analyseur d'utilisation des disques » de GNOME). Une **phase 16**
+(**v1.9.0**) le reproduit dans Portail, adapté au téléphone ; il **remplace** l'analyse de l'espace de la phase 9
+(§ 15), dont il reprend les points d'entrée. Les phases suivantes descendent d'un rang : la gestion des partitions
+(§ 17, § 24, § 25) devient la **phase 17** (**v1.10.0**), la vérification et la réparation des disques (§ 16) la
+**phase 18** (**v1.11.0**). La répartition des outils du § 24 (e2fsprogs et ntfs-3g apportés par les partitions,
+réutilisés pour réparer) vaut pour les phases 17 et 18.
+*(Valeurs, limites et adaptations au téléphone : décisions du planificateur, à valider aux essais ; voir le plan de la
+phase 16.)*
+- **Accueil de l'analyseur**, comme celui de Baobab : les emplacements analysables avec leur barre d'occupation
+  (stockage du téléphone, cartes SD, volumes ouverts des disques USB, coffres ouverts), **Analyser un dossier…**, et les
+  analyses gardées de la session (date, taille, **Ouvrir** ou **Réanalyser**). On y entre par l'accueil de Portail, par
+  le menu d'un stockage ou d'un volume, et par l'explorateur (**Analyser ce dossier**, dans n'importe quel dossier).
+- **Analyse récursive** avec progression (fichiers et dossiers comptés, place vue, dossier en cours ; pourcentage quand
+  tout un stockage est analysé) et **Annuler** ; les résultats s'affichent **au fur et à mesure**. Une analyse annulée
+  garde ce qu'elle a vu, marqué « résultats partiels ». **Réanalyser** refait l'analyse du même emplacement.
+- **Tailles réelles** : place **occupée sur le support** (blocs alloués, comme `du` et Baobab) plutôt que taille
+  apparente ; un fichier à liens physiques n'est compté qu'une fois ; un fichier creux compte pour ses seuls blocs
+  écrits ; les liens symboliques ne sont jamais suivis et l'analyse ne passe pas sur un autre système de fichiers. La
+  taille apparente reste visible dans le détail d'un élément. Les fichiers cachés sont comptés (ils occupent la place).
+- **Arbre des dossiers** trié par taille (ou par nom, nombre d'éléments, date) : pour chaque élément sa taille, son
+  **contenu** (nombre d'éléments sous lui), sa **date de modification** (la plus récente de son contenu) et une barre
+  de **pourcentage par rapport à son parent**. Les fichiers figurent aussi : les plus gros de chaque dossier, le reste
+  résumé en « … et N autres fichiers » ; l'onglet des **plus gros fichiers** de la phase 9 est gardé.
+- **Deux graphiques au choix**, synchronisés avec l'arbre : **anneaux concentriques** et **carte proportionnelle**
+  (treemap). Au doigt : **toucher** un dossier du graphique ou de l'arbre **y entre** (zoom), toucher le centre des
+  anneaux, le **fil d'Ariane**, le bouton **Dossier parent** ou Retour remontent ; **glisser le doigt** sur le graphique
+  montre le nom, la taille et la part de l'élément dessous (à la place du survol de Baobab) ; **appui long** : menu.
+  **Profondeur** du graphique réglable (moins ou plus de niveaux). Graphique masquable pour ne garder que l'arbre.
+- **Menu d'un élément** : **Afficher dans l'explorateur**, **Copier le chemin**, **Propriétés**, **Mettre à la
+  corbeille** ou **Supprimer définitivement** (mêmes confirmations et même corbeille que l'explorateur ; une mise à la
+  corbeille ne libère la place qu'au vidage de la corbeille, l'analyseur le dit), **Exclure des analyses**. L'arbre est
+  mis à jour sans tout réanalyser.
+- **Emplacements exclus** (Réglages → Analyseur de stockage) : dossiers ignorés par les analyses, par stockage ; aucun
+  par défaut.
+- **Adaptation au téléphone** : les dossiers que Android interdit de lire (`Android/data`, `Android/obb`) apparaissent
+  « accès refusé par Android » ; quand tout un stockage est analysé, la différence entre la place occupée selon le
+  système et ce que l'analyse a pu compter apparaît comme une part à part (« Applications, système et dossiers
+  protégés » sur le téléphone, « Réservé par le système de fichiers » sur un disque). Les **dossiers distants** (SFTP,
+  FTP) s'analysent depuis l'explorateur seulement, après un avertissement (lent, tailles annoncées par le serveur) ; un
+  fichier déchiffré en mémoire n'est pas analysable.
+- **Accessibilité et thèmes** : les graphiques ont une description lue par TalkBack, et l'arbre en est l'alternative
+  complète ; la couleur n'est jamais la seule information (noms, tailles et pourcentages écrits) ; couleurs des
+  graphiques contrastées en clair comme en sombre ; texte jusqu'à 200 % ; grands écrans : graphique et arbre côte à
+  côte. Écrans ajoutés au banc d'accessibilité de la phase 11.
+- **Architecture** : l'analyse se fait en Kotlin (un seul parcours pour toutes les sources), le moteur natif donnant la
+  place allouée, l'inode et le nombre de liens des fichiers des disques (ext4, FAT, exFAT, NTFS) ; l'arbre est gardé
+  en Kotlin sous une forme compacte et bornée ; Flutter ne reçoit que ce qu'il affiche. Une analyse à la fois ; elle
+  continue si l'on quitte l'écran ; les résultats restent en mémoire pendant la session (pas sur le stockage).
+- **Ce que l'analyseur ne fait pas** (phase 16) : taille des applications et de leurs données (il faudrait l'accès aux
+  statistiques d'utilisation d'Android) ; recherche de doublons ; comparaison de deux analyses ; capture du graphique
+  dans un fichier ; analyse planifiée ou en arrière-plan quand Portail est fermé ; écriture d'aucune sorte en dehors
+  des actions demandées par l'utilisateur (corbeille, suppression). La taille des applications est prévue pour une
+  phase suivante (accord de l'utilisateur du 2026-10-25).

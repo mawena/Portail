@@ -1,3 +1,5 @@
+#define _GNU_SOURCE /* PTHREAD_MUTEX_RECURSIVE */
+#include <pthread.h>
 #include <stdatomic.h>
 #include <stdio.h>
 #include <string.h>
@@ -28,6 +30,22 @@ static const struct {
 static _Atomic(int64_t (*)(void)) g_clock;
 
 void fl_fs_set_clock(int64_t (*now)(void)) { atomic_store(&g_clock, now); }
+
+static pthread_once_t g_glue_once = PTHREAD_ONCE_INIT;
+static pthread_mutex_t g_glue;
+
+static void glue_init(void) {
+  pthread_mutexattr_t a;
+  pthread_mutexattr_init(&a);
+  pthread_mutexattr_settype(&a, PTHREAD_MUTEX_RECURSIVE);
+  pthread_mutex_init(&g_glue, &a);
+  pthread_mutexattr_destroy(&a);
+}
+
+pthread_mutex_t *fl_fs_glue_lock(void) {
+  pthread_once(&g_glue_once, glue_init);
+  return &g_glue;
+}
 
 int64_t fl_fs_now(void) {
   int64_t (*now)(void) = atomic_load(&g_clock);

@@ -34,6 +34,8 @@ class AppState extends ChangeNotifier implements FluLuksEventsApi {
   bool _ejecting = false;
   String? _ejectError;
   List<SourceMsg> _sources = const [];
+  List<VaultMsg> _vaults = const [];
+  String? _biometricUnavailable;
   List<RemoteServerMsg> _servers = const [];
   bool _allFilesAccess = false;
   TransferMsg? _transfer;
@@ -49,11 +51,26 @@ class AppState extends ChangeNotifier implements FluLuksEventsApi {
   final _closedNoticed = <String>{}; // stockages disparus dont la fermeture a déjà été annoncée
   (String, String)? _transferDestination;
 
+  /// Vues déchiffrées ouvertes (phase 14) et le stockage de leur fichier chiffré.
+  final _decrypted = <String, (SourceMsg, String)>{};
+
+  /// Écrans qui demandent FLAG_SECURE (terminal masqué, coffre parcouru avec le réglage) ; [_secureApplied] : état
+  /// demandé à Android.
+  int _secureHolds = 0;
+  bool _secureApplied = false;
+  ({String dstId, String dstDir, String format, bool single})? _lastEncrypt;
+
   List<DiskMsg> get disks => _disks;
   List<VolumeMsg> get volumes => _volumes;
 
   /// Stockages du gestionnaire de fichiers : téléphone, cartes SD, volumes ouverts.
   List<SourceMsg> get sources => _sources;
+
+  /// Coffres connus (phase 14) : fermés, ouverts ou indisponibles.
+  List<VaultMsg> get vaults => _vaults;
+
+  /// Raison pour laquelle la biométrie forte n'est pas utilisable (null : elle l'est).
+  String? get biometricUnavailable => _biometricUnavailable;
 
   /// Serveurs distants enregistrés (phase 10).
   List<RemoteServerMsg> get servers => _servers;
@@ -133,7 +150,7 @@ class AppState extends ChangeNotifier implements FluLuksEventsApi {
     for (final s in _sources) {
       if (s.id == id) return s;
     }
-    return null;
+    return _decrypted[id]?.$1;
   }
 
   /// « Ouvrir les disques en lecture seule » : tout nouveau montage se fait alors sans écriture.
@@ -189,6 +206,8 @@ class AppState extends ChangeNotifier implements FluLuksEventsApi {
       _uiPrefs.value = await api.getUiPrefs();
       _favorites = await api.listFavorites();
       _servers = await api.listServers();
+      _vaults = await api.listVaults();
+      _biometricUnavailable = await api.biometricUnavailable();
       notifyListeners();
       await terminals.restore(); // sessions gardées par le service pendant que l'application était fermée
     } on PlatformException catch (e) {
@@ -252,9 +271,10 @@ class AppState extends ChangeNotifier implements FluLuksEventsApi {
   }
 
   @override
-  void onStateChanged(List<DiskMsg> disks, List<VolumeMsg> volumes) {
+  void onStateChanged(List<DiskMsg> disks, List<VolumeMsg> volumes, List<VaultMsg> vaults) {
     _disks = disks;
     _volumes = volumes;
+    _vaults = vaults;
     notifyListeners();
     refreshSources(); // un volume ouvert ou fermé ajoute ou retire un stockage
   }
@@ -274,11 +294,14 @@ class AppState extends ChangeNotifier implements FluLuksEventsApi {
       if (before.difference(now).isNotEmpty) {
         if (_clipboard != null && !now.contains(_clipboard!.sourceId)) _clipboard = null;
         if (_pendingExtract != null && !now.contains(_pendingExtract!.sourceId)) _pendingExtract = null;
+        _decrypted.removeWhere((_, v) => !now.contains(v.$2)); // retirées côté Kotlin avec leur stockage
+        _applySecure();
         PaintingBinding.instance.imageCache.clear();
       }
       _allFilesAccess = await api.hasAllFilesAccess();
       _favorites = await api.listFavorites();
       _servers = await api.listServers();
+      _vaults = await api.listVaults();
       notifyListeners();
     } on PlatformException catch (e) {
       _fail(e);
@@ -392,11 +415,168 @@ class AppState extends ChangeNotifier implements FluLuksEventsApi {
         _transferDestination = (srcId, dstDir);
       });
 
-  /// Extrait [archive] sous [dstDir] de [dstId], dans un nouveau dossier au nom de l'archive si [intoNewFolder].
-  Future<void> startExtract(String srcId, String archive, String dstId, String dstDir, {required bool intoNewFolder}) =>
+  /// Extrait [archive] sous [dstDir] de [dstId], dans un nouveau dossier au nom de l'archive si [intoNewFolder] ;
+  /// [password] pour une archive protégée (mis à zéro par l'appelant).
+  Future<void> startExtract(String srcId, String archive, String dstId, String dstDir,
+          {required bool intoNewFolder, Uint8List? password}) =>
       _guard(() async {
-        await api.startExtract(srcId, archive, dstId, dstDir, intoNewFolder);
+        await api.startExtract(srcId, archive, dstId, dstDir, intoNewFolder, password: password);
         _transferDestination = (dstId, dstDir);
+      });
+
+  // ---------------------------------------------------------------- chiffrement (phase 14)
+
+  /// Dernier chiffrement lancé : où il écrit, son format, et s'il produit un seul fichier (à partager ensuite).
+  ({String dstId, String dstDir, String format, bool single})? get lastEncrypt => _lastEncrypt;
+
+  /// Chiffre [paths] (format `age` ou `zip`) ; [password] est mis à zéro par l'appelant.
+  Future<void> startEncrypt(String srcId, List<String> paths, String dstId, String dstDir,
+          {required String format, required bool together, String? name, required bool deleteOriginal,
+          required Uint8List password}) =>
+      _guard(() async {
+        await api.startEncrypt(srcId, paths, dstId, dstDir, format, together, name, deleteOriginal, password);
+        _transferDestination = (dstId, dstDir);
+        _lastEncrypt = (dstId: dstId, dstDir: dstDir, format: format, single: together || paths.length == 1);
+      });
+
+  Future<void> startDecrypt(String srcId, String path, String dstId, String dstDir,
+          {required bool extractFolder, required Uint8List password}) =>
+      _guard(() async {
+        await api.startDecrypt(srcId, path, dstId, dstDir, extractFolder, password);
+        _transferDestination = (dstId, dstDir);
+      });
+
+  Future<void> startVerify(String srcId, String path, Uint8List password) =>
+      _guard(() => api.startVerify(srcId, path, password));
+
+  /// Change le mot de passe d'un fichier `.age` ; erreur `badPassword` rendue telle quelle.
+  Future<void> changeFilePassword(String srcId, String path, Uint8List oldPassword, Uint8List newPassword) =>
+      api.changeFilePassword(srcId, path, oldPassword, newPassword);
+
+  /// Ouvre une vue déchiffrée de [path] ; erreur `badPassword` rendue telle quelle.
+  Future<SourceMsg> openDecrypted(String srcId, String path, Uint8List password) async {
+    final s = await api.openDecrypted(srcId, path, password);
+    _decrypted[s.id] = (s, srcId);
+    _applySecure();
+    return s;
+  }
+
+  Future<void> closeDecrypted(String id) async {
+    if (_decrypted.remove(id) == null) return;
+    _applySecure();
+    try {
+      await api.closeDecrypted(id);
+    } on PlatformException {
+      // déjà fermée avec son stockage
+    }
+  }
+
+  VaultMsg? vaultById(String id) {
+    for (final v in _vaults) {
+      if (v.id == id) return v;
+    }
+    return null;
+  }
+
+  /// Crée un coffre (progression par [transfer], type `vault`) ; lève [PlatformException] en cas d'échec ou
+  /// d'annulation. [password] est mis à zéro après l'appel, sur tous les chemins.
+  Future<VaultMsg> createVault(String srcId, String dir, String name, int sizeBytes, String fs, Uint8List password) async {
+    try {
+      _transferDestination = (srcId, dir);
+      final v = await api.createVault(srcId, dir, name, sizeBytes, fs, password);
+      await refreshSources();
+      return v;
+    } finally {
+      password.fillRange(0, password.length, 0);
+    }
+  }
+
+  /// Ouvre un coffre connu ([vaultId]) ou le fichier [path] de [srcId] ; rend son volume (le stockage du coffre a
+  /// le même identifiant). Erreur `badPassword` rendue telle quelle ; [password] mis à zéro après l'appel.
+  Future<VolumeMsg> openVault({String? vaultId, String? srcId, String? path, required Uint8List password,
+      required bool writable, bool recovery = false}) async {
+    try {
+      final v = await api.openVault(vaultId, srcId, path, password, writable, recovery: recovery);
+      await refresh();
+      return v;
+    } finally {
+      password.fillRange(0, password.length, 0);
+    }
+  }
+
+  /// Change le mot de passe d'un coffre fermé ([oldPassword] : mot de passe ou clé de secours). Lève
+  /// [PlatformException] ; les deux tableaux sont mis à zéro après l'appel.
+  Future<void> changeVaultPassword(String id, Uint8List oldPassword, Uint8List newPassword) async {
+    try {
+      await api.changeVaultPassword(id, oldPassword, newPassword);
+    } finally {
+      oldPassword.fillRange(0, oldPassword.length, 0);
+      newPassword.fillRange(0, newPassword.length, 0);
+    }
+  }
+
+  /// Crée la clé de secours d'un coffre fermé et la rend (l'appelant la montre une fois, puis la met à zéro).
+  Future<Uint8List> addRecoveryKey(String id, Uint8List password) async {
+    try {
+      final k = await api.addRecoveryKey(id, password);
+      await refreshSources();
+      return k;
+    } finally {
+      password.fillRange(0, password.length, 0);
+    }
+  }
+
+  Future<void> removeRecoveryKey(String id, Uint8List password) async {
+    try {
+      await api.removeRecoveryKey(id, password);
+      await refreshSources();
+    } finally {
+      password.fillRange(0, password.length, 0);
+    }
+  }
+
+  /// Active le déverrouillage biométrique (invite biométrique côté Android) ; erreur `biometricCancelled` si elle est
+  /// annulée. [password] est mis à zéro.
+  Future<void> enableBiometric(String id, Uint8List password) async {
+    try {
+      await api.enableBiometric(id, password);
+      await refreshSources();
+    } finally {
+      password.fillRange(0, password.length, 0);
+    }
+  }
+
+  /// Ouvre le coffre par la biométrie ; erreurs `biometricCancelled` et `biometricInvalidated` rendues telles quelles.
+  Future<VolumeMsg> openVaultBiometric(String id, {required bool writable}) async {
+    try {
+      final v = await api.openVaultBiometric(id, writable);
+      await refresh();
+      return v;
+    } on PlatformException {
+      await refreshSources(); // biométrie peut-être désactivée
+      rethrow;
+    }
+  }
+
+  Future<void> disableBiometric(String id, Uint8List? password) async {
+    try {
+      await api.disableBiometric(id, password);
+      await refreshSources();
+    } finally {
+      password?.fillRange(0, password.length, 0);
+    }
+  }
+
+  /// Ferme le coffre (synchronisé, démonté, clé effacée).
+  Future<void> closeVault(String id) => _guard(() async {
+        await api.closeVault(id);
+        await refresh();
+      });
+
+  /// Retire le coffre de la liste ; son fichier n'est pas touché.
+  Future<void> forgetVault(String id) => _guard(() async {
+        await api.forgetVault(id);
+        await refresh();
       });
 
   Future<void> cancelTransfer() => _guard(() => api.cancelTransfer());
@@ -410,8 +590,32 @@ class AppState extends ChangeNotifier implements FluLuksEventsApi {
   Future<void> setUiPrefs(UiPrefsMsg prefs) => _guard(() async {
         await api.setUiPrefs(prefs);
         _uiPrefs.value = prefs;
+        _applySecure();
         notifyListeners();
       });
+
+  /// Réglage « Masquer les coffres et les fichiers déchiffrés » (phase 14).
+  bool get hideVaults => uiPrefs.hideVaults ?? false;
+
+  /// Masque l'application dans les captures et les applications récentes tant que [releaseSecure] n'a pas été
+  /// appelé autant de fois (terminal masqué, coffre parcouru) ; une vue déchiffrée ouverte masque aussi, si
+  /// [hideVaults].
+  void holdSecure() {
+    _secureHolds++;
+    _applySecure();
+  }
+
+  void releaseSecure() {
+    if (_secureHolds > 0) _secureHolds--;
+    _applySecure();
+  }
+
+  void _applySecure() {
+    final want = _secureHolds > 0 || (hideVaults && _decrypted.isNotEmpty);
+    if (want == _secureApplied) return;
+    _secureApplied = want;
+    api.setSecureScreen(want).catchError((_) {}); // sans activité (tests, arrière-plan) : rien à masquer
+  }
 
   Future<void> addFavorite(String sourceId, String path, String label) => _guard(() async {
         await api.addFavorite(sourceId, path, label);

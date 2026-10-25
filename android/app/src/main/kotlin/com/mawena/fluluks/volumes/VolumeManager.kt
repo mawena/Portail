@@ -21,6 +21,7 @@ import com.mawena.fluluks.engine.EngineError
 import com.mawena.fluluks.engine.NativeEngine
 import com.mawena.fluluks.engine.ScanResult
 import com.mawena.fluluks.engine.VolumeStat
+import com.mawena.fluluks.crypt.DecryptedSources
 import com.mawena.fluluks.files.Thumbnails
 import com.mawena.fluluks.service.VolumeService
 import com.mawena.fluluks.usb.UsbDisks
@@ -62,6 +63,21 @@ object VolumeManager {
     const val MSG_LOW_MEMORY =
         "Mémoire insuffisante pour déverrouiller ce disque : fermez d'autres applications et réessayez"
     const val MSG_TOO_MANY = "Trop de volumes ouverts : éjectez-en un avant d'en ouvrir un autre"
+    const val MSG_NOT_VAULT = "Ce fichier n'est pas un coffre"
+    const val MSG_VAULT_DETACHED = "Coffre fermé : son disque a été débranché"
+    const val MSG_VAULT_REMOVED = "Coffre fermé : son stockage a été retiré"
+    fun msgVaultOpen(name: String) = "fermez d'abord le coffre « $name »"
+
+    /** Raison de la lecture seule d'un coffre, complétée du moyen de le réparer sous Linux. */
+    fun vaultAdvice(reason: String, fs: String): String {
+        val fsck = when (fs.lowercase()) {
+            "ext4" -> "e2fsck"
+            "exfat" -> "fsck.exfat"
+            "ntfs" -> "ntfsfix"
+            else -> "fsck.fat"
+        }
+        return "$reason ; vérifiez-le sous Linux : cryptsetup open, puis $fsck"
+    }
     const val MSG_EJECTING = "Écriture des données en attente…"
     private const val MSG_DETACH_DURING_WRITE_PREFIX = "Disque débranché pendant une écriture : "
     /** Avertissement d'un débranchement pendant une écriture, avec le conseil adapté au système de fichiers. */
@@ -130,8 +146,17 @@ object VolumeManager {
 
     /** Le volume vient de servir (lecture, écriture, listage) : base du verrouillage automatique. */
     fun noteActivity(volumeId: String) {
-        if (mounts.containsKey(volumeId)) activity[volumeId] = clock()
+        if (!mounts.containsKey(volumeId)) return
+        activity[volumeId] = clock()
+        // un coffre qui sert garde actif le volume qui porte son fichier
+        vaultHosts[volumeId]?.sourceId?.let { host -> if (mounts.containsKey(host)) activity[host] = clock() }
     }
+
+    /** Coffres ouverts : leur fichier ne peut être ni supprimé, ni déplacé, ni renommé, ni copié. */
+    fun openVaultHosts(): Collection<VaultHost> = vaultHosts.values
+
+    /** Volume du coffre [vaultId] s'il est ouvert. */
+    fun vaultVolume(vaultId: String): VolumeState? = mounts.values.firstOrNull { it.state.vaultId == vaultId }?.state
 
     /** Heure (horloge de [noteActivity]) de la dernière activité du volume, ou null s'il n'est pas ouvert. */
     fun lastActivity(volumeId: String): Long? = activity[volumeId]
@@ -151,6 +176,9 @@ object VolumeManager {
     private val dispatcher get() = exec.asCoroutineDispatcher()
 
     @Volatile private var availMem: () -> Long = { Long.MAX_VALUE }
+
+    /** Mémoire disponible (octets) : la règle des 0,8 × de LUKS sert aussi au scrypt des fichiers age (phase 14). */
+    fun availableMemory(): Long = availMem()
 
     /** Service au premier plan : état et démarrage, injectables pour les tests JVM. */
     @Volatile private var serviceRunning: () -> Boolean = { VolumeService.running }
@@ -193,6 +221,8 @@ object VolumeManager {
         var intfId: Int = -1,
         val imagePath: String? = null, // disque de test : rouvert depuis ce chemin
         val imageReadOnly: Boolean = true,
+        /** Coffre : disque sur un fichier, jamais publié dans [disks], oublié à sa fermeture. */
+        val vault: VaultHost? = null,
     )
 
     private class MountEntry(val state: VolumeState, val handle: Long)
@@ -200,6 +230,9 @@ object VolumeManager {
     // Modifiés uniquement sur l'exécuteur (disks) ; mounts lisible de partout.
     private val diskEntries = LinkedHashMap<String, DiskEntry>()
     private val mounts = ConcurrentHashMap<String, MountEntry>()
+
+    /** Coffres ouverts, par volume : lisible de partout (fichiers protégés, activité du volume porteur). */
+    private val vaultHosts = ConcurrentHashMap<String, VaultHost>()
     private val mountOrder = ArrayList<String>() // exécuteur seulement
     private val counter = AtomicInteger(0)
 
@@ -285,7 +318,7 @@ object VolumeManager {
         pendingSync.values.forEach { it() }
         pendingSync.clear(); writeGen.clear(); syncedGen.clear()
         _ejecting.value = false; _ejectError.value = null; _formatting.value = null; formattingDisk = null
-        diskEntries.clear(); mounts.clear(); mountOrder.clear()
+        diskEntries.clear(); mounts.clear(); mountOrder.clear(); vaultHosts.clear()
         counter.set(0); imageCounter.set(0); sessionToken = newSessionToken()
         _disks.value = emptyList(); _volumes.value = emptyList()
         serviceRunning = { false }; serviceStarter = null
@@ -389,6 +422,10 @@ object VolumeManager {
     private fun detach(diskId: String) {
         val entry = diskEntries.remove(diskId)
         val vols = mountOrder.filter { mounts[it]?.state?.diskId == diskId }
+        // coffres dont le fichier est sur ce disque : fermés de force avant lui
+        val vaults = vols.flatMap(::vaultsOn)
+        if (vaults.isNotEmpty()) detachWarner(MSG_VAULT_DETACHED)
+        for (v in vaults) closeVaultLocked(v)
         // un seul avertissement, avec le conseil du premier volume écrit
         vols.firstOrNull { hasUnsyncedWrites(it) }?.let { detachWarner(detachAdvice(mounts[it]?.state?.fs ?: "")) }
         for (vid in vols) unmountLocked(vid)
@@ -435,7 +472,14 @@ object VolumeManager {
     suspend fun mountPlain(diskId: String, partIndex: Int, writable: Boolean = false): VolumeState =
         withContext(dispatcher) { mountLocked(diskId, partIndex, null, writable) }
 
-    private fun mountLocked(diskId: String, partIndex: Int, pass: ByteArray?, writable: Boolean): VolumeState {
+    private fun mountLocked(
+        diskId: String,
+        partIndex: Int,
+        pass: ByteArray?,
+        writable: Boolean,
+        slot: Int = -1,
+        vaultTitle: String? = null,
+    ): VolumeState {
         try {
             if (formattingDisk == diskId) throw EngineError(EngineError.FL_EBUSY, MSG_FORMAT_BUSY)
             val existing = mounts.values.firstOrNull { it.state.diskId == diskId && it.state.partIndex == partIndex }
@@ -459,20 +503,31 @@ object VolumeManager {
                     throw EngineError(EngineError.FL_ENOMEM, MSG_LOW_MEMORY)
                 }
             }
-            val vol = EngineError.check(engine.mount(entry.handle, partIndex, pass, writable))
+            val vol = EngineError.check(
+                if (slot >= 0 && pass != null) engine.mountSlot(entry.handle, partIndex, slot, pass, writable)
+                else engine.mount(entry.handle, partIndex, pass, writable),
+            )
             val stat = try {
                 VolumeStat.parse(engine.statfs(vol))
             } catch (t: Throwable) {
                 engine.unmount(vol, true); throw t // la poignée ne doit jamais fuir
             }
-            val title = defaultTitle(stat.label, part.sizeBytes)
+            val title = vaultTitle ?: defaultTitle(stat.label, part.sizeBytes)
+            val vault = entry.vault
+            // coffre en lecture seule imposée (système de fichiers à vérifier…) : comment le réparer sous Linux
+            val roReason = if (vault != null && stat.readOnly && stat.roReason.isNotEmpty() && stat.roReason != RO_USER_REASON) {
+                vaultAdvice(stat.roReason, stat.fs)
+            } else {
+                stat.roReason
+            }
             val state = VolumeState(
                 id = "v" + sessionToken + "-" + counter.incrementAndGet(), diskId = diskId, partIndex = partIndex, title = title,
                 totalBytes = stat.totalBytes, freeBytes = stat.freeBytes,
-                needsRecovery = stat.needsRecovery, roReason = stat.roReason, readOnly = stat.readOnly,
-                partUuid = part.uuid, fs = stat.fs, encrypted = pass != null,
+                needsRecovery = stat.needsRecovery, roReason = roReason, readOnly = stat.readOnly,
+                partUuid = part.uuid, fs = stat.fs, encrypted = pass != null, vaultId = vault?.vaultId,
             )
             mounts[state.id] = MountEntry(state, vol)
+            if (vault != null) vaultHosts[state.id] = vault
             activity[state.id] = clock()
             mountOrder.add(state.id)
             publishVolumes()
@@ -605,8 +660,22 @@ object VolumeManager {
         _ejectError.value = null
         _ejecting.value = true
         try {
+            // les coffres d'abord, avant le volume qui porte leur fichier, même s'ils sont aussi dans [ids] (Tout
+            // éjecter : l'hôte, ouvert avant, y vient avant ses coffres)
+            val order = ArrayList<String>()
             for (id in ids) {
+                for (v in vaultsOn(id)) if (v !in order) order.add(v)
+                if (id !in order) order.add(id)
+            }
+            for (id in order) {
                 val m = mounts[id] ?: continue
+                val still = vaultsOn(id).firstOrNull()
+                if (still != null) {
+                    // un coffre de ce volume n'a pas pu se fermer : le volume reste ouvert
+                    _ejectError.value = msgEjectFailed(msgVaultOpen(mounts[still]?.state?.title ?: ""))
+                    continue
+                }
+                DecryptedSources.dropFor(id) // vues déchiffrées fermées avant le démontage (fichier ouvert)
                 pendingSync.remove(id)?.invoke()
                 val rcSync = engine.sync(m.handle)
                 if (rcSync < 0) {
@@ -637,12 +706,95 @@ object VolumeManager {
                     _ejectError.value = msgEjectFailed(detail) + " " + msgEjectIncomplete(detail)
                 }
                 val entry = diskEntries[m.state.diskId]
-                if (entry != null && mounts.values.none { it.state.diskId == m.state.diskId }) release(entry)
+                if (entry != null && mounts.values.none { it.state.diskId == m.state.diskId }) {
+                    release(entry)
+                    if (entry.vault != null) diskEntries.remove(m.state.diskId) // un coffre se rouvre par son fichier
+                }
             }
         } finally {
             _ejecting.value = false
             publishDisks(); publishVolumes()
         }
+    }
+
+    /** Volumes des coffres ouverts dont le fichier est sur [sourceId] (volume d'un disque, téléphone, carte SD). */
+    private fun vaultsOn(sourceId: String): List<String> =
+        mountOrder.filter { vaultHosts[it]?.sourceId == sourceId }
+
+    /** Ferme de force le coffre du volume [volumeId] (son stockage a disparu) et libère son disque (exécuteur). */
+    private fun closeVaultLocked(volumeId: String) {
+        val diskId = mounts[volumeId]?.state?.diskId ?: return
+        unmountLocked(volumeId)
+        val entry = diskEntries.remove(diskId) ?: return
+        release(entry)
+    }
+
+    /**
+     * Ouvre le coffre [host] (exécuteur) : [openDisk] rend la poignée du disque sur son fichier (le fichier appartient
+     * ensuite au disque), puis le disque entier, sans table (index 0), est monté avec [pass] (ou par l'emplacement
+     * [slot] : clé de secours, biométrie). [MSG_NOT_VAULT] si ce n'est pas un conteneur LUKS. [pass] est mis à zéro.
+     */
+    suspend fun openVault(
+        host: VaultHost,
+        name: String,
+        pass: ByteArray,
+        writable: Boolean,
+        slot: Int = -1,
+        openDisk: () -> Long,
+    ): VolumeState {
+        try {
+            return withContext(dispatcher) {
+                vaultVolume(host.vaultId)?.let { return@withContext it }
+                if (mounts.size >= MAX_VOLUMES) throw EngineError(EngineError.FL_EBUSY, MSG_TOO_MANY)
+                val diskId = "vault:" + host.vaultId
+                diskEntries.remove(diskId)?.let(::release) // reste d'une ouverture interrompue
+                val h = EngineError.check(openDisk())
+                val entry = DiskEntry(DiskState(diskId, name, 0, true, null, null), null, handle = h, vault = host)
+                diskEntries[diskId] = entry
+                try {
+                    entry.state = scanState(diskId, name, h, true)
+                    val scan = entry.state.scan
+                    val part = scan?.parts?.firstOrNull { it.index == 0 }
+                    if (scan == null || scan.table != "none" || part == null || !part.encrypted) {
+                        throw EngineError(EngineError.FL_ENOTSUP, MSG_NOT_VAULT)
+                    }
+                    part.luks?.let { vaultLuks[host.vaultId] = it.version }
+                    mountLocked(diskId, 0, pass.copyOf(), writable, slot, vaultTitle = name)
+                } catch (t: Throwable) {
+                    if (mounts.values.none { it.state.diskId == diskId }) {
+                        diskEntries.remove(diskId)
+                        release(entry)
+                    }
+                    throw t
+                }
+            }
+        } finally {
+            pass.fill(0)
+        }
+    }
+
+    /** Ferme les coffres dont le fichier est sur [sourceId], qui a disparu (carte SD retirée, serveur…). */
+    fun closeVaultsOn(sourceId: String) {
+        exec.execute {
+            runSafely(null) {
+                val vaults = vaultsOn(sourceId)
+                if (vaults.isEmpty()) return@runSafely
+                detachWarner(MSG_VAULT_REMOVED)
+                vaults.forEach(::closeVaultLocked)
+                publishVolumes()
+            }
+        }
+    }
+
+    /** Version LUKS (1 ou 2) du coffre [vaultId], lue à sa dernière ouverture ; null s'il n'a pas été ouvert. */
+    fun vaultLuksVersion(vaultId: String): Int? = vaultLuks[vaultId]
+
+    private val vaultLuks = java.util.concurrent.ConcurrentHashMap<String, Int>()
+
+    /** Ferme le coffre ouvert [vaultId] comme une éjection (synchronisé, démonté, clé effacée). */
+    fun closeVault(vaultId: String) {
+        val v = vaultVolume(vaultId) ?: return
+        eject(v.id)
     }
 
     /** Retire un volume des tables (démonté, ou en train de l'être). */
@@ -653,7 +805,9 @@ object VolumeManager {
         pendingSync.remove(volumeId)?.invoke()
         writeGen.remove(volumeId); syncedGen.remove(volumeId)
         activity.remove(volumeId)
+        vaultHosts.remove(volumeId)
         Thumbnails.drop(volumeId) // vignettes du disque oubliées avec lui
+        DecryptedSources.dropFor(volumeId)
     }
 
     /** Débranchement : démontage de force (le disque n'est plus là). */
@@ -777,7 +931,7 @@ object VolumeManager {
     // ---------------------------------------------------------------- publication
 
     private fun publishDisks() {
-        _disks.value = diskEntries.values.map { it.state }
+        _disks.value = diskEntries.values.filter { it.vault == null }.map { it.state } // un coffre n'est pas un disque
     }
 
     private fun publishVolumes() {

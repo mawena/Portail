@@ -1,6 +1,9 @@
+import 'dart:typed_data';
+import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:fluluks/src/app.dart';
+import 'package:fluluks/src/screens/explorer_screen.dart';
 import 'package:fluluks/src/bridge/fluluks_api.g.dart';
 import 'package:fluluks/src/state/app_state.dart';
 import 'package:fluluks/src/strings_fr.dart';
@@ -27,14 +30,15 @@ void main() {
     addTearDown(tester.view.reset);
     await pumpSettings(tester, FakeHostApi());
     final headers = tester.widgetList<SectionHeader>(find.byType(SectionHeader)).map((h) => h.title).toList();
-    expect(headers, [Fr.sectionAppearance, Fr.sectionFiles, Fr.sectionAi, Fr.sectionDisks, Fr.sectionComfort, Fr.title]);
-    expect(headers, ['Apparence', 'Fichiers', 'Intelligence artificielle', 'Disques', 'Confort', 'Portail']);
+    expect(headers, [Fr.sectionAppearance, Fr.sectionFiles, Fr.sectionAi, Fr.sectionDisks, Fr.sectionPrivacy, Fr.sectionComfort, Fr.title]);
+    expect(headers, ['Apparence', 'Fichiers', 'Intelligence artificielle', 'Disques', 'Confidentialité', 'Confort', 'Portail']);
     // chaque réglage sous son en-tête, dans l'ordre
     const order = [
       Fr.sectionAppearance, Fr.theme, Fr.display, Fr.showHidden, //
       Fr.sectionFiles, Fr.builtInViewers, Fr.allFilesTitle, //
       Fr.sectionAi, Fr.aiServers, //
       Fr.sectionDisks, Fr.readOnlySwitch, Fr.autoLock, //
+      Fr.sectionPrivacy, Fr.closeVaultsOnScreenOff, Fr.hideVaults, //
       Fr.sectionComfort, Fr.haptics, //
       Fr.title, Fr.help, Fr.about,
     ];
@@ -118,7 +122,7 @@ void main() {
     await pumpSettings(tester, FakeHostApi()..autoLockMinutes = 15);
     await tester.scrollUntilVisible(find.text('15 min'), 100); // section Disques, sous Apparence et Fichiers
     expect(find.text('Verrouillage automatique'), findsOneWidget);
-    expect(find.text('Disques chiffrés, après ce délai sans activité'), findsOneWidget);
+    expect(find.text(Fr.autoLockHelp), findsOneWidget);
     expect(find.text('15 min'), findsOneWidget);
   });
 
@@ -134,5 +138,75 @@ void main() {
     await tester.pumpAndSettle();
     expect(api.autoLockMinutes, 60);
     expect(find.text('1 h'), findsOneWidget);
+  });
+
+  // --- phase 14, T13 : confidentialité des coffres ---
+
+  testWidgets('bothSettingsOffByDefault', (tester) async {
+    tester.view.physicalSize = const Size(412, 2400);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.reset);
+    final api = await pumpSettings(tester, FakeHostApi());
+    SwitchListTile sw(String t) => tester.widget<SwitchListTile>(find.widgetWithText(SwitchListTile, t));
+    expect(sw(Fr.closeVaultsOnScreenOff).value, isFalse);
+    expect(sw(Fr.hideVaults).value, isFalse);
+    expect(find.text(Fr.autoLockHelp), findsOneWidget); // le verrouillage automatique vaut aussi pour les coffres
+    await tester.tap(find.text(Fr.closeVaultsOnScreenOff));
+    await tester.pump();
+    expect(api.uiPrefs.closeVaultsOnScreenOff, isTrue);
+    expect(api.uiPrefs.hideVaults ?? false, isFalse);
+    await tester.tap(find.text(Fr.hideVaults));
+    await tester.pump();
+    expect(api.uiPrefs.hideVaults, isTrue);
+    expect(sw(Fr.hideVaults).value, isTrue);
+  });
+
+  testWidgets('secureFlagWhileVaultOrDecryptedView', (tester) async {
+    SourceMsg s(String id, String kind) => SourceMsg(id: id, stableKey: id, kind: kind, label: id, totalBytes: 1000,
+        freeBytes: 500, readOnly: false, roReason: '', encrypted: kind == 'vault');
+    Future<(FakeHostApi, AppState)> start(bool hide) async {
+      final api = FakeHostApi()
+        ..sources = [s('phone', 'phone'), s('vv1', 'vault')]
+        ..dirs['phone'] = {'/': []}
+        ..dirs['vv1'] = {'/': []}
+        ..filePassword = 'correct horse battery'
+        ..uiPrefs = UiPrefsMsg(theme: 'system', haptics: true, welcomeSeen: true, hideVaults: hide);
+      final state = AppState(api);
+      await state.loadUiPrefs();
+      await state.refresh();
+      await tester.pumpWidget(const SizedBox.shrink());
+      await tester.pumpWidget(FluLuksApp(state: state));
+      await tester.pumpAndSettle();
+      return (api, state);
+    }
+
+    Future<void> browse(AppState state, String id) async {
+      tester.state<NavigatorState>(find.byType(Navigator)).push(
+          MaterialPageRoute<void>(builder: (_) => ExplorerScreen(state: state, sourceId: id)));
+      await tester.pumpAndSettle();
+    }
+
+    Future<void> back() async {
+      tester.state<NavigatorState>(find.byType(Navigator)).pop();
+      await tester.pumpAndSettle();
+    }
+
+    var (api, state) = await start(true);
+    await browse(state, 'phone');
+    expect(api.secureScreen, isNull); // le téléphone n'est pas masqué
+    await back();
+    await browse(state, 'vv1');
+    expect(api.secureScreen, isTrue); // coffre parcouru : masqué
+    await back();
+    expect(api.secureScreen, isFalse);
+    final view = await state.openDecrypted('phone', '/a.txt.age', Uint8List.fromList(utf8.encode('correct horse battery')));
+    expect(api.secureScreen, isTrue); // vue déchiffrée ouverte
+    await state.closeDecrypted(view.id);
+    expect(api.secureScreen, isFalse);
+
+    // réglage désactivé : jamais masqué
+    (api, state) = await start(false);
+    await browse(state, 'vv1');
+    expect(api.secureScreen, isNull);
   });
 }

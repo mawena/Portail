@@ -14,6 +14,7 @@
 enum { L2_KDF_PBKDF2 = 1, L2_KDF_ARGON2I, L2_KDF_ARGON2ID };
 
 typedef struct {
+  uint32_t id;    /* numéro de l'emplacement dans le JSON */
   bool supported; /* type/KDF/hash/chiffrement pris en charge (sinon slot ignoré) */
   int priority; /* 1 normal, 2 haute (0 = jamais : conservé mais ignoré) */
   uint32_t key_size;
@@ -52,5 +53,35 @@ typedef struct {
 
 /* Analyse la zone JSON (terminée par NUL) ; dev_size en octets. */
 int fl_luks2_parse_json(const char *json, uint64_t dev_size, luks2 *out);
+
+/* cJSON_Parse sous le verrou de luks2_json.c (cJSON écrit une variable globale à chaque analyse). */
+struct cJSON;
+struct cJSON *fl_luks2_cjson_parse(const char *json);
+
+#include "fluluks/blockdev.h"
+
+/* Image d'un en-tête LUKS2 vérifié (binaire, JSON, somme). */
+typedef struct {
+  uint8_t *buf; /* size octets ; NULL si l'en-tête est absent ou invalide */
+  size_t size;
+  uint64_t seqid;
+  uint64_t off; /* position sur le disque */
+} l2_img;
+
+typedef struct {
+  l2_img hdr[2]; /* [0] primaire, [1] secondaire */
+  int cur;       /* en-tête retenu : seqid le plus grand dont le JSON s'analyse (égalité : primaire) */
+} l2_hdrs;
+
+/* Lit les deux en-têtes de `dev` et analyse celui à retenir dans *x (alloué par l'appelant). Mêmes codes
+ * que fl_luks_open. En cas de succès, h est à libérer par fl_luks2_hdrs_free. */
+int fl_luks2_load(fl_bdev *dev, bool primary_ok, l2_hdrs *h, luks2 *x);
+void fl_luks2_hdrs_free(l2_hdrs *h);
+
+/* Retrouve la clé maîtresse (mk : 64 octets de mémoire sécurisée) avec `pass`, par l'emplacement d'identifiant
+ * `slot` (−1 : tous, par priorité). *mkl, *digest : longueur de la clé et indice du digest qui l'a vérifiée.
+ * FL_EBADPASS, FL_ENOENT (slot ≥ 0 absent ou inutilisable), ou erreur d'un emplacement (FL_ENOMEM, FL_EIO…). */
+int fl_luks2_recover_mk(fl_bdev *dev, const luks2 *x, int slot, const void *pass, size_t passlen, uint8_t *mk,
+                        size_t *mkl, int *digest);
 
 #endif

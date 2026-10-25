@@ -189,6 +189,7 @@ void main() {
     final api = api0();
     final state = await pump(tester, api);
     TransferMsg t(String kind) => TransferMsg(
+        badPassword: false,
         kind: kind, move: kind == 'move', currentName: 'b.txt', fileIndex: 1, fileCount: 2, doneBytes: 50,
         totalBytes: 100, finished: false, cancelled: false, elapsedMs: 0);
     state.onTransferChanged(t('compress'));

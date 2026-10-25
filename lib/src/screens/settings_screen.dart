@@ -127,6 +127,19 @@ class SettingsScreen extends StatelessWidget {
                 },
               ),
             ),
+            const SectionHeader(Fr.sectionPrivacy),
+            SwitchListTile(
+              title: const Text(Fr.closeVaultsOnScreenOff),
+              subtitle: const Text(Fr.closeVaultsOnScreenOffHelp),
+              value: state.uiPrefs.closeVaultsOnScreenOff ?? false,
+              onChanged: (on) => state.setUiPrefs(state.uiPrefs.copyWith(closeVaultsOnScreenOff: on)),
+            ),
+            SwitchListTile(
+              title: const Text(Fr.hideVaults),
+              subtitle: const Text(Fr.hideVaultsHelp),
+              value: state.hideVaults,
+              onChanged: (on) => state.setUiPrefs(state.uiPrefs.copyWith(hideVaults: on)),
+            ),
             const SectionHeader(Fr.sectionComfort),
             SwitchListTile(
               title: const Text(Fr.haptics),

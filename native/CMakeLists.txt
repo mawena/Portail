@@ -25,6 +25,7 @@ set(FL_SOURCES
   src/blockdev/file_bdev.c
   src/blockdev/slice_bdev.c
   src/blockdev/cache_bdev.c
+  src/blockdev/fsfile_bdev.c
   src/part/crc32.c
   src/part/gpt.c
   src/part/mbr.c
@@ -36,6 +37,7 @@ set(FL_SOURCES
   src/luks/luks1.c
   src/luks/luks2.c
   src/luks/luks2_json.c
+  src/luks/luks2_slots.c
   src/luks/b64.c
   src/luks/af.c
   src/luks/crypt_bdev.c
@@ -60,6 +62,9 @@ set(FL_SOURCES
   src/format/format.c
   src/archive/reader.c
   src/archive/writer.c
+  src/age/age_header.c
+  src/age/age_writer.c
+  src/age/age_reader.c
 )
 # Transport usbdevfs : Linux et Android seulement.
 if(CMAKE_SYSTEM_NAME STREQUAL "Linux" OR ANDROID)
@@ -69,7 +74,9 @@ endif()
 add_library(fluluks STATIC ${FL_SOURCES})
 target_include_directories(fluluks PUBLIC include PRIVATE src)
 target_compile_options(fluluks PRIVATE -Wall -Wextra -Werror)
-target_link_libraries(fluluks PUBLIC fl_mbedcrypto fl_argon2 fl_cjson fl_lwext4 fl_fatfs fl_mkntfs fl_ntfs3g fl_libarchive Threads::Threads)
+target_link_libraries(fluluks PUBLIC fl_mbedcrypto fl_scrypt fl_argon2 fl_cjson fl_lwext4 fl_fatfs fl_mkntfs fl_ntfs3g fl_libarchive Threads::Threads)
+# Cycle voulu entre bibliothèques statiques : scrypt_glue.c (fl_scrypt) efface par fl_memzero (fluluks).
+target_link_libraries(fl_scrypt PRIVATE fluluks)
 if(ANDROID)
   target_link_libraries(fluluks PUBLIC log) # fl_ext4_policy_log (logcat)
 endif()
@@ -135,9 +142,23 @@ if(FL_TESTS)
   fl_add_test(test_partition)
   fl_add_test(test_probe)
   fl_add_test(test_crypto)
+  # Phase 14 : scrypt (RFC 7914) et format age, jugé par tools/fixtures/agejuge.py.
+  fl_add_test(test_scrypt)
+  add_test(NAME test_scrypt_lent COMMAND test_scrypt lent)
+  set_tests_properties(test_scrypt_lent PROPERTIES LABELS lent TIMEOUT 1800)
+  add_test(NAME test_scrypt_debit COMMAND test_scrypt debit)
+  set_tests_properties(test_scrypt_debit PROPERTIES LABELS lent)
+  fl_add_test(test_age)
+  target_link_libraries(test_age PRIVATE fl_testsupport)
+  target_compile_definitions(test_age PRIVATE FL_TOOLS_DIR="${CMAKE_SOURCE_DIR}/../tools"
+                             FL_AGE_DATA="${CMAKE_SOURCE_DIR}/tests/data/age")
+  set_tests_properties(test_age PROPERTIES TIMEOUT 600)
   fl_add_test(test_luks1)
   fl_add_test(test_luks2)
   fl_add_test(test_luks2_lent LABELS lent)
+  fl_add_test(test_luks2_slots)
+  target_link_libraries(test_luks2_slots PRIVATE fl_testsupport)
+  set_tests_properties(test_luks2_slots PROPERTIES TIMEOUT 900)
   fl_add_test(test_ext4)
   fl_add_test(test_fat)
   target_link_libraries(test_fat PRIVATE fl_testsupport)
@@ -179,6 +200,15 @@ if(FL_TESTS)
   target_link_libraries(test_archive_write PRIVATE fl_testsupport)
   add_test(NAME test_archive_write_lent COMMAND test_archive_write lent)
   set_tests_properties(test_archive_write_lent PROPERTIES LABELS lent TIMEOUT 1800)
+  # Phase 14, T2 : ZIP chiffré AES-256, ZIP protégés en lecture, ZIP dans un flux age (juges Python sur PC).
+  fl_add_arc_test(test_archive_crypt)
+  target_link_libraries(test_archive_crypt PRIVATE fl_testsupport)
+  target_compile_definitions(test_archive_crypt PRIVATE FL_TOOLS_DIR="${CMAKE_SOURCE_DIR}/../tools")
+  set_tests_properties(test_archive_crypt PROPERTIES TIMEOUT 600)
+  # Coffres (phase 14, T3) : fichier LUKS2 sans table, sur un descripteur ou un fichier du moteur.
+  fl_add_test(test_vault)
+  target_link_libraries(test_vault PRIVATE fl_testsupport)
+  set_tests_properties(test_vault PROPERTIES TIMEOUT 900)
   fl_add_test(test_cache)
   fl_add_test(test_crc32c)
   add_test(NAME test_crc32c_debit COMMAND test_crc32c debit)

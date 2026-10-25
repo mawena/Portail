@@ -2,7 +2,9 @@
 /* Lecture d'archives sur libarchive (phase 9). Formats : ZIP (répertoire central, accès aléatoire), 7z, RAR4,
  * RAR5, TAR, et « brut » derrière un filtre gzip, xz ou lzma (un .gz ou un .xz seul). Les noms sont rendus
  * octets pour octets ; libarchive est appelé dans une locale UTF-8 propre au fil (sous « C », il refuse les
- * noms UTF-8 d'un ZIP). Une erreur de la source (fl_arc_in) est rendue telle quelle. */
+ * noms UTF-8 d'un ZIP). Une erreur de la source (fl_arc_in) est rendue telle quelle.
+ * Phase 14 : mot de passe pour les ZIP chiffrés (WinZip AES, ZipCrypto ; libarchive sur mbedTLS), et ZIP lu
+ * depuis un flux age (dossier chiffré) sans fichier intermédiaire. */
 #include <archive.h>
 #include <archive_entry.h>
 #include <errno.h>
@@ -13,8 +15,10 @@
 #include <string.h>
 
 #include "archive/arc_internal.h"
+#include "fluluks/age.h"
 #include "fluluks/archive.h"
 #include "fluluks/error.h"
+#include "fluluks/secure.h"
 
 #define BUF (64 * 1024)
 
@@ -27,6 +31,9 @@ struct fl_arc_reader {
   int pending_rc;           /* son code (ARCHIVE_OK, ARCHIVE_EOF…) */
   struct archive_entry *pending_e;
   bool encrypted;           /* entrée courante chiffrée */
+  bool has_pass;            /* un mot de passe a été donné (fl_arc_open2) */
+  fl_ager *age;             /* flux age sous le ZIP (fl_arc_open_age), sinon NULL */
+  fl_arc_in age_in;         /* entrée en clair lue dans `age` */
   uint8_t buf[BUF];
 };
 
@@ -90,20 +97,35 @@ static la_int64_t cb_skip(struct archive *a, void *data, la_int64_t req) {
 /* Code d'une erreur de libarchive : celle de la source s'il y en a une, sinon archive abîmée. */
 static int err_code(fl_arc_reader *r) { return r->io_err ? r->io_err : FL_ECORRUPT; }
 
+/* Mot de passe utilisable : non vide, sans octet nul (libarchive le veut terminé par NUL). */
+static bool pass_ok(const void *pass, size_t passlen) {
+  return passlen > 0 && memchr(pass, 0, passlen) == NULL;
+}
+
 /* ---- API ---- */
 
-int fl_arc_open(const fl_arc_in *in, fl_arc_reader **out) {
-  if (!in || !in->pread || in->size < 0 || !out) return FL_EINVAL;
-  *out = NULL;
-  fl_arc_reader *r = calloc(1, sizeof *r);
-  if (!r) return FL_ENOMEM;
-  r->in = in;
+/* Ouvre `r` (déjà alloué, r->in posé) ; libère l'archive en cas d'échec, pas `r`. */
+static int open_reader(fl_arc_reader *r, const void *pass, size_t passlen) {
   r->a = archive_read_new();
-  if (!r->a) {
-    free(r);
-    return FL_ENOMEM;
-  }
+  if (!r->a) return FL_ENOMEM;
   struct archive *a = r->a;
+  if (pass) {
+    /* copie terminée par NUL en mémoire sécurisée, effacée aussitôt ; libarchive efface la sienne au
+     * archive_read_free */
+    char *c = fl_secure_alloc(passlen + 1);
+    if (!c) {
+      archive_read_free(a);
+      return FL_ENOMEM;
+    }
+    memcpy(c, pass, passlen);
+    int prc = archive_read_add_passphrase(a, c);
+    fl_secure_free(c, passlen + 1);
+    if (prc != ARCHIVE_OK) {
+      archive_read_free(a);
+      return FL_ENOMEM;
+    }
+    r->has_pass = true;
+  }
   archive_read_support_filter_gzip(a);
   archive_read_support_filter_xz(a);
   archive_read_support_filter_lzma(a);
@@ -133,6 +155,46 @@ int fl_arc_open(const fl_arc_in *in, fl_arc_reader **out) {
   }
   if (code != FL_OK) {
     archive_read_free(a);
+    r->a = NULL;
+  }
+  return code;
+}
+
+int fl_arc_open2(const fl_arc_in *in, const void *pass, size_t passlen, fl_arc_reader **out) {
+  if (!in || !in->pread || in->size < 0 || !out) return FL_EINVAL;
+  *out = NULL;
+  if (pass && !pass_ok(pass, passlen)) return FL_EINVAL;
+  fl_arc_reader *r = calloc(1, sizeof *r);
+  if (!r) return FL_ENOMEM;
+  r->in = in;
+  int code = open_reader(r, pass, passlen);
+  if (code != FL_OK) {
+    free(r);
+    return code;
+  }
+  *out = r;
+  return FL_OK;
+}
+
+int fl_arc_open(const fl_arc_in *in, fl_arc_reader **out) { return fl_arc_open2(in, NULL, 0, out); }
+
+static int64_t age_pread(void *ctx, void *buf, size_t len, uint64_t off) {
+  return fl_ager_pread(ctx, buf, len, off);
+}
+
+int fl_arc_open_age(const fl_arc_in *in, const void *pass, size_t passlen, uint8_t max_log2n, fl_arc_reader **out) {
+  if (!in || !in->pread || in->size < 0 || !pass || !out) return FL_EINVAL;
+  *out = NULL;
+  fl_arc_reader *r = calloc(1, sizeof *r);
+  if (!r) return FL_ENOMEM;
+  int code = fl_ager_open(in, pass, passlen, max_log2n, &r->age);
+  if (code == FL_OK) {
+    r->age_in = (fl_arc_in){.ctx = r->age, .size = fl_ager_size(r->age), .pread = age_pread};
+    r->in = &r->age_in;
+    code = open_reader(r, NULL, 0);
+    if (code != FL_OK) fl_ager_close(r->age);
+  }
+  if (code != FL_OK) {
     free(r);
     return code;
   }
@@ -188,13 +250,30 @@ int fl_arc_next(fl_arc_reader *r, fl_arc_entry *e) {
   return out;
 }
 
+/* Code d'une erreur de lecture d'une entrée chiffrée, d'après le message de libarchive (aucun code dédié) :
+ * mauvais mot de passe, chiffrement non pris en charge (7z, RAR), sinon archive abîmée (HMAC faux…). */
+static int crypt_err_code(fl_arc_reader *r) {
+  if (r->io_err) return r->io_err;
+  const char *m = archive_error_string(r->a);
+  if (!m) return FL_ECORRUPT;
+  if (strstr(m, "Incorrect passphrase") || strstr(m, "Passphrase required")) return FL_EBADPASS;
+  if (strstr(m, "upport")) return FL_ENOTSUP; /* « unsupported », « support unavailable »… */
+  return FL_ECORRUPT;
+}
+
+/* libarchive ne sait déchiffrer que le ZIP (WinZip AES, ZipCrypto) ; ailleurs (7z, RAR), il tenterait de décoder
+ * le chiffré et rendrait une erreur sans rapport. */
+static bool can_decrypt(fl_arc_reader *r) {
+  return r->has_pass && (archive_format(r->a) & ARCHIVE_FORMAT_BASE_MASK) == ARCHIVE_FORMAT_ZIP;
+}
+
 int64_t fl_arc_read(fl_arc_reader *r, void *buf, size_t len) {
   if (!r || (!buf && len)) return FL_EINVAL;
-  if (r->encrypted) return FL_ENOTSUP;
+  if (r->encrypted && !can_decrypt(r)) return FL_ENOTSUP;
   if (len == 0) return 0;
   la_ssize_t n = archive_read_data(r->a, buf, len);
   if (n >= 0) return n;
-  return err_code(r);
+  return r->encrypted ? crypt_err_code(r) : err_code(r);
 }
 
 const char *fl_arc_format(const fl_arc_reader *r) {
@@ -204,5 +283,6 @@ const char *fl_arc_format(const fl_arc_reader *r) {
 void fl_arc_close(fl_arc_reader *r) {
   if (!r) return;
   archive_read_free(r->a);
+  if (r->age) fl_ager_close(r->age);
   free(r);
 }

@@ -9,6 +9,7 @@ import '../strings_fr.dart';
 import '../ui/feedback.dart';
 import '../ui/tokens.dart';
 import '../ui/widgets.dart';
+import '../widgets/password_field.dart';
 
 /// Système de fichiers proposé : identifiant passé au moteur, nom affiché, ligne d'aide.
 typedef _Fs = ({String id, String name, String help});
@@ -170,24 +171,22 @@ class _FormatScreenState extends State<FormatScreen> {
                 value: _encrypted,
                 onChanged: _busy ? null : (v) => setState(() => _encrypted = v),
               ),
-              if (_encrypted) ...[
-                TextField(
+              // règles du formatage (phase 8) gardées : phrase non vide et confirmée, vérifiées à l'envoi
+              if (_encrypted)
+                PasswordField(
                   controller: _pass,
+                  confirm: _confirm,
+                  label: Fr.passphrase,
+                  confirmLabel: Fr.passConfirm,
+                  showLabel: Fr.showPassphrase,
+                  hideLabel: Fr.hidePassphrase,
+                  enforceRules: false,
+                  errorText: _passError,
+                  showStrength: true,
+                  allowGenerate: true,
+                  copySecret: widget.state.api.copySecret,
                   enabled: !_busy,
-                  obscureText: true,
-                  enableSuggestions: false,
-                  autocorrect: false,
-                  decoration: const InputDecoration(labelText: Fr.passphrase),
                 ),
-                TextField(
-                  controller: _confirm,
-                  enabled: !_busy,
-                  obscureText: true,
-                  enableSuggestions: false,
-                  autocorrect: false,
-                  decoration: InputDecoration(labelText: Fr.passConfirm, errorText: _passError),
-                ),
-              ],
               const SizedBox(height: Space.l),
               if (_error != null)
                 Padding(
