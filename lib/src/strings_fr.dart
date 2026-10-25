@@ -98,6 +98,57 @@ class Fr {
   static const changeButton = 'Changer';
   static const passwordChanged = 'Mot de passe changé';
   static const kindEncrypted = 'fichier chiffré';
+
+  // coffres (phase 14)
+  static const vaults = 'Coffres';
+  static const vaultsEmpty =
+      "Un coffre est un fichier chiffré qui s'ouvre comme un disque, ici ou sous Linux, avec son propre mot de passe.";
+  static const createVault = 'Créer un coffre';
+  static const create = 'Créer';
+  static const newVault = 'Nouveau coffre…';
+  static const createVaultTitle = 'Nouveau coffre';
+  static const createVaultButton = 'Créer le coffre';
+  static const vaultName = 'Nom du coffre';
+  static const vaultNameDefault = 'Coffre';
+  static const vaultLocation = 'Emplacement';
+  static const changeLocation = 'Changer…';
+  static const vaultSize = 'Taille';
+  static const vaultSizeOther = 'Autre';
+  static const vaultSizeMib = 'Taille en Mio';
+  static String vaultSizeRange(int min, int max) => 'De $min à $max Mio';
+  static const vaultNoSpace = 'Pas assez de place ici pour un coffre (32 Mio au moins, une réserve gardée)';
+  static const vaultFatLimit = 'Stockage FAT32 : 4 Gio au plus pour un coffre';
+  static const vaultFs = 'Système de fichiers';
+  static const vaultExfatHelp = 'Windows, macOS et Linux';
+  static const vaultExt4Help = 'Linux';
+  static const vaultExt4Owner =
+      "Sous Linux, les fichiers du coffre appartiennent à l'utilisateur 1000, le premier compte créé, comme sur un "
+      'disque formaté en ext4 par Portail. Windows et macOS ne le lisent pas.';
+  static const vaultNoRecovery = 'Sans le mot de passe, personne ne pourra ouvrir ce coffre, pas même Portail.';
+  static String vaultCreated(String name) => 'Coffre « $name » créé';
+  static const vaultClosed = 'Fermé';
+  static const vaultOpen = 'Ouvert';
+  static String vaultUnavailable(String storage) => "Indisponible : « $storage » n'est pas là";
+  static String vaultLine(String size, String fs, String where) => fs.isEmpty ? '$size · $where' : '$size · $fs · $where';
+  static const vaultOpenAction = 'Ouvrir le coffre';
+  static String vaultOpenTitle(String name) => 'Ouvrir le coffre $name';
+  static const vaultOpening = 'Ouverture du coffre…';
+  static const vaultClose = 'Fermer';
+  static const showLocation = "Afficher l'emplacement";
+  static const vaultForget = 'Retirer de la liste';
+  static String vaultForgetTitle(String name) => 'Retirer $name de la liste ?';
+  static const vaultForgetBody =
+      "Le fichier du coffre reste à sa place : touchez-le dans l'explorateur pour le rouvrir.";
+  static const vaultForgetConfirm = 'Retirer';
+  static const kindVault = 'coffre';
+
+  /// Taille binaire d'un coffre : « 256 Mio », « 1 Gio », « 1,5 Gio ».
+  static String binarySize(int bytes) {
+    const m = 1 << 20, g = 1 << 30;
+    if (bytes < g) return '${(bytes / m).round()} Mio';
+    if (bytes % g == 0) return '${bytes ~/ g} Gio';
+    return '${(bytes / g).toStringAsFixed(1).replaceAll('.', ',')} Gio';
+  }
   static const openReadOnly = 'Ouvrir en lecture seule';
   static const unlocking =
       'Déverrouillage en cours… cela peut prendre quelques secondes';

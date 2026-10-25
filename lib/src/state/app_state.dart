@@ -454,6 +454,51 @@ class AppState extends ChangeNotifier implements FluLuksEventsApi {
     }
   }
 
+  VaultMsg? vaultById(String id) {
+    for (final v in _vaults) {
+      if (v.id == id) return v;
+    }
+    return null;
+  }
+
+  /// Crée un coffre (progression par [transfer], type `vault`) ; lève [PlatformException] en cas d'échec ou
+  /// d'annulation. [password] est mis à zéro après l'appel, sur tous les chemins.
+  Future<VaultMsg> createVault(String srcId, String dir, String name, int sizeBytes, String fs, Uint8List password) async {
+    try {
+      _transferDestination = (srcId, dir);
+      final v = await api.createVault(srcId, dir, name, sizeBytes, fs, password);
+      await refreshSources();
+      return v;
+    } finally {
+      password.fillRange(0, password.length, 0);
+    }
+  }
+
+  /// Ouvre un coffre connu ([vaultId]) ou le fichier [path] de [srcId] ; rend son volume (le stockage du coffre a
+  /// le même identifiant). Erreur `badPassword` rendue telle quelle ; [password] mis à zéro après l'appel.
+  Future<VolumeMsg> openVault({String? vaultId, String? srcId, String? path, required Uint8List password,
+      required bool writable}) async {
+    try {
+      final v = await api.openVault(vaultId, srcId, path, password, writable);
+      await refresh();
+      return v;
+    } finally {
+      password.fillRange(0, password.length, 0);
+    }
+  }
+
+  /// Ferme le coffre (synchronisé, démonté, clé effacée).
+  Future<void> closeVault(String id) => _guard(() async {
+        await api.closeVault(id);
+        await refresh();
+      });
+
+  /// Retire le coffre de la liste ; son fichier n'est pas touché.
+  Future<void> forgetVault(String id) => _guard(() async {
+        await api.forgetVault(id);
+        await refresh();
+      });
+
   Future<void> cancelTransfer() => _guard(() => api.cancelTransfer());
 
   Future<void> setViewPrefs(ViewPrefsMsg prefs) => _guard(() async {

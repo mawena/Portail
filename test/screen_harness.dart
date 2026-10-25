@@ -26,6 +26,7 @@ import 'package:fluluks/src/ui/root.dart';
 import 'package:fluluks/src/widgets/mini_player.dart';
 import 'package:fluluks/src/widgets/decrypt_dialog.dart';
 import 'package:fluluks/src/widgets/unlock_dialog.dart';
+import 'package:fluluks/src/screens/vault_create_screen.dart';
 
 import 'demo_data.dart';
 import 'fake_host_api.dart';
@@ -34,7 +35,7 @@ import 'fake_host_api.dart';
 const screens = [
   'home', 'explorerList', 'explorerGrid', 'filterGrid', 'search', 'globalSearch', 'trash', 'space', 'settings', //
   'about', 'help', 'welcome', 'unlock', 'format', 'editor', 'serverForm', 'nowPlaying', 'terminal', 'sshKeys', 'tunnels',
-  'encrypt', 'decrypt',
+  'encrypt', 'decrypt', 'vaultCreate', 'homeVaults',
 ];
 
 /// Pont et état du dernier [pumpScreen] (pour les tests qui agissent ensuite sur l'écran).
@@ -76,6 +77,23 @@ Future<void> pumpScreen(
           usedBy: []),
     ]);
   }
+  if (screen == 'homeVaults') {
+    // un coffre fermé, un ouvert, un indisponible (carte SD absente)
+    VaultMsg v(String id, String name, String state, {String? volumeId, String label = 'Téléphone'}) => VaultMsg(
+        id: id, name: name, sourceKey: label == 'Téléphone' ? 'phone' : 'sd:2', sourceLabel: label,
+        path: '/Coffres/$name.luks', sizeBytes: 1 << 30, fs: 'exfat', state: state, volumeId: volumeId,
+        hasRecovery: false, biometric: false, luksVersion: 2);
+    api.sources = [
+      ...api.sources,
+      SourceMsg(id: 'vv1', stableKey: 'vault:a2', kind: 'vault', label: 'Coffre Photos', totalBytes: 1 << 30,
+          freeBytes: 1 << 29, readOnly: false, roReason: '', encrypted: true),
+    ];
+    api.vaults = [
+      v('a1', 'Papiers', 'closed'),
+      v('a2', 'Photos', 'open', volumeId: 'vv1'),
+      v('a3', 'Ancien', 'unavailable', label: 'Carte SD 2'),
+    ];
+  }
   if (screen == 'welcome') api.uiPrefs = UiPrefsMsg(theme: 'system', haptics: true, welcomeSeen: false);
   final state = AppState(api);
   await state.loadUiPrefs();
@@ -108,7 +126,7 @@ Future<void> pumpScreen(
   await t.pumpAndSettle();
 
   final Widget? page = switch (screen) {
-    'home' || 'welcome' => null,
+    'home' || 'welcome' || 'homeVaults' => null,
     'explorerList' || 'explorerGrid' => ExplorerScreen(state: state, sourceId: 'phone'),
     'filterGrid' => FilterScreen(state: state, filter: 'photos', title: 'Photos'),
     'search' => SearchScreen(state: state, sourceId: 'phone', path: '/'),
@@ -125,6 +143,7 @@ Future<void> pumpScreen(
     'sshKeys' => SshKeysScreen(state: state),
     'tunnels' => TunnelsScreen(state: state, serverId: 's1', sessionId: terminalId),
     'encrypt' => EncryptSheet(state: state, sourceId: 'phone', paths: const ['/notes-1.txt', '/Documents'], dir: '/'),
+    'vaultCreate' => VaultCreateScreen(state: state, sourceId: 'phone', dir: '/Documents'),
     'unlock' || 'nowPlaying' || 'decrypt' => null,
     _ => throw ArgumentError.value(screen, 'screen'),
   };
@@ -145,6 +164,9 @@ Future<void> pumpScreen(
         folder: false,
       ),
     );
+  } else if (screen == 'homeVaults') {
+    // la section « Coffres » en haut de l'écran
+    await t.scrollUntilVisible(find.byKey(const ValueKey('a1')), 300, scrollable: find.byType(Scrollable).first);
   } else if (screen == 'unlock') {
     showDialog<void>(
       context: nav.context,

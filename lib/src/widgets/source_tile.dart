@@ -5,11 +5,14 @@ import '../strings_fr.dart';
 import '../ui/tokens.dart';
 import '../ui/widgets.dart';
 
-/// Icône d'un stockage selon son type (`phone`, `removable` : carte SD ou clé montée par Android, `disk`, `remote`).
+/// Icône d'un stockage selon son type (`phone`, `removable` : carte SD ou clé montée par Android, `disk`, `remote`,
+/// `vault` : coffre ouvert, `decrypted` : fichier déchiffré en mémoire).
 IconData sourceIcon(String kind) => switch (kind) {
       'phone' => Icons.smartphone_rounded,
       'removable' => Icons.sd_storage_rounded,
       'remote' => Icons.cloud_outlined,
+      'vault' => Icons.enhanced_encryption_rounded,
+      'decrypted' => Icons.lock_open_rounded,
       _ => Icons.usb_rounded,
     };
 

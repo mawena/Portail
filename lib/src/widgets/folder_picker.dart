@@ -8,14 +8,16 @@ import '../ui/tokens.dart';
 import '../ui/widgets.dart';
 
 /// Choix d'un dossier de destination dans n'importe quel stockage, dossier distant compris ; les stockages en
-/// lecture seule et les vues déchiffrées ne sont pas proposés. Rend (stockage, chemin), ou null si annulé.
-Future<(String, String)?> pickFolder(BuildContext context, AppState state) =>
-    showDialog<(String, String)>(context: context, builder: (_) => FolderPickerDialog(state: state));
+/// lecture seule et les vues déchiffrées ne sont pas proposés ; [accept] écarte d'autres stockages (dossiers
+/// distants et coffres pour un nouveau coffre). Rend (stockage, chemin), ou null si annulé.
+Future<(String, String)?> pickFolder(BuildContext context, AppState state, {bool Function(SourceMsg)? accept}) =>
+    showDialog<(String, String)>(context: context, builder: (_) => FolderPickerDialog(state: state, accept: accept));
 
 class FolderPickerDialog extends StatefulWidget {
-  const FolderPickerDialog({super.key, required this.state});
+  const FolderPickerDialog({super.key, required this.state, this.accept});
 
   final AppState state;
+  final bool Function(SourceMsg)? accept;
 
   @override
   State<FolderPickerDialog> createState() => _FolderPickerDialogState();
@@ -32,6 +34,7 @@ class _FolderPickerDialogState extends State<FolderPickerDialog> {
         'phone' => Icons.smartphone_rounded,
         'remote' => Icons.cloud_rounded,
         'removable' => Icons.sd_card_rounded,
+        'vault' => Icons.enhanced_encryption_rounded,
         _ => Icons.usb_rounded,
       };
 
@@ -76,7 +79,10 @@ class _FolderPickerDialogState extends State<FolderPickerDialog> {
   @override
   Widget build(BuildContext context) {
     final s = _source;
-    final storages = widget.state.sources.where((x) => x.kind != 'decrypted' && !x.readOnly).toList();
+    final accept = widget.accept;
+    final storages = widget.state.sources
+        .where((x) => x.kind != 'decrypted' && !x.readOnly && (accept == null || accept(x)))
+        .toList();
     return AlertDialog(
       title: const Text(Fr.pickFolderTitle),
       contentPadding: const EdgeInsets.symmetric(vertical: Space.s),

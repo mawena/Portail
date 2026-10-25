@@ -457,16 +457,16 @@ JUnit 4, AndroidX Test.
   `lib/src/state/app_state.dart`, `lib/src/strings_fr.dart`, `test/fake_host_api.dart`
 - Test : `test/vault_screens_test.dart`
 
-- [ ] **Step 1 : tests en échec** : `createFormDefaults` (exFAT, 1 Gio, dossier courant), `sizeChoicesRespectFreeSpace`,
+- [x] **Step 1 : tests en échec** : `createFormDefaults` (exFAT, 1 Gio, dossier courant), `sizeChoicesRespectFreeSpace`,
   `fat32HostCapsSize`, `ext4ExplainsLinuxOwnership`, `noRecoveryWarningAlwaysShown`, `createShowsProgressAndCancel`,
   `homeListsVaultsWithState` (fermé, ouvert, indisponible avec le nom du stockage absent), `openThenBrowse`
   (l'explorateur s'ouvre à la racine du coffre), `closeFromTile`, `forgetKeepsFile` (« Retirer de la liste » ne
   supprime rien), `tapLuksFileOffersOpen`, `readOnlyCheckboxHonoursSetting`.
-- [ ] **Step 2 : implémentation** ; tuile : nom, taille, système de fichiers, emplacement ; menu ⋮ : Ouvrir/Fermer,
+- [x] **Step 2 : implémentation** ; tuile : nom, taille, système de fichiers, emplacement ; menu ⋮ : Ouvrir/Fermer,
   Parcourir, Ouvrir dans Fichiers, Changer le mot de passe (T11), Clé de secours (T11), Déverrouillage biométrique
   (T12), Afficher l'emplacement, Retirer de la liste. Écrans ajoutés au banc d'accessibilité (`vaultCreate`,
   `homeVaults`).
-- [ ] **Step 3 : commit** `feat(coffres): écrans de création, section Coffres de l'accueil`.
+- [x] **Step 3 : commit** `feat(coffres): écrans de création, section Coffres de l'accueil`.
 
 ### Task 11 : mot de passe et clé de secours d'un coffre *(proposition du planificateur)*
 

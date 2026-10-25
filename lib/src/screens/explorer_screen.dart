@@ -22,11 +22,13 @@ import '../widgets/decrypt_dialog.dart';
 import '../widgets/entry_collection.dart';
 import '../widgets/properties_sheet.dart';
 import '../widgets/thumb.dart';
+import '../widgets/unlock_dialog.dart';
 import 'batch_rename_screen.dart';
 import 'encrypt_sheet.dart';
 import 'search_screen.dart';
 import 'space_screen.dart';
 import 'trash_screen.dart';
+import 'vault_create_screen.dart';
 
 /// Ouvre l'explorateur sur [sourceId] (à la racine, ou sur [path]).
 Future<void> openExplorer(BuildContext context, AppState state, String sourceId, {String path = '/'}) =>
@@ -192,6 +194,10 @@ class _ExplorerScreenState extends State<ExplorerScreen> {
       _decrypt(e);
       return;
     }
+    if (isVaultName(e.name)) {
+      _openVault(e);
+      return;
+    }
     if (isArchiveName(e.name)) {
       _archiveSheet(e);
       return;
@@ -201,7 +207,61 @@ class _ExplorerScreenState extends State<ExplorerScreen> {
       _run(() => openViewer(context, state, widget.sourceId, e, sortEntries(_entries, v.sort, v.ascending)));
       return;
     }
-    _run(() => state.api.openWith(widget.sourceId, e.path));
+    _openOther(e);
+  }
+
+  /// Fichier sans lecteur de Portail : un conteneur LUKS (créé sous Linux, sans l'extension .luks), reconnu par ses
+  /// premiers octets, propose « Ouvrir le coffre » ; sinon « Ouvrir avec… » directement.
+  Future<void> _openOther(EntryMsg e) async {
+    if (kindOf(e) == FileKind.other && await _isLuks(e.path)) {
+      if (!mounted) return;
+      final choice = await showActionSheet<String>(context, title: e.name, actions: [
+        const SheetAction('vault', Icons.enhanced_encryption_rounded, Fr.vaultOpenAction),
+        const SheetAction('open', Icons.open_in_new_rounded, Fr.openWith),
+      ]);
+      if (!mounted || choice == null) return;
+      if (choice == 'vault') return _openVault(e);
+    }
+    await _run(() => state.api.openWith(widget.sourceId, e.path));
+  }
+
+  Future<bool> _isLuks(String path) async {
+    try {
+      return (await state.api.encryptedInfo(widget.sourceId, path)).format == 'luks';
+    } on PlatformException {
+      return false;
+    }
+  }
+
+  /// Ouvre le coffre [e] (son mot de passe d'abord), puis l'explorateur à sa racine. Il rejoint la liste des
+  /// coffres de l'accueil.
+  Future<void> _openVault(EntryMsg e) async {
+    final name = isVaultName(e.name) ? e.name.substring(0, e.name.length - '.luks'.length) : e.name;
+    final vol = await openVaultDialog(context, state, name: name, srcId: widget.sourceId, path: e.path);
+    if (vol != null && mounted) await openExplorer(context, state, vol.id);
+  }
+
+  /// Un coffre se crée sur le téléphone, une carte SD ou un volume d'un disque USB : jamais sur un dossier distant
+  /// ni dans un autre coffre.
+  bool get _canCreateVault {
+    final s = _source;
+    return s != null && canHoldVault(s);
+  }
+
+  /// Bouton flottant : Nouveau dossier, ou Nouveau coffre… là où un coffre peut se créer.
+  Future<void> _create() async {
+    final choice = await showActionSheet<String>(context, actions: [
+      const SheetAction('folder', Icons.create_new_folder_rounded, Fr.newFolder),
+      const SheetAction('vault', Icons.enhanced_encryption_rounded, Fr.newVault),
+    ]);
+    if (!mounted) return;
+    switch (choice) {
+      case 'folder':
+        await _newFolder();
+      case 'vault':
+        await openVaultCreate(context, state, sourceId: widget.sourceId, dir: _path);
+        if (mounted) _load(quiet: true);
+    }
   }
 
   /// Archive touchée : Extraire ici (nouveau dossier au nom de l'archive), Extraire vers… (dossier choisi
@@ -689,12 +749,19 @@ class _ExplorerScreenState extends State<ExplorerScreen> {
         ),
         floatingActionButton: _readOnly || _selected.isNotEmpty
             ? null
-            : FloatingActionButton(
-                heroTag: null, // plusieurs explorateurs peuvent être empilés
-                tooltip: Fr.newFolder,
-                onPressed: _newFolder,
-                child: const Icon(Icons.create_new_folder_rounded),
-              ),
+            : _canCreateVault
+                ? FloatingActionButton(
+                    heroTag: null, // plusieurs explorateurs peuvent être empilés
+                    tooltip: Fr.create,
+                    onPressed: _create,
+                    child: const Icon(Icons.add_rounded),
+                  )
+                : FloatingActionButton(
+                    heroTag: null,
+                    tooltip: Fr.newFolder,
+                    onPressed: _newFolder,
+                    child: const Icon(Icons.create_new_folder_rounded),
+                  ),
       ),
     );
   }

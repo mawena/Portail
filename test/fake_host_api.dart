@@ -728,12 +728,18 @@ class FakeHostApi implements HostApi {
   final closedVaults = <String>[];
   final forgottenVaults = <String>[];
 
+  /// Retarde la fin de [createVault] (progression et annulation) ; [createVaultError] la fait échouer.
+  Completer<void>? createVaultGate;
+  PlatformException? createVaultError;
+
   @override
   Future<List<VaultMsg>> listVaults() async => vaults;
 
   @override
   Future<VaultMsg> createVault(String srcId, String dir, String name, int sizeBytes, String fs, Uint8List password) async {
     createdVaults.add((srcId, dir, name, sizeBytes, fs, _take(password)));
+    if (createVaultGate != null) await createVaultGate!.future;
+    if (createVaultError != null) throw createVaultError!;
     final v = VaultMsg(id: 'c${createdVaults.length}', name: name, sourceKey: srcId, sourceLabel: srcId,
         path: '$dir/$name.luks'.replaceFirst('//', '/'), sizeBytes: sizeBytes, fs: fs, state: 'closed',
         hasRecovery: false, biometric: false, luksVersion: 2);
@@ -746,15 +752,41 @@ class FakeHostApi implements HostApi {
     final p = _take(password);
     openedVaults.add((vaultId, srcId, path, p, writable));
     if (p != filePassword) throw _bad();
-    return VolumeMsg(id: 'vv${openedVaults.length}', diskId: 'vault:$vaultId', partIndex: 0, title: 'Coffre',
-        totalBytes: 1000, freeBytes: 500, needsRecovery: false, roReason: '', readOnly: !writable, vaultId: vaultId ?? 'x');
+    final id = 'vv${openedVaults.length}';
+    final vid = vaultId ?? 'x${openedVaults.length}';
+    final name = vaults.where((v) => v.id == vid).map((v) => v.name).firstOrNull ??
+        (path ?? '').split('/').last.replaceFirst(RegExp(r'\.luks$'), '');
+    // ouvert : un stockage de plus, et le coffre passe à « ouvert »
+    sources = [
+      ...sources,
+      SourceMsg(id: id, stableKey: 'vault:$vid', kind: 'vault', label: 'Coffre $name', totalBytes: 1000, freeBytes: 500,
+          readOnly: !writable, roReason: writable ? '' : 'ouvert en lecture seule', encrypted: true),
+    ];
+    vaults = [
+      for (final v in vaults)
+        if (v.id == vid) (VaultMsg.decode(v.encode())..state = 'open'..volumeId = id) else v,
+    ];
+    dirs[id] = {'/': []};
+    return VolumeMsg(id: id, diskId: 'vault:$vid', partIndex: 0, title: 'Coffre $name',
+        totalBytes: 1000, freeBytes: 500, needsRecovery: false, roReason: '', readOnly: !writable, vaultId: vid);
   }
 
   @override
-  Future<void> closeVault(String vaultId) async => closedVaults.add(vaultId);
+  Future<void> closeVault(String vaultId) async {
+    closedVaults.add(vaultId);
+    final vol = vaults.where((v) => v.id == vaultId).map((v) => v.volumeId).firstOrNull;
+    sources = sources.where((s) => s.id != vol).toList();
+    vaults = [
+      for (final v in vaults)
+        if (v.id == vaultId) (VaultMsg.decode(v.encode())..state = 'closed'..volumeId = null) else v,
+    ];
+  }
 
   @override
-  Future<void> forgetVault(String vaultId) async => forgottenVaults.add(vaultId);
+  Future<void> forgetVault(String vaultId) async {
+    forgottenVaults.add(vaultId);
+    vaults = vaults.where((v) => v.id != vaultId).toList();
+  }
 
   /// Copies protégées reçues (copies des octets, l'appelant met les siens à zéro).
   final secretCopies = <Uint8List>[];

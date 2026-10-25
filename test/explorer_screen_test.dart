@@ -256,7 +256,9 @@ void main() {
   testWidgets('newFolderRejectsReservedNames', (tester) async {
     final api = api0();
     await pump(tester, api);
-    await tester.tap(find.byTooltip(Fr.newFolder));
+    await tester.tap(find.byTooltip(Fr.create)); // Nouveau dossier ou Nouveau coffre (phase 14)
+    await tester.pumpAndSettle();
+    await tester.tap(find.text(Fr.newFolder));
     await tester.pumpAndSettle();
     FilledButton ok() => tester.widget<FilledButton>(find.widgetWithText(FilledButton, Fr.ok));
     expect(ok().onPressed, isNull); // vide
@@ -348,6 +350,8 @@ void main() {
     final api = api0();
     await pump(tester, api);
     await tester.tap(find.byType(FloatingActionButton));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text(Fr.newFolder)); // Nouveau dossier ou Nouveau coffre (phase 14)
     await tester.pumpAndSettle();
     await tester.enterText(find.byType(TextField), 'Vacances');
     await tester.pump(); // OK s'active une fois le nom validé
