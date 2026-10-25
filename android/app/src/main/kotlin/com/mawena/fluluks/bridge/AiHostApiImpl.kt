@@ -5,6 +5,9 @@ import com.mawena.fluluks.ai.Ai
 import com.mawena.fluluks.ai.AiException
 import com.mawena.fluluks.ai.AiHealth
 import com.mawena.fluluks.ai.AiServerConfig
+import com.mawena.fluluks.ai.chat.Chats
+import com.mawena.fluluks.ai.chat.Conversation
+import com.mawena.fluluks.ai.chat.Message
 import io.flutter.plugin.common.BinaryMessenger
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
@@ -23,6 +26,7 @@ class AiHostApiImpl(private val context: Context) : AiHostApi {
 
     fun attach(messenger: BinaryMessenger) {
         Ai.init(context)
+        Chats.init(context)
         AiHostApi.setUp(messenger, this)
     }
 
@@ -74,6 +78,31 @@ class AiHostApiImpl(private val context: Context) : AiHostApi {
 
     override fun aiAttemptLog(serverId: String): List<String> = sync { Ai.servers().lastLog(serverId) }
 
+    // --- historique des conversations (T5)
+
+    override fun conversations(callback: (Result<List<ConversationMsg>>) -> Unit) = io(callback) {
+        Chats.store().conversations().map(::conversationMsg)
+    }
+
+    override fun conversation(id: Long, callback: (Result<ConversationDetailMsg>) -> Unit) = io(callback) {
+        val s = Chats.store()
+        ConversationDetailMsg(conversationMsg(s.conversation(id)), s.messages(id).map(::messageMsg))
+    }
+
+    override fun createConversation(serverId: String?, model: String?, callback: (Result<ConversationMsg>) -> Unit) =
+        io(callback) { conversationMsg(Chats.store().create(serverId, model)) }
+
+    override fun renameConversation(id: Long, title: String, callback: (Result<Unit>) -> Unit) =
+        io(callback) { Chats.store().rename(id, title) }
+
+    override fun deleteConversation(id: Long, callback: (Result<Unit>) -> Unit) = io(callback) { Chats.store().delete(id) }
+
+    override fun setConversationModel(id: Long, serverId: String?, model: String?, callback: (Result<Unit>) -> Unit) =
+        io(callback) { Chats.store().setModel(id, serverId, model) }
+
+    override fun setSystemPrompt(id: Long, prompt: String?, callback: (Result<Unit>) -> Unit) =
+        io(callback) { Chats.store().setSystemPrompt(id, prompt) }
+
     // --- utilitaires
 
     private fun <T> io(callback: (Result<T>) -> Unit, block: suspend () -> T) {
@@ -96,6 +125,12 @@ class AiHostApiImpl(private val context: Context) : AiHostApi {
     }
 
     companion object {
+        internal fun conversationMsg(c: Conversation) =
+            ConversationMsg(c.id, c.title, c.serverId, c.model, c.systemPrompt, c.createdAt, c.updatedAt)
+
+        internal fun messageMsg(m: Message) =
+            ChatMessageMsg(m.id, m.conversationId, m.role, m.content, m.state, m.error, m.createdAt)
+
         internal fun toFlutterError(e: Throwable): FlutterError = when (e) {
             is AiException -> FlutterError("ai", e.message, e.serverMessage)
             else -> HostApiImpl.toFlutterError(e)

@@ -2284,6 +2284,183 @@ data class AiHealthMsg (
     return "AiHealthMsg(serverId=$serverId, state=$state, version=$version, modelCount=$modelCount, error=$error, detail=$detail)"
   }
 }
+
+/**
+ * Conversation (phase 15) : [title] vide tant que le premier message ne l'a pas fixé ; [serverId] peut désigner un
+ * serveur supprimé depuis (la conversation reste lisible) ; dates en millisecondes depuis l'époque.
+ *
+ * Generated class from Pigeon that represents data sent in messages.
+ */
+data class ConversationMsg (
+  val id: Long,
+  val title: String,
+  val serverId: String? = null,
+  val model: String? = null,
+  val systemPrompt: String? = null,
+  val createdAt: Long,
+  val updatedAt: Long
+)
+ {
+  companion object {
+    fun fromList(pigeonVar_list: List<Any?>): ConversationMsg {
+      val id = pigeonVar_list[0] as Long
+      val title = pigeonVar_list[1] as String
+      val serverId = pigeonVar_list[2] as String?
+      val model = pigeonVar_list[3] as String?
+      val systemPrompt = pigeonVar_list[4] as String?
+      val createdAt = pigeonVar_list[5] as Long
+      val updatedAt = pigeonVar_list[6] as Long
+      return ConversationMsg(id, title, serverId, model, systemPrompt, createdAt, updatedAt)
+    }
+  }
+  fun toList(): List<Any?> {
+    return listOf(
+      id,
+      title,
+      serverId,
+      model,
+      systemPrompt,
+      createdAt,
+      updatedAt,
+    )
+  }
+  override fun equals(other: Any?): Boolean {
+    if (other == null || other.javaClass != javaClass) {
+      return false
+    }
+    if (this === other) {
+      return true
+    }
+    val other = other as ConversationMsg
+    return FluLuksApiPigeonUtils.deepEquals(this.id, other.id) && FluLuksApiPigeonUtils.deepEquals(this.title, other.title) && FluLuksApiPigeonUtils.deepEquals(this.serverId, other.serverId) && FluLuksApiPigeonUtils.deepEquals(this.model, other.model) && FluLuksApiPigeonUtils.deepEquals(this.systemPrompt, other.systemPrompt) && FluLuksApiPigeonUtils.deepEquals(this.createdAt, other.createdAt) && FluLuksApiPigeonUtils.deepEquals(this.updatedAt, other.updatedAt)
+  }
+
+  override fun hashCode(): Int {
+    var result = javaClass.hashCode()
+    result = 31 * result + FluLuksApiPigeonUtils.deepHash(this.id)
+    result = 31 * result + FluLuksApiPigeonUtils.deepHash(this.title)
+    result = 31 * result + FluLuksApiPigeonUtils.deepHash(this.serverId)
+    result = 31 * result + FluLuksApiPigeonUtils.deepHash(this.model)
+    result = 31 * result + FluLuksApiPigeonUtils.deepHash(this.systemPrompt)
+    result = 31 * result + FluLuksApiPigeonUtils.deepHash(this.createdAt)
+    result = 31 * result + FluLuksApiPigeonUtils.deepHash(this.updatedAt)
+    return result
+  }
+  override fun toString(): String {
+    return "ConversationMsg(id=$id, title=$title, serverId=$serverId, model=$model, systemPrompt=$systemPrompt, createdAt=$createdAt, updatedAt=$updatedAt)"
+  }
+}
+
+/**
+ * Message : [role] `user` ou `assistant` ; [state] ∈ `done`, `streaming`, `stopped`, `failed`, `interrupted` (Portail
+ * fermé pendant la génération) ; [error] : message français d'un échec.
+ *
+ * Generated class from Pigeon that represents data sent in messages.
+ */
+data class ChatMessageMsg (
+  val id: Long,
+  val conversationId: Long,
+  val role: String,
+  val content: String,
+  val state: String,
+  val error: String? = null,
+  val createdAt: Long
+)
+ {
+  companion object {
+    fun fromList(pigeonVar_list: List<Any?>): ChatMessageMsg {
+      val id = pigeonVar_list[0] as Long
+      val conversationId = pigeonVar_list[1] as Long
+      val role = pigeonVar_list[2] as String
+      val content = pigeonVar_list[3] as String
+      val state = pigeonVar_list[4] as String
+      val error = pigeonVar_list[5] as String?
+      val createdAt = pigeonVar_list[6] as Long
+      return ChatMessageMsg(id, conversationId, role, content, state, error, createdAt)
+    }
+  }
+  fun toList(): List<Any?> {
+    return listOf(
+      id,
+      conversationId,
+      role,
+      content,
+      state,
+      error,
+      createdAt,
+    )
+  }
+  override fun equals(other: Any?): Boolean {
+    if (other == null || other.javaClass != javaClass) {
+      return false
+    }
+    if (this === other) {
+      return true
+    }
+    val other = other as ChatMessageMsg
+    return FluLuksApiPigeonUtils.deepEquals(this.id, other.id) && FluLuksApiPigeonUtils.deepEquals(this.conversationId, other.conversationId) && FluLuksApiPigeonUtils.deepEquals(this.role, other.role) && FluLuksApiPigeonUtils.deepEquals(this.content, other.content) && FluLuksApiPigeonUtils.deepEquals(this.state, other.state) && FluLuksApiPigeonUtils.deepEquals(this.error, other.error) && FluLuksApiPigeonUtils.deepEquals(this.createdAt, other.createdAt)
+  }
+
+  override fun hashCode(): Int {
+    var result = javaClass.hashCode()
+    result = 31 * result + FluLuksApiPigeonUtils.deepHash(this.id)
+    result = 31 * result + FluLuksApiPigeonUtils.deepHash(this.conversationId)
+    result = 31 * result + FluLuksApiPigeonUtils.deepHash(this.role)
+    result = 31 * result + FluLuksApiPigeonUtils.deepHash(this.content)
+    result = 31 * result + FluLuksApiPigeonUtils.deepHash(this.state)
+    result = 31 * result + FluLuksApiPigeonUtils.deepHash(this.error)
+    result = 31 * result + FluLuksApiPigeonUtils.deepHash(this.createdAt)
+    return result
+  }
+  override fun toString(): String {
+    return "ChatMessageMsg(id=$id, conversationId=$conversationId, role=$role, content=$content, state=$state, error=$error, createdAt=$createdAt)"
+  }
+}
+
+/**
+ * Conversation et ses messages, dans l'ordre.
+ *
+ * Generated class from Pigeon that represents data sent in messages.
+ */
+data class ConversationDetailMsg (
+  val conversation: ConversationMsg,
+  val messages: List<ChatMessageMsg>
+)
+ {
+  companion object {
+    fun fromList(pigeonVar_list: List<Any?>): ConversationDetailMsg {
+      val conversation = pigeonVar_list[0] as ConversationMsg
+      val messages = pigeonVar_list[1] as List<ChatMessageMsg>
+      return ConversationDetailMsg(conversation, messages)
+    }
+  }
+  fun toList(): List<Any?> {
+    return listOf(
+      conversation,
+      messages,
+    )
+  }
+  override fun equals(other: Any?): Boolean {
+    if (other == null || other.javaClass != javaClass) {
+      return false
+    }
+    if (this === other) {
+      return true
+    }
+    val other = other as ConversationDetailMsg
+    return FluLuksApiPigeonUtils.deepEquals(this.conversation, other.conversation) && FluLuksApiPigeonUtils.deepEquals(this.messages, other.messages)
+  }
+
+  override fun hashCode(): Int {
+    var result = javaClass.hashCode()
+    result = 31 * result + FluLuksApiPigeonUtils.deepHash(this.conversation)
+    result = 31 * result + FluLuksApiPigeonUtils.deepHash(this.messages)
+    return result
+  }
+  override fun toString(): String {
+    return "ConversationDetailMsg(conversation=$conversation, messages=$messages)"
+  }
+}
 private open class FluLuksApiPigeonCodec : StandardMessageCodec() {
   override fun readValueOfType(type: Byte, buffer: ByteBuffer): Any? {
     return when (type) {
@@ -2452,6 +2629,21 @@ private open class FluLuksApiPigeonCodec : StandardMessageCodec() {
           AiHealthMsg.fromList(it)
         }
       }
+      162.toByte() -> {
+        return (readValue(buffer) as? List<Any?>)?.let {
+          ConversationMsg.fromList(it)
+        }
+      }
+      163.toByte() -> {
+        return (readValue(buffer) as? List<Any?>)?.let {
+          ChatMessageMsg.fromList(it)
+        }
+      }
+      164.toByte() -> {
+        return (readValue(buffer) as? List<Any?>)?.let {
+          ConversationDetailMsg.fromList(it)
+        }
+      }
       else -> super.readValueOfType(type, buffer)
     }
   }
@@ -2587,6 +2779,18 @@ private open class FluLuksApiPigeonCodec : StandardMessageCodec() {
       }
       is AiHealthMsg -> {
         stream.write(161)
+        writeValue(stream, value.toList())
+      }
+      is ConversationMsg -> {
+        stream.write(162)
+        writeValue(stream, value.toList())
+      }
+      is ChatMessageMsg -> {
+        stream.write(163)
+        writeValue(stream, value.toList())
+      }
+      is ConversationDetailMsg -> {
+        stream.write(164)
         writeValue(stream, value.toList())
       }
       else -> super.writeValue(stream, value)
@@ -5195,6 +5399,17 @@ interface AiHostApi {
   fun aiHealth(serverId: String, callback: (Result<AiHealthMsg>) -> Unit)
   /** Journal du dernier test du serveur, sans aucun secret. */
   fun aiAttemptLog(serverId: String): List<String>
+  /** Plus récente d'abord. */
+  fun conversations(callback: (Result<List<ConversationMsg>>) -> Unit)
+  fun conversation(id: Long, callback: (Result<ConversationDetailMsg>) -> Unit)
+  /** Sans [serverId] : serveur par défaut ; sans [model] : modèle par défaut du serveur. */
+  fun createConversation(serverId: String?, model: String?, callback: (Result<ConversationMsg>) -> Unit)
+  fun renameConversation(id: Long, title: String, callback: (Result<Unit>) -> Unit)
+  /** Supprime la conversation et ses messages. */
+  fun deleteConversation(id: Long, callback: (Result<Unit>) -> Unit)
+  fun setConversationModel(id: Long, serverId: String?, model: String?, callback: (Result<Unit>) -> Unit)
+  /** Vide ou null : aucun prompt système. */
+  fun setSystemPrompt(id: Long, prompt: String?, callback: (Result<Unit>) -> Unit)
 
   companion object {
     /** The codec used by AiHostApi. */
@@ -5383,6 +5598,145 @@ interface AiHostApi {
               FluLuksApiPigeonUtils.wrapError(exception)
             }
             reply.reply(wrapped)
+          }
+        } else {
+          channel.setMessageHandler(null)
+        }
+      }
+      run {
+        val channel = BasicMessageChannel<Any?>(binaryMessenger, "dev.flutter.pigeon.fluluks.AiHostApi.conversations$separatedMessageChannelSuffix", codec)
+        if (api != null) {
+          channel.setMessageHandler { _, reply ->
+            api.conversations{ result: Result<List<ConversationMsg>> ->
+              val error = result.exceptionOrNull()
+              if (error != null) {
+                reply.reply(FluLuksApiPigeonUtils.wrapError(error))
+              } else {
+                val data = result.getOrNull()
+                reply.reply(FluLuksApiPigeonUtils.wrapResult(data))
+              }
+            }
+          }
+        } else {
+          channel.setMessageHandler(null)
+        }
+      }
+      run {
+        val channel = BasicMessageChannel<Any?>(binaryMessenger, "dev.flutter.pigeon.fluluks.AiHostApi.conversation$separatedMessageChannelSuffix", codec)
+        if (api != null) {
+          channel.setMessageHandler { message, reply ->
+            val args = message as List<Any?>
+            val idArg = args[0] as Long
+            api.conversation(idArg) { result: Result<ConversationDetailMsg> ->
+              val error = result.exceptionOrNull()
+              if (error != null) {
+                reply.reply(FluLuksApiPigeonUtils.wrapError(error))
+              } else {
+                val data = result.getOrNull()
+                reply.reply(FluLuksApiPigeonUtils.wrapResult(data))
+              }
+            }
+          }
+        } else {
+          channel.setMessageHandler(null)
+        }
+      }
+      run {
+        val channel = BasicMessageChannel<Any?>(binaryMessenger, "dev.flutter.pigeon.fluluks.AiHostApi.createConversation$separatedMessageChannelSuffix", codec)
+        if (api != null) {
+          channel.setMessageHandler { message, reply ->
+            val args = message as List<Any?>
+            val serverIdArg = args[0] as String?
+            val modelArg = args[1] as String?
+            api.createConversation(serverIdArg, modelArg) { result: Result<ConversationMsg> ->
+              val error = result.exceptionOrNull()
+              if (error != null) {
+                reply.reply(FluLuksApiPigeonUtils.wrapError(error))
+              } else {
+                val data = result.getOrNull()
+                reply.reply(FluLuksApiPigeonUtils.wrapResult(data))
+              }
+            }
+          }
+        } else {
+          channel.setMessageHandler(null)
+        }
+      }
+      run {
+        val channel = BasicMessageChannel<Any?>(binaryMessenger, "dev.flutter.pigeon.fluluks.AiHostApi.renameConversation$separatedMessageChannelSuffix", codec)
+        if (api != null) {
+          channel.setMessageHandler { message, reply ->
+            val args = message as List<Any?>
+            val idArg = args[0] as Long
+            val titleArg = args[1] as String
+            api.renameConversation(idArg, titleArg) { result: Result<Unit> ->
+              val error = result.exceptionOrNull()
+              if (error != null) {
+                reply.reply(FluLuksApiPigeonUtils.wrapError(error))
+              } else {
+                reply.reply(FluLuksApiPigeonUtils.wrapResult(null))
+              }
+            }
+          }
+        } else {
+          channel.setMessageHandler(null)
+        }
+      }
+      run {
+        val channel = BasicMessageChannel<Any?>(binaryMessenger, "dev.flutter.pigeon.fluluks.AiHostApi.deleteConversation$separatedMessageChannelSuffix", codec)
+        if (api != null) {
+          channel.setMessageHandler { message, reply ->
+            val args = message as List<Any?>
+            val idArg = args[0] as Long
+            api.deleteConversation(idArg) { result: Result<Unit> ->
+              val error = result.exceptionOrNull()
+              if (error != null) {
+                reply.reply(FluLuksApiPigeonUtils.wrapError(error))
+              } else {
+                reply.reply(FluLuksApiPigeonUtils.wrapResult(null))
+              }
+            }
+          }
+        } else {
+          channel.setMessageHandler(null)
+        }
+      }
+      run {
+        val channel = BasicMessageChannel<Any?>(binaryMessenger, "dev.flutter.pigeon.fluluks.AiHostApi.setConversationModel$separatedMessageChannelSuffix", codec)
+        if (api != null) {
+          channel.setMessageHandler { message, reply ->
+            val args = message as List<Any?>
+            val idArg = args[0] as Long
+            val serverIdArg = args[1] as String?
+            val modelArg = args[2] as String?
+            api.setConversationModel(idArg, serverIdArg, modelArg) { result: Result<Unit> ->
+              val error = result.exceptionOrNull()
+              if (error != null) {
+                reply.reply(FluLuksApiPigeonUtils.wrapError(error))
+              } else {
+                reply.reply(FluLuksApiPigeonUtils.wrapResult(null))
+              }
+            }
+          }
+        } else {
+          channel.setMessageHandler(null)
+        }
+      }
+      run {
+        val channel = BasicMessageChannel<Any?>(binaryMessenger, "dev.flutter.pigeon.fluluks.AiHostApi.setSystemPrompt$separatedMessageChannelSuffix", codec)
+        if (api != null) {
+          channel.setMessageHandler { message, reply ->
+            val args = message as List<Any?>
+            val idArg = args[0] as Long
+            val promptArg = args[1] as String?
+            api.setSystemPrompt(idArg, promptArg) { result: Result<Unit> ->
+              val error = result.exceptionOrNull()
+              if (error != null) {
+                reply.reply(FluLuksApiPigeonUtils.wrapError(error))
+              } else {
+                reply.reply(FluLuksApiPigeonUtils.wrapResult(null))
+              }
+            }
           }
         } else {
           channel.setMessageHandler(null)

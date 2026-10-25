@@ -942,6 +942,55 @@ class AiHealthMsg {
   String? detail;
 }
 
+/// Conversation (phase 15) : [title] vide tant que le premier message ne l'a pas fixé ; [serverId] peut désigner un
+/// serveur supprimé depuis (la conversation reste lisible) ; dates en millisecondes depuis l'époque.
+class ConversationMsg {
+  ConversationMsg({
+    required this.id,
+    required this.title,
+    this.serverId,
+    this.model,
+    this.systemPrompt,
+    required this.createdAt,
+    required this.updatedAt,
+  });
+  int id;
+  String title;
+  String? serverId;
+  String? model;
+  String? systemPrompt;
+  int createdAt;
+  int updatedAt;
+}
+
+/// Message : [role] `user` ou `assistant` ; [state] ∈ `done`, `streaming`, `stopped`, `failed`, `interrupted` (Portail
+/// fermé pendant la génération) ; [error] : message français d'un échec.
+class ChatMessageMsg {
+  ChatMessageMsg({
+    required this.id,
+    required this.conversationId,
+    required this.role,
+    required this.content,
+    required this.state,
+    this.error,
+    required this.createdAt,
+  });
+  int id;
+  int conversationId;
+  String role;
+  String content;
+  String state;
+  String? error;
+  int createdAt;
+}
+
+/// Conversation et ses messages, dans l'ordre.
+class ConversationDetailMsg {
+  ConversationDetailMsg({required this.conversation, required this.messages});
+  ConversationMsg conversation;
+  List<ChatMessageMsg> messages;
+}
+
 /// Serveurs IA (phase 15). Erreurs : code `ai` (message français ; détails : message du serveur), ou les codes du
 /// moteur pour une fiche invalide (`saveAiServer` : adresse ou nom refusés).
 @HostApi()
@@ -967,4 +1016,28 @@ abstract class AiHostApi {
 
   /// Journal du dernier test du serveur, sans aucun secret.
   List<String> aiAttemptLog(String serverId);
+
+  // --- historique des conversations (T5) ; erreur FL_ENOENT : conversation supprimée
+
+  /// Plus récente d'abord.
+  @async
+  List<ConversationMsg> conversations();
+  @async
+  ConversationDetailMsg conversation(int id);
+
+  /// Sans [serverId] : serveur par défaut ; sans [model] : modèle par défaut du serveur.
+  @async
+  ConversationMsg createConversation(String? serverId, String? model);
+  @async
+  void renameConversation(int id, String title);
+
+  /// Supprime la conversation et ses messages.
+  @async
+  void deleteConversation(int id);
+  @async
+  void setConversationModel(int id, String? serverId, String? model);
+
+  /// Vide ou null : aucun prompt système.
+  @async
+  void setSystemPrompt(int id, String? prompt);
 }

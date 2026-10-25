@@ -117,6 +117,95 @@ mixin FakeAiApi implements AiApi {
 
   @override
   Future<List<String>> aiAttemptLog(String serverId) async => List.of(aiLog);
+
+  // --- historique des conversations (T5), en mémoire
+
+  final chatConversations = <ConversationMsg>[];
+  final chatMessages = <int, List<ChatMessageMsg>>{};
+  int _chatNext = 1;
+  int chatClock = 1000;
+
+  ConversationMsg _conv(int id) => chatConversations.firstWhere(
+        (c) => c.id == id,
+        orElse: () => throw PlatformException(code: '-2', message: 'Cette conversation n\'existe plus'),
+      );
+
+  void _replaceConv(ConversationMsg c) => chatConversations[chatConversations.indexWhere((x) => x.id == c.id)] = c;
+
+  ConversationMsg _copyConv(ConversationMsg c, {String? title, String? serverId, String? model, String? systemPrompt,
+          bool keepServer = true, int? updatedAt}) =>
+      ConversationMsg(
+        id: c.id,
+        title: title ?? c.title,
+        serverId: keepServer ? c.serverId : serverId,
+        model: keepServer ? c.model : model,
+        systemPrompt: systemPrompt ?? c.systemPrompt,
+        createdAt: c.createdAt,
+        updatedAt: updatedAt ?? c.updatedAt,
+      );
+
+  @override
+  Future<List<ConversationMsg>> conversations() async =>
+      List.of(chatConversations)..sort((a, b) => b.updatedAt != a.updatedAt ? b.updatedAt - a.updatedAt : b.id - a.id);
+
+  @override
+  Future<ConversationDetailMsg> conversation(int id) async =>
+      ConversationDetailMsg(conversation: _conv(id), messages: List.of(chatMessages[id] ?? const []));
+
+  @override
+  Future<ConversationMsg> createConversation(String? serverId, String? model) async {
+    aiCalls.add('createConversation $serverId $model');
+    AiServerMsg? s;
+    for (final x in aiServerList) {
+      if (serverId == null ? x.isDefault : x.id == serverId) s = x;
+    }
+    final t = chatClock++;
+    final c = ConversationMsg(
+      id: _chatNext++,
+      title: '',
+      serverId: serverId ?? s?.id,
+      model: model ?? s?.defaultModel,
+      createdAt: t,
+      updatedAt: t,
+    );
+    chatConversations.add(c);
+    return c;
+  }
+
+  @override
+  Future<void> renameConversation(int id, String title) async {
+    aiCalls.add('renameConversation $id $title');
+    _replaceConv(_copyConv(_conv(id), title: title.trim()));
+  }
+
+  @override
+  Future<void> deleteConversation(int id) async {
+    aiCalls.add('deleteConversation $id');
+    chatConversations.removeWhere((c) => c.id == id);
+    chatMessages.remove(id);
+  }
+
+  @override
+  Future<void> setConversationModel(int id, String? serverId, String? model) async {
+    aiCalls.add('setConversationModel $id $serverId $model');
+    _replaceConv(_copyConv(_conv(id), keepServer: false, serverId: serverId, model: model));
+  }
+
+  @override
+  Future<void> setSystemPrompt(int id, String? prompt) async {
+    aiCalls.add('setSystemPrompt $id $prompt');
+    final c = _conv(id);
+    final p = prompt?.trim();
+    _replaceConv(ConversationMsg(
+      id: c.id,
+      title: c.title,
+      serverId: c.serverId,
+      model: c.model,
+      systemPrompt: p == null || p.isEmpty ? null : p,
+      createdAt: c.createdAt,
+      updatedAt: c.updatedAt,
+    ));
+  }
 }
 
 /// Serveur IA de démonstration.

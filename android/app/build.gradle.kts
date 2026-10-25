@@ -1,6 +1,7 @@
 plugins {
     id("com.android.application")
     id("kotlin-android")
+    id("com.google.devtools.ksp") // Room (phase 15)
     // The Flutter Gradle Plugin must be applied after the Android and Kotlin Gradle plugins.
     id("dev.flutter.flutter-gradle-plugin")
 }
@@ -53,6 +54,11 @@ android {
         }
     }
 
+    // Phase 15 : schémas de Room exportés (versionnés), lus par les essais de migration.
+    sourceSets {
+        getByName("androidTest").assets.srcDir("$projectDir/schemas")
+    }
+
     // Manifestes OSGi en double (JSch, Bouncy Castle, jspecify) : inutiles sur Android.
     packaging {
         resources {
@@ -73,6 +79,9 @@ dependencies {
     implementation("org.bouncycastle:bcprov-jdk18on:1.86")
     // Phase 15 : serveurs IA compatibles OpenAI (HTTP, flux SSE lu par Portail).
     implementation("com.squareup.okhttp3:okhttp:4.12.0")
+    // Phase 15 : historique des conversations et automatisations (Room).
+    implementation("androidx.room:room-runtime:2.7.2")
+    ksp("androidx.room:room-compiler:2.7.2")
     testImplementation("junit:junit:4.13.2")
     testImplementation("org.apache.sshd:sshd-core:2.20.0")
     testImplementation("org.apache.sshd:sshd-sftp:2.20.0")
@@ -85,10 +94,15 @@ dependencies {
     androidTestImplementation("androidx.test:runner:1.6.2")
     androidTestImplementation("androidx.test.ext:junit:1.2.1")
     androidTestImplementation("androidx.test:rules:1.6.1")
+    androidTestImplementation("androidx.room:room-testing:2.7.2")
 }
 
 flutter {
     source = "../.."
+}
+
+ksp {
+    arg("room.schemaLocation", "$projectDir/schemas")
 }
 
 // integration_test (Flutter, en dépendance de développement) tire androidx.test 1.2.x dans le classpath de debug ; la

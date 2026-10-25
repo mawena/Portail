@@ -15,6 +15,15 @@ abstract class AiApi {
   Future<void> setAiDefaultModel(String serverId, String? model);
   Future<AiHealthMsg> aiHealth(String serverId);
   Future<List<String>> aiAttemptLog(String serverId);
+
+  // historique des conversations (T5)
+  Future<List<ConversationMsg>> conversations();
+  Future<ConversationDetailMsg> conversation(int id);
+  Future<ConversationMsg> createConversation(String? serverId, String? model);
+  Future<void> renameConversation(int id, String title);
+  Future<void> deleteConversation(int id);
+  Future<void> setConversationModel(int id, String? serverId, String? model);
+  Future<void> setSystemPrompt(int id, String? prompt);
 }
 
 /// Implémentation réelle : délègue au client Pigeon `AiHostApi`.
@@ -41,4 +50,20 @@ mixin PigeonAiApi implements AiApi {
   Future<AiHealthMsg> aiHealth(String serverId) => _ai.aiHealth(serverId);
   @override
   Future<List<String>> aiAttemptLog(String serverId) => _ai.aiAttemptLog(serverId);
+
+  @override
+  Future<List<ConversationMsg>> conversations() => _ai.conversations();
+  @override
+  Future<ConversationDetailMsg> conversation(int id) => _ai.conversation(id);
+  @override
+  Future<ConversationMsg> createConversation(String? serverId, String? model) => _ai.createConversation(serverId, model);
+  @override
+  Future<void> renameConversation(int id, String title) => _ai.renameConversation(id, title);
+  @override
+  Future<void> deleteConversation(int id) => _ai.deleteConversation(id);
+  @override
+  Future<void> setConversationModel(int id, String? serverId, String? model) =>
+      _ai.setConversationModel(id, serverId, model);
+  @override
+  Future<void> setSystemPrompt(int id, String? prompt) => _ai.setSystemPrompt(id, prompt);
 }
