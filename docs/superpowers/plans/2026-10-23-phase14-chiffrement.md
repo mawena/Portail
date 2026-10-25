@@ -530,7 +530,7 @@ Pigeon `@async void enableBiometric(String vaultId, Uint8List password)`, `@asyn
 
 ### Task 14 : documentation
 
-- [ ] README : section « Chiffrement et coffres (nouveau en 1.7.0) » (formats, un mot de passe par élément, aucune
+- [x] README : section « Chiffrement et coffres (nouveau en 1.7.0) » (formats, un mot de passe par élément, aucune
   récupération sans lui, ouverture sans copie en clair, coffres, clé de secours, biométrie) ; « Lire sur un
   ordinateur » : `age -d fichier.age > fichier`, `age -d dossier.zip.age | bsdtar -xf -`, `7z x fichier.zip`,
   `udisksctl loop-setup -f Coffre.luks` ou `sudo cryptsetup open Coffre.luks coffre && sudo mount /dev/mapper/coffre /mnt` ;
@@ -538,11 +538,11 @@ Pigeon `@async void enableBiometric(String vaultId, Uint8List password)`, `@asyn
   7z et RAR chiffrés refusés, coffre exFAT mal fermé en lecture seule jusqu'à `fsck.exfat`, effacement sur mémoire
   flash) ; « Archives protégées par mot de passe » retiré des limites pour le ZIP ; licences (scrypt, liste EFF) ;
   tableau de la feuille de route ; commandes des juges dans « Tests ».
-- [ ] Aide : trois questions, « Chiffrer un fichier ou un dossier », « Créer et ouvrir un coffre », « J'ai oublié le mot
+- [x] Aide : trois questions, « Chiffrer un fichier ou un dossier », « Créer et ouvrir un coffre », « J'ai oublié le mot
   de passe » ; strings testées.
-- [ ] Fiche d'essai `docs/superpowers/research/<AAAA-MM-JJ>-essais-phase14/essais.md` (T16), copiée sur `develop` et sur le
+- [x] Fiche d'essai `docs/superpowers/research/<AAAA-MM-JJ>-essais-phase14/essais.md` (T16), copiée sur `develop` et sur le
   téléphone (`Download/portail-tests/phase14/`).
-- [ ] Commit `docs: chiffrement et coffres`.
+- [x] Commit `docs: chiffrement et coffres`.
 
 ### Task 15 : essais instrumentés sur le Pixel
 

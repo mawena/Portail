@@ -591,7 +591,8 @@ class Fr {
     ),
     (
       'Le verrouillage automatique',
-      'Dans les Réglages, les disques chiffrés se verrouillent après 5, 15 ou 30 minutes, ou 1 heure, sans activité '
+      'Dans les Réglages, les disques chiffrés et les coffres se verrouillent après 5, 15 ou 30 minutes, ou 1 heure, '
+          'sans activité '
           '(« Jamais » par défaut). Une copie en cours ou un fichier lu par une autre application compte '
           'comme une activité. Une notification annonce le verrouillage.'
     ),
@@ -618,6 +619,27 @@ class Fr {
       'Réglages, Clés SSH : générez une clé sur le téléphone ou importez-en une, puis Installer sur un serveur '
           'l\'ajoute à ses clés autorisées. Acceptez ensuite d\'utiliser cette clé pour ce serveur : les connexions '
           'ne demandent plus le mot de passe.'
+    ),
+    (
+      'Chiffrer un fichier ou un dossier',
+      "Menu d'un élément ou de la sélection, Chiffrer…\u00A0: le chiffrement fort (age) cache aussi les noms, le ZIP "
+          "chiffré s'ouvre avec 7-Zip pour l'échange. Choisissez un mot de passe d'au moins 8 caractères, ou "
+          "générez-le, et gardez-le bien\u00A0: Portail ne le mémorise jamais. Touchez ensuite le fichier chiffré pour "
+          "l'ouvrir sans copie en clair, le déchiffrer ou le vérifier."
+    ),
+    (
+      'Créer et ouvrir un coffre',
+      "Un coffre est un fichier chiffré qui s'ouvre comme un disque\u00A0: Créer un coffre dans la section Coffres de "
+          "l'accueil, ou Nouveau coffre… depuis le bouton Créer de l'explorateur. Ouvert, il se parcourt comme les "
+          "autres stockages et apparaît dans l'application Fichiers\u00A0; Fermer efface sa clé. Sous Linux, il s'ouvre "
+          'par cryptsetup, ou par un double-clic après udisksctl loop-setup.'
+    ),
+    (
+      "J'ai oublié le mot de passe",
+      'Sans son mot de passe, personne ne peut ouvrir un fichier chiffré ni un coffre, pas même Portail. Si le '
+          "coffre a une clé de secours, touchez Utiliser la clé de secours en l'ouvrant, puis changez son mot de "
+          "passe en donnant la clé à la place de l'ancien. Le déverrouillage biométrique, s'il est activé, ouvre "
+          'aussi le coffre.'
     ),
   ];
   static const addFavorite = 'Ajouter aux favoris';
