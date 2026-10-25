@@ -1,0 +1,51 @@
+name: Bogue
+description: Quelque chose ne marche pas comme prévu
+labels: ["bogue"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Merci de prendre le temps de signaler ce problème. **Pour une faille de sécurité, n'utilisez pas ce
+        formulaire** : suivez SECURITY.md.
+  - type: input
+    id: version
+    attributes:
+      label: Version de Portail
+      description: À propos → version
+      placeholder: "1.6.1"
+    validations:
+      required: true
+  - type: input
+    id: telephone
+    attributes:
+      label: Téléphone et version d'Android
+      placeholder: "Pixel 4 XL, Android 13"
+    validations:
+      required: true
+  - type: input
+    id: disque
+    attributes:
+      label: Disque ou stockage concerné
+      description: Type de disque, chiffrement, système de fichiers, ou serveur distant
+      placeholder: "Disque USB LUKS2 + ext4, 1 To"
+  - type: textarea
+    id: etapes
+    attributes:
+      label: Étapes pour reproduire
+      placeholder: |
+        1. Brancher le disque
+        2. Déverrouiller
+        3. Copier un dossier de 2 Go
+    validations:
+      required: true
+  - type: textarea
+    id: attendu
+    attributes:
+      label: Ce qui était attendu, et ce qui s'est passé
+    validations:
+      required: true
+  - type: textarea
+    id: details
+    attributes:
+      label: Message d'erreur, captures
+      description: Ne joignez aucune phrase de passe, clé ou donnée personnelle.

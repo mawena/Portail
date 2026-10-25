@@ -10,6 +10,11 @@ int fl_hash(const char *hash, const void *data, size_t len, void *out);
 int fl_pbkdf2(const char *hash, const void *pw, size_t pwlen, const void *salt, size_t saltlen,
               uint32_t iterations, void *out, size_t outlen);
 
+/* scrypt (RFC 7914 ; fichier de référence de Tarsnap, third_party/scrypt) : N = 2^log2n, 1 <= log2n <= 22,
+ * r et p non nuls, r * p < 2^30. Tampons internes effacés à la libération. FL_EINVAL, FL_ENOMEM. */
+int fl_scrypt(const void *pass, size_t passlen, const void *salt, size_t saltlen, uint8_t log2n, uint32_t r,
+              uint32_t p, void *out, size_t outlen);
+
 typedef enum { FL_ARGON2I = 1, FL_ARGON2ID = 2 } fl_argon2_type;
 /* Version 0x13. FL_ENOMEM si l'allocation echoue, FL_EINVAL pour des parametres invalides. */
 int fl_argon2(fl_argon2_type t, const void *pw, size_t pwlen, const void *salt, size_t saltlen,

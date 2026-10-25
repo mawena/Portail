@@ -45,6 +45,7 @@ const libraries = [
   'Apache Commons Net',
   'JSch',
   'Bouncy Castle',
+  'EFF Large Wordlist',
 ];
 
 void main() {
@@ -77,6 +78,7 @@ void main() {
     expect(texts['Apache Commons Net'], contains('The Apache Software Foundation'));
     expect(texts['JSch'], contains('JCraft'));
     expect(texts['Bouncy Castle'], contains('Legion of the Bouncy Castle'));
+    expect(texts['EFF Large Wordlist'], contains('CC BY 3.0 US'));
     expect(texts['FatFs'], isNot(contains('\r')));
     for (final name in libraries) {
       expect(texts[name]!.length, greaterThan(300), reason: name);
@@ -96,9 +98,12 @@ void main() {
   });
 
   testWidgets('helpEntriesExpand', (tester) async {
+    tester.view.physicalSize = const Size(412, 2400); // toutes les questions construites
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.reset);
     await pumpApp(tester, FakeHostApi());
     await homeMenu(tester, Fr.help);
-    expect(find.byType(ExpansionTile), findsNWidgets(10));
+    expect(find.byType(ExpansionTile), findsNWidgets(13));
     final titles = [
       'Ouvrir un disque chiffré',
       'Pourquoi mon disque s\'ouvre en lecture seule ?',
@@ -110,6 +115,9 @@ void main() {
       'Formater un disque',
       'Ouvrir un terminal SSH',
       'Se connecter avec une clé SSH',
+      'Chiffrer un fichier ou un dossier',
+      'Créer et ouvrir un coffre',
+      "J'ai oublié le mot de passe",
     ];
     expect(Fr.helpEntries.map((e) => e.$1).toList(), titles);
     for (final (title, answer) in Fr.helpEntries) {

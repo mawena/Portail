@@ -77,6 +77,16 @@ int fl_file_bdev_open(const char *path, uint32_t sector_size, bool read_only, fl
     fd = open(path, (read_only ? O_RDONLY : O_RDWR) | O_CLOEXEC);
   } while (fd < 0 && errno == EINTR);
   if (fd < 0) return errno == ENOENT ? FL_ENOENT : FL_EIO;
+  return fl_fd_bdev_open(fd, sector_size, read_only, out);
+}
+
+int fl_fd_bdev_open(int fd, uint32_t sector_size, bool read_only, fl_bdev **out) {
+  if (out) *out = NULL;
+  if (fd < 0) return FL_EINVAL;
+  if (!out) {
+    close(fd);
+    return FL_EINVAL;
+  }
 
   struct stat st;
   if (fstat(fd, &st) != 0) {

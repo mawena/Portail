@@ -12,6 +12,7 @@ import '../widgets/server_tile.dart';
 import '../widgets/shortcut_grid.dart';
 import '../widgets/source_tile.dart';
 import '../widgets/ssh_sessions_card.dart';
+import '../widgets/vaults_card.dart';
 import 'explorer_screen.dart';
 import 'filter_screen.dart';
 import 'global_search_screen.dart';
@@ -20,8 +21,8 @@ import 'settings_screen.dart';
 import 'space_screen.dart';
 import 'trash_screen.dart';
 
-/// Accueil : en-tête au logo, puis accès aux fichiers, Raccourcis, Stockage, Disques USB, Dossiers distants et
-/// Favoris. En largeur étendue, deux colonnes : à gauche ce qui est sur le téléphone, à droite les disques USB et
+/// Accueil : en-tête au logo, puis accès aux fichiers, Raccourcis, Stockage, Disques USB, Coffres, Dossiers
+/// distants et Favoris. En largeur étendue, deux colonnes : à gauche ce qui est sur le téléphone, à droite les disques USB et
 /// les dossiers distants.
 class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key, required this.state});
@@ -65,6 +66,7 @@ class HomeScreen extends StatelessWidget {
           final phone = [..._shortcuts(context), ..._storage(context)];
           final away = [
             ..._disks(context),
+            VaultsSection(state: state), // ouverts par le moteur, comme les disques
             if (state.terminals.sessions.isNotEmpty) SshSessionsCard(state: state),
             ..._remote(context),
           ];
@@ -132,8 +134,9 @@ class HomeScreen extends StatelessWidget {
     ];
   }
 
-  /// Stockages du téléphone : mémoire interne, cartes SD (les disques USB et dossiers distants ont leur section).
-  bool _isLocal(String kind) => kind != 'disk' && kind != 'remote';
+  /// Stockages du téléphone : mémoire interne, cartes SD (les disques USB, dossiers distants et coffres ont leur
+  /// section ; un fichier déchiffré en mémoire n'est pas un stockage de l'accueil).
+  bool _isLocal(String kind) => !const {'disk', 'remote', 'vault', 'decrypted'}.contains(kind);
 
   bool get _hasLocal => state.sources.any((s) => _isLocal(s.kind));
 

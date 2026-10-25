@@ -13,6 +13,7 @@
 #include "cJSON.h"
 #include "fluluks/error.h"
 #include "fluluks/fs.h"
+#include "fluluks/secure.h"
 #include "fs/ro_reasons.h"
 #include "fsck_util.h"
 #include "handles.h"
@@ -911,7 +912,8 @@ static int zip_exemple(int64_t w) {
   return fj_arcw_write(w, buf, sizeof buf);
 }
 
-/* Relit le ZIP ouvert `r` : noms (base64 des octets bruts) et contenu. */
+/* Relit le ZIP ouvert `r` : noms (base64 des octets bruts) et contenu. g_zip_aes : le fichier est chiffré (AES). */
+static bool g_zip_aes;
 static void relire_exemple(int64_t r) {
   fl_json j;
   static uint8_t buf[200000];
@@ -925,7 +927,7 @@ static void relire_exemple(int64_t r) {
     TT_ASSERT_STR_EQ(cJSON_GetObjectItem(e, "name")->valuestring, attendus[k]);
     TT_ASSERT_STR_EQ(cJSON_GetObjectItem(e, "type")->valuestring, k ? "f" : "d");
     TT_ASSERT_EQ((int64_t)cJSON_GetObjectItem(e, "size")->valuedouble, k ? 100000 : 0);
-    TT_ASSERT(!cJSON_IsTrue(cJSON_GetObjectItem(e, "encrypted")));
+    TT_ASSERT_EQ(cJSON_IsTrue(cJSON_GetObjectItem(e, "encrypted")), g_zip_aes && k == 1);
     TT_ASSERT(cJSON_IsFalse(cJSON_GetObjectItem(e, "raw")));
     cJSON_Delete(e);
     int64_t total = 0, n;
@@ -948,7 +950,7 @@ static void test_arc_par_jni(void) {
   /* sur le disque : écrit par le moteur, relu par le moteur ; la poignée d'archive possède le fichier */
   int64_t f = fj_open_file(v, "/a.zip", FL_O_RDWR | FL_O_CREAT);
   TT_ASSERT(f > 0);
-  int64_t w = fj_arcw_open_file(f);
+  int64_t w = fj_arcw_open_file(f, NULL, NULL, 0);
   TT_ASSERT(w > 0);
   TT_ASSERT_EQ(zip_exemple(w), FL_OK);
   TT_ASSERT_EQ(fj_arcw_close(w, true), FL_OK);
@@ -961,7 +963,7 @@ static void test_arc_par_jni(void) {
   int64_t taille = (int64_t)cJSON_GetObjectItem(st, "size")->valuedouble;
   cJSON_Delete(st);
   f = fj_open_file(v, "/a.zip", FL_O_RDONLY);
-  int64_t r = fj_arc_open_file(f, taille);
+  int64_t r = fj_arc_open_file(f, taille, NULL, NULL, 0);
   TT_ASSERT(r > 0);
   relire_exemple(r);
   TT_ASSERT_EQ(fj_arc_close(r), FL_OK);
@@ -971,16 +973,16 @@ static void test_arc_par_jni(void) {
   snprintf(zip, sizeof zip, "%s/arc-fd.zip", td);
   int fd = open(zip, O_RDWR | O_CREAT | O_TRUNC, 0644);
   TT_ASSERT(fd >= 0);
-  w = fj_arcw_open_fd(fd);
+  w = fj_arcw_open_fd(fd, NULL, NULL, 0);
   TT_ASSERT(w > 0);
   TT_ASSERT_EQ(zip_exemple(w), FL_OK);
   TT_ASSERT_EQ(fj_arcw_close(w, true), FL_OK);
   TT_ASSERT(fcntl(fd, F_GETFD) < 0); /* fermé */
-  r = fj_arc_open_fd(open(zip, O_RDONLY));
+  r = fj_arc_open_fd(open(zip, O_RDONLY), NULL, NULL, 0);
   TT_ASSERT(r > 0);
   relire_exemple(r);
   TT_ASSERT_EQ(fj_arc_close(r), FL_OK);
-  TT_ASSERT_EQ(fj_arc_open_fd(open(img, O_RDONLY)), FL_ENOTSUP); /* une image de disque n'est pas une archive */
+  TT_ASSERT_EQ(fj_arc_open_fd(open(img, O_RDONLY), NULL, NULL, 0), FL_ENOTSUP); /* une image de disque n'est pas une archive */
   unlink(zip);
   TT_ASSERT_EQ(fj_unmount(v, false), FL_OK);
   TT_ASSERT_EQ(fj_close_disk(d), FL_OK);
@@ -998,7 +1000,7 @@ static void test_arc_flux_brut(void) {
   TT_ASSERT(g != NULL);
   TT_ASSERT_EQ(gzwrite(g, "bonjour", 7), 7);
   TT_ASSERT_EQ(gzclose(g), Z_OK);
-  int64_t r = fj_arc_open_fd(open(gz, O_RDONLY));
+  int64_t r = fj_arc_open_fd(open(gz, O_RDONLY), NULL, NULL, 0);
   TT_ASSERT(r > 0);
   fl_json j;
   fl_json_init(&j);
@@ -1020,7 +1022,7 @@ static void test_arc_disque_ferme(void) {
   int64_t d = 0, v = 0;
   TT_ASSERT_EQ(disque_exfat(img, sizeof img, "arc-ferme.img", &d, &v), 0);
   int64_t f = fj_open_file(v, "/a.zip", FL_O_RDWR | FL_O_CREAT);
-  int64_t w = fj_arcw_open_file(f);
+  int64_t w = fj_arcw_open_file(f, NULL, NULL, 0);
   TT_ASSERT_EQ(zip_exemple(w), FL_OK);
   TT_ASSERT_EQ(fj_arcw_close(w, true), FL_OK);
   fl_json j;
@@ -1031,10 +1033,10 @@ static void test_arc_disque_ferme(void) {
   int64_t taille = (int64_t)cJSON_GetObjectItem(st, "size")->valuedouble;
   cJSON_Delete(st);
   f = fj_open_file(v, "/a.zip", FL_O_RDONLY);
-  int64_t r = fj_arc_open_file(f, taille);
+  int64_t r = fj_arc_open_file(f, taille, NULL, NULL, 0);
   TT_ASSERT(r > 0);
   int64_t f2 = fj_open_file(v, "/b.zip", FL_O_RDWR | FL_O_CREAT);
-  int64_t w2 = fj_arcw_open_file(f2);
+  int64_t w2 = fj_arcw_open_file(f2, NULL, NULL, 0);
   TT_ASSERT(w2 > 0);
   TT_ASSERT_EQ(fj_close_disk(d), FL_OK);
   uint8_t buf[16];
@@ -1095,6 +1097,416 @@ static void test_stat_droits(void) {
   unlink(img);
 }
 
+/* --- chiffrement et coffres (phase 14, T4) --------------------------------------------------- */
+
+#define COFFRE_PASS "phrase du coffre"
+#define COFFRE_REC "ABCD-EFGH-JKMN-PQRS"
+#define COFFRE_TAILLE (32 * 1024 * 1024)
+#define COFFRE_OPTS "{\"fs\":\"exfat\",\"encrypted\":true,\"table\":\"none\",\"kdf_mem_kib\":8192,\"label\":\"Coffre\"}"
+
+/* /coffre.luks de COFFRE_TAILLE octets (zéros) sur le volume v ; poignée du fichier ouvert en écriture. */
+static int64_t fichier_coffre(int64_t v, bool creer) {
+  int64_t f = fj_open_file(v, "/coffre.luks", creer ? FL_O_RDWR | FL_O_CREAT | FL_O_TRUNC : FL_O_RDWR);
+  if (f <= 0 || !creer) return f;
+  static uint8_t zeros[1024 * 1024];
+  for (uint64_t off = 0; off < COFFRE_TAILLE; off += sizeof zeros)
+    if (fj_pwrite(f, zeros, sizeof zeros, off) != (int64_t)sizeof zeros) return FL_EIO;
+  return f;
+}
+
+/* Écrit /note.txt (texte) dans le volume du coffre. */
+static int ecrire_note(int64_t vv, const char *texte) {
+  int64_t f = fj_open_file(vv, "/note.txt", FL_O_RDWR | FL_O_CREAT | FL_O_TRUNC);
+  if (f <= 0) return (int)f;
+  int64_t n = fj_pwrite(f, texte, strlen(texte), 0);
+  int rc = fj_close_file(f);
+  return n == (int64_t)strlen(texte) ? rc : FL_EIO;
+}
+
+static int lire_note(int64_t vv, char *out, size_t cap) {
+  int64_t f = fj_open_file(vv, "/note.txt", FL_O_RDONLY);
+  if (f <= 0) return (int)f;
+  int64_t n = fj_pread(f, out, cap - 1, 0);
+  fj_close_file(f);
+  if (n < 0) return (int)n;
+  out[n] = 0;
+  return FL_OK;
+}
+
+/* Coffre sur un fichier du volume hôte : fermer le fichier démonte d'abord le coffre (synchronisé). */
+static void closingHostFileClosesVaultDisk(void) {
+  unsigned u0 = fj_debug_used();
+  char img[4200], note[64];
+  int64_t d = 0, v = 0;
+  TT_ASSERT_EQ(disque_exfat(img, sizeof img, "coffre-hote.img", &d, &v), 0);
+  int64_t f = fichier_coffre(v, true);
+  TT_ASSERT(f > 0);
+  int64_t vd = fj_open_disk_file(f, COFFRE_TAILLE);
+  TT_ASSERT(vd > 0);
+  TT_ASSERT_EQ(fj_format(vd, COFFRE_OPTS, COFFRE_PASS, strlen(COFFRE_PASS), NULL, NULL), FL_OK);
+  fl_json j;
+  fl_json_init(&j);
+  cJSON *r = json_de(fj_scan(vd, &j), &j);
+  fl_json_free(&j);
+  TT_ASSERT(r != NULL);
+  TT_ASSERT_STR_EQ(cJSON_GetObjectItem(r, "table")->valuestring, "none");
+  TT_ASSERT_STR_EQ(cJSON_GetObjectItem(cJSON_GetArrayItem(cJSON_GetObjectItem(r, "parts"), 0), "content")->valuestring,
+                   "LUKS2");
+  cJSON_Delete(r);
+  int64_t vv = fj_mount(vd, 0, COFFRE_PASS, strlen(COFFRE_PASS), true);
+  TT_ASSERT(vv > 0);
+  TT_ASSERT_EQ(ecrire_note(vv, "écrit dans le coffre"), FL_OK);
+  int64_t vf = fj_open_file(vv, "/ouvert.bin", FL_O_RDWR | FL_O_CREAT);
+  TT_ASSERT(vf > 0);
+  TT_ASSERT_EQ(fj_pwrite(vf, "xyz", 3, 0), 3);
+  /* le volume hôte refuse de se démonter : un fichier (celui du coffre) est ouvert */
+  TT_ASSERT_EQ(fj_unmount(v, false), FL_EBUSY);
+  TT_ASSERT_EQ(fj_close_file(f), FL_OK);
+  TT_ASSERT_EQ(fj_pwrite(vf, "xyz", 3, 0), FL_EINVAL);
+  TT_ASSERT_EQ(fj_sync(vv), FL_EINVAL);
+  fl_json_init(&j);
+  TT_ASSERT_EQ(fj_scan(vd, &j), FL_EINVAL);
+  fl_json_free(&j);
+  TT_ASSERT_EQ(fj_close_disk(vd), FL_EINVAL);
+
+  /* rouvert : tout a été synchronisé */
+  f = fichier_coffre(v, false);
+  TT_ASSERT(f > 0);
+  vd = fj_open_disk_file(f, COFFRE_TAILLE);
+  TT_ASSERT(vd > 0);
+  vv = fj_mount(vd, 0, COFFRE_PASS, strlen(COFFRE_PASS), false);
+  TT_ASSERT(vv > 0);
+  TT_ASSERT_EQ(lire_note(vv, note, sizeof note), FL_OK);
+  TT_ASSERT_STR_EQ(note, "écrit dans le coffre");
+  /* fermer le disque du coffre ferme aussi son fichier, qui lui appartient */
+  TT_ASSERT_EQ(fj_close_disk(vd), FL_OK);
+  TT_ASSERT_EQ(fj_close_file(f), FL_EINVAL);
+  TT_ASSERT_EQ(fj_unmount(v, false), FL_OK);
+  /* taille impossible : refus, le fichier est fermé quand même */
+  f = fichier_coffre(fj_mount(d, (uint32_t)partition_unique(d, note, sizeof note), NULL, 0, true), false);
+  TT_ASSERT(f > 0);
+  TT_ASSERT_EQ(fj_open_disk_file(f, COFFRE_TAILLE + 512), FL_EINVAL);
+  TT_ASSERT_EQ(fj_close_file(f), FL_EINVAL);
+  TT_ASSERT_EQ(fj_close_disk(d), FL_OK);
+  TT_ASSERT_EQ(fj_debug_used(), u0);
+  unlink(img);
+}
+
+/* Éjecter le disque hôte : volume hôte, fichier, disque du coffre et volume du coffre, dans cet ordre. */
+static void ejectHostDiskCascades(void) {
+  unsigned u0 = fj_debug_used();
+  char img[4200], note[64];
+  int64_t d = 0, v = 0;
+  TT_ASSERT_EQ(disque_exfat(img, sizeof img, "coffre-ejecte.img", &d, &v), 0);
+  int64_t f = fichier_coffre(v, true);
+  int64_t vd = fj_open_disk_file(f, COFFRE_TAILLE);
+  TT_ASSERT(vd > 0);
+  TT_ASSERT_EQ(fj_format(vd, COFFRE_OPTS, COFFRE_PASS, strlen(COFFRE_PASS), NULL, NULL), FL_OK);
+  int64_t vv = fj_mount(vd, 0, COFFRE_PASS, strlen(COFFRE_PASS), true);
+  TT_ASSERT(vv > 0);
+  TT_ASSERT_EQ(ecrire_note(vv, "avant l'éjection"), FL_OK);
+  int64_t vf = fj_open_file(vv, "/ouvert.bin", FL_O_RDWR | FL_O_CREAT);
+  TT_ASSERT_EQ(fj_pwrite(vf, "abc", 3, 0), 3);
+  TT_ASSERT_EQ(fj_close_disk(d), FL_OK);
+  TT_ASSERT_EQ(fj_debug_used(), u0);
+  TT_ASSERT_EQ(fj_pwrite(vf, "abc", 3, 0), FL_EINVAL);
+  TT_ASSERT_EQ(fj_unmount(vv, true), FL_EINVAL);
+
+  d = fj_open_image(img, false);
+  TT_ASSERT(d > 0);
+  v = fj_mount(d, (uint32_t)partition_unique(d, note, sizeof note), NULL, 0, true);
+  f = fichier_coffre(v, false);
+  vd = fj_open_disk_file(f, COFFRE_TAILLE);
+  vv = fj_mount(vd, 0, COFFRE_PASS, strlen(COFFRE_PASS), false);
+  TT_ASSERT(vv > 0);
+  TT_ASSERT_EQ(lire_note(vv, note, sizeof note), FL_OK);
+  TT_ASSERT_STR_EQ(note, "avant l'éjection");
+  vf = fj_open_file(vv, "/ouvert.bin", FL_O_RDONLY);
+  TT_ASSERT_EQ(fj_pread(vf, note, 3, 0), 3);
+  TT_ASSERT_MEM_EQ(note, "abc", 3);
+  TT_ASSERT_EQ(fj_close_disk(d), FL_OK);
+  TT_ASSERT_EQ(fj_debug_used(), u0);
+  unlink(img);
+}
+
+#define AGE_PASS "phrase age été"
+#define AGE_N 10 /* log2 N d'essai : rapide */
+
+static void remplir_motif(uint8_t *p, size_t n, uint32_t g) {
+  for (size_t i = 0; i < n; i++) {
+    g = g * 1103515245u + 12345u;
+    p[i] = (uint8_t)(g >> 16);
+  }
+}
+
+/* Lecteur age sur un fichier du moteur : enfant du fichier, fermé avec lui. */
+static void agerChildOfFile(void) {
+  unsigned u0 = fj_debug_used();
+  char img[4200];
+  int64_t d = 0, v = 0;
+  TT_ASSERT_EQ(disque_exfat(img, sizeof img, "age-hote.img", &d, &v), 0);
+  static uint8_t data[200000], lu[200000];
+  remplir_motif(data, sizeof data, 3);
+  int64_t f = fj_open_file(v, "/a.age", FL_O_RDWR | FL_O_CREAT);
+  int64_t w = fj_agew_open_file(f, AGE_PASS, strlen(AGE_PASS), AGE_N);
+  TT_ASSERT(w > 0);
+  TT_ASSERT_EQ(fj_agew_write(w, data, 70000), FL_OK);
+  TT_ASSERT_EQ(fj_agew_write(w, data + 70000, sizeof data - 70000), FL_OK);
+  TT_ASSERT_EQ(fj_agew_close(w, true), FL_OK);
+  TT_ASSERT_EQ(fj_close_file(f), FL_EINVAL); /* fermé avec l'écrivain */
+  fl_json j;
+  fl_json_init(&j);
+  cJSON *st = json_de(fj_stat(v, "/a.age", &j), &j);
+  fl_json_free(&j);
+  TT_ASSERT(st != NULL);
+  int64_t taille = (int64_t)cJSON_GetObjectItem(st, "size")->valuedouble;
+  cJSON_Delete(st);
+  f = fj_open_file(v, "/a.age", FL_O_RDONLY);
+  TT_ASSERT_EQ(fj_age_peek_file(f, taille), AGE_N);
+  int64_t r = fj_ager_open_file(f, taille, "faux", 4);
+  TT_ASSERT_EQ(r, FL_EBADPASS);
+  TT_ASSERT_EQ(fj_close_file(f), FL_EINVAL); /* l'échec ferme aussi la source */
+  f = fj_open_file(v, "/a.age", FL_O_RDONLY);
+  r = fj_ager_open_file(f, taille, AGE_PASS, strlen(AGE_PASS));
+  TT_ASSERT(r > 0);
+  TT_ASSERT_EQ(fj_ager_size(r), (int64_t)sizeof data);
+  TT_ASSERT_EQ(fj_ager_pread(r, lu, sizeof lu, 0), (int64_t)sizeof lu);
+  TT_ASSERT_MEM_EQ(lu, data, sizeof data);
+  TT_ASSERT_EQ(fj_ager_pread(r, lu, 100, 123456), 100);
+  TT_ASSERT_MEM_EQ(lu, data + 123456, 100);
+  /* fermer le fichier ferme le lecteur */
+  TT_ASSERT_EQ(fj_close_file(f), FL_OK);
+  TT_ASSERT_EQ(fj_ager_pread(r, lu, 100, 0), FL_EINVAL);
+  TT_ASSERT_EQ(fj_ager_close(r), FL_EINVAL);
+
+  /* sur descripteurs : écriture, lecture, changement de phrase */
+  char td[4096], a[4200], b[4200];
+  TT_ASSERT_EQ(fu_tmpdir(td, sizeof td), 0);
+  snprintf(a, sizeof a, "%s/fd-a.age", td);
+  snprintf(b, sizeof b, "%s/fd-b.age", td);
+  w = fj_agew_open_fd(open(a, O_RDWR | O_CREAT | O_TRUNC, 0644), AGE_PASS, strlen(AGE_PASS), AGE_N);
+  TT_ASSERT(w > 0);
+  TT_ASSERT_EQ(fj_agew_write(w, data, sizeof data), FL_OK);
+  TT_ASSERT_EQ(fj_agew_close(w, true), FL_OK);
+  int fd = open(a, O_RDONLY);
+  TT_ASSERT_EQ(fj_age_peek_fd(fd), AGE_N);
+  TT_ASSERT(fcntl(fd, F_GETFD) != -1); /* peek ne prend pas le descripteur */
+  close(fd);
+  TT_ASSERT_EQ(fj_age_rewrap(open(a, O_RDONLY), 0, 0, open(b, O_RDWR | O_CREAT | O_TRUNC, 0644), 0, AGE_PASS,
+                             strlen(AGE_PASS), "nouvelle", 8, AGE_N),
+               FL_OK);
+  TT_ASSERT_EQ(fj_ager_open_fd(open(b, O_RDONLY), AGE_PASS, strlen(AGE_PASS)), FL_EBADPASS);
+  r = fj_ager_open_fd(open(b, O_RDONLY), "nouvelle", 8);
+  TT_ASSERT(r > 0);
+  TT_ASSERT_EQ(fj_ager_pread(r, lu, sizeof lu, 0), (int64_t)sizeof lu);
+  TT_ASSERT_MEM_EQ(lu, data, sizeof data);
+  TT_ASSERT_EQ(fj_ager_close(r), FL_OK);
+  /* écrivain abandonné : rien de valable n'est laissé */
+  w = fj_agew_open_fd(open(a, O_RDWR | O_CREAT | O_TRUNC, 0644), AGE_PASS, strlen(AGE_PASS), AGE_N);
+  TT_ASSERT_EQ(fj_agew_write(w, data, 1000), FL_OK);
+  TT_ASSERT_EQ(fj_agew_close(w, false), FL_OK);
+  r = fj_ager_open_fd(open(a, O_RDONLY), AGE_PASS, strlen(AGE_PASS));
+  TT_ASSERT(r < 0);
+  TT_ASSERT_EQ(fj_close_disk(d), FL_OK);
+  TT_ASSERT_EQ(fj_debug_used(), u0);
+  unlink(a);
+  unlink(b);
+  unlink(img);
+}
+
+/* Archives : ZIP AES et ZIP dans age, en écriture puis en lecture, par descripteur. */
+static void arcModesRoundTrip(void) {
+  unsigned u0 = fj_debug_used();
+  char td[4096], z[4200];
+  TT_ASSERT_EQ(fu_tmpdir(td, sizeof td), 0);
+  const char *modes[] = {"aes", "age"};
+  for (int m = 0; m < 2; m++) {
+    snprintf(z, sizeof z, "%s/modes-%s.zip", td, modes[m]);
+    int64_t w = fj_arcw_open_fd(open(z, O_RDWR | O_CREAT | O_TRUNC, 0644), modes[m], AGE_PASS, strlen(AGE_PASS));
+    TT_ASSERT(w > 0);
+    TT_ASSERT_EQ(zip_exemple(w), FL_OK);
+    TT_ASSERT_EQ(fj_arcw_close(w, true), FL_OK);
+    if (m) {
+      TT_ASSERT_EQ(fj_arc_open_fd(open(z, O_RDONLY), modes[m], "faux", 4), FL_EBADPASS);
+    } else {
+      /* ZIP AES : les noms se lisent, les données refusent une phrase fausse */
+      int64_t rf = fj_arc_open_fd(open(z, O_RDONLY), modes[m], "faux", 4);
+      TT_ASSERT(rf > 0);
+      fl_json j;
+      fl_json_init(&j);
+      TT_ASSERT_EQ(fj_arc_next(rf, &j), 1);
+      fl_json_free(&j);
+      fl_json_init(&j);
+      TT_ASSERT_EQ(fj_arc_next(rf, &j), 1);
+      fl_json_free(&j);
+      uint8_t b[64];
+      TT_ASSERT_EQ(fj_arc_read(rf, b, sizeof b), FL_EBADPASS);
+      TT_ASSERT_EQ(fj_arc_close(rf), FL_OK);
+    }
+    int64_t r = fj_arc_open_fd(open(z, O_RDONLY), modes[m], AGE_PASS, strlen(AGE_PASS));
+    TT_ASSERT(r > 0);
+    g_zip_aes = m == 0;
+    relire_exemple(r);
+    g_zip_aes = false;
+    TT_ASSERT_EQ(fj_arc_close(r), FL_OK);
+    unlink(z);
+  }
+  /* mode inconnu, phrase manquante */
+  TT_ASSERT_EQ(fj_arcw_open_fd(open(z, O_RDWR | O_CREAT | O_TRUNC, 0644), "rot13", NULL, 0), FL_EINVAL);
+  TT_ASSERT_EQ(fj_arcw_open_fd(open(z, O_RDWR | O_CREAT | O_TRUNC, 0644), "aes", NULL, 0), FL_EINVAL);
+  TT_ASSERT_EQ(fj_debug_used(), u0);
+  unlink(z);
+}
+
+static void staleAgeHandleIsEinval(void) {
+  unsigned u0 = fj_debug_used();
+  char td[4096], a[4200];
+  uint8_t buf[16] = {0};
+  TT_ASSERT_EQ(fu_tmpdir(td, sizeof td), 0);
+  snprintf(a, sizeof a, "%s/perime.age", td);
+  int64_t w = fj_agew_open_fd(open(a, O_RDWR | O_CREAT | O_TRUNC, 0644), AGE_PASS, strlen(AGE_PASS), AGE_N);
+  TT_ASSERT(w > 0);
+  TT_ASSERT_EQ(fj_ager_pread(w, buf, 1, 0), FL_EINVAL); /* écrivain pris pour un lecteur */
+  TT_ASSERT_EQ(fj_ager_size(w), FL_EINVAL);
+  TT_ASSERT_EQ(fj_arc_read(w, buf, 1), FL_EINVAL);
+  TT_ASSERT_EQ(fj_agew_write(w, buf, sizeof buf), FL_OK);
+  TT_ASSERT_EQ(fj_agew_close(w, true), FL_OK);
+  TT_ASSERT_EQ(fj_agew_write(w, buf, sizeof buf), FL_EINVAL);
+  TT_ASSERT_EQ(fj_agew_close(w, true), FL_EINVAL);
+  int64_t r = fj_ager_open_fd(open(a, O_RDONLY), AGE_PASS, strlen(AGE_PASS));
+  TT_ASSERT(r > 0);
+  TT_ASSERT_EQ(fj_agew_write(r, buf, 1), FL_EINVAL);
+  TT_ASSERT_EQ(fj_close_file(r), FL_EINVAL);
+  TT_ASSERT_EQ(fj_ager_close(r), FL_OK);
+  TT_ASSERT_EQ(fj_ager_pread(r, buf, 1, 0), FL_EINVAL);
+  TT_ASSERT_EQ(fj_ager_size(r), FL_EINVAL);
+  TT_ASSERT_EQ(fj_ager_close(-5), FL_EINVAL);
+  TT_ASSERT_EQ(fj_agew_open_fd(-1, AGE_PASS, strlen(AGE_PASS), AGE_N), FL_EINVAL);
+  TT_ASSERT_EQ(fj_ager_open_fd(-1, AGE_PASS, strlen(AGE_PASS)), FL_EINVAL);
+  TT_ASSERT_EQ(fj_debug_used(), u0);
+  unlink(a);
+}
+
+/* Coffre sur un descripteur : emplacements de clé, refusés tant qu'un volume du coffre est monté. */
+static void slotChangeRefusedWhileMounted(void) {
+  unsigned u0 = fj_debug_used();
+  char img[4200];
+  image_vierge(img, sizeof img, "coffre-fd.luks");
+  int64_t vd = fj_open_disk_fd(open(img, O_RDWR), false);
+  TT_ASSERT(vd > 0);
+  TT_ASSERT_EQ(fj_format(vd, COFFRE_OPTS, COFFRE_PASS, strlen(COFFRE_PASS), NULL, NULL), FL_OK);
+  int64_t vv = fj_mount(vd, 0, COFFRE_PASS, strlen(COFFRE_PASS), true);
+  TT_ASSERT(vv > 0);
+  TT_ASSERT_EQ(fj_luks_slot_set(vd, 1, COFFRE_PASS, strlen(COFFRE_PASS), COFFRE_REC, strlen(COFFRE_REC), 8192, 1),
+               FL_EBUSY);
+  TT_ASSERT_EQ(fj_luks_slot_remove(vd, 0, COFFRE_PASS, strlen(COFFRE_PASS)), FL_EBUSY);
+  TT_ASSERT_EQ(fj_unmount(vv, false), FL_OK);
+  TT_ASSERT_EQ(fj_luks_slot_set(vd, 1, COFFRE_PASS, strlen(COFFRE_PASS), COFFRE_REC, strlen(COFFRE_REC), 8192, 1),
+               FL_OK);
+  fl_json j;
+  fl_json_init(&j);
+  cJSON *r = json_de(fj_luks_slots(vd, &j), &j);
+  fl_json_free(&j);
+  TT_ASSERT(r != NULL);
+  TT_ASSERT_EQ(cJSON_GetObjectItem(r, "version")->valuedouble, 2);
+  cJSON *sl = cJSON_GetObjectItem(r, "slots");
+  TT_ASSERT_EQ(cJSON_GetArraySize(sl), 2);
+  TT_ASSERT_EQ(cJSON_GetArrayItem(sl, 0)->valuedouble, 0);
+  TT_ASSERT_EQ(cJSON_GetArrayItem(sl, 1)->valuedouble, 1);
+  cJSON_Delete(r);
+  TT_ASSERT_EQ(fj_mount_slot(vd, 0, 0, COFFRE_REC, strlen(COFFRE_REC), false), FL_EBADPASS);
+  vv = fj_mount_slot(vd, 0, 1, COFFRE_REC, strlen(COFFRE_REC), false);
+  TT_ASSERT(vv > 0);
+  TT_ASSERT_EQ(fj_unmount(vv, false), FL_OK);
+  TT_ASSERT_EQ(fj_luks_slot_remove(vd, 1, COFFRE_PASS, strlen(COFFRE_PASS)), FL_OK);
+  TT_ASSERT_EQ(fj_mount_slot(vd, 0, 1, COFFRE_REC, strlen(COFFRE_REC), false), FL_ENOENT);
+  TT_ASSERT_EQ(fj_close_disk(vd), FL_OK);
+  /* le descripteur appartient au disque */
+  int fd = open(img, O_RDWR);
+  int64_t h2 = fj_open_disk_fd(fd, true);
+  TT_ASSERT(h2 > 0);
+  TT_ASSERT_EQ(fj_close_disk(h2), FL_OK);
+  TT_ASSERT_EQ(fcntl(fd, F_GETFD), -1);
+  TT_ASSERT_EQ(fj_open_disk_fd(-1, false), FL_EINVAL);
+  /* disque avec une table : les emplacements ne se gèrent que sur un coffre (sans table) */
+  int64_t g = fj_open_image(tt_fixture("gpt-luks2.img"), true);
+  fl_json_init(&j);
+  TT_ASSERT_EQ(fj_luks_slots(g, &j), FL_ENOTSUP);
+  fl_json_free(&j);
+  TT_ASSERT_EQ(fj_luks_slot_set(g, 1, "x", 1, "y", 1, 8192, 1), FL_ENOTSUP);
+  TT_ASSERT_EQ(fj_close_disk(g), FL_OK);
+  TT_ASSERT_EQ(fj_debug_used(), u0);
+  unlink(img);
+}
+
+/* Toute phrase passée au moteur y est copiée en mémoire sécurisée, et cette copie est effacée au retour,
+ * succès comme échec. */
+static int g_wipes;
+static const char *g_secret;
+static void sur_effacement(void *arg, const void *p, size_t n) {
+  (void)arg;
+  if (g_secret && n == strlen(g_secret) && memcmp(p, g_secret, n) == 0) g_wipes++;
+}
+
+static void passWipedOnEveryPath(void) {
+  unsigned u0 = fj_debug_used();
+  char td[4096], a[4200], img[4200];
+  TT_ASSERT_EQ(fu_tmpdir(td, sizeof td), 0);
+  snprintf(a, sizeof a, "%s/efface.age", td);
+  fl_secure_debug_set_free_hook(sur_effacement, NULL);
+  const char *P = "secret à effacer";
+  size_t n = strlen(P);
+  g_secret = P;
+#define EFFACE(expr)                                                                                               \
+  do {                                                                                                             \
+    int avant_ = g_wipes;                                                                                          \
+    int64_t rc_ = (expr);                                                                                          \
+    (void)rc_;                                                                                                     \
+    if (g_wipes == avant_) {                                                                                       \
+      fprintf(stderr, "phrase non effacée : %s\n", #expr);                                                         \
+      tt_failures++;                                                                                               \
+    }                                                                                                              \
+  } while (0)
+  /* succès */
+  int64_t w = 0;
+  EFFACE(w = fj_agew_open_fd(open(a, O_RDWR | O_CREAT | O_TRUNC, 0644), P, n, AGE_N));
+  TT_ASSERT(w > 0);
+  TT_ASSERT_EQ(fj_agew_close(w, true), FL_OK);
+  int64_t r = 0;
+  EFFACE(r = fj_ager_open_fd(open(a, O_RDONLY), P, n));
+  TT_ASSERT(r > 0);
+  TT_ASSERT_EQ(fj_ager_close(r), FL_OK);
+  /* échecs */
+  EFFACE(fj_agew_open_fd(-1, P, n, AGE_N));
+  EFFACE(fj_ager_open_fd(-1, P, n));
+  g_secret = "faux";
+  EFFACE(fj_ager_open_fd(open(a, O_RDONLY), "faux", 4));
+  g_secret = P;
+  EFFACE(fj_arcw_open_fd(-1, "aes", P, n));
+  EFFACE(fj_arc_open_fd(open(a, O_RDONLY), "age", P, n));
+  EFFACE(fj_age_rewrap(-1, 0, 0, -1, 0, P, n, "x", 1, AGE_N));
+  /* coffre : déverrouillage, emplacements, formatage */
+  image_vierge(img, sizeof img, "efface.luks");
+  int64_t vd = fj_open_disk_fd(open(img, O_RDWR), false);
+  TT_ASSERT(vd > 0);
+  EFFACE(fj_format(vd, COFFRE_OPTS, P, n, NULL, NULL));
+  int64_t vv = 0;
+  EFFACE(vv = fj_mount(vd, 0, P, n, false));
+  TT_ASSERT(vv > 0);
+  EFFACE(fj_luks_slot_set(vd, 1, P, n, "autre", 5, 8192, 1)); /* refus : monté */
+  TT_ASSERT_EQ(fj_unmount(vv, false), FL_OK);
+  EFFACE(fj_luks_slot_set(vd, 1, P, n, "autre", 5, 8192, 1));
+  EFFACE(fj_luks_slot_remove(vd, 1, P, n));
+  EFFACE(fj_mount_slot(vd, 0, 1, P, n, false));
+  EFFACE(fj_mount(vd, 0, P, n, false) > 0 ? fj_close_disk(vd) : FL_EIO);
+  fl_secure_debug_set_free_hook(NULL, NULL);
+  g_secret = NULL;
+#undef EFFACE
+  TT_ASSERT_EQ(fj_debug_used(), u0);
+  unlink(a);
+  unlink(img);
+}
+
 int main(void) {
   srand((unsigned)time(NULL));
   TT_RUN(test_scan_gpt_luks2);
@@ -1121,6 +1533,13 @@ int main(void) {
   TT_RUN(test_arc_disque_ferme);
   TT_RUN(test_arc_flux_brut);
   TT_RUN(test_stat_droits);
+  TT_RUN(closingHostFileClosesVaultDisk);
+  TT_RUN(ejectHostDiskCascades);
+  TT_RUN(agerChildOfFile);
+  TT_RUN(arcModesRoundTrip);
+  TT_RUN(staleAgeHandleIsEinval);
+  TT_RUN(slotChangeRefusedWhileMounted);
+  TT_RUN(passWipedOnEveryPath);
   if (!tt_failures && g_saute) return 77; /* SKIP_RETURN_CODE de CTest */
   TT_MAIN_END();
 }

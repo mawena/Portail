@@ -39,6 +39,10 @@ uint64_t fl_bdev_size_bytes(const fl_bdev *d);
 
 /* Fichier image ou périphérique bloc. Pour un périphérique bloc, sector_size est ignoré. */
 int fl_file_bdev_open(const char *path, uint32_t sector_size, bool read_only, fl_bdev **out);
+/* Même chose sur un descripteur déjà ouvert (fichier d'un coffre sur le téléphone, phase 14). Le
+ * descripteur appartient au périphérique dès l'appel : fermé par fl_bdev_close, et aussi si l'ouverture
+ * échoue. FL_EINVAL si fd < 0 ou sector_size = 0 (fichier ordinaire). */
+int fl_fd_bdev_open(int fd, uint32_t sector_size, bool read_only, fl_bdev **out);
 /* Tranche [first_lba, first_lba+count) du parent ; ne possède pas le parent. */
 int fl_slice_bdev_new(fl_bdev *parent, uint64_t first_lba, uint64_t count, fl_bdev **out);
 

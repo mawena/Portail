@@ -75,7 +75,7 @@ class _TerminalScreenState extends State<TerminalScreen> {
     _controller.addListener(_changed);
     if (_state.uiPrefs.terminalSecure ?? false) {
       _secure = true;
-      _state.api.setSecureScreen(true);
+      _state.holdSecure();
     }
   }
 
@@ -84,7 +84,7 @@ class _TerminalScreenState extends State<TerminalScreen> {
     _hub.removeListener(_changed);
     _state.uiPrefsListenable.removeListener(_changed);
     _controller.removeListener(_changed);
-    if (_secure) _state.api.setSecureScreen(false);
+    if (_secure) _state.releaseSecure();
     final e = _hub.entry(_id);
     if (e != null && e.inputFilter == _mods.apply) e.inputFilter = null;
     _mods.dispose();

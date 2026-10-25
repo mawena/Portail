@@ -28,6 +28,170 @@ class Fr {
   static const passphrase = 'Phrase de passe';
   static const showPassphrase = 'Afficher la phrase de passe';
   static const hidePassphrase = 'Masquer la phrase de passe';
+
+  // mots de passe des fichiers et des coffres (phase 14) ; libellé du champ : [password]
+  static const passwordConfirm = 'Confirmer le mot de passe';
+  static const showPassword = 'Afficher le mot de passe';
+  static const hidePassword = 'Masquer le mot de passe';
+  static const passwordTooShort = 'Le mot de passe doit faire au moins 8 caractères';
+  static const passwordNul = 'Le mot de passe contient un caractère interdit';
+  static const passwordMismatch = 'Les deux mots de passe diffèrent';
+  static const passwordNoRecovery = 'Sans ce mot de passe, rien ne pourra être récupéré';
+  static const generatePassword = 'Générer un mot de passe';
+  static const generateChars = '20 caractères';
+  static const generateWords = '6 mots';
+  static const copyPassword = 'Copier le mot de passe';
+  static const passwordCopied = 'Mot de passe copié, effacé du presse-papiers dans 60\u00A0s';
+  static const strengthVeryWeak = 'très faible';
+  static const strengthWeak = 'faible';
+  static const strengthFair = 'moyen';
+  static const strengthGood = 'bon';
+  static const strengthExcellent = 'excellent';
+
+  /// « Force : bon ».
+  static String strength(String level) => 'Force\u00A0: $level';
+
+  // chiffrer et déchiffrer dans l'explorateur (phase 14)
+  static const encryptAction = 'Chiffrer…';
+  static const decryptAction = 'Déchiffrer…';
+  static const verifyAction = 'Vérifier';
+  static const changePasswordAction = 'Changer le mot de passe';
+  static const encryptTitle = 'Chiffrer';
+  static const encryptFormat = 'Format';
+  static const formatStrong = 'Chiffrement fort';
+  static const formatStrongHelp =
+      "Format age\u00A0: noms des fichiers cachés, toute modification détectée. Se déchiffre sur un ordinateur avec l'outil libre age.";
+  static const formatZip = 'ZIP chiffré (AES-256)';
+  static const formatZipHelp = "Pour l'échange\u00A0: s'ouvre avec 7-Zip, WinRAR ou bsdtar.";
+  static const zipNamesWarning =
+      'Dans un ZIP chiffré, les noms et les tailles des fichiers restent visibles, et le mot de passe se devine plus '
+      'facilement\u00A0: choisissez-le long.';
+  static const together = 'Réunir dans un seul fichier';
+  static const togetherName = 'Nom du fichier';
+  static const destination = 'Destination';
+  static const destHere = 'Ce dossier';
+  static const destOther = 'Autre dossier…';
+  static String destChosen(String storage, String path) => '$storage · $path';
+  static const deleteOriginal = "Supprimer l'original";
+  static const deleteOriginalHelp = 'Après vérification du fichier chiffré, définitivement (sans corbeille)';
+  static const deleteOriginalFlash =
+      'Sur une mémoire flash (téléphone, carte SD, clé USB), une suppression ne garantit pas que les anciennes données '
+      "soient irrécupérables. Sur un disque chiffré LUKS, l'original n'a jamais été en clair sur le support.";
+  static const encryptButton = 'Chiffrer';
+  static const openDecrypted = 'Ouvrir';
+  static const decryptHere = 'Déchiffrer ici';
+  static const decryptTo = 'Déchiffrer vers…';
+  static const badPassword = 'Mot de passe incorrect';
+  static const fileIntact = 'Fichier intact';
+  static const shareEncrypted = 'Partager le fichier chiffré';
+  static const shareHintAge = 'Le destinataire déchiffre avec age';
+  static const shareHintZip = 'Le destinataire ouvre le ZIP avec 7-Zip';
+  static const sharePlainTitle = 'Partager en clair\u202F?';
+  static const sharePlainBody = 'Le destinataire recevra le fichier en clair.';
+  static const pickFolderTitle = 'Choisir un dossier';
+  static const pickHere = 'Choisir ce dossier';
+  static const pickUp = 'Dossier parent';
+  static const pickStorages = 'Stockages';
+  static const protectedArchive = 'Archive protégée par un mot de passe';
+  static const extractButton = 'Extraire';
+  static const currentPassword = 'Mot de passe actuel';
+  static const changeButton = 'Changer';
+  static const passwordChanged = 'Mot de passe changé';
+  static const kindEncrypted = 'fichier chiffré';
+
+  // coffres (phase 14)
+  static const vaults = 'Coffres';
+  static const vaultsEmpty =
+      "Un coffre est un fichier chiffré qui s'ouvre comme un disque, ici ou sous Linux, avec son propre mot de passe.";
+  static const createVault = 'Créer un coffre';
+  static const create = 'Créer';
+  static const newVault = 'Nouveau coffre…';
+  static const createVaultTitle = 'Nouveau coffre';
+  static const createVaultButton = 'Créer le coffre';
+  static const vaultName = 'Nom du coffre';
+  static const vaultNameDefault = 'Coffre';
+  static const vaultLocation = 'Emplacement';
+  static const changeLocation = 'Changer…';
+  static const vaultSize = 'Taille';
+  static const vaultSizeOther = 'Autre';
+  static const vaultSizeMib = 'Taille en Mio';
+  static String vaultSizeRange(int min, int max) => 'De $min à $max Mio';
+  static const vaultNoSpace = 'Pas assez de place ici pour un coffre (32 Mio au moins, une réserve gardée)';
+  static const vaultFatLimit = 'Stockage FAT32 : 4 Gio au plus pour un coffre';
+  static const vaultFs = 'Système de fichiers';
+  static const vaultExfatHelp = 'Windows, macOS et Linux';
+  static const vaultExt4Help = 'Linux';
+  static const vaultExt4Owner =
+      "Sous Linux, les fichiers du coffre appartiennent à l'utilisateur 1000, le premier compte créé, comme sur un "
+      'disque formaté en ext4 par Portail. Windows et macOS ne le lisent pas.';
+  static const vaultNoRecovery = 'Sans le mot de passe, personne ne pourra ouvrir ce coffre, pas même Portail.';
+  static String vaultCreated(String name) => 'Coffre « $name » créé';
+  static const vaultClosed = 'Fermé';
+  static const vaultOpen = 'Ouvert';
+  static String vaultUnavailable(String storage) => "Indisponible : « $storage » n'est pas là";
+  static String vaultLine(String size, String fs, String where) => fs.isEmpty ? '$size · $where' : '$size · $fs · $where';
+  static const vaultOpenAction = 'Ouvrir le coffre';
+  static String vaultOpenTitle(String name) => 'Ouvrir le coffre $name';
+  static const vaultOpening = 'Ouverture du coffre…';
+  static const vaultClose = 'Fermer';
+  static const showLocation = "Afficher l'emplacement";
+  static const vaultForget = 'Retirer de la liste';
+  static String vaultForgetTitle(String name) => 'Retirer $name de la liste ?';
+  static const vaultForgetBody =
+      "Le fichier du coffre reste à sa place : touchez-le dans l'explorateur pour le rouvrir.";
+  static const vaultForgetConfirm = 'Retirer';
+  static const kindVault = 'coffre';
+
+  // mot de passe et clé de secours d'un coffre (phase 14)
+  static String changeVaultPasswordTitle(String name) => 'Mot de passe du coffre $name';
+  static const oldPasswordOrRecovery = 'Le mot de passe actuel, ou la clé de secours';
+  static const closeVaultFirst = "Fermez d'abord le coffre";
+  static const vaultLuks1 = 'Coffre LUKS1 : changez la phrase sous Linux';
+  static const recoveryKey = 'Clé de secours';
+  static const useRecoveryKey = 'Utiliser la clé de secours';
+  static const usePassword = 'Utiliser le mot de passe';
+  static const showRecoveryKey = 'Afficher la clé';
+  static const hideRecoveryKey = 'Masquer la clé';
+  static const recoveryKeyHelp =
+      'Une clé de secours de 24 caractères ouvre le coffre si le mot de passe est oublié, et permet alors de le '
+      "changer. Elle n'est montrée qu'une fois : notez-la et rangez-la ailleurs que sur ce téléphone.";
+  static const recoveryKeyPresent = 'Ce coffre a une clé de secours.';
+  static const recoveryKeyAbsent = "Ce coffre n'a pas de clé de secours.";
+  static const recoveryKeyCreate = 'Créer une clé de secours';
+  static const recoveryKeyReplace = 'Remplacer la clé de secours';
+  static const recoveryKeyReplaceHelp = "L'ancienne clé n'ouvrira plus le coffre.";
+  static const recoveryKeyRemove = 'Retirer la clé de secours';
+  static const recoveryKeyRemoved = 'Clé de secours retirée';
+  static const vaultPasswordTitle = 'Mot de passe du coffre';
+  static const recoveryKeyShownTitle = 'Votre clé de secours';
+  static const recoveryKeyShownOnce =
+      'Notez-la maintenant : elle ne sera plus jamais affichée. Rangez-la ailleurs que sur ce téléphone.';
+  static const recoveryKeyLinux = 'Sous Linux, elle se tape telle quelle, tirets compris, à la place de la phrase de passe.';
+  static const copyRecoveryKey = 'Copier la clé';
+  static const recoveryKeyCopied = 'Clé copiée, effacée du presse-papiers dans 60 s';
+  static const recoveryKeyNoted = "J'ai noté la clé";
+  static const workingOnKeys = 'Calcul de la clé… quelques secondes';
+
+  // déverrouillage biométrique d'un coffre (phase 14)
+  static const biometricEnable = 'Activer le déverrouillage biométrique';
+  static const biometricDisable = 'Désactiver le déverrouillage biométrique';
+  static const biometricEnableHelp =
+      'Le visage ou une empreinte ouvrira ce coffre sur ce téléphone. Le mot de passe reste nécessaire ailleurs, et '
+      "ici si la biométrie du téléphone change. Confirmez d'abord le mot de passe du coffre.";
+  static const biometricEnabled = 'Déverrouillage biométrique activé';
+  static const biometricDisabled = 'Déverrouillage biométrique désactivé';
+  static const biometricDisableOpenBody =
+      'La clé biométrique de ce téléphone sera effacée. Le coffre ne pourra plus être ouvert par le visage ou une empreinte.';
+  static const biometricDisableConfirm = 'Désactiver';
+  static const chipBiometric = 'Biométrie';
+
+  /// Taille binaire d'un coffre : « 256 Mio », « 1 Gio », « 1,5 Gio ».
+  static String binarySize(int bytes) {
+    const m = 1 << 20, g = 1 << 30;
+    if (bytes < g) return '${(bytes / m).round()} Mio';
+    if (bytes % g == 0) return '${bytes ~/ g} Gio';
+    return '${(bytes / g).toStringAsFixed(1).replaceAll('.', ',')} Gio';
+  }
   static const openReadOnly = 'Ouvrir en lecture seule';
   static const unlocking =
       'Déverrouillage en cours… cela peut prendre quelques secondes';
@@ -60,7 +224,12 @@ class Fr {
   static const settings = 'Réglages';
   static const readOnlyHelp = "S'applique aux prochaines ouvertures de disques";
   static const autoLock = 'Verrouillage automatique';
-  static const autoLockHelp = 'Disques chiffrés, après ce délai sans activité';
+  static const autoLockHelp = 'Verrouiller les disques chiffrés et les coffres après ce délai sans activité';
+  static const sectionPrivacy = 'Confidentialité';
+  static const closeVaultsOnScreenOff = "Fermer les coffres quand l'écran s'éteint";
+  static const closeVaultsOnScreenOffHelp = "Une copie en cours dans un coffre se termine d'abord";
+  static const hideVaults = 'Masquer les coffres et les fichiers déchiffrés';
+  static const hideVaultsHelp = "Dans les captures d'écran et les applications récentes";
   static const never = 'Jamais';
 
   /// « 15 min », « 1 h ».
@@ -422,7 +591,8 @@ class Fr {
     ),
     (
       'Le verrouillage automatique',
-      'Dans les Réglages, les disques chiffrés se verrouillent après 5, 15 ou 30 minutes, ou 1 heure, sans activité '
+      'Dans les Réglages, les disques chiffrés et les coffres se verrouillent après 5, 15 ou 30 minutes, ou 1 heure, '
+          'sans activité '
           '(« Jamais » par défaut). Une copie en cours ou un fichier lu par une autre application compte '
           'comme une activité. Une notification annonce le verrouillage.'
     ),
@@ -449,6 +619,27 @@ class Fr {
       'Réglages, Clés SSH : générez une clé sur le téléphone ou importez-en une, puis Installer sur un serveur '
           'l\'ajoute à ses clés autorisées. Acceptez ensuite d\'utiliser cette clé pour ce serveur : les connexions '
           'ne demandent plus le mot de passe.'
+    ),
+    (
+      'Chiffrer un fichier ou un dossier',
+      "Menu d'un élément ou de la sélection, Chiffrer…\u00A0: le chiffrement fort (age) cache aussi les noms, le ZIP "
+          "chiffré s'ouvre avec 7-Zip pour l'échange. Choisissez un mot de passe d'au moins 8 caractères, ou "
+          "générez-le, et gardez-le bien\u00A0: Portail ne le mémorise jamais. Touchez ensuite le fichier chiffré pour "
+          "l'ouvrir sans copie en clair, le déchiffrer ou le vérifier."
+    ),
+    (
+      'Créer et ouvrir un coffre',
+      "Un coffre est un fichier chiffré qui s'ouvre comme un disque\u00A0: Créer un coffre dans la section Coffres de "
+          "l'accueil, ou Nouveau coffre… depuis le bouton Créer de l'explorateur. Ouvert, il se parcourt comme les "
+          "autres stockages et apparaît dans l'application Fichiers\u00A0; Fermer efface sa clé. Sous Linux, il s'ouvre "
+          'par cryptsetup, ou par un double-clic après udisksctl loop-setup.'
+    ),
+    (
+      "J'ai oublié le mot de passe",
+      'Sans son mot de passe, personne ne peut ouvrir un fichier chiffré ni un coffre, pas même Portail. Si le '
+          "coffre a une clé de secours, touchez Utiliser la clé de secours en l'ouvrant, puis changez son mot de "
+          "passe en donnant la clé à la place de l'ancien. Le déverrouillage biométrique, s'il est activé, ouvre "
+          'aussi le coffre.'
     ),
   ];
   static const addFavorite = 'Ajouter aux favoris';
@@ -502,6 +693,10 @@ class Fr {
       'move' => 'Déplacement',
       'compress' => 'Compression',
       'extract' => 'Extraction',
+      'encrypt' => 'Chiffrement',
+      'decrypt' => 'Déchiffrement',
+      'verify' => 'Vérification',
+      'vault' => 'Création du coffre',
       _ => 'Copie',
     };
     return '$what de $name — $i sur $n · $pct\u202F%';

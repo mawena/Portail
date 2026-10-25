@@ -66,6 +66,9 @@ void main() {
     expect(find.byType(AlertDialog), findsNothing);
     await tester.enterText(find.widgetWithText(TextField, Fr.passphrase), 'secret');
     await tester.enterText(find.widgetWithText(TextField, Fr.passConfirm), 'secreT');
+    await tester.pump();
+    // la force de la phrase s'affiche sous le champ : le bouton descend
+    await scrollTo(tester, find.widgetWithText(FilledButton, Fr.formatButton));
     await tester.tap(find.widgetWithText(FilledButton, Fr.formatButton));
     await tester.pumpAndSettle();
     expect(find.text(Fr.passMismatch), findsOneWidget);

@@ -383,32 +383,32 @@ dans le même commit que le travail.
 ### Phase 14 — Chiffrement de fichiers, de dossiers et coffres ([plan](2026-10-23-phase14-chiffrement.md))
 - [x] Plan de la phase 14 écrit *(demande du 2026-10-23 ; spec § 22)*
 - [x] T1 — Moteur : scrypt et format age (chiffrement en flux, lecture à accès aléatoire, juge Python) *(scrypt de Tarsnap copié sans modification, vecteurs RFC 7914 et C2SP/CCTV, juge agejuge.py ; ctest 46/46 ; essais sur le Pixel en T15)*
-- [ ] T2 — Moteur : ZIP chiffré AES-256 et archives ZIP protégées par mot de passe (libarchive sur mbedTLS)
-- [ ] T3 — Moteur : coffres LUKS2 dans un fichier, formatage sans table, emplacements de clé sûrs en cas de coupure
-- [ ] T4 — Poignées JNI et moteur Kotlin : chiffrement, déchiffrement, coffres en cascade sous leur fichier
-- [ ] T5 — Chiffrer, déchiffrer, vérifier, changer le mot de passe d'un fichier ; original supprimé après vérification
-- [ ] T6 — Ouvrir un fichier chiffré sans copie en clair (source déchiffrée en mémoire, fournisseur de flux)
-- [ ] T7 — Saisie des mots de passe : force, générateur de mots de passe et de phrases, copie protégée
-- [ ] T8 — Écrans Chiffrer et Déchiffrer dans l'explorateur, ZIP protégés, partage d'un fichier chiffré
-- [ ] T9 — Coffres (Kotlin) : création, ouverture comme un stockage, fermeture avant le stockage porteur
-- [ ] T10 — Coffres (écrans) : création, section « Coffres » de l'accueil, ouvrir, fermer, parcourir
-- [ ] T11 — Mot de passe et clé de secours d'un coffre
-- [ ] T12 — Déverrouillage biométrique d'un coffre (visage ou empreinte)
-- [ ] T13 — Coffres fermés à l'écran éteint, masqués dans les captures
-- [ ] T14 — Documentation
-- [ ] T15 — Essais instrumentés sur le Pixel
-- [ ] *(utilisateur)* T16 — Essais sur le Pixel
-- [ ] Relecture finale de toute la branche
-- [ ] Fusion `feature/chiffrement` → `develop`
-- [ ] Version `v1.7.0`
+- [x] T2 — Moteur : ZIP chiffré AES-256 et archives ZIP protégées par mot de passe (libarchive sur mbedTLS) *(juge zipaesjuge.py ; ctest 47/47 ; tests natifs verts sur le Pixel)*
+- [x] T3 — Moteur : coffres LUKS2 dans un fichier, formatage sans table, emplacements de clé sûrs en cas de coupure *(verrou commun et récursif des systèmes de fichiers ; ctest 49/49 ; tests natifs verts sur le Pixel ; vérification par le noyau à lancer avec sudo)*
+- [x] T4 — Poignées JNI et moteur Kotlin : chiffrement, déchiffrement, coffres en cascade sous leur fichier *(ctest 49/49 ; EngineTest 17/17 sur le Pixel : age 2^18 en 1,0 s, coffre Argon2 64 Mio en 0,66 s)*
+- [x] T5 — Chiffrer, déchiffrer, vérifier, changer le mot de passe d'un fichier ; original supprimé après vérification *(CryptTest 21, CryptFormatsTest 7, PasswordsTest 3 ; erreur « badPassword » à part dans le pont)*
+- [x] T6 — Ouvrir un fichier chiffré sans copie en clair (source déchiffrée en mémoire, fournisseur de flux) *(DecryptedSourceTest 8 ; essais instrumentés CryptInstrumentedTest écrits, passage sur le Pixel avec T15)*
+- [x] T7 — Saisie des mots de passe : force, générateur de mots de passe et de phrases, copie protégée *(liste de l'EFF, 7776 mots, CC BY 3.0 US ; 554 tests Flutter)*
+- [x] T8 — Écrans Chiffrer et Déchiffrer dans l'explorateur, ZIP protégés, partage d'un fichier chiffré *(encrypt_screens_test 16 ; écrans au banc d'accessibilité ; 590 tests Flutter)*
+- [x] T9 — Coffres (Kotlin) : création, ouverture comme un stockage, fermeture avant le stockage porteur *(VaultsTest 21, VaultStoreTest 2 ; conteneur LUKS1 de Linux à essayer sur le Pixel avec T15)*
+- [x] T10 — Coffres (écrans) : création, section « Coffres » de l'accueil, ouvrir, fermer, parcourir *(vault_screens_test 15 ; écrans vaultCreate et homeVaults au banc d'accessibilité ; 625 tests Flutter)*
+- [x] T11 — Mot de passe et clé de secours d'un coffre *(VaultsTest 29 ; vault_keys_test 6 ; clé de secours Crockford 24 caractères, emplacements inconnus jamais touchés ; 631 tests Flutter, 496 Kotlin)*
+- [x] T12 — Déverrouillage biométrique d'un coffre (visage ou empreinte) *(BiometricBoxLogicTest 6, VaultsTest 35 ; vault_biometric_test 7 ; BiometricBoxInstrumentedTest écrit, passage sur le Pixel avec T15 ; 638 tests Flutter, 508 Kotlin)*
+- [x] T13 — Coffres fermés à l'écran éteint, masqués dans les captures *(VaultPrivacyTest 4 ; réglages Confidentialité désactivés par défaut ; 640 tests Flutter, 512 Kotlin)*
+- [x] T14 — Documentation *(README : chiffrement et coffres, lire sur un ordinateur, limites, licences de scrypt et de la liste EFF ; aide : trois questions ; fiche d'essai de la phase 14)*
+- [x] T15 — Essais instrumentés sur le Pixel *(9/9 : coffres, LUKS1 de Linux, dossier de 200 fichiers en age et ZIP AES relus par les juges, clé du Keystore ; coffre 128 Mio créé en 4,4 s, ouvert en 3,8 s, 87 Mo/s ; deux défauts trouvés et corrigés : clé de secours vide, Tout éjecter)*
+- [x] *(utilisateur)* T16 — Essais sur le Pixel *(fiche : 41 lignes réussies, 2 facultatives non faites ; coffres du Pixel vérifiés par le noyau ; trois défauts trouvés et corrigés : mot de passe copié jamais effacé du presse-papiers, explorateur non ouvert à la première ouverture d'un coffre, chemin du manifeste dans le script de vérification)*
+- [x] Relecture finale de toute la branche *(relue par l'auteur, sans relecteur neuf ; points mineurs reportés au registre)*
+- [x] Fusion `feature/chiffrement` → `develop` *(2026-10-25, commit 493d989)*
+- [x] Version `v1.7.0`
 
 ### Phase 15 — Intégration IA : serveurs auto-hébergés, chat, automatisations ([plan](2026-10-24-phase15-ia.md))
-- [x] Plan de la phase 15 écrit *(demande du 2026-10-24 ; spec § 23 ; commence après la validation de la phase 14)*
-- [ ] T1 — Contrat d'API (compatible OpenAI) et serveur d'essai
-- [ ] T2 — Couche réseau `AiProvider` compatible OpenAI, lecture du flux SSE, erreurs traduites *(MockWebServer)*
-- [ ] T3 — Serveurs IA : stockage, clé API scellée, serveur par défaut, Tester la connexion
-- [ ] T4 — Écrans des serveurs IA : modèles, modèle par défaut, état en ligne ou hors ligne
-- [ ] T5 — Historique local des conversations (Room)
+- [x] Plan de la phase 15 écrit *(demande du 2026-10-24 ; spec § 23 à § 25 ; phase 15, puis 17, puis 15 depuis le 2026-10-25 ; jamais avant la validation de la phase 14 ; serveur réel : atelier.mawena.cloud)*
+- [x] T1 — Contrat d'API (compatible OpenAI) et serveur d'essai
+- [x] T2 — Couche réseau `AiProvider` compatible OpenAI, lecture du flux SSE, erreurs traduites *(MockWebServer)*
+- [x] T3 — Serveurs IA : stockage, clé API scellée, serveur par défaut, Tester la connexion
+- [x] T4 — Écrans des serveurs IA : modèles, modèle par défaut, état en ligne ou hors ligne
+- [x] T5 — Historique local des conversations (Room) *(Room 2.7.2 et KSP, schéma exporté, réponses interrompues retrouvées au démarrage)*
 - [ ] T6 — Réponses en flux vers l'écran, arrêter, régénérer
 - [ ] T7 — Écran de chat : Markdown, blocs de code, serveur, modèle et prompt système par conversation
 - [ ] T8 — Automatisations : modèles de prompt à variables, lancement manuel ou planifié (WorkManager), historique
@@ -421,17 +421,26 @@ dans le même commit que le travail.
 - [ ] Fusion `feature/ia` → `develop`
 - [ ] Version `v1.8.0`
 
-### Phase 16 — Vérification et réparation des disques
-- [ ] Plan de la phase 16 écrit *(demande du 2026-10-22 ; spec § 16 ; phase 11, puis 12, 13, 14 et 15, jusqu'au 2026-10-24)*
-- [ ] Vérification en lecture seule avec rapport, pour chaque système de fichiers
-- [ ] Réparation ext4 par e2fsck (e2fsprogs, sur l'accès USB du moteur)
-- [ ] Réparation NTFS par ntfsfix (ntfs-3g)
-- [ ] Réparation FAT32 et exFAT par fsck.fat et fsck.exfat
-- [ ] LUKS : vérification des deux en-têtes, sauvegarde et restauration de l'en-tête
+### Phase 16 — Analyseur de stockage, comme celui d'Ubuntu ([plan](2026-10-25-phase16-analyseur.md))
+- [x] Plan de la phase 16 écrit *(demande du 2026-10-25 ; spec § 26)*
+- [ ] T1 — Moteur : place allouée, inode et liens physiques dans la liste d'un dossier (ext4, FAT, exFAT, NTFS)
+- [ ] T2 — Liste d'un dossier avec sa place réelle : téléphone et cartes SD par lstat, disques et coffres par le moteur, distant en taille apparente
+- [ ] T3 — Arbre compact et parcours itératif borné (liens physiques une fois, fichiers creux, dossiers inaccessibles, exclusions)
+- [ ] T4 — Analyses gardées, vues élaguées pour les graphiques, part « hors analyse », corbeille et exclusions
+- [ ] T5 — Pont Pigeon et contrôleur de l'écran d'analyse (résultats au fur et à mesure)
+- [ ] T6 — Géométrie des anneaux et de la carte proportionnelle, couleurs contrastées
+- [ ] T7 — Graphiques à l'écran : toucher pour entrer, glisser pour lire, appui long pour le menu, TalkBack
+- [ ] T8 — Écran de l'analyse : arbre synchronisé, fil d'Ariane, profondeur, actions (explorateur, chemin, propriétés, corbeille)
+- [ ] T9 — Accueil de l'analyseur, points d'entrée, emplacements exclus ; retrait de l'analyse de la phase 9
+- [ ] T10 — Documentation
+- [ ] T11 — Essais instrumentés sur le Pixel
+- [ ] *(utilisateur)* T12 — Essais sur le Pixel (comparaison avec Baobab sous Ubuntu)
+- [ ] Relecture finale de toute la branche
+- [ ] Fusion `feature/analyseur` → `develop`
 - [ ] Version `v1.9.0`
 
 ### Phase 17 — Gestion des partitions, comme GParted
-- [ ] Plan de la phase 17 écrit *(demande du 2026-10-22 ; spec § 17 ; phase 12, puis 13, 14, 15 et 16, jusqu'au 2026-10-24)*
+- [ ] Plan de la phase 17 écrit *(demande du 2026-10-22 ; spec § 17, § 24, § 25 et § 26 ; phase 12, puis 13, 14, 15, 16, 17 et 15, jusqu'au 2026-10-25, puis 16, puis 17 depuis le 2026-10-25)*
 - [ ] Vue du disque : partitions et espace libre à l'échelle, système de fichiers, étiquette, taille, place occupée
 - [ ] Taille choisie au formatage ; créer une partition dans un espace libre, en supprimer une, formater une seule partition
 - [ ] Changer l'étiquette d'une partition ; nouvelle table MBR ou GPT
@@ -440,6 +449,14 @@ dans le même commit que le travail.
 - [ ] Opérations préparées, résumées, puis appliquées après confirmation
 - [ ] Version `v1.10.0`
 
+### Phase 18 — Vérification et réparation des disques
+- [ ] Plan de la phase 18 écrit *(demande du 2026-10-22 ; spec § 16, § 25 et § 26 ; phase 11, puis 12, 13, 14, 15 et 16, jusqu'au 2026-10-25, puis 17, puis 18 depuis le 2026-10-25)*
+- [ ] Vérification en lecture seule avec rapport, pour chaque système de fichiers
+- [ ] Réparation ext4 par e2fsck (e2fsprogs, sur l'accès USB du moteur)
+- [ ] Réparation NTFS par ntfsfix (ntfs-3g)
+- [ ] Réparation FAT32 et exFAT par fsck.fat et fsck.exfat
+- [ ] LUKS : vérification des deux en-têtes, sauvegarde et restauration de l'en-tête
+- [ ] Version `v1.11.0`
 ---
 
 ## Principes

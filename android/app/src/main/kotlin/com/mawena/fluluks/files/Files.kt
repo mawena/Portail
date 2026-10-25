@@ -5,6 +5,7 @@ import android.content.Context
 import android.content.Intent
 import android.net.Uri
 import androidx.annotation.VisibleForTesting
+import com.mawena.fluluks.crypt.DecryptedSources
 import com.mawena.fluluks.engine.EngineError
 import com.mawena.fluluks.engine.FileType
 import com.mawena.fluluks.provider.MimeTypes
@@ -43,9 +44,11 @@ object Files {
         resolver = r ?: Sources::get
     }
 
-    fun source(id: String): FileSource = resolver(id) ?: throw FilesException(EngineError.FL_ENODEV, MSG_SOURCE_CLOSED)
+    fun source(id: String): FileSource = sourceOrNull(id) ?: throw FilesException(EngineError.FL_ENODEV, MSG_SOURCE_CLOSED)
 
-    fun sourceOrNull(id: String): FileSource? = resolver(id)
+    /** La source [id] ; une vue déchiffrée (`dec:…`) vient de [DecryptedSources], les autres de [Sources]. */
+    fun sourceOrNull(id: String): FileSource? =
+        if (id.startsWith(DecryptedSources.PREFIX)) DecryptedSources.get(id) else resolver(id)
 
     /** « Volume en lecture seule : <raison> » pour un disque, la raison seule pour le téléphone. */
     fun readOnlyMessage(s: FileSource, reason: String): String =

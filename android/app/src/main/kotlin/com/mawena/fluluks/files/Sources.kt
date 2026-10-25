@@ -11,6 +11,7 @@ import android.os.Environment
 import android.os.storage.StorageManager
 import android.provider.Settings
 import androidx.core.content.ContextCompat
+import com.mawena.fluluks.crypt.DecryptedSource
 import com.mawena.fluluks.remote.RemoteSource
 import com.mawena.fluluks.remote.Remotes
 import com.mawena.fluluks.volumes.VolumeManager
@@ -84,12 +85,14 @@ object Sources {
 
     /**
      * Type affiché : `phone`, `removable` (stockage amovible monté par Android : carte SD ou clé USB, Android
-     * ne dit pas lequel), `disk` ou `remote` (serveur FTP ou SFTP).
+     * ne dit pas lequel), `disk`, `remote` (serveur FTP ou SFTP) ou `decrypted` (vue déchiffrée d'un fichier age).
      */
     fun kind(s: FileSource): String = when {
         s.id == PHONE -> "phone"
         s is LocalSource -> "removable"
         s is RemoteSource -> "remote"
+        s is DecryptedSource -> "decrypted"
+        s is DiskSource && VolumeManager.volume(s.id)?.vaultId != null -> "vault"
         else -> "disk"
     }
 }

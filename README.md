@@ -12,18 +12,76 @@ photo dans les applications habituelles.
 Elle est née d'un besoin simple : utiliser sur un téléphone non rooté (un Pixel 4 XL) le disque
 LUKS2/ext4 qu'on utilise sous Ubuntu. Aucune application existante ne le permettait.
 
-> **État actuel : version 1.6.1 ; gestionnaire de fichiers (interface claire ou sombre et accessible, recherche dans
+> **État actuel : version 1.7.0 ; gestionnaire de fichiers (interface claire ou sombre et accessible, recherche dans
 > tous les stockages, lecteurs intégrés de photos, musique, vidéos et textes, dossiers distants FTP et SFTP, terminal
-> SSH avec clés et tunnels, archives ZIP, 7z, RAR et TAR, corbeille, analyse de l'espace, renommage par lot), lecture
-> et écriture sur ext4, FAT, exFAT et NTFS, formatage des disques USB, en clair ou chiffrés.** L'écriture a été
-> vérifiée sur PC (batteries de
+> SSH avec clés et tunnels, archives ZIP, 7z, RAR et TAR, corbeille, analyse de l'espace, renommage par lot), fichiers
+> et dossiers chiffrés, coffres de fichiers, lecture et écriture sur ext4, FAT, exFAT et NTFS, formatage des disques
+> USB, en clair ou chiffrés.** L'écriture a été vérifiée sur PC (batteries de
 > non-corruption jugées par des outils indépendants et le noyau Linux, coupures simulées), sur le téléphone avec des
 > images, puis essayée sur une vraie clé et un vrai disque pour chaque système de fichiers (ext4 compris : `e2fsck`
 > propre ensuite sous Ubuntu).
 > Une sauvegarde reste recommandée avant d'écrire sur un disque qui compte. Voir les
 > [limites](#limites-actuelles).
 
-## Ce que fait la version 1.6.0
+## Ce que fait la version 1.7.0
+
+### Chiffrement et coffres (nouveau en 1.7.0)
+
+- **Un mot de passe par élément** : chaque fichier chiffré, chaque dossier chiffré et chaque coffre a le sien,
+  choisi à la création (8 caractères au moins, confirmé), saisi à chaque usage et **jamais mémorisé**. **Sans lui,
+  rien n'est récupérable** : ni Portail ni personne ne peut l'ouvrir. La saisie montre la force du mot de passe
+  et propose un **générateur** (20 caractères, ou 6 mots de la liste de l'EFF) ; « Copier » le met dans le
+  presse-papiers marqué sensible, effacé après 60 s.
+- **Chiffrer** (menu d'un élément ou de la sélection → **Chiffrer…**) :
+  - **chiffrement fort** au format [age](https://age-encryption.org) (`.age`) : noms cachés, toute modification
+    détectée ; un dossier, ou plusieurs éléments réunis, devient un seul `.zip.age` ;
+  - ou **ZIP chiffré (AES-256)** pour l'échange, qui s'ouvre avec 7-Zip, WinRAR ou bsdtar (avec sa mise en garde :
+    noms visibles, mot de passe plus facile à deviner) ;
+  - dans ce dossier ou un autre stockage ; **supprimer l'original** après vérification du fichier chiffré, au
+    choix ; **Partager le fichier chiffré** à la fin.
+- **Fichier chiffré touché** : le mot de passe, puis **Ouvrir** (lu en mémoire par les lecteurs de Portail ou par
+  une autre application, **sans aucune copie en clair** sur le téléphone), **Déchiffrer ici**, **Déchiffrer vers…**
+  ou **Vérifier** (« Fichier intact »). **Changer le mot de passe** d'un `.age` ne déchiffre pas son contenu : il est recopié sous un
+  nouvel en-tête, vérifié, puis remplace l'ancien fichier.
+  Partager un fichier ouvert ainsi demande confirmation : le destinataire le reçoit en clair.
+- **ZIP protégés par un mot de passe** (AES ou ancien chiffrement ZipCrypto) : extraits après le mot de passe.
+- **Coffres de fichiers** : un coffre est un fichier chiffré **LUKS2** (`nom.luks`) qui contient un exFAT (par
+  défaut) ou un ext4, ouvert par Portail comme un disque :
+  - **Créer un coffre** (section **Coffres** de l'accueil, ou bouton **Créer** de l'explorateur → **Nouveau
+    coffre…**) : nom, emplacement (téléphone, carte SD ou disque USB ouvert), taille (256 Mio, 1 Gio, 4 Gio,
+    16 Gio ou au choix, de 32 Mio à la place libre moins une réserve ; 4 Gio au plus sur un stockage FAT32),
+    système de fichiers et mot de passe. La place est écrite à la création, avec progression et annulation ;
+  - **Ouvrir** depuis l'accueil, ou en touchant un `.luks` (ou un conteneur LUKS créé sous Linux) dans
+    l'explorateur : le coffre devient un stockage de Portail et une racine de l'application **Fichiers** ;
+  - **Fermer** : synchronisé, démonté, clé effacée. Un coffre se ferme aussi au verrouillage automatique et
+    **avant** l'éjection du disque qui le porte ; débrancher ce disque ou retirer la carte SD le ferme de force,
+    avec un avertissement. Tant qu'il est ouvert, son fichier ne peut être ni supprimé, ni déplacé, ni renommé, ni
+    copié ;
+  - **Retirer de la liste** n'efface rien : le fichier reste à sa place et se rouvre en le touchant.
+- **Mot de passe et clé de secours d'un coffre** (menu ⋮ du coffre, coffre fermé) : **Changer le mot de passe**
+  sans réécrire le contenu, sûr même interrompu ; **Clé de secours** de 24 caractères (6 groupes de 4), montrée
+  **une seule fois**, qui ouvre le coffre (lien « Utiliser la clé de secours ») et permet d'en changer le mot de
+  passe s'il est oublié ; retirable.
+- **Déverrouillage biométrique** (facultatif, coffre par coffre) : le visage du Pixel 4 XL ou une empreinte ouvre le
+  coffre. Un secret aléatoire, distinct du mot de passe, est scellé par une clé matérielle du téléphone qui exige la
+  biométrie forte et devient inutilisable si un nouveau visage ou une nouvelle empreinte est enregistré :
+  le déverrouillage se désactive alors, et le mot de passe est demandé.
+- **Confidentialité** (Réglages → **Confidentialité**, désactivés par défaut) : **Fermer les coffres quand l'écran
+  s'éteint** (une copie en cours dans un coffre se termine d'abord) ; **Masquer les coffres et les fichiers
+  déchiffrés** dans les captures d'écran et les applications récentes.
+
+#### Lire sur un ordinateur
+
+```sh
+age -d fichier.pdf.age > fichier.pdf                # fichier chiffré (outil libre age)
+age -d dossier.zip.age | bsdtar -xf -               # dossier chiffré
+7z x fichier.zip                                    # ZIP chiffré
+udisksctl loop-setup -f Coffre.luks                 # coffre : le bureau demande le mot de passe et l'ouvre
+sudo cryptsetup open Coffre.luks coffre && sudo mount /dev/mapper/coffre /mnt   # ou à la main
+```
+
+La clé de secours d'un coffre se tape telle quelle, tirets compris, à la place de la phrase de passe. Un coffre en
+ext4 appartient à l'utilisateur 1000 (le premier compte créé sous Ubuntu), comme un disque formaté par Portail.
 
 ### Connexions SSH (nouveau en 1.6.0)
 
@@ -293,6 +351,20 @@ Mesures sur le même téléphone, sur une image (test `PerfInstrumentedTest`, sa
   - vignettes des images de 8 Mio au plus, pas de vignette de vidéo ;
   - au plus 3 transferts en même temps par serveur ; au-delà, une opération attend (30 s au plus) ;
   - pas d'FTPS (FTP sur TLS) ni d'authentification SSH par agent.
+- **Chiffrement et coffres** :
+  - dans un ZIP chiffré (AES-256), les noms et les tailles des fichiers restent visibles : préférez le chiffrement
+    fort (age) pour ce qui est confidentiel ;
+  - la taille d'un coffre est fixée à sa création ; pas de coffre sur un dossier distant ni dans un autre coffre ;
+    un coffre ouvert compte dans les 8 volumes ouverts au plus ;
+  - sur une carte SD en FAT32, un coffre de plus de 4 Gio échoue en cours de création (le fichier partiel est
+    supprimé) : Portail ne voit pas le système de fichiers d'une carte SD ;
+  - un coffre exFAT mal fermé (téléphone éteint coffre ouvert) s'ouvre en lecture seule jusqu'à sa vérification
+    sous Linux : `sudo cryptsetup open Coffre.luks coffre && sudo fsck.exfat /dev/mapper/coffre` ;
+  - un conteneur LUKS1 créé sous Linux s'ouvre, mais son mot de passe et ses clés se changent sous Linux ;
+    Portail ne touche jamais aux emplacements de clé qu'il n'a pas créés ;
+  - **Supprimer l'original** après chiffrement : sur une mémoire flash (téléphone, carte SD, clé USB), une
+    suppression ne garantit pas que les anciennes données soient irrécupérables ;
+  - le lecteur vidéo n'est pas masqué dans les captures d'écran, même avec le réglage de confidentialité.
 - **Connexions SSH** :
   - tunnels locaux seulement (`ssh -L`) : pas de redirection distante (`-R`) ni dynamique (`-D`, SOCKS) ;
   - pas d'agent SSH, pas de saut par un hôte intermédiaire (`ProxyJump`), pas de transfert X11 ;
@@ -345,7 +417,8 @@ Mesures sur le même téléphone, sur une image (test `PerfInstrumentedTest`, sa
     le disque serait à reformater ;
   - l'étiquette d'un disque NTFS n'est pas encore affichée sur sa carte.
 - **Archives** :
-  - archives protégées par mot de passe : non prises en charge (« Archive protégée par mot de passe ») ;
+  - 7z et RAR protégés par mot de passe : non pris en charge (« Archive protégée par mot de passe ») ; les ZIP
+    protégés s'extraient avec leur mot de passe ;
   - RAR en lecture seule (le format n'est pas libre en écriture) : Portail compresse en ZIP ;
   - archives en plusieurs volumes (`.part1.rar`, `.z01`…) non prises en charge ;
   - liens et fichiers spéciaux d'une archive non extraits ; les fichiers extraits portent la date de
@@ -376,6 +449,10 @@ Mesures sur le même téléphone, sur une image (test `PerfInstrumentedTest`, sa
   ext4 inconnue, d'un journal à rejouer ou d'une somme de contrôle fausse, et l'application affiche la
   raison. Après une erreur d'écriture en cours de session, plus rien n'est écrit : le disque garde la
   dernière transaction validée, que le journal sait récupérer.
+- **Aucun mot de passe de fichier ou de coffre n'est mémorisé** (1.7.0). Chiffrement et déchiffrement se font en
+  flux, de la source à la destination choisie : un fichier ouvert est déchiffré en mémoire, sans copie en clair, et
+  seul un nom temporaire `.nom.portail-partiel` existe pendant l'écriture, supprimé en cas d'échec. Les clés de
+  secours ne sont gardées nulle part ; le secret biométrique d'un coffre n'existe que scellé par le Keystore.
 - **Rien d'un disque chiffré n'est écrit sur le téléphone à votre insu.** Les vignettes sont gardées en
   mémoire seulement (32 Mio au plus), et vidées à l'éjection ; les résultats de recherche ne sont pas
   enregistrés. Seule une action explicite (copier, partager, ouvrir avec) sort un fichier du disque.
@@ -480,6 +557,12 @@ sudo tools/fixtures/verify_ntfs_with_kernel.sh build/native/tmp/ntfs-batterie-<t
   build/native/tmp/ntfs-batterie-<type>.manifest                   # …et les fait relire par ntfs3
 sudo tools/fixtures/essais_phase8_pc.sh   # formate 10 images et les fait monter et écrire par le noyau
 
+# chiffrement (phase 14) : juges indépendants, appelés par ctest (test_age, test_archive_crypt), utilisables seuls
+python3 tools/fixtures/agejuge.py decrypt fichier.age sortie "mot de passe"
+python3 tools/fixtures/zipaesjuge.py read archive.zip "mot de passe"
+FL_KEEP=1 ctest --test-dir build/native -R '^test_vault$'           # garde deux coffres créés par le moteur…
+sudo tools/fixtures/verify_vault_with_kernel.sh build/native/tmp     # …ouverts et vérifiés par cryptsetup et le noyau
+
 # moteur natif sur le téléphone (écrit seulement dans /data/local/tmp/fluluks/)
 tools/android/run_native_tests.sh <numéro-adb>
 
@@ -539,25 +622,33 @@ Le dépôt suit git flow :
 | 11 | Interface complète et professionnelle : thèmes clair et sombre, accessibilité, grands écrans, liste ou grille partout, recherche dans tous les stockages, aide, à propos et licences | **v1.4.0** |
 | 12 | Lecteur vidéo : portrait par défaut, rotation et verrou, pistes audio et sous-titres, gestes comme VLC | **v1.5.0** |
 | 13 | Connexions SSH : terminal, sessions en arrière-plan, clés, commandes enregistrées, tunnels | **v1.6.0** (correctif **v1.6.1** : permission Internet de la version de publication) |
-| 14 | Chiffrement de fichiers et de dossiers, coffres de fichiers, chacun avec son mot de passe | v1.7.0 |
+| 14 | Chiffrement de fichiers et de dossiers, coffres de fichiers, chacun avec son mot de passe | **v1.7.0** |
 | 15 | Intégration IA : serveurs auto-hébergés compatibles OpenAI, chat en flux, automatisations | v1.8.0 |
-| 16 | Vérification et réparation des disques : e2fsck, ntfsfix, fsck.fat, fsck.exfat, en-têtes LUKS | v1.9.0 |
+| 16 | Analyseur de stockage comme celui d'Ubuntu (Baobab) : place réelle, anneaux et carte proportionnelle, arbre, corbeille | v1.9.0 |
 | 17 | Gestion des partitions comme GParted : taille au formatage, créer, supprimer, redimensionner | v1.10.0 |
+| 18 | Vérification et réparation des disques : e2fsck, ntfsfix, fsck.fat, fsck.exfat, en-têtes LUKS | v1.11.0 |
 
 Suivi détaillé, étape par étape : [docs/superpowers/plans/2026-10-17-fluluks-feuille-de-route.md](docs/superpowers/plans/2026-10-17-fluluks-feuille-de-route.md).
 Conception : [docs/superpowers/specs/2026-10-17-fluluks-design.md](docs/superpowers/specs/2026-10-17-fluluks-design.md).
 
+Historique des versions : [CHANGELOG.md](CHANGELOG.md). Pour contribuer : [CONTRIBUTING.md](CONTRIBUTING.md) et
+[CODE_OF_CONDUCT.md](CODE_OF_CONDUCT.md). Pour signaler une faille : [SECURITY.md](SECURITY.md).
+
 ## Licence
 
-Aucune licence n'est encore choisie pour le code de Portail. Mais l'application est liée à libntfs-3g
-(GPL version 2 ou ultérieure, depuis la phase 5) et à une partie de lwext4 sous GPL : distribuée, elle doit
-l'être sous GPL, avec ses sources. FatFs est sous une licence de type BSD à une clause, compatible avec la
+Portail est distribué sous la **GNU GPL version 3 ou ultérieure** (GPL-3.0-or-later) : voir [LICENSE](LICENSE).
+Copyright © 2026 mawena.
+
+Ce choix découle des bibliothèques embarquées : libntfs-3g et une partie de lwext4 sont sous GPL version 2 ou
+ultérieure, et plusieurs bibliothèques sont sous Apache-2.0, qui n'est compatible qu'avec la GPL version 3. FatFs est sous une licence de type BSD à une clause, compatible avec la
 GPL, comme libarchive (BSD à deux clauses) et liblzma (0BSD). Depuis la phase 10, l'application embarque aussi
 AndroidX Media3 1.11.1 et Apache Commons Net 3.13.0 (Apache-2.0), JSch 2.28.8 de mwiede (BSD) et Bouncy Castle
 1.86 (licence MIT), toutes compatibles avec la GPL ; Apache FtpServer 1.2.1 et Apache MINA SSHD 2.20.0 (Apache-2.0)
 ne servent qu'aux tests. Les icônes du lecteur vidéo (phase 12) viennent d'AOSP et de Media3 (Apache-2.0). Le
 terminal SSH (phase 13) s'affiche par xterm 4.0.0 (licence MIT), avec ses dépendances equatable et zmodem (MIT)
-et quiver (Apache-2.0). Les
+et quiver (Apache-2.0). Le chiffrement (phase 14) ajoute scrypt 1.3.2 de Tarsnap (fichier de référence, BSD à deux
+clauses, dans `native/third_party/scrypt/`) et la liste de mots de l'EFF des phrases de passe générées (EFF Large
+Wordlist, CC BY 3.0 US, `assets/words/`). Les
 licences des bibliothèques natives sont dans
 `native/third_party/` (`ntfs-3g/COPYING`, `fatfs/LICENSE.txt`, `libarchive/COPYING`, `xz/COPYING`…) ; leurs correctifs sont décrits dans
 [native/third_party/PATCHES.md](native/third_party/PATCHES.md). Depuis la phase 11, toutes ces licences se lisent aussi

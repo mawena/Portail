@@ -33,7 +33,7 @@ void main() {
     final state = AppState(api);
     await state.refresh();
     api.sources = [source('phone'), source('v1', kind: 'disk', label: 'Données')];
-    state.onStateChanged(const [], [volume()]);
+    state.onStateChanged(const [], [volume()], const []);
     await pumpEventQueue();
     expect(state.sources.map((s) => s.id), ['phone', 'v1']);
   });
@@ -66,6 +66,7 @@ void main() {
     var notified = 0;
     state.addListener(() => notified++);
     state.onTransferChanged(TransferMsg(
+        badPassword: false,
       kind: 'move',
       move: true,
       currentName: 'a',

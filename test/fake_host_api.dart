@@ -646,8 +646,255 @@ class FakeHostApi implements HostApi {
       compresses.add((srcId, paths, dstDir, name));
 
   @override
-  Future<void> startExtract(String srcId, String archive, String dstId, String dstDir, bool intoNewFolder) async =>
-      extracts.add((srcId, archive, dstId, dstDir, intoNewFolder));
+  Future<void> startExtract(String srcId, String archive, String dstId, String dstDir, bool intoNewFolder,
+      {Uint8List? password}) async {
+    extracts.add((srcId, archive, dstId, dstDir, intoNewFolder));
+    if (password != null) {
+      passwordBuffers.add(password);
+      extractPasswords.add(utf8.decode(password));
+    }
+  }
+
+  // --- chiffrement (phase 14) ---
+
+  /// Mots de passe reçus pour une extraction ; tampons reçus (l'écran doit les mettre à zéro après l'appel).
+  final extractPasswords = <String>[];
+  final passwordBuffers = <Uint8List>[];
+
+  /// Format chiffré par chemin (sinon `none`) ; [filePassword] : le seul mot de passe accepté par openDecrypted et
+  /// changeFilePassword (sinon erreur `badPassword`).
+  final encryptedInfos = <String, EncryptedInfoMsg>{};
+  String filePassword = '';
+  final encrypts = <({String srcId, List<String> paths, String dstId, String dstDir, String format, bool together,
+      String? name, bool deleteOriginal, String password, Uint8List bytes})>[];
+  final decrypts = <({String srcId, String path, String dstId, String dstDir, bool extractFolder, String password})>[];
+  final verifies = <(String, String, String)>[];
+  final changedPasswords = <(String, String, String, String)>[];
+  final openDecryptedPasswords = <String>[];
+  final closedDecrypted = <String>[];
+  int _decCount = 0;
+
+  String _take(Uint8List b) {
+    passwordBuffers.add(b);
+    return utf8.decode(b);
+  }
+
+  PlatformException _bad() => PlatformException(code: 'badPassword', message: 'Mot de passe incorrect');
+
+  @override
+  Future<EncryptedInfoMsg> encryptedInfo(String sourceId, String path) async =>
+      encryptedInfos[path] ?? EncryptedInfoMsg(format: 'none', folder: false);
+
+  @override
+  Future<void> startEncrypt(String srcId, List<String> paths, String dstId, String dstDir, String format, bool together,
+      String? name, bool deleteOriginal, Uint8List password) async {
+    encrypts.add((srcId: srcId, paths: paths, dstId: dstId, dstDir: dstDir, format: format, together: together,
+        name: name, deleteOriginal: deleteOriginal, password: utf8.decode(password), bytes: password));
+    passwordBuffers.add(password);
+  }
+
+  @override
+  Future<void> startDecrypt(String srcId, String path, String dstId, String dstDir, bool extractFolder, Uint8List password) async =>
+      decrypts.add((srcId: srcId, path: path, dstId: dstId, dstDir: dstDir, extractFolder: extractFolder, password: _take(password)));
+
+  @override
+  Future<void> startVerify(String srcId, String path, Uint8List password) async => verifies.add((srcId, path, _take(password)));
+
+  @override
+  Future<void> changeFilePassword(String srcId, String path, Uint8List oldPassword, Uint8List newPassword) async {
+    final o = _take(oldPassword), n = _take(newPassword);
+    if (o != filePassword) throw _bad();
+    changedPasswords.add((srcId, path, o, n));
+  }
+
+  @override
+  Future<SourceMsg> openDecrypted(String srcId, String path, Uint8List password) async {
+    final p = _take(password);
+    openDecryptedPasswords.add(p);
+    if (p != filePassword) throw _bad();
+    final name = path.substring(path.lastIndexOf('/') + 1).replaceFirst(RegExp(r'\.age$'), '');
+    return SourceMsg(id: 'dec:${++_decCount}', stableKey: 'dec:$_decCount', kind: 'decrypted', label: name,
+        totalBytes: 1000, freeBytes: 0, readOnly: true, roReason: 'Fichier déchiffré en mémoire, en lecture seule',
+        encrypted: false);
+  }
+
+  @override
+  Future<void> closeDecrypted(String sourceId) async => closedDecrypted.add(sourceId);
+
+  // --- coffres (phase 14) ---
+  List<VaultMsg> vaults = [];
+  final createdVaults = <(String, String, String, int, String, String)>[];
+  final openedVaults = <(String?, String?, String?, String, bool)>[];
+  final recoveryOpens = <bool>[];
+
+  /// Retarde la fin de [openVault] : le test peut pousser entre-temps un changement d'état, comme Kotlin.
+  Completer<void>? openVaultGate;
+
+  /// Comme l'ancien VaultStore : le coffre ouvert passe en fin de liste.
+  bool moveOpenedLast = false;
+
+  /// Clé de secours des coffres de ce faux pont (rendue par [addRecoveryKey], acceptée par [openVault]).
+  String recoveryKey = 'ABCD-EFGH-JKMN-PQRS-TVWX-YZ01';
+  final changedVaultPasswords = <(String, String, String)>[];
+  final addedRecovery = <(String, String)>[];
+  final removedRecovery = <(String, String)>[];
+
+  /// Biométrie (T12) : raison d'indisponibilité (null : disponible), erreur de l'invite, appels reçus.
+  String? biometricReason;
+  PlatformException? biometricError;
+  final enabledBiometric = <(String, String)>[];
+  final biometricOpens = <(String, bool)>[];
+  final disabledBiometric = <(String, String?)>[];
+
+  @override
+  Future<String?> biometricUnavailable() async => biometricReason;
+
+  @override
+  Future<void> enableBiometric(String vaultId, Uint8List password) async {
+    final p = _take(password);
+    if (p != filePassword) throw _bad();
+    if (biometricError != null) throw biometricError!;
+    enabledBiometric.add((vaultId, p));
+    vaults = [
+      for (final v in vaults)
+        if (v.id == vaultId) (VaultMsg.decode(v.encode())..biometric = true) else v,
+    ];
+  }
+
+  @override
+  Future<VolumeMsg> openVaultBiometric(String vaultId, bool writable) async {
+    biometricOpens.add((vaultId, writable));
+    final e = biometricError;
+    if (e != null) {
+      if (e.code == 'biometricInvalidated') {
+        vaults = [
+          for (final v in vaults)
+            if (v.id == vaultId) (VaultMsg.decode(v.encode())..biometric = false) else v,
+        ];
+      }
+      throw e;
+    }
+    // même effet qu'une ouverture par mot de passe
+    return openVault(vaultId, null, null, Uint8List.fromList(utf8.encode(filePassword)), writable);
+  }
+
+  @override
+  Future<void> disableBiometric(String vaultId, Uint8List? password) async {
+    final p = password == null ? null : _take(password);
+    if (p != null && p != filePassword) throw _bad();
+    disabledBiometric.add((vaultId, p));
+    vaults = [
+      for (final v in vaults)
+        if (v.id == vaultId) (VaultMsg.decode(v.encode())..biometric = false) else v,
+    ];
+  }
+
+  /// Octets de la dernière clé rendue (le code appelant doit les mettre à zéro).
+  Uint8List? lastRecoveryBytes;
+
+  @override
+  Future<void> changeVaultPassword(String vaultId, Uint8List oldPassword, Uint8List newPassword) async {
+    final o = _take(oldPassword), n = _take(newPassword);
+    if (o != filePassword) throw _bad();
+    changedVaultPasswords.add((vaultId, o, n));
+  }
+
+  @override
+  Future<Uint8List> addRecoveryKey(String vaultId, Uint8List password) async {
+    final p = _take(password);
+    if (p != filePassword) throw _bad();
+    addedRecovery.add((vaultId, p));
+    vaults = [
+      for (final v in vaults)
+        if (v.id == vaultId) (VaultMsg.decode(v.encode())..hasRecovery = true) else v,
+    ];
+    return lastRecoveryBytes = Uint8List.fromList(utf8.encode(recoveryKey));
+  }
+
+  @override
+  Future<void> removeRecoveryKey(String vaultId, Uint8List password) async {
+    final p = _take(password);
+    if (p != filePassword) throw _bad();
+    removedRecovery.add((vaultId, p));
+    vaults = [
+      for (final v in vaults)
+        if (v.id == vaultId) (VaultMsg.decode(v.encode())..hasRecovery = false) else v,
+    ];
+  }
+  final closedVaults = <String>[];
+  final forgottenVaults = <String>[];
+
+  /// Retarde la fin de [createVault] (progression et annulation) ; [createVaultError] la fait échouer.
+  Completer<void>? createVaultGate;
+  PlatformException? createVaultError;
+
+  @override
+  Future<List<VaultMsg>> listVaults() async => vaults;
+
+  @override
+  Future<VaultMsg> createVault(String srcId, String dir, String name, int sizeBytes, String fs, Uint8List password) async {
+    createdVaults.add((srcId, dir, name, sizeBytes, fs, _take(password)));
+    if (createVaultGate != null) await createVaultGate!.future;
+    if (createVaultError != null) throw createVaultError!;
+    final v = VaultMsg(id: 'c${createdVaults.length}', name: name, sourceKey: srcId, sourceLabel: srcId,
+        path: '$dir/$name.luks'.replaceFirst('//', '/'), sizeBytes: sizeBytes, fs: fs, state: 'closed',
+        hasRecovery: false, biometric: false, luksVersion: 2);
+    vaults = [...vaults, v];
+    return v;
+  }
+
+  @override
+  Future<VolumeMsg> openVault(String? vaultId, String? srcId, String? path, Uint8List password, bool writable,
+      {bool recovery = false}) async {
+    final p = _take(password);
+    openedVaults.add((vaultId, srcId, path, p, writable));
+    recoveryOpens.add(recovery);
+    if (openVaultGate != null) await openVaultGate!.future;
+    if (recovery ? p.toUpperCase().replaceAll(RegExp(r'[^0-9A-Z]'), '') != recoveryKey.replaceAll('-', '') : p != filePassword) {
+      throw _bad();
+    }
+    final id = 'vv${openedVaults.length}';
+    final vid = vaultId ?? 'x${openedVaults.length}';
+    final name = vaults.where((v) => v.id == vid).map((v) => v.name).firstOrNull ??
+        (path ?? '').split('/').last.replaceFirst(RegExp(r'\.luks$'), '');
+    // ouvert : un stockage de plus, et le coffre passe à « ouvert »
+    sources = [
+      ...sources,
+      SourceMsg(id: id, stableKey: 'vault:$vid', kind: 'vault', label: 'Coffre $name', totalBytes: 1000, freeBytes: 500,
+          readOnly: !writable, roReason: writable ? '' : 'ouvert en lecture seule', encrypted: true),
+    ];
+    vaults = [
+      for (final v in vaults)
+        if (v.id == vid) (VaultMsg.decode(v.encode())..state = 'open'..volumeId = id) else v,
+    ];
+    if (moveOpenedLast) vaults = [...vaults.where((v) => v.id != vid), ...vaults.where((v) => v.id == vid)];
+    dirs[id] = {'/': []};
+    return VolumeMsg(id: id, diskId: 'vault:$vid', partIndex: 0, title: 'Coffre $name',
+        totalBytes: 1000, freeBytes: 500, needsRecovery: false, roReason: '', readOnly: !writable, vaultId: vid);
+  }
+
+  @override
+  Future<void> closeVault(String vaultId) async {
+    closedVaults.add(vaultId);
+    final vol = vaults.where((v) => v.id == vaultId).map((v) => v.volumeId).firstOrNull;
+    sources = sources.where((s) => s.id != vol).toList();
+    vaults = [
+      for (final v in vaults)
+        if (v.id == vaultId) (VaultMsg.decode(v.encode())..state = 'closed'..volumeId = null) else v,
+    ];
+  }
+
+  @override
+  Future<void> forgetVault(String vaultId) async {
+    forgottenVaults.add(vaultId);
+    vaults = vaults.where((v) => v.id != vaultId).toList();
+  }
+
+  /// Copies protégées reçues (copies des octets, l'appelant met les siens à zéro).
+  final secretCopies = <Uint8List>[];
+
+  @override
+  Future<void> copySecret(Uint8List text) async => secretCopies.add(Uint8List.fromList(text));
 
   /// Réponse de [search] selon la requête ; un completer dans [searchGates] la retarde.
   SearchResultMsg Function(String query) searchResult = (_) => SearchResultMsg(entries: [], truncated: false);

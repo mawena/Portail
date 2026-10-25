@@ -2,7 +2,7 @@
  *
  * Fils d'exécution : lwext4 garde des registres globaux (périphériques, points de
  * montage, règles de création) et des caches par montage, sans aucun verrou. Tout appel
- * à lwext4 passe donc sous le mutex global g_lock (initialisé statiquement), qui protège
+ * à lwext4 passe donc sous le mutex global g_lock (verrou commun, récursif, de fs_internal.h), qui protège
  * aussi le compteur de noms et les fichiers ouverts de chaque volume. Aucun rappel
  * utilisateur n'est appelé sous ce verrou. Une phase ultérieure ajoutera un verrou par
  * volume au-dessus.
@@ -49,7 +49,7 @@
 #include "fs/ro_reasons.h"
 #include "fs/wbuf.h"
 
-static pthread_mutex_t g_lock = PTHREAD_MUTEX_INITIALIZER;
+#define g_lock (*fl_fs_glue_lock()) /* verrou commun et récursif des systèmes de fichiers (fs_internal.h) */
 static uint32_t g_counter; /* protégé par g_lock */
 
 #define MP_CAP 24                 /* "/fl4294967295/" + NUL tient largement */

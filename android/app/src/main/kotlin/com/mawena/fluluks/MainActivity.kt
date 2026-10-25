@@ -11,6 +11,7 @@ import com.mawena.fluluks.remote.Remotes
 import com.mawena.fluluks.volumes.VolumeManager
 import com.mawena.fluluks.bridge.FilePicker
 import com.mawena.fluluks.bridge.HostApiImpl
+import com.mawena.fluluks.vaults.BiometricUi
 import io.flutter.embedding.android.FlutterActivity
 import io.flutter.embedding.engine.FlutterEngine
 
@@ -35,12 +36,14 @@ class MainActivity : FlutterActivity() {
         Sources.init(this)
         Remotes.init(this)
         FilePicker.activity = java.lang.ref.WeakReference(this)
+        BiometricUi.attach(this)
         handleUsbIntent(intent)
         requestNotificationPermission()
     }
 
     override fun onDestroy() {
         if (FilePicker.activity?.get() === this) FilePicker.activity = null
+        BiometricUi.detach(this)
         super.onDestroy()
     }
 

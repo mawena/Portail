@@ -1493,3 +1493,10 @@ typedef uint64_t uintmax_t;
 
 /* Define to 'unsigned int' if <sys/types.h> does not define. */
 /* #undef uintptr_t */
+
+/* Phase 14 : chiffrement ZIP (WinZip AES, HMAC-SHA1, PBKDF2) par mbedTLS, lié à fl_libarchive. */
+#define HAVE_LIBMBEDCRYPTO 1
+#define HAVE_MBEDTLS_AES_H 1
+#define HAVE_MBEDTLS_MD_H 1
+#define HAVE_MBEDTLS_PKCS5_H 1
+#define HAVE_MBEDTLS_VERSION_H 1

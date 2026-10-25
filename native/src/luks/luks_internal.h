@@ -24,8 +24,12 @@ int fl_crypt_bdev_new(fl_bdev *dev, uint64_t data_offset_bytes, uint64_t data_si
 
 /* Un format (LUKS1, LUKS2) fournit ces opérations. */
 typedef struct {
-  int (*unlock)(struct fl_luks *l, const void *pass, size_t passlen, fl_bdev **decrypted);
+  /* slot −1 : tous les emplacements ; sinon celui-là seul (FL_ENOENT s'il n'existe pas ou n'est pas
+   * utilisable). */
+  int (*unlock)(struct fl_luks *l, int slot, const void *pass, size_t passlen, fl_bdev **decrypted);
   void (*destroy)(struct fl_luks *l); /* libère impl */
+  /* Bit n : l'emplacement n existe. */
+  uint32_t (*slot_mask)(const struct fl_luks *l);
 } fl_luks_ops;
 
 struct fl_luks {
@@ -48,5 +52,9 @@ int fl_luks2_open(struct fl_luks *l, bool primary_ok);
 /* primary_ok = magie et version du primaire corrects ; sinon, sans en-tête secondaire valide -> FL_ENOTSUP. */
 /* Plus grande mémoire Argon2 (Kio) des slots LUKS2 utilisables ; 0 si PBKDF2 seulement. */
 uint32_t fl_luks2_max_kdf_memory_kib(const struct fl_luks *l);
+
+/* Premiers octets de `dev` : magie et version LUKS (luks.c). *magic_ok : magie « LUKS\xBA\xBE ». FL_ENOTSUP
+ * si le disque est plus petit qu'un en-tête LUKS1. */
+int fl_luks_peek(fl_bdev *dev, bool *magic_ok, int *version);
 
 #endif
