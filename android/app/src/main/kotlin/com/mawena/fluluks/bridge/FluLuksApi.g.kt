@@ -2466,6 +2466,211 @@ data class ConversationDetailMsg (
     return "ConversationDetailMsg(conversation=$conversation, messages=$messages)"
   }
 }
+
+/**
+ * Variable d'un modèle de prompt et sa valeur par défaut (obligatoire pour une exécution planifiée).
+ *
+ * Generated class from Pigeon that represents data sent in messages.
+ */
+data class AutomationVarMsg (
+  val name: String,
+  val defaultValue: String? = null
+)
+ {
+  companion object {
+    fun fromList(pigeonVar_list: List<Any?>): AutomationVarMsg {
+      val name = pigeonVar_list[0] as String
+      val defaultValue = pigeonVar_list[1] as String?
+      return AutomationVarMsg(name, defaultValue)
+    }
+  }
+  fun toList(): List<Any?> {
+    return listOf(
+      name,
+      defaultValue,
+    )
+  }
+  override fun equals(other: Any?): Boolean {
+    if (other == null || other.javaClass != javaClass) {
+      return false
+    }
+    if (this === other) {
+      return true
+    }
+    val other = other as AutomationVarMsg
+    return FluLuksApiPigeonUtils.deepEquals(this.name, other.name) && FluLuksApiPigeonUtils.deepEquals(this.defaultValue, other.defaultValue)
+  }
+
+  override fun hashCode(): Int {
+    var result = javaClass.hashCode()
+    result = 31 * result + FluLuksApiPigeonUtils.deepHash(this.name)
+    result = 31 * result + FluLuksApiPigeonUtils.deepHash(this.defaultValue)
+    return result
+  }
+  override fun toString(): String {
+    return "AutomationVarMsg(name=$name, defaultValue=$defaultValue)"
+  }
+}
+
+/**
+ * Automatisation (phase 15, T8) : [trigger] `manual` ou `periodic` (toutes les [intervalMinutes] minutes, 15 au moins) ;
+ * [id] 0 : pas encore enregistrée ; [lastRun] : dernière exécution, s'il y en a une.
+ *
+ * Generated class from Pigeon that represents data sent in messages.
+ */
+data class AutomationMsg (
+  val id: Long,
+  val name: String,
+  val template: String,
+  val variables: List<AutomationVarMsg>,
+  val serverId: String? = null,
+  val model: String? = null,
+  val systemPrompt: String? = null,
+  val trigger: String,
+  val intervalMinutes: Long? = null,
+  val enabled: Boolean,
+  val lastRun: AutomationRunMsg? = null
+)
+ {
+  companion object {
+    fun fromList(pigeonVar_list: List<Any?>): AutomationMsg {
+      val id = pigeonVar_list[0] as Long
+      val name = pigeonVar_list[1] as String
+      val template = pigeonVar_list[2] as String
+      val variables = pigeonVar_list[3] as List<AutomationVarMsg>
+      val serverId = pigeonVar_list[4] as String?
+      val model = pigeonVar_list[5] as String?
+      val systemPrompt = pigeonVar_list[6] as String?
+      val trigger = pigeonVar_list[7] as String
+      val intervalMinutes = pigeonVar_list[8] as Long?
+      val enabled = pigeonVar_list[9] as Boolean
+      val lastRun = pigeonVar_list[10] as AutomationRunMsg?
+      return AutomationMsg(id, name, template, variables, serverId, model, systemPrompt, trigger, intervalMinutes, enabled, lastRun)
+    }
+  }
+  fun toList(): List<Any?> {
+    return listOf(
+      id,
+      name,
+      template,
+      variables,
+      serverId,
+      model,
+      systemPrompt,
+      trigger,
+      intervalMinutes,
+      enabled,
+      lastRun,
+    )
+  }
+  override fun equals(other: Any?): Boolean {
+    if (other == null || other.javaClass != javaClass) {
+      return false
+    }
+    if (this === other) {
+      return true
+    }
+    val other = other as AutomationMsg
+    return FluLuksApiPigeonUtils.deepEquals(this.id, other.id) && FluLuksApiPigeonUtils.deepEquals(this.name, other.name) && FluLuksApiPigeonUtils.deepEquals(this.template, other.template) && FluLuksApiPigeonUtils.deepEquals(this.variables, other.variables) && FluLuksApiPigeonUtils.deepEquals(this.serverId, other.serverId) && FluLuksApiPigeonUtils.deepEquals(this.model, other.model) && FluLuksApiPigeonUtils.deepEquals(this.systemPrompt, other.systemPrompt) && FluLuksApiPigeonUtils.deepEquals(this.trigger, other.trigger) && FluLuksApiPigeonUtils.deepEquals(this.intervalMinutes, other.intervalMinutes) && FluLuksApiPigeonUtils.deepEquals(this.enabled, other.enabled) && FluLuksApiPigeonUtils.deepEquals(this.lastRun, other.lastRun)
+  }
+
+  override fun hashCode(): Int {
+    var result = javaClass.hashCode()
+    result = 31 * result + FluLuksApiPigeonUtils.deepHash(this.id)
+    result = 31 * result + FluLuksApiPigeonUtils.deepHash(this.name)
+    result = 31 * result + FluLuksApiPigeonUtils.deepHash(this.template)
+    result = 31 * result + FluLuksApiPigeonUtils.deepHash(this.variables)
+    result = 31 * result + FluLuksApiPigeonUtils.deepHash(this.serverId)
+    result = 31 * result + FluLuksApiPigeonUtils.deepHash(this.model)
+    result = 31 * result + FluLuksApiPigeonUtils.deepHash(this.systemPrompt)
+    result = 31 * result + FluLuksApiPigeonUtils.deepHash(this.trigger)
+    result = 31 * result + FluLuksApiPigeonUtils.deepHash(this.intervalMinutes)
+    result = 31 * result + FluLuksApiPigeonUtils.deepHash(this.enabled)
+    result = 31 * result + FluLuksApiPigeonUtils.deepHash(this.lastRun)
+    return result
+  }
+  override fun toString(): String {
+    return "AutomationMsg(id=$id, name=$name, template=$template, variables=$variables, serverId=$serverId, model=$model, systemPrompt=$systemPrompt, trigger=$trigger, intervalMinutes=$intervalMinutes, enabled=$enabled, lastRun=$lastRun)"
+  }
+}
+
+/**
+ * Exécution : [state] ∈ `running`, `done`, `failed`, `stopped`, `interrupted` ; [input] : prompt envoyé ; [error] :
+ * message français d'un échec, [errorDetail] : message du serveur ; [scheduled] : lancée par la planification.
+ *
+ * Generated class from Pigeon that represents data sent in messages.
+ */
+data class AutomationRunMsg (
+  val id: Long,
+  val automationId: Long,
+  val startedAt: Long,
+  val endedAt: Long? = null,
+  val state: String,
+  val scheduled: Boolean,
+  val input: String,
+  val output: String? = null,
+  val error: String? = null,
+  val errorDetail: String? = null
+)
+ {
+  companion object {
+    fun fromList(pigeonVar_list: List<Any?>): AutomationRunMsg {
+      val id = pigeonVar_list[0] as Long
+      val automationId = pigeonVar_list[1] as Long
+      val startedAt = pigeonVar_list[2] as Long
+      val endedAt = pigeonVar_list[3] as Long?
+      val state = pigeonVar_list[4] as String
+      val scheduled = pigeonVar_list[5] as Boolean
+      val input = pigeonVar_list[6] as String
+      val output = pigeonVar_list[7] as String?
+      val error = pigeonVar_list[8] as String?
+      val errorDetail = pigeonVar_list[9] as String?
+      return AutomationRunMsg(id, automationId, startedAt, endedAt, state, scheduled, input, output, error, errorDetail)
+    }
+  }
+  fun toList(): List<Any?> {
+    return listOf(
+      id,
+      automationId,
+      startedAt,
+      endedAt,
+      state,
+      scheduled,
+      input,
+      output,
+      error,
+      errorDetail,
+    )
+  }
+  override fun equals(other: Any?): Boolean {
+    if (other == null || other.javaClass != javaClass) {
+      return false
+    }
+    if (this === other) {
+      return true
+    }
+    val other = other as AutomationRunMsg
+    return FluLuksApiPigeonUtils.deepEquals(this.id, other.id) && FluLuksApiPigeonUtils.deepEquals(this.automationId, other.automationId) && FluLuksApiPigeonUtils.deepEquals(this.startedAt, other.startedAt) && FluLuksApiPigeonUtils.deepEquals(this.endedAt, other.endedAt) && FluLuksApiPigeonUtils.deepEquals(this.state, other.state) && FluLuksApiPigeonUtils.deepEquals(this.scheduled, other.scheduled) && FluLuksApiPigeonUtils.deepEquals(this.input, other.input) && FluLuksApiPigeonUtils.deepEquals(this.output, other.output) && FluLuksApiPigeonUtils.deepEquals(this.error, other.error) && FluLuksApiPigeonUtils.deepEquals(this.errorDetail, other.errorDetail)
+  }
+
+  override fun hashCode(): Int {
+    var result = javaClass.hashCode()
+    result = 31 * result + FluLuksApiPigeonUtils.deepHash(this.id)
+    result = 31 * result + FluLuksApiPigeonUtils.deepHash(this.automationId)
+    result = 31 * result + FluLuksApiPigeonUtils.deepHash(this.startedAt)
+    result = 31 * result + FluLuksApiPigeonUtils.deepHash(this.endedAt)
+    result = 31 * result + FluLuksApiPigeonUtils.deepHash(this.state)
+    result = 31 * result + FluLuksApiPigeonUtils.deepHash(this.scheduled)
+    result = 31 * result + FluLuksApiPigeonUtils.deepHash(this.input)
+    result = 31 * result + FluLuksApiPigeonUtils.deepHash(this.output)
+    result = 31 * result + FluLuksApiPigeonUtils.deepHash(this.error)
+    result = 31 * result + FluLuksApiPigeonUtils.deepHash(this.errorDetail)
+    return result
+  }
+  override fun toString(): String {
+    return "AutomationRunMsg(id=$id, automationId=$automationId, startedAt=$startedAt, endedAt=$endedAt, state=$state, scheduled=$scheduled, input=$input, output=$output, error=$error, errorDetail=$errorDetail)"
+  }
+}
 private open class FluLuksApiPigeonCodec : StandardMessageCodec() {
   override fun readValueOfType(type: Byte, buffer: ByteBuffer): Any? {
     return when (type) {
@@ -2649,6 +2854,21 @@ private open class FluLuksApiPigeonCodec : StandardMessageCodec() {
           ConversationDetailMsg.fromList(it)
         }
       }
+      165.toByte() -> {
+        return (readValue(buffer) as? List<Any?>)?.let {
+          AutomationVarMsg.fromList(it)
+        }
+      }
+      166.toByte() -> {
+        return (readValue(buffer) as? List<Any?>)?.let {
+          AutomationMsg.fromList(it)
+        }
+      }
+      167.toByte() -> {
+        return (readValue(buffer) as? List<Any?>)?.let {
+          AutomationRunMsg.fromList(it)
+        }
+      }
       else -> super.readValueOfType(type, buffer)
     }
   }
@@ -2796,6 +3016,18 @@ private open class FluLuksApiPigeonCodec : StandardMessageCodec() {
       }
       is ConversationDetailMsg -> {
         stream.write(164)
+        writeValue(stream, value.toList())
+      }
+      is AutomationVarMsg -> {
+        stream.write(165)
+        writeValue(stream, value.toList())
+      }
+      is AutomationMsg -> {
+        stream.write(166)
+        writeValue(stream, value.toList())
+      }
+      is AutomationRunMsg -> {
+        stream.write(167)
         writeValue(stream, value.toList())
       }
       else -> super.writeValue(stream, value)
@@ -5426,6 +5658,27 @@ interface AiHostApi {
   fun regenerate(conversationId: Long, callback: (Result<ChatMessageMsg>) -> Unit)
   /** Conversations dont une réponse est en cours. */
   fun runningChats(): List<Long>
+  fun automations(callback: (Result<List<AutomationMsg>>) -> Unit)
+  /** Enregistre (id 0 : nouvelle) ; seules les variables du modèle sont gardées ; planifie ou annule. */
+  fun saveAutomation(automation: AutomationMsg, callback: (Result<AutomationMsg>) -> Unit)
+  fun deleteAutomation(id: Long, callback: (Result<Unit>) -> Unit)
+  fun setAutomationEnabled(id: Long, enabled: Boolean, callback: (Result<AutomationMsg>) -> Unit)
+  /** Copie désactivée, « Nom (copie) ». */
+  fun duplicateAutomation(id: Long, callback: (Result<AutomationMsg>) -> Unit)
+  /** Variables à saisir d'un modèle de prompt, dans l'ordre, sans `date` ni `heure` (fournies). */
+  fun templateVariables(template: String): List<String>
+  /**
+   * Lancement manuel : [values] saisies (absentes : valeurs par défaut) ; rend l'exécution « en cours », dont le
+   * texte arrive par `AiEventsApi.onAutomationDelta` et la fin par `onAutomationState`.
+   */
+  fun runAutomation(id: Long, values: Map<String, String>, callback: (Result<AutomationRunMsg>) -> Unit)
+  fun stopAutomationRun(runId: Long)
+  /** Exécutions manuelles en cours. */
+  fun runningAutomationRuns(): List<Long>
+  /** Plus récente d'abord (50 au plus). */
+  fun automationRuns(automationId: Long, callback: (Result<List<AutomationRunMsg>>) -> Unit)
+  fun automationRun(runId: Long, callback: (Result<AutomationRunMsg>) -> Unit)
+  fun clearAutomationRuns(automationId: Long, callback: (Result<Unit>) -> Unit)
 
   companion object {
     /** The codec used by AiHostApi. */
@@ -5832,6 +6085,234 @@ interface AiHostApi {
           channel.setMessageHandler(null)
         }
       }
+      run {
+        val channel = BasicMessageChannel<Any?>(binaryMessenger, "dev.flutter.pigeon.fluluks.AiHostApi.automations$separatedMessageChannelSuffix", codec)
+        if (api != null) {
+          channel.setMessageHandler { _, reply ->
+            api.automations{ result: Result<List<AutomationMsg>> ->
+              val error = result.exceptionOrNull()
+              if (error != null) {
+                reply.reply(FluLuksApiPigeonUtils.wrapError(error))
+              } else {
+                val data = result.getOrNull()
+                reply.reply(FluLuksApiPigeonUtils.wrapResult(data))
+              }
+            }
+          }
+        } else {
+          channel.setMessageHandler(null)
+        }
+      }
+      run {
+        val channel = BasicMessageChannel<Any?>(binaryMessenger, "dev.flutter.pigeon.fluluks.AiHostApi.saveAutomation$separatedMessageChannelSuffix", codec)
+        if (api != null) {
+          channel.setMessageHandler { message, reply ->
+            val args = message as List<Any?>
+            val automationArg = args[0] as AutomationMsg
+            api.saveAutomation(automationArg) { result: Result<AutomationMsg> ->
+              val error = result.exceptionOrNull()
+              if (error != null) {
+                reply.reply(FluLuksApiPigeonUtils.wrapError(error))
+              } else {
+                val data = result.getOrNull()
+                reply.reply(FluLuksApiPigeonUtils.wrapResult(data))
+              }
+            }
+          }
+        } else {
+          channel.setMessageHandler(null)
+        }
+      }
+      run {
+        val channel = BasicMessageChannel<Any?>(binaryMessenger, "dev.flutter.pigeon.fluluks.AiHostApi.deleteAutomation$separatedMessageChannelSuffix", codec)
+        if (api != null) {
+          channel.setMessageHandler { message, reply ->
+            val args = message as List<Any?>
+            val idArg = args[0] as Long
+            api.deleteAutomation(idArg) { result: Result<Unit> ->
+              val error = result.exceptionOrNull()
+              if (error != null) {
+                reply.reply(FluLuksApiPigeonUtils.wrapError(error))
+              } else {
+                reply.reply(FluLuksApiPigeonUtils.wrapResult(null))
+              }
+            }
+          }
+        } else {
+          channel.setMessageHandler(null)
+        }
+      }
+      run {
+        val channel = BasicMessageChannel<Any?>(binaryMessenger, "dev.flutter.pigeon.fluluks.AiHostApi.setAutomationEnabled$separatedMessageChannelSuffix", codec)
+        if (api != null) {
+          channel.setMessageHandler { message, reply ->
+            val args = message as List<Any?>
+            val idArg = args[0] as Long
+            val enabledArg = args[1] as Boolean
+            api.setAutomationEnabled(idArg, enabledArg) { result: Result<AutomationMsg> ->
+              val error = result.exceptionOrNull()
+              if (error != null) {
+                reply.reply(FluLuksApiPigeonUtils.wrapError(error))
+              } else {
+                val data = result.getOrNull()
+                reply.reply(FluLuksApiPigeonUtils.wrapResult(data))
+              }
+            }
+          }
+        } else {
+          channel.setMessageHandler(null)
+        }
+      }
+      run {
+        val channel = BasicMessageChannel<Any?>(binaryMessenger, "dev.flutter.pigeon.fluluks.AiHostApi.duplicateAutomation$separatedMessageChannelSuffix", codec)
+        if (api != null) {
+          channel.setMessageHandler { message, reply ->
+            val args = message as List<Any?>
+            val idArg = args[0] as Long
+            api.duplicateAutomation(idArg) { result: Result<AutomationMsg> ->
+              val error = result.exceptionOrNull()
+              if (error != null) {
+                reply.reply(FluLuksApiPigeonUtils.wrapError(error))
+              } else {
+                val data = result.getOrNull()
+                reply.reply(FluLuksApiPigeonUtils.wrapResult(data))
+              }
+            }
+          }
+        } else {
+          channel.setMessageHandler(null)
+        }
+      }
+      run {
+        val channel = BasicMessageChannel<Any?>(binaryMessenger, "dev.flutter.pigeon.fluluks.AiHostApi.templateVariables$separatedMessageChannelSuffix", codec)
+        if (api != null) {
+          channel.setMessageHandler { message, reply ->
+            val args = message as List<Any?>
+            val templateArg = args[0] as String
+            val wrapped: List<Any?> = try {
+              listOf(api.templateVariables(templateArg))
+            } catch (exception: Throwable) {
+              FluLuksApiPigeonUtils.wrapError(exception)
+            }
+            reply.reply(wrapped)
+          }
+        } else {
+          channel.setMessageHandler(null)
+        }
+      }
+      run {
+        val channel = BasicMessageChannel<Any?>(binaryMessenger, "dev.flutter.pigeon.fluluks.AiHostApi.runAutomation$separatedMessageChannelSuffix", codec)
+        if (api != null) {
+          channel.setMessageHandler { message, reply ->
+            val args = message as List<Any?>
+            val idArg = args[0] as Long
+            val valuesArg = args[1] as Map<String, String>
+            api.runAutomation(idArg, valuesArg) { result: Result<AutomationRunMsg> ->
+              val error = result.exceptionOrNull()
+              if (error != null) {
+                reply.reply(FluLuksApiPigeonUtils.wrapError(error))
+              } else {
+                val data = result.getOrNull()
+                reply.reply(FluLuksApiPigeonUtils.wrapResult(data))
+              }
+            }
+          }
+        } else {
+          channel.setMessageHandler(null)
+        }
+      }
+      run {
+        val channel = BasicMessageChannel<Any?>(binaryMessenger, "dev.flutter.pigeon.fluluks.AiHostApi.stopAutomationRun$separatedMessageChannelSuffix", codec)
+        if (api != null) {
+          channel.setMessageHandler { message, reply ->
+            val args = message as List<Any?>
+            val runIdArg = args[0] as Long
+            val wrapped: List<Any?> = try {
+              api.stopAutomationRun(runIdArg)
+              listOf(null)
+            } catch (exception: Throwable) {
+              FluLuksApiPigeonUtils.wrapError(exception)
+            }
+            reply.reply(wrapped)
+          }
+        } else {
+          channel.setMessageHandler(null)
+        }
+      }
+      run {
+        val channel = BasicMessageChannel<Any?>(binaryMessenger, "dev.flutter.pigeon.fluluks.AiHostApi.runningAutomationRuns$separatedMessageChannelSuffix", codec)
+        if (api != null) {
+          channel.setMessageHandler { _, reply ->
+            val wrapped: List<Any?> = try {
+              listOf(api.runningAutomationRuns())
+            } catch (exception: Throwable) {
+              FluLuksApiPigeonUtils.wrapError(exception)
+            }
+            reply.reply(wrapped)
+          }
+        } else {
+          channel.setMessageHandler(null)
+        }
+      }
+      run {
+        val channel = BasicMessageChannel<Any?>(binaryMessenger, "dev.flutter.pigeon.fluluks.AiHostApi.automationRuns$separatedMessageChannelSuffix", codec)
+        if (api != null) {
+          channel.setMessageHandler { message, reply ->
+            val args = message as List<Any?>
+            val automationIdArg = args[0] as Long
+            api.automationRuns(automationIdArg) { result: Result<List<AutomationRunMsg>> ->
+              val error = result.exceptionOrNull()
+              if (error != null) {
+                reply.reply(FluLuksApiPigeonUtils.wrapError(error))
+              } else {
+                val data = result.getOrNull()
+                reply.reply(FluLuksApiPigeonUtils.wrapResult(data))
+              }
+            }
+          }
+        } else {
+          channel.setMessageHandler(null)
+        }
+      }
+      run {
+        val channel = BasicMessageChannel<Any?>(binaryMessenger, "dev.flutter.pigeon.fluluks.AiHostApi.automationRun$separatedMessageChannelSuffix", codec)
+        if (api != null) {
+          channel.setMessageHandler { message, reply ->
+            val args = message as List<Any?>
+            val runIdArg = args[0] as Long
+            api.automationRun(runIdArg) { result: Result<AutomationRunMsg> ->
+              val error = result.exceptionOrNull()
+              if (error != null) {
+                reply.reply(FluLuksApiPigeonUtils.wrapError(error))
+              } else {
+                val data = result.getOrNull()
+                reply.reply(FluLuksApiPigeonUtils.wrapResult(data))
+              }
+            }
+          }
+        } else {
+          channel.setMessageHandler(null)
+        }
+      }
+      run {
+        val channel = BasicMessageChannel<Any?>(binaryMessenger, "dev.flutter.pigeon.fluluks.AiHostApi.clearAutomationRuns$separatedMessageChannelSuffix", codec)
+        if (api != null) {
+          channel.setMessageHandler { message, reply ->
+            val args = message as List<Any?>
+            val automationIdArg = args[0] as Long
+            api.clearAutomationRuns(automationIdArg) { result: Result<Unit> ->
+              val error = result.exceptionOrNull()
+              if (error != null) {
+                reply.reply(FluLuksApiPigeonUtils.wrapError(error))
+              } else {
+                reply.reply(FluLuksApiPigeonUtils.wrapResult(null))
+              }
+            }
+          }
+        } else {
+          channel.setMessageHandler(null)
+        }
+      }
     }
   }
 }
@@ -5875,6 +6356,42 @@ class AiEventsApi(private val binaryMessenger: BinaryMessenger, private val mess
     val channelName = "dev.flutter.pigeon.fluluks.AiEventsApi.onChatState$separatedMessageChannelSuffix"
     val channel = BasicMessageChannel<Any?>(binaryMessenger, channelName, codec)
     channel.send(listOf(messageArg)) {
+      if (it is List<*>) {
+        if (it.size > 1) {
+          callback(Result.failure(FlutterError(it[0] as String, it[1] as String, it[2] as String?)))
+        } else {
+          callback(Result.success(Unit))
+        }
+      } else {
+        callback(Result.failure(FluLuksApiPigeonUtils.createConnectionError(channelName)))
+      } 
+    }
+  }
+  /** Texte reçu d'un lancement manuel d'automatisation, par lots (mêmes règles que [onChatDelta]). */
+  fun onAutomationDelta(runIdArg: Long, textArg: String, callback: (Result<Unit>) -> Unit)
+{
+    val separatedMessageChannelSuffix = if (messageChannelSuffix.isNotEmpty()) ".$messageChannelSuffix" else ""
+    val channelName = "dev.flutter.pigeon.fluluks.AiEventsApi.onAutomationDelta$separatedMessageChannelSuffix"
+    val channel = BasicMessageChannel<Any?>(binaryMessenger, channelName, codec)
+    channel.send(listOf(runIdArg, textArg)) {
+      if (it is List<*>) {
+        if (it.size > 1) {
+          callback(Result.failure(FlutterError(it[0] as String, it[1] as String, it[2] as String?)))
+        } else {
+          callback(Result.success(Unit))
+        }
+      } else {
+        callback(Result.failure(FluLuksApiPigeonUtils.createConnectionError(channelName)))
+      } 
+    }
+  }
+  /** Lancement manuel terminé, avec tout son résultat : aucun lot ne suit. */
+  fun onAutomationState(runArg: AutomationRunMsg, callback: (Result<Unit>) -> Unit)
+{
+    val separatedMessageChannelSuffix = if (messageChannelSuffix.isNotEmpty()) ".$messageChannelSuffix" else ""
+    val channelName = "dev.flutter.pigeon.fluluks.AiEventsApi.onAutomationState$separatedMessageChannelSuffix"
+    val channel = BasicMessageChannel<Any?>(binaryMessenger, channelName, codec)
+    channel.send(listOf(runArg)) {
       if (it is List<*>) {
         if (it.size > 1) {
           callback(Result.failure(FlutterError(it[0] as String, it[1] as String, it[2] as String?)))

@@ -15,10 +15,10 @@ class ChatThread {
 }
 
 /// Conversations côté Dart (phase 15) : tenues ici, hors de tout écran, comme les terminaux. Kotlin pousse le texte
-/// des réponses par lots ([onChatDelta]) et leur fin ([onChatState]) ; le texte d'une réponse en cours est gardé ici
+/// des réponses par lots ([onChatDelta]) et leur fin ([onChatState]), par `AiEvents` ; le texte d'une réponse en cours est gardé ici
 /// même quand aucun écran ne la montre (Kotlin ne l'écrit dans l'historique qu'à la fin), pour qu'un écran rouvert
 /// la retrouve entière.
-class ChatHub extends ChangeNotifier implements AiEventsApi {
+class ChatHub extends ChangeNotifier {
   ChatHub(this.api);
 
   final AiApi api;
@@ -116,14 +116,12 @@ class ChatHub extends ChangeNotifier implements AiEventsApi {
     await load();
   }
 
-  @override
   void onChatDelta(int conversationId, int messageId, String text) {
     _running.add(conversationId);
     (_live[messageId] ??= StringBuffer()).write(text);
     notifyListeners();
   }
 
-  @override
   void onChatState(ChatMessageMsg message) {
     _live.remove(message.id);
     _running.remove(message.conversationId);

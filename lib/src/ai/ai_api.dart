@@ -30,6 +30,20 @@ abstract class AiApi {
   Future<void> stopGeneration(int conversationId);
   Future<ChatMessageMsg> regenerate(int conversationId);
   Future<List<int>> runningChats();
+
+  // automatisations (T8)
+  Future<List<AutomationMsg>> automations();
+  Future<AutomationMsg> saveAutomation(AutomationMsg automation);
+  Future<void> deleteAutomation(int id);
+  Future<AutomationMsg> setAutomationEnabled(int id, bool enabled);
+  Future<AutomationMsg> duplicateAutomation(int id);
+  Future<List<String>> templateVariables(String template);
+  Future<AutomationRunMsg> runAutomation(int id, Map<String, String> values);
+  Future<void> stopAutomationRun(int runId);
+  Future<List<int>> runningAutomationRuns();
+  Future<List<AutomationRunMsg>> automationRuns(int automationId);
+  Future<AutomationRunMsg> automationRun(int runId);
+  Future<void> clearAutomationRuns(int automationId);
 }
 
 /// Implémentation réelle : délègue au client Pigeon `AiHostApi`.
@@ -80,4 +94,29 @@ mixin PigeonAiApi implements AiApi {
   Future<ChatMessageMsg> regenerate(int conversationId) => _ai.regenerate(conversationId);
   @override
   Future<List<int>> runningChats() => _ai.runningChats();
+
+  @override
+  Future<List<AutomationMsg>> automations() => _ai.automations();
+  @override
+  Future<AutomationMsg> saveAutomation(AutomationMsg automation) => _ai.saveAutomation(automation);
+  @override
+  Future<void> deleteAutomation(int id) => _ai.deleteAutomation(id);
+  @override
+  Future<AutomationMsg> setAutomationEnabled(int id, bool enabled) => _ai.setAutomationEnabled(id, enabled);
+  @override
+  Future<AutomationMsg> duplicateAutomation(int id) => _ai.duplicateAutomation(id);
+  @override
+  Future<List<String>> templateVariables(String template) => _ai.templateVariables(template);
+  @override
+  Future<AutomationRunMsg> runAutomation(int id, Map<String, String> values) => _ai.runAutomation(id, values);
+  @override
+  Future<void> stopAutomationRun(int runId) => _ai.stopAutomationRun(runId);
+  @override
+  Future<List<int>> runningAutomationRuns() => _ai.runningAutomationRuns();
+  @override
+  Future<List<AutomationRunMsg>> automationRuns(int automationId) => _ai.automationRuns(automationId);
+  @override
+  Future<AutomationRunMsg> automationRun(int runId) => _ai.automationRun(runId);
+  @override
+  Future<void> clearAutomationRuns(int automationId) => _ai.clearAutomationRuns(automationId);
 }

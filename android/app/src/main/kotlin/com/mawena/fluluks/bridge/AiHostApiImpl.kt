@@ -5,6 +5,13 @@ import com.mawena.fluluks.ai.Ai
 import com.mawena.fluluks.ai.AiException
 import com.mawena.fluluks.ai.AiHealth
 import com.mawena.fluluks.ai.AiServerConfig
+import com.mawena.fluluks.ai.auto.Automation
+import com.mawena.fluluks.ai.auto.AutomationRun
+import com.mawena.fluluks.ai.auto.AutomationSink
+import com.mawena.fluluks.ai.auto.AutomationVar
+import com.mawena.fluluks.ai.auto.Automations
+import com.mawena.fluluks.ai.auto.Autos
+import com.mawena.fluluks.ai.auto.Template
 import com.mawena.fluluks.ai.chat.ChatSink
 import com.mawena.fluluks.ai.chat.Chats
 import com.mawena.fluluks.ai.chat.Conversation
@@ -26,10 +33,12 @@ class AiHostApiImpl(private val context: Context) : AiHostApi {
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Main.immediate)
 
     private var sink: ChatSink? = null
+    private var autoSink: AutomationSink? = null
 
     fun attach(messenger: BinaryMessenger) {
         Ai.init(context)
         Chats.init(context)
+        Autos.init(context)
         AiHostApi.setUp(messenger, this)
         val events = AiEventsApi(messenger)
         // Lots et fins de réponse envoyés sur le fil principal, dans l'ordre ; la réponse de Dart acquitte le lot.
@@ -42,12 +51,23 @@ class AiHostApiImpl(private val context: Context) : AiHostApi {
                 scope.launch { events.onChatState(messageMsg(m)) { /* réponse ignorée */ } }
             }
         }.also { Chats.sessions().sink = it }
+        autoSink = object : AutomationSink {
+            override fun delta(runId: Long, text: String, delivered: () -> Unit) {
+                scope.launch { events.onAutomationDelta(runId, text) { delivered() } }
+            }
+
+            override fun state(r: AutomationRun) {
+                scope.launch { events.onAutomationState(runMsg(r)) { /* réponse ignorée */ } }
+            }
+        }.also { Autos.get().sink = it }
     }
 
     fun detach(messenger: BinaryMessenger) {
         AiHostApi.setUp(messenger, null)
         if (Chats.sessions().sink === sink) Chats.sessions().sink = null
         sink = null
+        if (Autos.get().sink === autoSink) Autos.get().sink = null
+        autoSink = null
         scope.cancel()
     }
 
@@ -67,7 +87,11 @@ class AiHostApiImpl(private val context: Context) : AiHostApi {
 
     override fun removeAiServerKey(serverId: String) = sync { Ai.servers().removeKey(serverId) }
 
-    override fun deleteAiServer(serverId: String) = sync { Ai.servers().delete(serverId) }
+    /** Ses automatisations sont désactivées et leur planification annulée. */
+    override fun deleteAiServer(serverId: String) = sync {
+        Ai.servers().delete(serverId)
+        Autos.get().serverDeleted(serverId)
+    }
 
     override fun setDefaultAiServer(serverId: String) = sync { Ai.servers().setDefault(serverId) }
 
@@ -131,6 +155,55 @@ class AiHostApiImpl(private val context: Context) : AiHostApi {
 
     override fun runningChats(): List<Long> = sync { Chats.sessions().running().toList() }
 
+    // --- automatisations (T8)
+
+    private fun automationMsg(a: Automation, autos: Automations) = AutomationMsg(
+        a.id, a.name, a.template, autos.variablesOf(a).map { AutomationVarMsg(it.name, it.default) }, a.serverId, a.model,
+        a.systemPrompt, a.trigger, a.intervalMinutes?.toLong(), a.enabled, autos.lastRun(a.id)?.let(::runMsg),
+    )
+
+    override fun automations(callback: (Result<List<AutomationMsg>>) -> Unit) = io(callback) {
+        val autos = Autos.get()
+        autos.list().map { automationMsg(it, autos) }
+    }
+
+    override fun saveAutomation(automation: AutomationMsg, callback: (Result<AutomationMsg>) -> Unit) = io(callback) {
+        val autos = Autos.get()
+        val a = Automation(
+            id = automation.id, name = automation.name, template = automation.template, variables = "",
+            serverId = automation.serverId, model = automation.model, systemPrompt = automation.systemPrompt,
+            trigger = automation.trigger, intervalMinutes = automation.intervalMinutes?.toInt(), enabled = automation.enabled,
+            createdAt = 0, updatedAt = 0,
+        )
+        automationMsg(autos.save(a, automation.variables.map { AutomationVar(it.name, it.defaultValue) }), autos)
+    }
+
+    override fun deleteAutomation(id: Long, callback: (Result<Unit>) -> Unit) = io(callback) { Autos.get().delete(id) }
+
+    override fun setAutomationEnabled(id: Long, enabled: Boolean, callback: (Result<AutomationMsg>) -> Unit) =
+        io(callback) { Autos.get().let { automationMsg(it.setEnabled(id, enabled), it) } }
+
+    override fun duplicateAutomation(id: Long, callback: (Result<AutomationMsg>) -> Unit) =
+        io(callback) { Autos.get().let { automationMsg(it.duplicate(id), it) } }
+
+    override fun templateVariables(template: String): List<String> = sync { Template.variables(template) }
+
+    override fun runAutomation(id: Long, values: Map<String, String>, callback: (Result<AutomationRunMsg>) -> Unit) =
+        io(callback) { runMsg(Autos.get().start(id, values)) }
+
+    override fun stopAutomationRun(runId: Long) = sync { Autos.get().stop(runId) }
+
+    override fun runningAutomationRuns(): List<Long> = sync { Autos.get().running().toList() }
+
+    override fun automationRuns(automationId: Long, callback: (Result<List<AutomationRunMsg>>) -> Unit) =
+        io(callback) { Autos.get().runs(automationId).map(::runMsg) }
+
+    override fun automationRun(runId: Long, callback: (Result<AutomationRunMsg>) -> Unit) =
+        io(callback) { runMsg(Autos.get().run(runId)) }
+
+    override fun clearAutomationRuns(automationId: Long, callback: (Result<Unit>) -> Unit) =
+        io(callback) { Autos.get().clearRuns(automationId) }
+
     // --- utilitaires
 
     private fun <T> io(callback: (Result<T>) -> Unit, block: suspend () -> T) {
@@ -158,6 +231,10 @@ class AiHostApiImpl(private val context: Context) : AiHostApi {
 
         internal fun messageMsg(m: Message) =
             ChatMessageMsg(m.id, m.conversationId, m.role, m.content, m.state, m.error, m.errorDetail, m.createdAt)
+
+        internal fun runMsg(r: AutomationRun) = AutomationRunMsg(
+            r.id, r.automationId, r.startedAt, r.endedAt, r.state, r.scheduled, r.input, r.output, r.error, r.errorDetail,
+        )
 
         internal fun toFlutterError(e: Throwable): FlutterError = when (e) {
             is AiException -> FlutterError("ai", e.message, e.serverMessage)

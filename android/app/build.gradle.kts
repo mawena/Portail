@@ -82,6 +82,8 @@ dependencies {
     // Phase 15 : historique des conversations et automatisations (Room).
     implementation("androidx.room:room-runtime:2.7.2")
     ksp("androidx.room:room-compiler:2.7.2")
+    // Phase 15 : automatisations planifiées (survivent aux redémarrages, respectent la batterie).
+    implementation("androidx.work:work-runtime-ktx:2.10.1")
     testImplementation("junit:junit:4.13.2")
     testImplementation("org.apache.sshd:sshd-core:2.20.0")
     testImplementation("org.apache.sshd:sshd-sftp:2.20.0")
@@ -95,6 +97,7 @@ dependencies {
     androidTestImplementation("androidx.test.ext:junit:1.2.1")
     androidTestImplementation("androidx.test:rules:1.6.1")
     androidTestImplementation("androidx.room:room-testing:2.7.2")
+    androidTestImplementation("androidx.work:work-testing:2.10.1")
 }
 
 flutter {

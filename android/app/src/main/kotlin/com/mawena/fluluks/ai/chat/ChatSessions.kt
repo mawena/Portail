@@ -6,6 +6,7 @@ import com.mawena.fluluks.ai.AiProvider
 import com.mawena.fluluks.ai.ChatEvent
 import com.mawena.fluluks.ai.ChatMessage
 import com.mawena.fluluks.ai.ChatRequest
+import com.mawena.fluluks.ai.DeltaPump
 import com.mawena.fluluks.engine.EngineError
 import com.mawena.fluluks.files.FilesException
 import kotlinx.coroutines.CancellationException
@@ -15,11 +16,8 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.SupervisorJob
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.sync.Semaphore
 import kotlinx.coroutines.withContext
-import kotlinx.coroutines.withTimeoutOrNull
 
 /**
  * Destinataire des réponses en cours (le pont vers Dart). [delta] : texte reçu, par lots ; [delivered] à appeler quand
@@ -99,12 +97,18 @@ class ChatSessions(
     private suspend fun generate(reply: Message) {
         val text = StringBuilder()
         var outcome: Outcome? = null
-        val pump = Pump(reply)
+        val pump = DeltaPump(
+            send = { sink?.let { s -> { chunk, delivered -> s.delta(reply.conversationId, reply.id, chunk, delivered) } } },
+            batchMs = batchMs,
+            maxBatch = maxBatch,
+            maxInflight = maxInflight,
+            ackTimeoutMs = ackTimeoutMs,
+        )
         try {
             val req = request(reply)
             val provider = providerFor(req.first)
             try {
-                coroutineScopeWithPump(pump) {
+                pump.run {
                     provider.chat(req.second).collect { ev ->
                         when (ev) {
                             is ChatEvent.Delta -> {
@@ -153,81 +157,6 @@ class ChatSessions(
             .map { ChatMessage(it.role, it.content) }
         val all = listOfNotNull(c.systemPrompt?.let { ChatMessage("system", it) }) + history
         return serverId to ChatRequest(model, all)
-    }
-
-    /** Lance l'envoi périodique des lots pendant [block], puis l'arrête. */
-    private suspend fun coroutineScopeWithPump(pump: Pump, block: suspend () -> Unit) {
-        kotlinx.coroutines.coroutineScope {
-            val ticker = launch {
-                while (true) {
-                    delay(batchMs)
-                    pump.flush()
-                }
-            }
-            try {
-                block()
-            } finally {
-                ticker.cancel()
-            }
-        }
-    }
-
-    /**
-     * Lots vers Dart : le texte reçu s'accumule ; [flush] l'envoie (un permis par lot non acquitté). Au-delà de
-     * [maxBatch] caractères en attente, [offer] envoie aussitôt et attend donc un permis : le flux n'est plus lu tant
-     * que Dart n'a pas suivi. Un acquittement qui tarde plus de [ackTimeoutMs] ms est tenu pour reçu (Dart parti).
-     * Après [close], plus rien ne part : le texte restant est dans la réponse finale.
-     */
-    private inner class Pump(private val reply: Message) {
-        private val permits = Semaphore(maxInflight)
-        private val pending = StringBuilder()
-        @Volatile private var closed = false
-
-        suspend fun offer(t: String) {
-            val full = synchronized(pending) {
-                pending.append(t)
-                pending.length >= maxBatch
-            }
-            if (full) flush()
-        }
-
-        suspend fun flush() {
-            while (true) {
-                if (closed) return
-                val target = sink ?: return
-                if (synchronized(pending) { pending.isEmpty() }) return
-                // acquittement qui tarde trop (Dart parti sans répondre) : le lot part quand même, sans permis
-                val permit = withTimeoutOrNull(ackTimeoutMs) { permits.acquire() } != null
-                val chunk = synchronized(pending) {
-                    if (closed || pending.isEmpty()) {
-                        null
-                    } else {
-                        var n = minOf(pending.length, maxBatch)
-                        if (n < pending.length && Character.isHighSurrogate(pending[n - 1])) n--
-                        pending.substring(0, n).also { pending.delete(0, n) }
-                    }
-                }
-                if (chunk == null) {
-                    if (permit) permits.release()
-                    return
-                }
-                val acked = java.util.concurrent.atomic.AtomicBoolean(!permit)
-                val ack = { if (acked.compareAndSet(false, true)) permits.release() }
-                try {
-                    target.delta(reply.conversationId, reply.id, chunk, ack)
-                } catch (e: Exception) {
-                    ack()
-                }
-                if (synchronized(pending) { pending.length < maxBatch }) return
-            }
-        }
-
-        fun close() {
-            synchronized(pending) {
-                closed = true
-                pending.setLength(0)
-            }
-        }
     }
 
     companion object {

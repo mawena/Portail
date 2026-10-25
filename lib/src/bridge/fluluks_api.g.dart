@@ -2759,6 +2759,246 @@ class ConversationDetailMsg {
   }
 }
 
+/// Variable d'un modèle de prompt et sa valeur par défaut (obligatoire pour une exécution planifiée).
+class AutomationVarMsg {
+  AutomationVarMsg({
+    required this.name,
+    this.defaultValue,
+  });
+
+  String name;
+
+  String? defaultValue;
+
+  List<Object?> _toList() {
+    return <Object?>[
+      name,
+      defaultValue,
+    ];
+  }
+
+  Object encode() {
+    return _toList();  }
+
+  static AutomationVarMsg decode(Object result) {
+    result as List<Object?>;
+    return AutomationVarMsg(
+      name: result[0]! as String,
+      defaultValue: result[1] as String?,
+    );
+  }
+
+  @override
+  // ignore: avoid_equals_and_hash_code_on_mutable_classes
+  bool operator ==(Object other) {
+    if (other is! AutomationVarMsg || other.runtimeType != runtimeType) {
+      return false;
+    }
+    if (identical(this, other)) {
+      return true;
+    }
+    return _deepEquals(name, other.name) && _deepEquals(defaultValue, other.defaultValue);
+  }
+
+  @override
+  // ignore: avoid_equals_and_hash_code_on_mutable_classes
+  int get hashCode => _deepHash(<Object?>[runtimeType, ..._toList()]);
+
+  @override
+  String toString() {
+    return 'AutomationVarMsg(name: $name, defaultValue: $defaultValue)';
+  }
+}
+
+/// Automatisation (phase 15, T8) : [trigger] `manual` ou `periodic` (toutes les [intervalMinutes] minutes, 15 au moins) ;
+/// [id] 0 : pas encore enregistrée ; [lastRun] : dernière exécution, s'il y en a une.
+class AutomationMsg {
+  AutomationMsg({
+    required this.id,
+    required this.name,
+    required this.template,
+    required this.variables,
+    this.serverId,
+    this.model,
+    this.systemPrompt,
+    required this.trigger,
+    this.intervalMinutes,
+    required this.enabled,
+    this.lastRun,
+  });
+
+  int id;
+
+  String name;
+
+  String template;
+
+  List<AutomationVarMsg> variables;
+
+  String? serverId;
+
+  String? model;
+
+  String? systemPrompt;
+
+  String trigger;
+
+  int? intervalMinutes;
+
+  bool enabled;
+
+  AutomationRunMsg? lastRun;
+
+  List<Object?> _toList() {
+    return <Object?>[
+      id,
+      name,
+      template,
+      variables,
+      serverId,
+      model,
+      systemPrompt,
+      trigger,
+      intervalMinutes,
+      enabled,
+      lastRun,
+    ];
+  }
+
+  Object encode() {
+    return _toList();  }
+
+  static AutomationMsg decode(Object result) {
+    result as List<Object?>;
+    return AutomationMsg(
+      id: result[0]! as int,
+      name: result[1]! as String,
+      template: result[2]! as String,
+      variables: (result[3]! as List<Object?>).cast<AutomationVarMsg>(),
+      serverId: result[4] as String?,
+      model: result[5] as String?,
+      systemPrompt: result[6] as String?,
+      trigger: result[7]! as String,
+      intervalMinutes: result[8] as int?,
+      enabled: result[9]! as bool,
+      lastRun: result[10] as AutomationRunMsg?,
+    );
+  }
+
+  @override
+  // ignore: avoid_equals_and_hash_code_on_mutable_classes
+  bool operator ==(Object other) {
+    if (other is! AutomationMsg || other.runtimeType != runtimeType) {
+      return false;
+    }
+    if (identical(this, other)) {
+      return true;
+    }
+    return _deepEquals(id, other.id) && _deepEquals(name, other.name) && _deepEquals(template, other.template) && _deepEquals(variables, other.variables) && _deepEquals(serverId, other.serverId) && _deepEquals(model, other.model) && _deepEquals(systemPrompt, other.systemPrompt) && _deepEquals(trigger, other.trigger) && _deepEquals(intervalMinutes, other.intervalMinutes) && _deepEquals(enabled, other.enabled) && _deepEquals(lastRun, other.lastRun);
+  }
+
+  @override
+  // ignore: avoid_equals_and_hash_code_on_mutable_classes
+  int get hashCode => _deepHash(<Object?>[runtimeType, ..._toList()]);
+
+  @override
+  String toString() {
+    return 'AutomationMsg(id: $id, name: $name, template: $template, variables: $variables, serverId: $serverId, model: $model, systemPrompt: $systemPrompt, trigger: $trigger, intervalMinutes: $intervalMinutes, enabled: $enabled, lastRun: $lastRun)';
+  }
+}
+
+/// Exécution : [state] ∈ `running`, `done`, `failed`, `stopped`, `interrupted` ; [input] : prompt envoyé ; [error] :
+/// message français d'un échec, [errorDetail] : message du serveur ; [scheduled] : lancée par la planification.
+class AutomationRunMsg {
+  AutomationRunMsg({
+    required this.id,
+    required this.automationId,
+    required this.startedAt,
+    this.endedAt,
+    required this.state,
+    required this.scheduled,
+    required this.input,
+    this.output,
+    this.error,
+    this.errorDetail,
+  });
+
+  int id;
+
+  int automationId;
+
+  int startedAt;
+
+  int? endedAt;
+
+  String state;
+
+  bool scheduled;
+
+  String input;
+
+  String? output;
+
+  String? error;
+
+  String? errorDetail;
+
+  List<Object?> _toList() {
+    return <Object?>[
+      id,
+      automationId,
+      startedAt,
+      endedAt,
+      state,
+      scheduled,
+      input,
+      output,
+      error,
+      errorDetail,
+    ];
+  }
+
+  Object encode() {
+    return _toList();  }
+
+  static AutomationRunMsg decode(Object result) {
+    result as List<Object?>;
+    return AutomationRunMsg(
+      id: result[0]! as int,
+      automationId: result[1]! as int,
+      startedAt: result[2]! as int,
+      endedAt: result[3] as int?,
+      state: result[4]! as String,
+      scheduled: result[5]! as bool,
+      input: result[6]! as String,
+      output: result[7] as String?,
+      error: result[8] as String?,
+      errorDetail: result[9] as String?,
+    );
+  }
+
+  @override
+  // ignore: avoid_equals_and_hash_code_on_mutable_classes
+  bool operator ==(Object other) {
+    if (other is! AutomationRunMsg || other.runtimeType != runtimeType) {
+      return false;
+    }
+    if (identical(this, other)) {
+      return true;
+    }
+    return _deepEquals(id, other.id) && _deepEquals(automationId, other.automationId) && _deepEquals(startedAt, other.startedAt) && _deepEquals(endedAt, other.endedAt) && _deepEquals(state, other.state) && _deepEquals(scheduled, other.scheduled) && _deepEquals(input, other.input) && _deepEquals(output, other.output) && _deepEquals(error, other.error) && _deepEquals(errorDetail, other.errorDetail);
+  }
+
+  @override
+  // ignore: avoid_equals_and_hash_code_on_mutable_classes
+  int get hashCode => _deepHash(<Object?>[runtimeType, ..._toList()]);
+
+  @override
+  String toString() {
+    return 'AutomationRunMsg(id: $id, automationId: $automationId, startedAt: $startedAt, endedAt: $endedAt, state: $state, scheduled: $scheduled, input: $input, output: $output, error: $error, errorDetail: $errorDetail)';
+  }
+}
+
 
 class _PigeonCodec extends StandardMessageCodec {
   const _PigeonCodec();
@@ -2875,6 +3115,15 @@ class _PigeonCodec extends StandardMessageCodec {
     }    else if (value is ConversationDetailMsg) {
       buffer.putUint8(164);
       writeValue(buffer, value.encode());
+    }    else if (value is AutomationVarMsg) {
+      buffer.putUint8(165);
+      writeValue(buffer, value.encode());
+    }    else if (value is AutomationMsg) {
+      buffer.putUint8(166);
+      writeValue(buffer, value.encode());
+    }    else if (value is AutomationRunMsg) {
+      buffer.putUint8(167);
+      writeValue(buffer, value.encode());
     } else {
       super.writeValue(buffer, value);
     }
@@ -2955,6 +3204,12 @@ class _PigeonCodec extends StandardMessageCodec {
         return ChatMessageMsg.decode(readValue(buffer)!);
       case 164:
         return ConversationDetailMsg.decode(readValue(buffer)!);
+      case 165:
+        return AutomationVarMsg.decode(readValue(buffer)!);
+      case 166:
+        return AutomationMsg.decode(readValue(buffer)!);
+      case 167:
+        return AutomationRunMsg.decode(readValue(buffer)!);
       default:
         return super.readValueOfType(type, buffer);
     }
@@ -5780,6 +6035,238 @@ class AiHostApi {
     ;
     return (pigeonVar_replyValue! as List<Object?>).cast<int>();
   }
+
+  Future<List<AutomationMsg>> automations() async {
+    final pigeonVar_channelName = 'dev.flutter.pigeon.fluluks.AiHostApi.automations$pigeonVar_messageChannelSuffix';
+    final pigeonVar_channel = BasicMessageChannel<Object?>(
+      pigeonVar_channelName,
+      pigeonChannelCodec,
+      binaryMessenger: pigeonVar_binaryMessenger,
+    );
+    final Future<Object?> pigeonVar_sendFuture = pigeonVar_channel.send(null);
+    final pigeonVar_replyList = await pigeonVar_sendFuture as List<Object?>?;
+
+    final Object? pigeonVar_replyValue = _extractReplyValueOrThrow(
+        pigeonVar_replyList,
+        pigeonVar_channelName,
+        isNullValid: false,
+    )
+    ;
+    return (pigeonVar_replyValue! as List<Object?>).cast<AutomationMsg>();
+  }
+
+  /// Enregistre (id 0 : nouvelle) ; seules les variables du modèle sont gardées ; planifie ou annule.
+  Future<AutomationMsg> saveAutomation(AutomationMsg automation) async {
+    final pigeonVar_channelName = 'dev.flutter.pigeon.fluluks.AiHostApi.saveAutomation$pigeonVar_messageChannelSuffix';
+    final pigeonVar_channel = BasicMessageChannel<Object?>(
+      pigeonVar_channelName,
+      pigeonChannelCodec,
+      binaryMessenger: pigeonVar_binaryMessenger,
+    );
+    final Future<Object?> pigeonVar_sendFuture = pigeonVar_channel.send(<Object?>[automation]);
+    final pigeonVar_replyList = await pigeonVar_sendFuture as List<Object?>?;
+
+    final Object? pigeonVar_replyValue = _extractReplyValueOrThrow(
+        pigeonVar_replyList,
+        pigeonVar_channelName,
+        isNullValid: false,
+    )
+    ;
+    return pigeonVar_replyValue! as AutomationMsg;
+  }
+
+  Future<void> deleteAutomation(int id) async {
+    final pigeonVar_channelName = 'dev.flutter.pigeon.fluluks.AiHostApi.deleteAutomation$pigeonVar_messageChannelSuffix';
+    final pigeonVar_channel = BasicMessageChannel<Object?>(
+      pigeonVar_channelName,
+      pigeonChannelCodec,
+      binaryMessenger: pigeonVar_binaryMessenger,
+    );
+    final Future<Object?> pigeonVar_sendFuture = pigeonVar_channel.send(<Object?>[id]);
+    final pigeonVar_replyList = await pigeonVar_sendFuture as List<Object?>?;
+
+    _extractReplyValueOrThrow(
+        pigeonVar_replyList,
+        pigeonVar_channelName,
+        isNullValid: true,
+    )
+    ;
+  }
+
+  Future<AutomationMsg> setAutomationEnabled(int id, bool enabled) async {
+    final pigeonVar_channelName = 'dev.flutter.pigeon.fluluks.AiHostApi.setAutomationEnabled$pigeonVar_messageChannelSuffix';
+    final pigeonVar_channel = BasicMessageChannel<Object?>(
+      pigeonVar_channelName,
+      pigeonChannelCodec,
+      binaryMessenger: pigeonVar_binaryMessenger,
+    );
+    final Future<Object?> pigeonVar_sendFuture = pigeonVar_channel.send(<Object?>[id, enabled]);
+    final pigeonVar_replyList = await pigeonVar_sendFuture as List<Object?>?;
+
+    final Object? pigeonVar_replyValue = _extractReplyValueOrThrow(
+        pigeonVar_replyList,
+        pigeonVar_channelName,
+        isNullValid: false,
+    )
+    ;
+    return pigeonVar_replyValue! as AutomationMsg;
+  }
+
+  /// Copie désactivée, « Nom (copie) ».
+  Future<AutomationMsg> duplicateAutomation(int id) async {
+    final pigeonVar_channelName = 'dev.flutter.pigeon.fluluks.AiHostApi.duplicateAutomation$pigeonVar_messageChannelSuffix';
+    final pigeonVar_channel = BasicMessageChannel<Object?>(
+      pigeonVar_channelName,
+      pigeonChannelCodec,
+      binaryMessenger: pigeonVar_binaryMessenger,
+    );
+    final Future<Object?> pigeonVar_sendFuture = pigeonVar_channel.send(<Object?>[id]);
+    final pigeonVar_replyList = await pigeonVar_sendFuture as List<Object?>?;
+
+    final Object? pigeonVar_replyValue = _extractReplyValueOrThrow(
+        pigeonVar_replyList,
+        pigeonVar_channelName,
+        isNullValid: false,
+    )
+    ;
+    return pigeonVar_replyValue! as AutomationMsg;
+  }
+
+  /// Variables à saisir d'un modèle de prompt, dans l'ordre, sans `date` ni `heure` (fournies).
+  Future<List<String>> templateVariables(String template) async {
+    final pigeonVar_channelName = 'dev.flutter.pigeon.fluluks.AiHostApi.templateVariables$pigeonVar_messageChannelSuffix';
+    final pigeonVar_channel = BasicMessageChannel<Object?>(
+      pigeonVar_channelName,
+      pigeonChannelCodec,
+      binaryMessenger: pigeonVar_binaryMessenger,
+    );
+    final Future<Object?> pigeonVar_sendFuture = pigeonVar_channel.send(<Object?>[template]);
+    final pigeonVar_replyList = await pigeonVar_sendFuture as List<Object?>?;
+
+    final Object? pigeonVar_replyValue = _extractReplyValueOrThrow(
+        pigeonVar_replyList,
+        pigeonVar_channelName,
+        isNullValid: false,
+    )
+    ;
+    return (pigeonVar_replyValue! as List<Object?>).cast<String>();
+  }
+
+  /// Lancement manuel : [values] saisies (absentes : valeurs par défaut) ; rend l'exécution « en cours », dont le
+  /// texte arrive par `AiEventsApi.onAutomationDelta` et la fin par `onAutomationState`.
+  Future<AutomationRunMsg> runAutomation(int id, Map<String, String> values) async {
+    final pigeonVar_channelName = 'dev.flutter.pigeon.fluluks.AiHostApi.runAutomation$pigeonVar_messageChannelSuffix';
+    final pigeonVar_channel = BasicMessageChannel<Object?>(
+      pigeonVar_channelName,
+      pigeonChannelCodec,
+      binaryMessenger: pigeonVar_binaryMessenger,
+    );
+    final Future<Object?> pigeonVar_sendFuture = pigeonVar_channel.send(<Object?>[id, values]);
+    final pigeonVar_replyList = await pigeonVar_sendFuture as List<Object?>?;
+
+    final Object? pigeonVar_replyValue = _extractReplyValueOrThrow(
+        pigeonVar_replyList,
+        pigeonVar_channelName,
+        isNullValid: false,
+    )
+    ;
+    return pigeonVar_replyValue! as AutomationRunMsg;
+  }
+
+  Future<void> stopAutomationRun(int runId) async {
+    final pigeonVar_channelName = 'dev.flutter.pigeon.fluluks.AiHostApi.stopAutomationRun$pigeonVar_messageChannelSuffix';
+    final pigeonVar_channel = BasicMessageChannel<Object?>(
+      pigeonVar_channelName,
+      pigeonChannelCodec,
+      binaryMessenger: pigeonVar_binaryMessenger,
+    );
+    final Future<Object?> pigeonVar_sendFuture = pigeonVar_channel.send(<Object?>[runId]);
+    final pigeonVar_replyList = await pigeonVar_sendFuture as List<Object?>?;
+
+    _extractReplyValueOrThrow(
+        pigeonVar_replyList,
+        pigeonVar_channelName,
+        isNullValid: true,
+    )
+    ;
+  }
+
+  /// Exécutions manuelles en cours.
+  Future<List<int>> runningAutomationRuns() async {
+    final pigeonVar_channelName = 'dev.flutter.pigeon.fluluks.AiHostApi.runningAutomationRuns$pigeonVar_messageChannelSuffix';
+    final pigeonVar_channel = BasicMessageChannel<Object?>(
+      pigeonVar_channelName,
+      pigeonChannelCodec,
+      binaryMessenger: pigeonVar_binaryMessenger,
+    );
+    final Future<Object?> pigeonVar_sendFuture = pigeonVar_channel.send(null);
+    final pigeonVar_replyList = await pigeonVar_sendFuture as List<Object?>?;
+
+    final Object? pigeonVar_replyValue = _extractReplyValueOrThrow(
+        pigeonVar_replyList,
+        pigeonVar_channelName,
+        isNullValid: false,
+    )
+    ;
+    return (pigeonVar_replyValue! as List<Object?>).cast<int>();
+  }
+
+  /// Plus récente d'abord (50 au plus).
+  Future<List<AutomationRunMsg>> automationRuns(int automationId) async {
+    final pigeonVar_channelName = 'dev.flutter.pigeon.fluluks.AiHostApi.automationRuns$pigeonVar_messageChannelSuffix';
+    final pigeonVar_channel = BasicMessageChannel<Object?>(
+      pigeonVar_channelName,
+      pigeonChannelCodec,
+      binaryMessenger: pigeonVar_binaryMessenger,
+    );
+    final Future<Object?> pigeonVar_sendFuture = pigeonVar_channel.send(<Object?>[automationId]);
+    final pigeonVar_replyList = await pigeonVar_sendFuture as List<Object?>?;
+
+    final Object? pigeonVar_replyValue = _extractReplyValueOrThrow(
+        pigeonVar_replyList,
+        pigeonVar_channelName,
+        isNullValid: false,
+    )
+    ;
+    return (pigeonVar_replyValue! as List<Object?>).cast<AutomationRunMsg>();
+  }
+
+  Future<AutomationRunMsg> automationRun(int runId) async {
+    final pigeonVar_channelName = 'dev.flutter.pigeon.fluluks.AiHostApi.automationRun$pigeonVar_messageChannelSuffix';
+    final pigeonVar_channel = BasicMessageChannel<Object?>(
+      pigeonVar_channelName,
+      pigeonChannelCodec,
+      binaryMessenger: pigeonVar_binaryMessenger,
+    );
+    final Future<Object?> pigeonVar_sendFuture = pigeonVar_channel.send(<Object?>[runId]);
+    final pigeonVar_replyList = await pigeonVar_sendFuture as List<Object?>?;
+
+    final Object? pigeonVar_replyValue = _extractReplyValueOrThrow(
+        pigeonVar_replyList,
+        pigeonVar_channelName,
+        isNullValid: false,
+    )
+    ;
+    return pigeonVar_replyValue! as AutomationRunMsg;
+  }
+
+  Future<void> clearAutomationRuns(int automationId) async {
+    final pigeonVar_channelName = 'dev.flutter.pigeon.fluluks.AiHostApi.clearAutomationRuns$pigeonVar_messageChannelSuffix';
+    final pigeonVar_channel = BasicMessageChannel<Object?>(
+      pigeonVar_channelName,
+      pigeonChannelCodec,
+      binaryMessenger: pigeonVar_binaryMessenger,
+    );
+    final Future<Object?> pigeonVar_sendFuture = pigeonVar_channel.send(<Object?>[automationId]);
+    final pigeonVar_replyList = await pigeonVar_sendFuture as List<Object?>?;
+
+    _extractReplyValueOrThrow(
+        pigeonVar_replyList,
+        pigeonVar_channelName,
+        isNullValid: true,
+    )
+    ;
+  }
 }
 
 /// Réponses en flux (phase 15, T6), poussées par Kotlin.
@@ -5792,6 +6279,12 @@ abstract class AiEventsApi {
 
   /// Réponse terminée (`done`, `stopped`, `failed`), avec tout son texte : aucun lot ne suit.
   void onChatState(ChatMessageMsg message);
+
+  /// Texte reçu d'un lancement manuel d'automatisation, par lots (mêmes règles que [onChatDelta]).
+  void onAutomationDelta(int runId, String text);
+
+  /// Lancement manuel terminé, avec tout son résultat : aucun lot ne suit.
+  void onAutomationState(AutomationRunMsg run);
 
   static void setUp(AiEventsApi? api, {BinaryMessenger? binaryMessenger, String messageChannelSuffix = '',}) {
     messageChannelSuffix = messageChannelSuffix.isNotEmpty ? '.$messageChannelSuffix' : '';
@@ -5830,6 +6323,49 @@ abstract class AiEventsApi {
           final ChatMessageMsg arg_message = args[0]! as ChatMessageMsg;
           try {
             api.onChatState(arg_message);
+            return wrapResponse(empty: true);
+          } on PlatformException catch (e) {
+            return wrapResponse(error: e);
+          }          catch (e) {
+            return wrapResponse(error: PlatformException(code: 'error', message: e.toString()));
+          }
+        });
+      }
+    }
+    {
+      final pigeonVar_channel = BasicMessageChannel<Object?>(
+          'dev.flutter.pigeon.fluluks.AiEventsApi.onAutomationDelta$messageChannelSuffix', pigeonChannelCodec,
+          binaryMessenger: binaryMessenger);
+      if (api == null) {
+        pigeonVar_channel.setMessageHandler(null);
+      } else {
+        pigeonVar_channel.setMessageHandler((Object? message) async {
+          final List<Object?> args = message! as List<Object?>;
+          final int arg_runId = args[0]! as int;
+          final String arg_text = args[1]! as String;
+          try {
+            api.onAutomationDelta(arg_runId, arg_text);
+            return wrapResponse(empty: true);
+          } on PlatformException catch (e) {
+            return wrapResponse(error: e);
+          }          catch (e) {
+            return wrapResponse(error: PlatformException(code: 'error', message: e.toString()));
+          }
+        });
+      }
+    }
+    {
+      final pigeonVar_channel = BasicMessageChannel<Object?>(
+          'dev.flutter.pigeon.fluluks.AiEventsApi.onAutomationState$messageChannelSuffix', pigeonChannelCodec,
+          binaryMessenger: binaryMessenger);
+      if (api == null) {
+        pigeonVar_channel.setMessageHandler(null);
+      } else {
+        pigeonVar_channel.setMessageHandler((Object? message) async {
+          final List<Object?> args = message! as List<Object?>;
+          final AutomationRunMsg arg_run = args[0]! as AutomationRunMsg;
+          try {
+            api.onAutomationState(arg_run);
             return wrapResponse(empty: true);
           } on PlatformException catch (e) {
             return wrapResponse(error: e);

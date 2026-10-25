@@ -4,6 +4,7 @@ import 'package:flutter/painting.dart';
 import 'package:flutter/services.dart';
 
 import '../ai/ai_hub.dart';
+import '../ai/automation_hub.dart';
 import '../ai/chat_hub.dart';
 import '../bridge/fluluks_api.g.dart';
 import '../strings_fr.dart';
@@ -25,6 +26,9 @@ class AppState extends ChangeNotifier implements FluLuksEventsApi {
 
   /// Conversations avec les modèles (phase 15), gardées hors des écrans.
   late final chats = ChatHub(api);
+
+  /// Lancements manuels des automatisations (phase 15), suivis hors des écrans.
+  late final automations = AutomationHub(api);
 
   void _bell() {
     if (uiPrefs.haptics) HapticFeedback.vibrate();

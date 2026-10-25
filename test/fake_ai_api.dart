@@ -281,6 +281,189 @@ mixin FakeAiApi implements AiApi {
     list[list.length - 1] = done;
     return done;
   }
+
+  // --- automatisations (T8), en mémoire ; un lancement reste « en cours » jusqu'à [finishFakeRun]
+
+  final automationList = <AutomationMsg>[];
+  final automationRunList = <AutomationRunMsg>[];
+  final automationRunning = <int>{};
+  int _autoNext = 1;
+  int _runNext = 1;
+
+  /// Erreur levée par le prochain `saveAutomation`, s'il y en a une.
+  PlatformException? automationSaveError;
+
+  static final _placeholder = RegExp(r'\{\{\s*([\p{L}_][\p{L}\p{N}_]*)\s*\}\}', unicode: true);
+
+  AutomationRunMsg? _lastRunOf(int id) {
+    final runs = automationRunList.where((r) => r.automationId == id).toList();
+    return runs.isEmpty ? null : runs.last;
+  }
+
+  AutomationMsg _withRun(AutomationMsg a) => AutomationMsg(
+        id: a.id,
+        name: a.name,
+        template: a.template,
+        variables: a.variables,
+        serverId: a.serverId,
+        model: a.model,
+        systemPrompt: a.systemPrompt,
+        trigger: a.trigger,
+        intervalMinutes: a.intervalMinutes,
+        enabled: a.enabled,
+        lastRun: _lastRunOf(a.id),
+      );
+
+  AutomationMsg _auto(int id) => automationList.firstWhere(
+        (a) => a.id == id,
+        orElse: () => throw PlatformException(code: '-8', message: "Cette automatisation n'existe plus"),
+      );
+
+  @override
+  Future<List<AutomationMsg>> automations() async => [for (final a in automationList) _withRun(a)];
+
+  @override
+  Future<AutomationMsg> saveAutomation(AutomationMsg automation) async {
+    aiCalls.add('saveAutomation ${automation.id} ${automation.name} ${automation.trigger} ${automation.intervalMinutes}');
+    final e = automationSaveError;
+    if (e != null) {
+      automationSaveError = null;
+      throw e;
+    }
+    final names = await templateVariables(automation.template);
+    final byName = {for (final v in automation.variables) v.name: v};
+    final saved = AutomationMsg(
+      id: automation.id == 0 ? _autoNext++ : automation.id,
+      name: automation.name.trim(),
+      template: automation.template,
+      variables: [for (final n in names) AutomationVarMsg(name: n, defaultValue: byName[n]?.defaultValue)],
+      serverId: automation.serverId ?? aiServerList.where((x) => x.isDefault).firstOrNull?.id,
+      model: automation.model ?? aiServerList.where((x) => x.isDefault).firstOrNull?.defaultModel,
+      systemPrompt: automation.systemPrompt,
+      trigger: automation.trigger,
+      intervalMinutes: automation.trigger == 'periodic' ? automation.intervalMinutes : null,
+      enabled: automation.enabled,
+    );
+    final i = automationList.indexWhere((a) => a.id == saved.id);
+    if (i >= 0) {
+      automationList[i] = saved;
+    } else {
+      automationList.add(saved);
+    }
+    return _withRun(saved);
+  }
+
+  @override
+  Future<void> deleteAutomation(int id) async {
+    aiCalls.add('deleteAutomation $id');
+    automationList.removeWhere((a) => a.id == id);
+    automationRunList.removeWhere((r) => r.automationId == id);
+  }
+
+  @override
+  Future<AutomationMsg> setAutomationEnabled(int id, bool enabled) async {
+    aiCalls.add('setAutomationEnabled $id $enabled');
+    final a = _auto(id);
+    a.enabled = enabled;
+    return _withRun(a);
+  }
+
+  @override
+  Future<AutomationMsg> duplicateAutomation(int id) async {
+    aiCalls.add('duplicateAutomation $id');
+    final a = _auto(id);
+    final copy = AutomationMsg(
+      id: _autoNext++,
+      name: '${a.name} (copie)',
+      template: a.template,
+      variables: a.variables,
+      serverId: a.serverId,
+      model: a.model,
+      systemPrompt: a.systemPrompt,
+      trigger: a.trigger,
+      intervalMinutes: a.intervalMinutes,
+      enabled: false,
+    );
+    automationList.add(copy);
+    return copy;
+  }
+
+  @override
+  Future<List<String>> templateVariables(String template) async {
+    final out = <String>[];
+    for (final m in _placeholder.allMatches(template)) {
+      final n = m.group(1)!;
+      if (n != 'date' && n != 'heure' && !out.contains(n)) out.add(n);
+    }
+    return out;
+  }
+
+  @override
+  Future<AutomationRunMsg> runAutomation(int id, Map<String, String> values) async {
+    aiCalls.add('runAutomation $id ${values.entries.map((e) => '${e.key}=${e.value}').join(',')}');
+    final a = _auto(id);
+    final defaults = {for (final v in a.variables) if (v.defaultValue != null) v.name: v.defaultValue!};
+    final all = {...defaults, ...values};
+    final input = a.template.replaceAllMapped(_placeholder, (m) => all[m.group(1)] ?? m.group(0)!);
+    final r = AutomationRunMsg(
+      id: _runNext++,
+      automationId: id,
+      startedAt: chatClock++,
+      state: 'running',
+      scheduled: false,
+      input: input,
+    );
+    automationRunList.add(r);
+    automationRunning.add(r.id);
+    return r;
+  }
+
+  @override
+  Future<void> stopAutomationRun(int runId) async {
+    aiCalls.add('stopAutomationRun $runId');
+    automationRunning.remove(runId);
+  }
+
+  @override
+  Future<List<int>> runningAutomationRuns() async => automationRunning.toList();
+
+  @override
+  Future<List<AutomationRunMsg>> automationRuns(int automationId) async =>
+      automationRunList.where((r) => r.automationId == automationId).toList().reversed.toList();
+
+  @override
+  Future<AutomationRunMsg> automationRun(int runId) async => automationRunList.firstWhere(
+        (r) => r.id == runId,
+        orElse: () => throw PlatformException(code: '-8', message: "Cette exécution n'existe plus"),
+      );
+
+  @override
+  Future<void> clearAutomationRuns(int automationId) async {
+    aiCalls.add('clearAutomationRuns $automationId');
+    automationRunList.removeWhere((r) => r.automationId == automationId);
+  }
+
+  /// Termine l'exécution [runId] côté faux pont et la rend (à pousser par `onAutomationState`).
+  AutomationRunMsg finishFakeRun(int runId, String? output,
+      {String state = 'done', String? error, String? errorDetail, bool scheduled = false}) {
+    automationRunning.remove(runId);
+    final i = automationRunList.indexWhere((r) => r.id == runId);
+    final r = automationRunList[i];
+    final done = AutomationRunMsg(
+      id: r.id,
+      automationId: r.automationId,
+      startedAt: r.startedAt,
+      endedAt: chatClock++,
+      state: state,
+      scheduled: scheduled || r.scheduled,
+      input: r.input,
+      output: output,
+      error: error,
+      errorDetail: errorDetail,
+    );
+    automationRunList[i] = done;
+    return done;
+  }
 }
 
 /// Serveur IA de démonstration.
