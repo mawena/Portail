@@ -353,7 +353,7 @@ fonctions choisies par le planificateur ; les lecteurs et stockages distants pas
 
 ## 16. Évolution du 2026-10-22 (suite) : vérification et réparation
 
-Décision de l'utilisateur : la **phase 16** (v1.9.0 ; numérotée 11, puis 12, 13, 14 et 15, avant le 2026-10-24, voir § 19 à § 24) apporte la **réparation des disques** dans
+Décision de l'utilisateur : la **phase 17** (v1.10.0 ; numérotée 11, puis 12, 13, 14, 15 et 16, avant le 2026-10-25, voir § 19 à § 25) apporte la **réparation des disques** dans
 l'application, avec les outils de référence de Linux intégrés au moteur natif.
 - **Vérifier d'abord, en lecture seule**, et montrer un rapport en français ; réparer seulement après
   confirmation, avec le conseil de sauvegarder les données importantes avant.
@@ -368,7 +368,7 @@ l'application, avec les outils de référence de Linux intégrés au moteur nati
 
 ## 17. Évolution du 2026-10-22 (suite) : gestion des partitions
 
-Décision de l'utilisateur : la **phase 15** (v1.8.0 ; numérotée 12, puis 13, 14, 15, 16 et 17, avant le 2026-10-24, voir § 19 à § 24) apporte la **gestion des partitions** d'un disque USB,
+Décision de l'utilisateur : la **phase 16** (v1.9.0 ; numérotée 12, puis 13, 14, 15, 16, 17 et 15, avant le 2026-10-25, voir § 19 à § 25) apporte la **gestion des partitions** d'un disque USB,
 à la manière de GParted, et le choix de la **taille** au formatage.
 - **Choisir la taille** : formater une partition de la taille voulue au lieu de tout le disque ; le reste
   reste libre.
@@ -379,7 +379,7 @@ Décision de l'utilisateur : la **phase 15** (v1.8.0 ; numérotée 12, puis 13, 
   étiquette), **supprimer** une partition, **formater une seule partition**, changer son **étiquette**,
   créer une **nouvelle table** (MBR ou GPT).
 - **Redimensionner** une partition et son système de fichiers, agrandir ou réduire :
-  - ext4 par `resize2fs` (e2fsprogs, intégré par cette phase ; la phase 16 s'en sert ensuite pour réparer) ;
+  - ext4 par `resize2fs` (e2fsprogs, intégré par cette phase ; la phase 17 s'en sert ensuite pour réparer) ;
   - NTFS par `ntfsresize` (ntfs-3g) ;
   - dans un volume LUKS2, le système de fichiers intérieur (la taille du segment LUKS2 suit la
     partition) ;
@@ -393,7 +393,7 @@ Décision de l'utilisateur : la **phase 15** (v1.8.0 ; numérotée 12, puis 13, 
     à la fois ;
   - jamais sur un volume ouvert ;
   - le système de fichiers est vérifié en lecture seule avant un redimensionnement (`e2fsck -n`, `ntfsfix -n`,
-    apportés par cette phase ; la réparation reste celle de la phase 16) ;
+    apportés par cette phase ; la réparation reste celle de la phase 17) ;
   - avertissement : un débranchement pendant un redimensionnement ou un déplacement peut rendre la
     partition illisible, sauvegardez d'abord ;
   - toutes les opérations sont jugées sur des images par les outils de référence (`sfdisk`, `sgdisk`,
@@ -609,16 +609,16 @@ essais.)*
   référence, BSD à deux clauses), seul code tiers nouveau ; liste de mots **EFF** pour les phrases de passe (CC BY 3.0).
   Aucune nouvelle dépendance Java ni Dart : la biométrie passe par l'API d'Android (`BiometricPrompt`, API 28 et plus).
 
-## 23. Évolution du 2026-10-24 : intégration IA (phase 17)
+## 23. Évolution du 2026-10-24 : intégration IA (phase 15)
 
-Demande de l'utilisateur, pendant la phase 14 : une phase « Intégration IA » (**phase 17**, **v1.10.0** ; numérotée
-15, en v1.8.0, jusqu'au § 24) relie Portail à une
+Demande de l'utilisateur, pendant la phase 14 : une phase « Intégration IA » (**phase 15**, **v1.8.0** ; numérotée
+15, puis 17, avant le § 25) relie Portail à une
 ou plusieurs IA auto-hébergées (VPS, machines locales) pour du chat et des automatisations. La réparation des disques
-devient la phase 16 (v1.9.0, § 16) et la gestion des partitions la phase 15 (v1.8.0, § 17, voir § 24). L'intégration
+devient la phase 16 (v1.9.0, § 16) et la gestion des partitions la phase 15 (v1.8.0, § 17, voir § 24 et § 25). L'intégration
 IA ne commence en aucun cas avant que la phase 14 soit terminée et validée. Le serveur sera développé à part :
 Portail est codé contre un **contrat d'API** et essayé contre un serveur d'essai.
 *(Valeurs, bibliothèques et fonctions marquées « proposition du planificateur » : décisions du planificateur, à valider
-aux essais ; voir le plan de la phase 17.)*
+aux essais ; voir le plan de la phase 15.)*
 - **Serveurs IA (« fournisseurs »)** : ajouter, modifier, supprimer, **tester la connexion** ; nom, URL de base
   (`http` ou `https`, port), clé API (jeton `Bearer`), serveur par défaut. Clés stockées scellées par le Keystore
   d'Android, jamais montrées ni renvoyées à l'interface.
@@ -651,3 +651,16 @@ Décision de l'utilisateur : la gestion des partitions (§ 17) devient la **phas
 dont le redimensionnement a besoin (e2fsprogs pour `resize2fs` et `e2fsck -n`, `ntfsresize` et `ntfsfix -n` de
 ntfs-3g), en lecture seule pour la vérification ; la phase 16 réutilise ces outils pour réparer. Le contenu des
 phases ne change pas autrement.
+
+## 25. Évolution du 2026-10-25 : intégration IA en phase 15, serveur sur atelier.mawena.cloud
+
+Décision de l'utilisateur : l'intégration IA (§ 23) devient la **phase 15** (**v1.8.0**) et les phases suivantes
+descendent d'un rang : la gestion des partitions (§ 17) devient la **phase 16** (**v1.9.0**), la vérification et la
+réparation des disques (§ 16) la **phase 17** (**v1.10.0**). Les partitions restent avant la réparation : la
+répartition des outils du § 24 (e2fsprogs et ntfs-3g apportés par les partitions, réutilisés pour réparer) vaut pour
+les phases 16 et 17.
+
+Le serveur IA de l'utilisateur est en service sur son VPS, à **`https://atelier.mawena.cloud`** : c'est le serveur
+réel des essais de la phase 15 (le serveur d'essai local reste celui du développement et des tests). Constat du
+2026-10-25 : `GET /health` rend `{"status":"ok","version":"0.1.0"}`, `GET /v1/models` sans clé rend 401 avec une
+erreur au format du contrat (`{"error":{"message","type","code"}}`).
