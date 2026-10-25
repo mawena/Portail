@@ -561,9 +561,9 @@ Pigeon `@async void enableBiometric(String vaultId, Uint8List password)`, `@asyn
 
 ### Task 16 *(utilisateur)* : essais sur le Pixel
 
-- [ ] Construire et installer l'APK sur le Pixel **avant** de demander l'essai (`adb install -r`, APK de
+- [x] Construire et installer l'APK sur le Pixel **avant** de demander l'essai (`adb install -r`, APK de
   l'utilisateur sauvegardée).
-- [ ] Fiche remplie : chiffrer une photo et un dossier du téléphone (age), puis un dossier du disque LUKS vers le disque ;
+- [x] Fiche remplie : chiffrer une photo et un dossier du téléphone (age), puis un dossier du disque LUKS vers le disque ;
   ouvrir la photo chiffrée dans la visionneuse et une vidéo chiffrée (avance rapide) ; déchiffrer ; mauvais mot de
   passe ; ZIP AES ouvert sur le PC par 7-Zip ou `7z`, fichier `.age` par `age -d` ; coffre créé sur le téléphone et sur
   le disque USB, parcouru dans Portail et dans Fichiers, vidéo lue dans VLC depuis le coffre ; coffre ouvert sous
@@ -572,7 +572,7 @@ Pigeon `@async void enableBiometric(String vaultId, Uint8List password)`, `@asyn
 
 ### Fin de phase
 
-- [ ] Relecture finale de toute la branche.
+- [x] Relecture finale de toute la branche.
 - [ ] Fusion `feature/chiffrement` → `develop`, puis `release/1.7.0` (pubspec `1.7.0+15`), `main`, étiquette signée
   `v1.7.0`. Pas de push sans l'accord de l'utilisateur.
 
