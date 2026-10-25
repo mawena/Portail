@@ -547,11 +547,16 @@ Le dépôt suit git flow :
 Suivi détaillé, étape par étape : [docs/superpowers/plans/2026-10-17-fluluks-feuille-de-route.md](docs/superpowers/plans/2026-10-17-fluluks-feuille-de-route.md).
 Conception : [docs/superpowers/specs/2026-10-17-fluluks-design.md](docs/superpowers/specs/2026-10-17-fluluks-design.md).
 
+Historique des versions : [CHANGELOG.md](CHANGELOG.md). Pour contribuer : [CONTRIBUTING.md](CONTRIBUTING.md) et
+[CODE_OF_CONDUCT.md](CODE_OF_CONDUCT.md). Pour signaler une faille : [SECURITY.md](SECURITY.md).
+
 ## Licence
 
-Aucune licence n'est encore choisie pour le code de Portail. Mais l'application est liée à libntfs-3g
-(GPL version 2 ou ultérieure, depuis la phase 5) et à une partie de lwext4 sous GPL : distribuée, elle doit
-l'être sous GPL, avec ses sources. FatFs est sous une licence de type BSD à une clause, compatible avec la
+Portail est distribué sous la **GNU GPL version 3 ou ultérieure** (GPL-3.0-or-later) : voir [LICENSE](LICENSE).
+Copyright © 2026 mawena.
+
+Ce choix découle des bibliothèques embarquées : libntfs-3g et une partie de lwext4 sont sous GPL version 2 ou
+ultérieure, et plusieurs bibliothèques sont sous Apache-2.0, qui n'est compatible qu'avec la GPL version 3. FatFs est sous une licence de type BSD à une clause, compatible avec la
 GPL, comme libarchive (BSD à deux clauses) et liblzma (0BSD). Depuis la phase 10, l'application embarque aussi
 AndroidX Media3 1.11.1 et Apache Commons Net 3.13.0 (Apache-2.0), JSch 2.28.8 de mwiede (BSD) et Bouncy Castle
 1.86 (licence MIT), toutes compatibles avec la GPL ; Apache FtpServer 1.2.1 et Apache MINA SSHD 2.20.0 (Apache-2.0)
