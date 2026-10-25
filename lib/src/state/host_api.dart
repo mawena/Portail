@@ -33,7 +33,8 @@ abstract class HostApi {
   Future<void> share(String sourceId, List<String> paths);
   Future<void> startTransfer(String srcId, List<String> paths, String dstId, String dstDir, bool move);
   Future<void> startCompress(String srcId, List<String> paths, String dstDir, String name);
-  Future<void> startExtract(String srcId, String archive, String dstId, String dstDir, bool intoNewFolder);
+  Future<void> startExtract(String srcId, String archive, String dstId, String dstDir, bool intoNewFolder,
+      {Uint8List? password});
   Future<void> cancelTransfer();
   Future<SearchResultMsg> search(String sourceId, String path, String query, bool showHidden);
   Future<void> cancelSearch();
@@ -172,8 +173,9 @@ class PigeonHostApi implements HostApi {
   Future<void> startCompress(String srcId, List<String> paths, String dstDir, String name) =>
       _api.startCompress(srcId, paths, dstDir, name);
   @override
-  Future<void> startExtract(String srcId, String archive, String dstId, String dstDir, bool intoNewFolder) =>
-      _api.startExtract(srcId, archive, dstId, dstDir, intoNewFolder);
+  Future<void> startExtract(String srcId, String archive, String dstId, String dstDir, bool intoNewFolder,
+          {Uint8List? password}) =>
+      _api.startExtract(srcId, archive, dstId, dstDir, intoNewFolder, password);
   @override
   Future<void> cancelTransfer() => _api.cancelTransfer();
   @override

@@ -436,6 +436,7 @@ void main() {
   testWidgets('homeShowsInterruptedTransfer', (tester) async {
     final (state, _) = await pump(tester, FakeHostApi());
     state.onTransferChanged(TransferMsg(
+        badPassword: false,
         kind: 'move', move: true, currentName: 'a.bin', fileIndex: 1, fileCount: 2, doneBytes: 10, totalBytes: 20,
         finished: true, cancelled: false, error: 'Stockage fermé : opération interrompue', elapsedMs: 1200));
     await tester.pump();

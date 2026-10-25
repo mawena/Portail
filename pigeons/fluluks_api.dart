@@ -187,6 +187,7 @@ class TransferMsg {
     required this.cancelled,
     this.error,
     required this.elapsedMs,
+    required this.badPassword,
   });
   bool move;
   String currentName;
@@ -201,8 +202,19 @@ class TransferMsg {
   /// Durée de l'opération en millisecondes (débit affiché à la fin).
   int elapsedMs;
 
-  /// `copy`, `move`, `compress` ou `extract`.
+  /// `copy`, `move`, `compress`, `extract`, `encrypt`, `decrypt` ou `verify`.
   String kind;
+
+  /// Échec sur un mot de passe incorrect : l'écran redemande le mot de passe.
+  bool badPassword;
+}
+
+/// Fichier chiffré reconnu par ses premiers octets : `format` vaut `age`, `zip-aes`, `zip-legacy`, `luks` ou
+/// `none` ; `folder` pour un `.zip.age` (dossier ou sélection chiffrés ensemble).
+class EncryptedInfoMsg {
+  EncryptedInfoMsg({required this.format, required this.folder});
+  String format;
+  bool folder;
 }
 
 /// Élément de la corbeille d'un stockage : `id` est son nom dans la corbeille, `name` et `originalPath` disent
@@ -569,8 +581,31 @@ abstract class FluLuksHostApi {
   /// Compresse `paths` dans un ZIP `name` sous `dstDir` (même stockage) ; même créneau que les copies.
   void startCompress(String srcId, List<String> paths, String dstDir, String name);
 
-  /// Extrait `archive` sous `dstDir` de `dstId`, dans un dossier au nom de l'archive si `intoNewFolder`.
-  void startExtract(String srcId, String archive, String dstId, String dstDir, bool intoNewFolder);
+  /// Extrait `archive` sous `dstDir` de `dstId`, dans un dossier au nom de l'archive si `intoNewFolder` ;
+  /// `password` pour un ZIP chiffré (mis à zéro après usage).
+  void startExtract(String srcId, String archive, String dstId, String dstDir, bool intoNewFolder, Uint8List? password);
+
+  /// Format chiffré d'un fichier, reconnu par ses premiers octets.
+  @async
+  EncryptedInfoMsg encryptedInfo(String sourceId, String path);
+
+  /// Chiffre `paths` vers `dstDir` de `dstId` ; `format` : `age` ou `zip` (ZIP AES-256) ; `together` réunit la
+  /// sélection dans un seul fichier (`name`, sinon « Archive ») ; l'original n'est supprimé, définitivement, qu'après
+  /// vérification du chiffré si `deleteOriginal`. Même créneau que les copies.
+  void startEncrypt(String srcId, List<String> paths, String dstId, String dstDir, String format, bool together, String? name,
+      bool deleteOriginal, Uint8List password);
+
+  /// Déchiffre `path` vers `dstDir` de `dstId` ; un `.zip.age` est extrait, sauf si `extractFolder` est faux (le ZIP
+  /// est alors gardé).
+  void startDecrypt(String srcId, String path, String dstId, String dstDir, bool extractFolder, Uint8List password);
+
+  /// Relit entièrement un fichier chiffré sans rien écrire ; le résultat arrive par `TransferMsg` (`verify`).
+  void startVerify(String srcId, String path, Uint8List password);
+
+  /// Change le mot de passe d'un fichier `.age` (nouveau fichier, puis remplacement) ; erreur `badPassword` si
+  /// l'ancien est incorrect.
+  @async
+  void changeFilePassword(String srcId, String path, Uint8List oldPassword, Uint8List newPassword);
   void cancelTransfer();
   @async
   SearchResultMsg search(String sourceId, String path, String query, bool showHidden);

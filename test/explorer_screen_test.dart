@@ -292,6 +292,7 @@ void main() {
     final state = await pump(tester, api);
     await state.startTransfer('v1', ['/film.mkv'], 'phone', '/', move: false);
     TransferMsg t({int done = 50, bool finished = false, String? error}) => TransferMsg(
+        badPassword: false,
         kind: 'copy', move: false, currentName: 'film.mkv', fileIndex: 1, fileCount: 1, doneBytes: done, totalBytes: 200,
         finished: finished, cancelled: false, error: error, elapsedMs: 0);
     state.onTransferChanged(t());
@@ -356,6 +357,7 @@ void main() {
   });
 
   TransferMsg done({int bytes = 200, int elapsedMs = 0, String? error}) => TransferMsg(
+        badPassword: false,
       kind: 'copy', move: false, currentName: 'film.mkv', fileIndex: 1, fileCount: 1, doneBytes: bytes, totalBytes: bytes,
       finished: true, cancelled: false, error: error, elapsedMs: elapsedMs);
 

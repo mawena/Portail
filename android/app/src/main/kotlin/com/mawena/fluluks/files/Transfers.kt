@@ -34,8 +34,10 @@ data class TransferState(
     val error: String? = null,
     /** Durée de l'opération (ms), connue à la fin. */
     val elapsedMs: Long = 0,
-    /** `copy`, `move`, `compress` ou `extract`. */
+    /** `copy`, `move`, `compress`, `extract`, `encrypt`, `decrypt` ou `verify`. */
     val kind: String = if (move) "move" else "copy",
+    /** L'opération a échoué sur un mot de passe incorrect (phase 14) : l'écran le redemande. */
+    val badPassword: Boolean = false,
 )
 
 /**
@@ -138,8 +140,8 @@ object Transfers {
             }
         }
 
-        fun finish(error: String? = null, cancelled: Boolean = false) {
-            st = st.copy(finished = true, cancelled = cancelled, error = error, elapsedMs = clock() - startMs)
+        fun finish(error: String? = null, cancelled: Boolean = false, badPassword: Boolean = false) {
+            st = st.copy(finished = true, cancelled = cancelled, error = error, elapsedMs = clock() - startMs, badPassword = badPassword)
             _state.value = st
         }
 

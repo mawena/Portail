@@ -152,6 +152,9 @@ object VolumeManager {
 
     @Volatile private var availMem: () -> Long = { Long.MAX_VALUE }
 
+    /** Mémoire disponible (octets) : la règle des 0,8 × de LUKS sert aussi au scrypt des fichiers age (phase 14). */
+    fun availableMemory(): Long = availMem()
+
     /** Service au premier plan : état et démarrage, injectables pour les tests JVM. */
     @Volatile private var serviceRunning: () -> Boolean = { VolumeService.running }
     @Volatile private var serviceStarter: (() -> Unit)? = null

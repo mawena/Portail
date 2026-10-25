@@ -48,6 +48,7 @@ void main() {
       await pumpScreen(t, 'explorerList', textScale: 2.0);
       await harnessState.startTransfer('v1', ['/Sauvegarde.zip'], 'phone', '/', move: false);
       harnessState.onTransferChanged(TransferMsg(
+        badPassword: false,
           kind: 'copy', move: false, currentName: 'Sauvegarde.zip', fileIndex: 1, fileCount: 1, doneBytes: 50,
           totalBytes: 200, finished: false, cancelled: false, elapsedMs: 0));
       await t.pump();

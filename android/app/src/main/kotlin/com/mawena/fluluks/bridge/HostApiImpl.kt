@@ -10,6 +10,7 @@ import android.provider.DocumentsContract
 import androidx.core.content.pm.PackageInfoCompat
 import com.mawena.fluluks.engine.EngineError
 import com.mawena.fluluks.engine.FileType
+import com.mawena.fluluks.crypt.Crypt
 import com.mawena.fluluks.files.Archives
 import com.mawena.fluluks.files.BatchRename
 import com.mawena.fluluks.files.Details
@@ -662,8 +663,41 @@ class HostApiImpl(
         Archives.startCompress(srcId, paths, dstDir, name)
     }
 
-    override fun startExtract(srcId: String, archive: String, dstId: String, dstDir: String, intoNewFolder: Boolean) = guarded {
-        Archives.startExtract(srcId, archive, dstId, dstDir, intoNewFolder)
+    override fun startExtract(
+        srcId: String, archive: String, dstId: String, dstDir: String, intoNewFolder: Boolean, password: ByteArray?,
+    ) = guarded {
+        Archives.startExtract(srcId, archive, dstId, dstDir, intoNewFolder, password)
+    }
+
+    override fun encryptedInfo(sourceId: String, path: String, callback: (Result<EncryptedInfoMsg>) -> Unit) =
+        io(callback) { Crypt.info(sourceId, path).let { EncryptedInfoMsg(format = it.format, folder = it.folder) } }
+
+    override fun startEncrypt(
+        srcId: String, paths: List<String>, dstId: String, dstDir: String, format: String, together: Boolean, name: String?,
+        deleteOriginal: Boolean, password: ByteArray,
+    ) = guarded {
+        Crypt.startEncrypt(Crypt.EncryptRequest(srcId, paths, dstId, dstDir, format, together, name, deleteOriginal), password)
+    }
+
+    override fun startDecrypt(srcId: String, path: String, dstId: String, dstDir: String, extractFolder: Boolean, password: ByteArray) =
+        guarded { Crypt.startDecrypt(srcId, path, dstId, dstDir, password, extractFolder) }
+
+    override fun startVerify(srcId: String, path: String, password: ByteArray) = guarded { Crypt.startVerify(srcId, path, password) }
+
+    override fun changeFilePassword(
+        srcId: String, path: String, oldPassword: ByteArray, newPassword: ByteArray, callback: (Result<Unit>) -> Unit,
+    ) {
+        scope.launch {
+            val result = try {
+                Crypt.changePassword(srcId, path, oldPassword, newPassword)
+                Result.success(Unit)
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: Throwable) {
+                Result.failure(toFlutterError(e))
+            }
+            callback(result)
+        }
     }
 
     override fun cancelTransfer() = Transfers.cancel()
@@ -851,13 +885,17 @@ class HostApiImpl(
         /** Erreur rendue à Flutter : code fl_err et message français, jamais le détail d'une exception. */
         internal fun toFlutterError(e: Throwable): FlutterError = when (e) {
             is FlutterError -> e // déjà en français (« Aucune application… »)
-            is EngineError -> FlutterError(e.code.toString(), e.message)
-            is FilesException -> FlutterError(e.code.toString(), e.message)
+            is EngineError -> FlutterError(codeOf(e.code), e.message)
+            is FilesException -> FlutterError(codeOf(e.code), e.message)
             is ActivityNotFoundException -> FlutterError(EngineError.FL_ENOTSUP.toString(), Files.MSG_NO_VIEWER)
             else -> FlutterError(EngineError.FL_EIO.toString(), "Erreur inattendue : l'opération a échoué")
         }
 
         const val MSG_NO_PARTITION = "Aucune partition reconnue"
+        const val CODE_BAD_PASSWORD = "badPassword"
+
+        /** Code fl_err, sauf le mauvais mot de passe : code à part, l'écran le redemande au lieu d'afficher une erreur. */
+        private fun codeOf(code: Int) = if (code == EngineError.FL_EBADPASS) CODE_BAD_PASSWORD else code.toString()
         private const val MAX_KEY_FILE = 64 * 1024
         private const val PREFS = "fluluks"
         private const val PREF_READ_ONLY = "lecture_seule"
@@ -913,7 +951,7 @@ class HostApiImpl(
         internal fun transferMsg(t: TransferState) = TransferMsg(
             move = t.move, currentName = t.currentName, fileIndex = t.fileIndex.toLong(), fileCount = t.fileCount.toLong(),
             doneBytes = t.doneBytes, totalBytes = t.totalBytes, finished = t.finished, cancelled = t.cancelled, error = t.error,
-            elapsedMs = t.elapsedMs, kind = t.kind,
+            elapsedMs = t.elapsedMs, kind = t.kind, badPassword = t.badPassword,
         )
 
         private fun volumeMsg(v: VolumeState) = VolumeMsg(

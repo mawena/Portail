@@ -305,7 +305,7 @@ JUnit 4, AndroidX Test.
   `startExtract` reçoit `Uint8List? password` ; `TransferMsg.kind` ∈ … `encrypt`, `decrypt`, `verify` ;
   erreur `badPassword` (« Mot de passe incorrect ») distincte des autres.
 
-- [ ] **Step 1 : tests en échec** : `encryptFileToAgeSameFolder` (`rapport.pdf` → `rapport.pdf.age`, nom unique),
+- [x] **Step 1 : tests en échec** : `encryptFileToAgeSameFolder` (`rapport.pdf` → `rapport.pdf.age`, nom unique),
   `encryptFolderToZipAge`, `encryptSelectionTogether` (« Archive.zip.age » ou le nom choisi), `encryptToZipAes`,
   `encryptToRemoteDestination` (tube de la phase 10), `noPlaintextOutsideDestination` (seules écritures : le partiel
   puis le nom final sur la destination), `partialRemovedOnFailureAndCancel`, `originalKeptUntilVerified`,
@@ -318,13 +318,13 @@ JUnit 4, AndroidX Test.
   `autoLockWaitsForCrypt` (`Transfers.isBusy`) ; `PasswordsTest` : `minLength8`, `nulRefused` ; `CryptFormatsTest` :
   reconnaissance par les premiers octets (`age-encryption.org/v1`, `PK` + drapeau de chiffrement, `LUKS\xba\xbe`),
   pas seulement l'extension.
-- [ ] **Step 2 : implémentation.** Chiffrement : lecture de la source en flux, empreinte SHA-256 du clair (ou du ZIP en
+- [x] **Step 2 : implémentation.** Chiffrement : lecture de la source en flux, empreinte SHA-256 du clair (ou du ZIP en
   clair) calculée au passage, écriture par `NativeOut` vers le partiel ; vérification : relecture complète du
   chiffré (déchiffrement sans écriture) et comparaison d'empreinte, ZIP relu (entrées et tailles) ; renommage ;
   seulement ensuite, si demandé, suppression **définitive** de l'original (sans corbeille). Déchiffrement : `NativeIn`
   de la phase 9 (descripteur, fichier du moteur, mandataire distant) ; dossier : `fl_arc_open_age` puis l'extraction
   de la phase 9 (chemins hostiles, place, deux passages).
-- [ ] **Step 3 : commit** `feat(chiffrement): chiffrer, déchiffrer, vérifier et changer le mot de passe d'un fichier`.
+- [x] **Step 3 : commit** `feat(chiffrement): chiffrer, déchiffrer, vérifier et changer le mot de passe d'un fichier`.
 
 ### Task 6 : ouvrir un fichier chiffré sans copie en clair
 

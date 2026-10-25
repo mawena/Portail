@@ -731,6 +731,7 @@ class TransferMsg {
     this.error,
     required this.elapsedMs,
     required this.kind,
+    required this.badPassword,
   });
 
   bool move;
@@ -754,8 +755,11 @@ class TransferMsg {
   /// Durée de l'opération en millisecondes (débit affiché à la fin).
   int elapsedMs;
 
-  /// `copy`, `move`, `compress` ou `extract`.
+  /// `copy`, `move`, `compress`, `extract`, `encrypt`, `decrypt` ou `verify`.
   String kind;
+
+  /// Échec sur un mot de passe incorrect : l'écran redemande le mot de passe.
+  bool badPassword;
 
   List<Object?> _toList() {
     return <Object?>[
@@ -770,6 +774,7 @@ class TransferMsg {
       error,
       elapsedMs,
       kind,
+      badPassword,
     ];
   }
 
@@ -790,6 +795,7 @@ class TransferMsg {
       error: result[8] as String?,
       elapsedMs: result[9]! as int,
       kind: result[10]! as String,
+      badPassword: result[11]! as bool,
     );
   }
 
@@ -802,7 +808,7 @@ class TransferMsg {
     if (identical(this, other)) {
       return true;
     }
-    return _deepEquals(move, other.move) && _deepEquals(currentName, other.currentName) && _deepEquals(fileIndex, other.fileIndex) && _deepEquals(fileCount, other.fileCount) && _deepEquals(doneBytes, other.doneBytes) && _deepEquals(totalBytes, other.totalBytes) && _deepEquals(finished, other.finished) && _deepEquals(cancelled, other.cancelled) && _deepEquals(error, other.error) && _deepEquals(elapsedMs, other.elapsedMs) && _deepEquals(kind, other.kind);
+    return _deepEquals(move, other.move) && _deepEquals(currentName, other.currentName) && _deepEquals(fileIndex, other.fileIndex) && _deepEquals(fileCount, other.fileCount) && _deepEquals(doneBytes, other.doneBytes) && _deepEquals(totalBytes, other.totalBytes) && _deepEquals(finished, other.finished) && _deepEquals(cancelled, other.cancelled) && _deepEquals(error, other.error) && _deepEquals(elapsedMs, other.elapsedMs) && _deepEquals(kind, other.kind) && _deepEquals(badPassword, other.badPassword);
   }
 
   @override
@@ -811,7 +817,59 @@ class TransferMsg {
 
   @override
   String toString() {
-    return 'TransferMsg(move: $move, currentName: $currentName, fileIndex: $fileIndex, fileCount: $fileCount, doneBytes: $doneBytes, totalBytes: $totalBytes, finished: $finished, cancelled: $cancelled, error: $error, elapsedMs: $elapsedMs, kind: $kind)';
+    return 'TransferMsg(move: $move, currentName: $currentName, fileIndex: $fileIndex, fileCount: $fileCount, doneBytes: $doneBytes, totalBytes: $totalBytes, finished: $finished, cancelled: $cancelled, error: $error, elapsedMs: $elapsedMs, kind: $kind, badPassword: $badPassword)';
+  }
+}
+
+/// Fichier chiffré reconnu par ses premiers octets : `format` vaut `age`, `zip-aes`, `zip-legacy`, `luks` ou
+/// `none` ; `folder` pour un `.zip.age` (dossier ou sélection chiffrés ensemble).
+class EncryptedInfoMsg {
+  EncryptedInfoMsg({
+    required this.format,
+    required this.folder,
+  });
+
+  String format;
+
+  bool folder;
+
+  List<Object?> _toList() {
+    return <Object?>[
+      format,
+      folder,
+    ];
+  }
+
+  Object encode() {
+    return _toList();  }
+
+  static EncryptedInfoMsg decode(Object result) {
+    result as List<Object?>;
+    return EncryptedInfoMsg(
+      format: result[0]! as String,
+      folder: result[1]! as bool,
+    );
+  }
+
+  @override
+  // ignore: avoid_equals_and_hash_code_on_mutable_classes
+  bool operator ==(Object other) {
+    if (other is! EncryptedInfoMsg || other.runtimeType != runtimeType) {
+      return false;
+    }
+    if (identical(this, other)) {
+      return true;
+    }
+    return _deepEquals(format, other.format) && _deepEquals(folder, other.folder);
+  }
+
+  @override
+  // ignore: avoid_equals_and_hash_code_on_mutable_classes
+  int get hashCode => _deepHash(<Object?>[runtimeType, ..._toList()]);
+
+  @override
+  String toString() {
+    return 'EncryptedInfoMsg(format: $format, folder: $folder)';
   }
 }
 
@@ -2189,62 +2247,65 @@ class _PigeonCodec extends StandardMessageCodec {
     }    else if (value is TransferMsg) {
       buffer.putUint8(137);
       writeValue(buffer, value.encode());
-    }    else if (value is TrashItemMsg) {
+    }    else if (value is EncryptedInfoMsg) {
       buffer.putUint8(138);
       writeValue(buffer, value.encode());
-    }    else if (value is DetailsMsg) {
+    }    else if (value is TrashItemMsg) {
       buffer.putUint8(139);
       writeValue(buffer, value.encode());
-    }    else if (value is TextFileMsg) {
+    }    else if (value is DetailsMsg) {
       buffer.putUint8(140);
       writeValue(buffer, value.encode());
-    }    else if (value is TextSaveMsg) {
+    }    else if (value is TextFileMsg) {
       buffer.putUint8(141);
       writeValue(buffer, value.encode());
-    }    else if (value is RenameRuleMsg) {
+    }    else if (value is TextSaveMsg) {
       buffer.putUint8(142);
       writeValue(buffer, value.encode());
-    }    else if (value is RenamePreviewMsg) {
+    }    else if (value is RenameRuleMsg) {
       buffer.putUint8(143);
       writeValue(buffer, value.encode());
-    }    else if (value is FilterItemMsg) {
+    }    else if (value is RenamePreviewMsg) {
       buffer.putUint8(144);
       writeValue(buffer, value.encode());
-    }    else if (value is FolderSizeMsg) {
+    }    else if (value is FilterItemMsg) {
       buffer.putUint8(145);
       writeValue(buffer, value.encode());
-    }    else if (value is SpaceItemMsg) {
+    }    else if (value is FolderSizeMsg) {
       buffer.putUint8(146);
       writeValue(buffer, value.encode());
-    }    else if (value is SpaceReportMsg) {
+    }    else if (value is SpaceItemMsg) {
       buffer.putUint8(147);
       writeValue(buffer, value.encode());
-    }    else if (value is SearchResultMsg) {
+    }    else if (value is SpaceReportMsg) {
       buffer.putUint8(148);
       writeValue(buffer, value.encode());
-    }    else if (value is RemoteServerMsg) {
+    }    else if (value is SearchResultMsg) {
       buffer.putUint8(149);
       writeValue(buffer, value.encode());
-    }    else if (value is SnippetMsg) {
+    }    else if (value is RemoteServerMsg) {
       buffer.putUint8(150);
       writeValue(buffer, value.encode());
-    }    else if (value is TunnelMsg) {
+    }    else if (value is SnippetMsg) {
       buffer.putUint8(151);
       writeValue(buffer, value.encode());
-    }    else if (value is SshKeyMsg) {
+    }    else if (value is TunnelMsg) {
       buffer.putUint8(152);
       writeValue(buffer, value.encode());
-    }    else if (value is ViewPrefsMsg) {
+    }    else if (value is SshKeyMsg) {
       buffer.putUint8(153);
       writeValue(buffer, value.encode());
-    }    else if (value is UiPrefsMsg) {
+    }    else if (value is ViewPrefsMsg) {
       buffer.putUint8(154);
       writeValue(buffer, value.encode());
-    }    else if (value is AppInfoMsg) {
+    }    else if (value is UiPrefsMsg) {
       buffer.putUint8(155);
       writeValue(buffer, value.encode());
-    }    else if (value is FavoriteMsg) {
+    }    else if (value is AppInfoMsg) {
       buffer.putUint8(156);
+      writeValue(buffer, value.encode());
+    }    else if (value is FavoriteMsg) {
+      buffer.putUint8(157);
       writeValue(buffer, value.encode());
     } else {
       super.writeValue(buffer, value);
@@ -2273,42 +2334,44 @@ class _PigeonCodec extends StandardMessageCodec {
       case 137:
         return TransferMsg.decode(readValue(buffer)!);
       case 138:
-        return TrashItemMsg.decode(readValue(buffer)!);
+        return EncryptedInfoMsg.decode(readValue(buffer)!);
       case 139:
-        return DetailsMsg.decode(readValue(buffer)!);
+        return TrashItemMsg.decode(readValue(buffer)!);
       case 140:
-        return TextFileMsg.decode(readValue(buffer)!);
+        return DetailsMsg.decode(readValue(buffer)!);
       case 141:
-        return TextSaveMsg.decode(readValue(buffer)!);
+        return TextFileMsg.decode(readValue(buffer)!);
       case 142:
-        return RenameRuleMsg.decode(readValue(buffer)!);
+        return TextSaveMsg.decode(readValue(buffer)!);
       case 143:
-        return RenamePreviewMsg.decode(readValue(buffer)!);
+        return RenameRuleMsg.decode(readValue(buffer)!);
       case 144:
-        return FilterItemMsg.decode(readValue(buffer)!);
+        return RenamePreviewMsg.decode(readValue(buffer)!);
       case 145:
-        return FolderSizeMsg.decode(readValue(buffer)!);
+        return FilterItemMsg.decode(readValue(buffer)!);
       case 146:
-        return SpaceItemMsg.decode(readValue(buffer)!);
+        return FolderSizeMsg.decode(readValue(buffer)!);
       case 147:
-        return SpaceReportMsg.decode(readValue(buffer)!);
+        return SpaceItemMsg.decode(readValue(buffer)!);
       case 148:
-        return SearchResultMsg.decode(readValue(buffer)!);
+        return SpaceReportMsg.decode(readValue(buffer)!);
       case 149:
-        return RemoteServerMsg.decode(readValue(buffer)!);
+        return SearchResultMsg.decode(readValue(buffer)!);
       case 150:
-        return SnippetMsg.decode(readValue(buffer)!);
+        return RemoteServerMsg.decode(readValue(buffer)!);
       case 151:
-        return TunnelMsg.decode(readValue(buffer)!);
+        return SnippetMsg.decode(readValue(buffer)!);
       case 152:
-        return SshKeyMsg.decode(readValue(buffer)!);
+        return TunnelMsg.decode(readValue(buffer)!);
       case 153:
-        return ViewPrefsMsg.decode(readValue(buffer)!);
+        return SshKeyMsg.decode(readValue(buffer)!);
       case 154:
-        return UiPrefsMsg.decode(readValue(buffer)!);
+        return ViewPrefsMsg.decode(readValue(buffer)!);
       case 155:
-        return AppInfoMsg.decode(readValue(buffer)!);
+        return UiPrefsMsg.decode(readValue(buffer)!);
       case 156:
+        return AppInfoMsg.decode(readValue(buffer)!);
+      case 157:
         return FavoriteMsg.decode(readValue(buffer)!);
       default:
         return super.readValueOfType(type, buffer);
@@ -2870,15 +2933,116 @@ class FluLuksHostApi {
     ;
   }
 
-  /// Extrait `archive` sous `dstDir` de `dstId`, dans un dossier au nom de l'archive si `intoNewFolder`.
-  Future<void> startExtract(String srcId, String archive, String dstId, String dstDir, bool intoNewFolder) async {
+  /// Extrait `archive` sous `dstDir` de `dstId`, dans un dossier au nom de l'archive si `intoNewFolder` ;
+  /// `password` pour un ZIP chiffré (mis à zéro après usage).
+  Future<void> startExtract(String srcId, String archive, String dstId, String dstDir, bool intoNewFolder, Uint8List? password) async {
     final pigeonVar_channelName = 'dev.flutter.pigeon.fluluks.FluLuksHostApi.startExtract$pigeonVar_messageChannelSuffix';
     final pigeonVar_channel = BasicMessageChannel<Object?>(
       pigeonVar_channelName,
       pigeonChannelCodec,
       binaryMessenger: pigeonVar_binaryMessenger,
     );
-    final Future<Object?> pigeonVar_sendFuture = pigeonVar_channel.send(<Object?>[srcId, archive, dstId, dstDir, intoNewFolder]);
+    final Future<Object?> pigeonVar_sendFuture = pigeonVar_channel.send(<Object?>[srcId, archive, dstId, dstDir, intoNewFolder, password]);
+    final pigeonVar_replyList = await pigeonVar_sendFuture as List<Object?>?;
+
+    _extractReplyValueOrThrow(
+        pigeonVar_replyList,
+        pigeonVar_channelName,
+        isNullValid: true,
+    )
+    ;
+  }
+
+  /// Format chiffré d'un fichier, reconnu par ses premiers octets.
+  Future<EncryptedInfoMsg> encryptedInfo(String sourceId, String path) async {
+    final pigeonVar_channelName = 'dev.flutter.pigeon.fluluks.FluLuksHostApi.encryptedInfo$pigeonVar_messageChannelSuffix';
+    final pigeonVar_channel = BasicMessageChannel<Object?>(
+      pigeonVar_channelName,
+      pigeonChannelCodec,
+      binaryMessenger: pigeonVar_binaryMessenger,
+    );
+    final Future<Object?> pigeonVar_sendFuture = pigeonVar_channel.send(<Object?>[sourceId, path]);
+    final pigeonVar_replyList = await pigeonVar_sendFuture as List<Object?>?;
+
+    final Object? pigeonVar_replyValue = _extractReplyValueOrThrow(
+        pigeonVar_replyList,
+        pigeonVar_channelName,
+        isNullValid: false,
+    )
+    ;
+    return pigeonVar_replyValue! as EncryptedInfoMsg;
+  }
+
+  /// Chiffre `paths` vers `dstDir` de `dstId` ; `format` : `age` ou `zip` (ZIP AES-256) ; `together` réunit la
+  /// sélection dans un seul fichier (`name`, sinon « Archive ») ; l'original n'est supprimé, définitivement, qu'après
+  /// vérification du chiffré si `deleteOriginal`. Même créneau que les copies.
+  Future<void> startEncrypt(String srcId, List<String> paths, String dstId, String dstDir, String format, bool together, String? name, bool deleteOriginal, Uint8List password) async {
+    final pigeonVar_channelName = 'dev.flutter.pigeon.fluluks.FluLuksHostApi.startEncrypt$pigeonVar_messageChannelSuffix';
+    final pigeonVar_channel = BasicMessageChannel<Object?>(
+      pigeonVar_channelName,
+      pigeonChannelCodec,
+      binaryMessenger: pigeonVar_binaryMessenger,
+    );
+    final Future<Object?> pigeonVar_sendFuture = pigeonVar_channel.send(<Object?>[srcId, paths, dstId, dstDir, format, together, name, deleteOriginal, password]);
+    final pigeonVar_replyList = await pigeonVar_sendFuture as List<Object?>?;
+
+    _extractReplyValueOrThrow(
+        pigeonVar_replyList,
+        pigeonVar_channelName,
+        isNullValid: true,
+    )
+    ;
+  }
+
+  /// Déchiffre `path` vers `dstDir` de `dstId` ; un `.zip.age` est extrait, sauf si `extractFolder` est faux (le ZIP
+  /// est alors gardé).
+  Future<void> startDecrypt(String srcId, String path, String dstId, String dstDir, bool extractFolder, Uint8List password) async {
+    final pigeonVar_channelName = 'dev.flutter.pigeon.fluluks.FluLuksHostApi.startDecrypt$pigeonVar_messageChannelSuffix';
+    final pigeonVar_channel = BasicMessageChannel<Object?>(
+      pigeonVar_channelName,
+      pigeonChannelCodec,
+      binaryMessenger: pigeonVar_binaryMessenger,
+    );
+    final Future<Object?> pigeonVar_sendFuture = pigeonVar_channel.send(<Object?>[srcId, path, dstId, dstDir, extractFolder, password]);
+    final pigeonVar_replyList = await pigeonVar_sendFuture as List<Object?>?;
+
+    _extractReplyValueOrThrow(
+        pigeonVar_replyList,
+        pigeonVar_channelName,
+        isNullValid: true,
+    )
+    ;
+  }
+
+  /// Relit entièrement un fichier chiffré sans rien écrire ; le résultat arrive par `TransferMsg` (`verify`).
+  Future<void> startVerify(String srcId, String path, Uint8List password) async {
+    final pigeonVar_channelName = 'dev.flutter.pigeon.fluluks.FluLuksHostApi.startVerify$pigeonVar_messageChannelSuffix';
+    final pigeonVar_channel = BasicMessageChannel<Object?>(
+      pigeonVar_channelName,
+      pigeonChannelCodec,
+      binaryMessenger: pigeonVar_binaryMessenger,
+    );
+    final Future<Object?> pigeonVar_sendFuture = pigeonVar_channel.send(<Object?>[srcId, path, password]);
+    final pigeonVar_replyList = await pigeonVar_sendFuture as List<Object?>?;
+
+    _extractReplyValueOrThrow(
+        pigeonVar_replyList,
+        pigeonVar_channelName,
+        isNullValid: true,
+    )
+    ;
+  }
+
+  /// Change le mot de passe d'un fichier `.age` (nouveau fichier, puis remplacement) ; erreur `badPassword` si
+  /// l'ancien est incorrect.
+  Future<void> changeFilePassword(String srcId, String path, Uint8List oldPassword, Uint8List newPassword) async {
+    final pigeonVar_channelName = 'dev.flutter.pigeon.fluluks.FluLuksHostApi.changeFilePassword$pigeonVar_messageChannelSuffix';
+    final pigeonVar_channel = BasicMessageChannel<Object?>(
+      pigeonVar_channelName,
+      pigeonChannelCodec,
+      binaryMessenger: pigeonVar_binaryMessenger,
+    );
+    final Future<Object?> pigeonVar_sendFuture = pigeonVar_channel.send(<Object?>[srcId, path, oldPassword, newPassword]);
     final pigeonVar_replyList = await pigeonVar_sendFuture as List<Object?>?;
 
     _extractReplyValueOrThrow(

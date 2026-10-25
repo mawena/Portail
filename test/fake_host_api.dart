@@ -646,7 +646,8 @@ class FakeHostApi implements HostApi {
       compresses.add((srcId, paths, dstDir, name));
 
   @override
-  Future<void> startExtract(String srcId, String archive, String dstId, String dstDir, bool intoNewFolder) async =>
+  Future<void> startExtract(String srcId, String archive, String dstId, String dstDir, bool intoNewFolder,
+          {Uint8List? password}) async =>
       extracts.add((srcId, archive, dstId, dstDir, intoNewFolder));
 
   /// Réponse de [search] selon la requête ; un completer dans [searchGates] la retarde.

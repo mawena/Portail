@@ -66,6 +66,7 @@ void main() {
     var notified = 0;
     state.addListener(() => notified++);
     state.onTransferChanged(TransferMsg(
+        badPassword: false,
       kind: 'move',
       move: true,
       currentName: 'a',
