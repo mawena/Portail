@@ -421,24 +421,42 @@ dans le même commit que le travail.
 - [ ] Fusion `feature/ia` → `develop`
 - [ ] Version `v1.8.0`
 
-### Phase 16 — Gestion des partitions, comme GParted
-- [ ] Plan de la phase 16 écrit *(demande du 2026-10-22 ; spec § 17, § 24 et § 25 ; phase 12, puis 13, 14, 15, 16, 17 et 15, jusqu'au 2026-10-25)*
+### Phase 16 — Analyseur de stockage, comme celui d'Ubuntu ([plan](2026-10-25-phase16-analyseur.md))
+- [x] Plan de la phase 16 écrit *(demande du 2026-10-25 ; spec § 26)*
+- [ ] T1 — Moteur : place allouée, inode et liens physiques dans la liste d'un dossier (ext4, FAT, exFAT, NTFS)
+- [ ] T2 — Liste d'un dossier avec sa place réelle : téléphone et cartes SD par lstat, disques et coffres par le moteur, distant en taille apparente
+- [ ] T3 — Arbre compact et parcours itératif borné (liens physiques une fois, fichiers creux, dossiers inaccessibles, exclusions)
+- [ ] T4 — Analyses gardées, vues élaguées pour les graphiques, part « hors analyse », corbeille et exclusions
+- [ ] T5 — Pont Pigeon et contrôleur de l'écran d'analyse (résultats au fur et à mesure)
+- [ ] T6 — Géométrie des anneaux et de la carte proportionnelle, couleurs contrastées
+- [ ] T7 — Graphiques à l'écran : toucher pour entrer, glisser pour lire, appui long pour le menu, TalkBack
+- [ ] T8 — Écran de l'analyse : arbre synchronisé, fil d'Ariane, profondeur, actions (explorateur, chemin, propriétés, corbeille)
+- [ ] T9 — Accueil de l'analyseur, points d'entrée, emplacements exclus ; retrait de l'analyse de la phase 9
+- [ ] T10 — Documentation
+- [ ] T11 — Essais instrumentés sur le Pixel
+- [ ] *(utilisateur)* T12 — Essais sur le Pixel (comparaison avec Baobab sous Ubuntu)
+- [ ] Relecture finale de toute la branche
+- [ ] Fusion `feature/analyseur` → `develop`
+- [ ] Version `v1.9.0`
+
+### Phase 17 — Gestion des partitions, comme GParted
+- [ ] Plan de la phase 17 écrit *(demande du 2026-10-22 ; spec § 17, § 24, § 25 et § 26 ; phase 12, puis 13, 14, 15, 16, 17 et 15, jusqu'au 2026-10-25, puis 16, puis 17 depuis le 2026-10-25)*
 - [ ] Vue du disque : partitions et espace libre à l'échelle, système de fichiers, étiquette, taille, place occupée
 - [ ] Taille choisie au formatage ; créer une partition dans un espace libre, en supprimer une, formater une seule partition
 - [ ] Changer l'étiquette d'une partition ; nouvelle table MBR ou GPT
 - [ ] Redimensionner (agrandir, réduire) : ext4 par resize2fs, NTFS par ntfsresize, système de fichiers dans LUKS2 ; FAT32 et exFAT à étudier
 - [ ] Déplacer une partition, si le plan sait le rendre sûr
 - [ ] Opérations préparées, résumées, puis appliquées après confirmation
-- [ ] Version `v1.9.0`
+- [ ] Version `v1.10.0`
 
-### Phase 17 — Vérification et réparation des disques
-- [ ] Plan de la phase 17 écrit *(demande du 2026-10-22 ; spec § 16 et § 25 ; phase 11, puis 12, 13, 14, 15 et 16, jusqu'au 2026-10-25)*
+### Phase 18 — Vérification et réparation des disques
+- [ ] Plan de la phase 18 écrit *(demande du 2026-10-22 ; spec § 16, § 25 et § 26 ; phase 11, puis 12, 13, 14, 15 et 16, jusqu'au 2026-10-25, puis 17, puis 18 depuis le 2026-10-25)*
 - [ ] Vérification en lecture seule avec rapport, pour chaque système de fichiers
 - [ ] Réparation ext4 par e2fsck (e2fsprogs, sur l'accès USB du moteur)
 - [ ] Réparation NTFS par ntfsfix (ntfs-3g)
 - [ ] Réparation FAT32 et exFAT par fsck.fat et fsck.exfat
 - [ ] LUKS : vérification des deux en-têtes, sauvegarde et restauration de l'en-tête
-- [ ] Version `v1.10.0`
+- [ ] Version `v1.11.0`
 ---
 
 ## Principes
