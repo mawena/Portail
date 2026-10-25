@@ -32,7 +32,7 @@ echecs=0
 for coffre in "${COFFRES[@]}"; do
   nom="$(basename "$coffre" .luks)"     # coffre-<fs>
   fs="${nom#coffre-}"
-  man="$DIR/$nom.sha256"
+  man="$(realpath -m "$DIR/$nom.sha256")"
   err() { echo "ÉCHEC $nom : $*"; echecs=$((echecs + 1)); nettoyer; }
   [ -f "$man" ] || { err "manifeste $man absent"; continue; }
   printf '%s' "$PASS" | cryptsetup open --readonly --key-file - "$coffre" "$MAP" || { err "cryptsetup open"; continue; }
@@ -44,7 +44,7 @@ for coffre in "${COFFRES[@]}"; do
   esac
   sortie="$("${juge[@]}" "$dev" 2>&1)" || { err "${juge[0]} :"; echo "$sortie"; continue; }
   mount -o ro -t "$type" "$dev" "$MNT" || { err "montage $type"; continue; }
-  sortie="$(cd "$MNT" && sha256sum -c "$(realpath "$man")" 2>&1)" || { err "contenu :"; echo "$sortie"; continue; }
+  sortie="$(cd "$MNT" && sha256sum -c "$man" 2>&1)" || { err "contenu :"; echo "$sortie"; continue; }
   etiquette="$(blkid -p -o value -s LABEL "$dev")"
   nettoyer
   echo "OK     $nom (étiquette « $etiquette »)"
