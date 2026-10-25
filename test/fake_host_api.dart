@@ -647,8 +647,79 @@ class FakeHostApi implements HostApi {
 
   @override
   Future<void> startExtract(String srcId, String archive, String dstId, String dstDir, bool intoNewFolder,
-          {Uint8List? password}) async =>
-      extracts.add((srcId, archive, dstId, dstDir, intoNewFolder));
+      {Uint8List? password}) async {
+    extracts.add((srcId, archive, dstId, dstDir, intoNewFolder));
+    if (password != null) {
+      passwordBuffers.add(password);
+      extractPasswords.add(utf8.decode(password));
+    }
+  }
+
+  // --- chiffrement (phase 14) ---
+
+  /// Mots de passe reçus pour une extraction ; tampons reçus (l'écran doit les mettre à zéro après l'appel).
+  final extractPasswords = <String>[];
+  final passwordBuffers = <Uint8List>[];
+
+  /// Format chiffré par chemin (sinon `none`) ; [filePassword] : le seul mot de passe accepté par openDecrypted et
+  /// changeFilePassword (sinon erreur `badPassword`).
+  final encryptedInfos = <String, EncryptedInfoMsg>{};
+  String filePassword = '';
+  final encrypts = <({String srcId, List<String> paths, String dstId, String dstDir, String format, bool together,
+      String? name, bool deleteOriginal, String password, Uint8List bytes})>[];
+  final decrypts = <({String srcId, String path, String dstId, String dstDir, bool extractFolder, String password})>[];
+  final verifies = <(String, String, String)>[];
+  final changedPasswords = <(String, String, String, String)>[];
+  final openDecryptedPasswords = <String>[];
+  final closedDecrypted = <String>[];
+  int _decCount = 0;
+
+  String _take(Uint8List b) {
+    passwordBuffers.add(b);
+    return utf8.decode(b);
+  }
+
+  PlatformException _bad() => PlatformException(code: 'badPassword', message: 'Mot de passe incorrect');
+
+  @override
+  Future<EncryptedInfoMsg> encryptedInfo(String sourceId, String path) async =>
+      encryptedInfos[path] ?? EncryptedInfoMsg(format: 'none', folder: false);
+
+  @override
+  Future<void> startEncrypt(String srcId, List<String> paths, String dstId, String dstDir, String format, bool together,
+      String? name, bool deleteOriginal, Uint8List password) async {
+    encrypts.add((srcId: srcId, paths: paths, dstId: dstId, dstDir: dstDir, format: format, together: together,
+        name: name, deleteOriginal: deleteOriginal, password: utf8.decode(password), bytes: password));
+    passwordBuffers.add(password);
+  }
+
+  @override
+  Future<void> startDecrypt(String srcId, String path, String dstId, String dstDir, bool extractFolder, Uint8List password) async =>
+      decrypts.add((srcId: srcId, path: path, dstId: dstId, dstDir: dstDir, extractFolder: extractFolder, password: _take(password)));
+
+  @override
+  Future<void> startVerify(String srcId, String path, Uint8List password) async => verifies.add((srcId, path, _take(password)));
+
+  @override
+  Future<void> changeFilePassword(String srcId, String path, Uint8List oldPassword, Uint8List newPassword) async {
+    final o = _take(oldPassword), n = _take(newPassword);
+    if (o != filePassword) throw _bad();
+    changedPasswords.add((srcId, path, o, n));
+  }
+
+  @override
+  Future<SourceMsg> openDecrypted(String srcId, String path, Uint8List password) async {
+    final p = _take(password);
+    openDecryptedPasswords.add(p);
+    if (p != filePassword) throw _bad();
+    final name = path.substring(path.lastIndexOf('/') + 1).replaceFirst(RegExp(r'\.age$'), '');
+    return SourceMsg(id: 'dec:${++_decCount}', stableKey: 'dec:$_decCount', kind: 'decrypted', label: name,
+        totalBytes: 1000, freeBytes: 0, readOnly: true, roReason: 'Fichier déchiffré en mémoire, en lecture seule',
+        encrypted: false);
+  }
+
+  @override
+  Future<void> closeDecrypted(String sourceId) async => closedDecrypted.add(sourceId);
 
   /// Copies protégées reçues (copies des octets, l'appelant met les siens à zéro).
   final secretCopies = <Uint8List>[];

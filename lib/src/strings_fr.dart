@@ -50,6 +50,54 @@ class Fr {
 
   /// « Force : bon ».
   static String strength(String level) => 'Force\u00A0: $level';
+
+  // chiffrer et déchiffrer dans l'explorateur (phase 14)
+  static const encryptAction = 'Chiffrer…';
+  static const decryptAction = 'Déchiffrer…';
+  static const verifyAction = 'Vérifier';
+  static const changePasswordAction = 'Changer le mot de passe';
+  static const encryptTitle = 'Chiffrer';
+  static const encryptFormat = 'Format';
+  static const formatStrong = 'Chiffrement fort';
+  static const formatStrongHelp =
+      "Format age\u00A0: noms des fichiers cachés, toute modification détectée. Se déchiffre sur un ordinateur avec l'outil libre age.";
+  static const formatZip = 'ZIP chiffré (AES-256)';
+  static const formatZipHelp = "Pour l'échange\u00A0: s'ouvre avec 7-Zip, WinRAR ou bsdtar.";
+  static const zipNamesWarning =
+      'Dans un ZIP chiffré, les noms et les tailles des fichiers restent visibles, et le mot de passe se devine plus '
+      'facilement\u00A0: choisissez-le long.';
+  static const together = 'Réunir dans un seul fichier';
+  static const togetherName = 'Nom du fichier';
+  static const destination = 'Destination';
+  static const destHere = 'Ce dossier';
+  static const destOther = 'Autre dossier…';
+  static String destChosen(String storage, String path) => '$storage · $path';
+  static const deleteOriginal = "Supprimer l'original";
+  static const deleteOriginalHelp = 'Après vérification du fichier chiffré, définitivement (sans corbeille)';
+  static const deleteOriginalFlash =
+      'Sur une mémoire flash (téléphone, carte SD, clé USB), une suppression ne garantit pas que les anciennes données '
+      "soient irrécupérables. Sur un disque chiffré LUKS, l'original n'a jamais été en clair sur le support.";
+  static const encryptButton = 'Chiffrer';
+  static const openDecrypted = 'Ouvrir';
+  static const decryptHere = 'Déchiffrer ici';
+  static const decryptTo = 'Déchiffrer vers…';
+  static const badPassword = 'Mot de passe incorrect';
+  static const fileIntact = 'Fichier intact';
+  static const shareEncrypted = 'Partager le fichier chiffré';
+  static const shareHintAge = 'Le destinataire déchiffre avec age';
+  static const shareHintZip = 'Le destinataire ouvre le ZIP avec 7-Zip';
+  static const sharePlainTitle = 'Partager en clair\u202F?';
+  static const sharePlainBody = 'Le destinataire recevra le fichier en clair.';
+  static const pickFolderTitle = 'Choisir un dossier';
+  static const pickHere = 'Choisir ce dossier';
+  static const pickUp = 'Dossier parent';
+  static const pickStorages = 'Stockages';
+  static const protectedArchive = 'Archive protégée par un mot de passe';
+  static const extractButton = 'Extraire';
+  static const currentPassword = 'Mot de passe actuel';
+  static const changeButton = 'Changer';
+  static const passwordChanged = 'Mot de passe changé';
+  static const kindEncrypted = 'fichier chiffré';
   static const openReadOnly = 'Ouvrir en lecture seule';
   static const unlocking =
       'Déverrouillage en cours… cela peut prendre quelques secondes';
@@ -524,6 +572,9 @@ class Fr {
       'move' => 'Déplacement',
       'compress' => 'Compression',
       'extract' => 'Extraction',
+      'encrypt' => 'Chiffrement',
+      'decrypt' => 'Déchiffrement',
+      'verify' => 'Vérification',
       _ => 'Copie',
     };
     return '$what de $name — $i sur $n · $pct\u202F%';

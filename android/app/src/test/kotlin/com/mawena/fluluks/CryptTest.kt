@@ -423,6 +423,7 @@ class CryptTest {
         val out = names().filter { it != "rapport.pdf" && it != "rapport.pdf.age" }
         assertEquals(1, out.size)
         assertTrue(out[0], out[0].startsWith("rapport.pdf") && out[0].endsWith(".age"))
+        assertEquals(out[0], s.currentName) // nom final rendu à l'écran (Partager le fichier chiffré)
         assertEquals("age", CryptFormats.detect(File(root, out[0]).readBytes()))
         assertArrayEquals(d, File(root, "rapport.pdf").readBytes()) // original gardé (pas demandé)
         File(root, "out").mkdir()

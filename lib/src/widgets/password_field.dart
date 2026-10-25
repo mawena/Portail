@@ -72,7 +72,11 @@ class PasswordField extends StatefulWidget {
   State<PasswordField> createState() => _PasswordFieldState();
 }
 
-class _PasswordFieldState extends State<PasswordField> {
+class _PasswordFieldState extends State<PasswordField> with AutomaticKeepAliveClientMixin {
+  /// Gardé en vie dans une liste défilante : un défilement ne démonte pas le champ (ni n'efface ce qui est tapé).
+  @override
+  bool get wantKeepAlive => true;
+
   bool _obscure = true;
   bool? _lastValid;
   Set<String>? _words;
@@ -93,10 +97,20 @@ class _PasswordFieldState extends State<PasswordField> {
 
   @override
   void dispose() {
-    widget.controller.removeListener(_changed);
-    widget.confirm?.removeListener(_changed);
-    widget.controller.clear();
-    widget.confirm?.clear();
+    final c = widget.controller, k = widget.confirm;
+    c.removeListener(_changed);
+    k?.removeListener(_changed);
+    // vidés après cette image : pendant le démontage, l'arbre ne peut pas se reconstruire ; un champ déjà libéré
+    // par son écran n'a plus rien à vider
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      for (final x in [c, ?k]) {
+        try {
+          x.clear();
+        } on FlutterError {
+          // contrôleur libéré par son écran
+        }
+      }
+    });
     super.dispose();
   }
 
@@ -163,6 +177,7 @@ class _PasswordFieldState extends State<PasswordField> {
 
   @override
   Widget build(BuildContext context) {
+    super.build(context);
     final theme = Theme.of(context);
     final text = widget.controller.text;
     final rules = _creating && widget.enforceRules;

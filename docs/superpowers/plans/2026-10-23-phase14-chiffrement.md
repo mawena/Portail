@@ -390,16 +390,16 @@ JUnit 4, AndroidX Test.
   `lib/src/state/app_state.dart`, `lib/src/strings_fr.dart`, `test/fake_host_api.dart`
 - Test : `test/encrypt_screens_test.dart`
 
-- [ ] **Step 1 : tests en échec** : `encryptSheetDefaults` (Chiffrement fort, même dossier, original gardé),
+- [x] **Step 1 : tests en échec** : `encryptSheetDefaults` (Chiffrement fort, même dossier, original gardé),
   `zipFormatShowsNamesWarning`, `deleteOriginalExplainsFlash`, `severalSelectedOffersTogether`,
   `destinationPickerIncludesRemote`, `tapAgeFileAsksPasswordThenOffersOpenDecryptVerify`,
   `tapZipAgeOffersExtract`, `tapProtectedZipAsksPassword` (extraction de la phase 9 avec mot de passe),
   `badPasswordStaysInDialog` (champ vidé, message, nouvel essai), `resultOffersShare` (« Partager le fichier
   chiffré » ; rappel « Le destinataire déchiffre avec age » ou « avec 7-Zip »), `passwordBytesZeroedAfterCall`,
   `lockIconOnEncryptedFiles`.
-- [ ] **Step 2 : implémentation** ; écrans ajoutés au banc `test/screen_harness.dart` (`encrypt`, `decrypt`) :
+- [x] **Step 2 : implémentation** ; écrans ajoutés au banc `test/screen_harness.dart` (`encrypt`, `decrypt`) :
   48 dp, contraste, 200 %, TalkBack, pas de texte sous la barre de navigation.
-- [ ] **Step 3 : commit** `feat(chiffrement): Chiffrer et Déchiffrer dans l'explorateur`.
+- [x] **Step 3 : commit** `feat(chiffrement): Chiffrer et Déchiffrer dans l'explorateur`.
 
 ### Task 9 : coffres (Kotlin)
 

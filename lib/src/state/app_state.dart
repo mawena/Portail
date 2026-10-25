@@ -45,6 +45,10 @@ class AppState extends ChangeNotifier implements FluLuksEventsApi {
   final _closedNoticed = <String>{}; // stockages disparus dont la fermeture a déjà été annoncée
   (String, String)? _transferDestination;
 
+  /// Vues déchiffrées ouvertes (phase 14) et le stockage de leur fichier chiffré.
+  final _decrypted = <String, (SourceMsg, String)>{};
+  ({String dstId, String dstDir, String format, bool single})? _lastEncrypt;
+
   List<DiskMsg> get disks => _disks;
   List<VolumeMsg> get volumes => _volumes;
 
@@ -129,7 +133,7 @@ class AppState extends ChangeNotifier implements FluLuksEventsApi {
     for (final s in _sources) {
       if (s.id == id) return s;
     }
-    return null;
+    return _decrypted[id]?.$1;
   }
 
   /// « Ouvrir les disques en lecture seule » : tout nouveau montage se fait alors sans écriture.
@@ -270,6 +274,7 @@ class AppState extends ChangeNotifier implements FluLuksEventsApi {
       if (before.difference(now).isNotEmpty) {
         if (_clipboard != null && !now.contains(_clipboard!.sourceId)) _clipboard = null;
         if (_pendingExtract != null && !now.contains(_pendingExtract!.sourceId)) _pendingExtract = null;
+        _decrypted.removeWhere((_, v) => !now.contains(v.$2)); // retirées côté Kotlin avec leur stockage
         PaintingBinding.instance.imageCache.clear();
       }
       _allFilesAccess = await api.hasAllFilesAccess();
@@ -388,12 +393,59 @@ class AppState extends ChangeNotifier implements FluLuksEventsApi {
         _transferDestination = (srcId, dstDir);
       });
 
-  /// Extrait [archive] sous [dstDir] de [dstId], dans un nouveau dossier au nom de l'archive si [intoNewFolder].
-  Future<void> startExtract(String srcId, String archive, String dstId, String dstDir, {required bool intoNewFolder}) =>
+  /// Extrait [archive] sous [dstDir] de [dstId], dans un nouveau dossier au nom de l'archive si [intoNewFolder] ;
+  /// [password] pour une archive protégée (mis à zéro par l'appelant).
+  Future<void> startExtract(String srcId, String archive, String dstId, String dstDir,
+          {required bool intoNewFolder, Uint8List? password}) =>
       _guard(() async {
-        await api.startExtract(srcId, archive, dstId, dstDir, intoNewFolder);
+        await api.startExtract(srcId, archive, dstId, dstDir, intoNewFolder, password: password);
         _transferDestination = (dstId, dstDir);
       });
+
+  // ---------------------------------------------------------------- chiffrement (phase 14)
+
+  /// Dernier chiffrement lancé : où il écrit, son format, et s'il produit un seul fichier (à partager ensuite).
+  ({String dstId, String dstDir, String format, bool single})? get lastEncrypt => _lastEncrypt;
+
+  /// Chiffre [paths] (format `age` ou `zip`) ; [password] est mis à zéro par l'appelant.
+  Future<void> startEncrypt(String srcId, List<String> paths, String dstId, String dstDir,
+          {required String format, required bool together, String? name, required bool deleteOriginal,
+          required Uint8List password}) =>
+      _guard(() async {
+        await api.startEncrypt(srcId, paths, dstId, dstDir, format, together, name, deleteOriginal, password);
+        _transferDestination = (dstId, dstDir);
+        _lastEncrypt = (dstId: dstId, dstDir: dstDir, format: format, single: together || paths.length == 1);
+      });
+
+  Future<void> startDecrypt(String srcId, String path, String dstId, String dstDir,
+          {required bool extractFolder, required Uint8List password}) =>
+      _guard(() async {
+        await api.startDecrypt(srcId, path, dstId, dstDir, extractFolder, password);
+        _transferDestination = (dstId, dstDir);
+      });
+
+  Future<void> startVerify(String srcId, String path, Uint8List password) =>
+      _guard(() => api.startVerify(srcId, path, password));
+
+  /// Change le mot de passe d'un fichier `.age` ; erreur `badPassword` rendue telle quelle.
+  Future<void> changeFilePassword(String srcId, String path, Uint8List oldPassword, Uint8List newPassword) =>
+      api.changeFilePassword(srcId, path, oldPassword, newPassword);
+
+  /// Ouvre une vue déchiffrée de [path] ; erreur `badPassword` rendue telle quelle.
+  Future<SourceMsg> openDecrypted(String srcId, String path, Uint8List password) async {
+    final s = await api.openDecrypted(srcId, path, password);
+    _decrypted[s.id] = (s, srcId);
+    return s;
+  }
+
+  Future<void> closeDecrypted(String id) async {
+    if (_decrypted.remove(id) == null) return;
+    try {
+      await api.closeDecrypted(id);
+    } on PlatformException {
+      // déjà fermée avec son stockage
+    }
+  }
 
   Future<void> cancelTransfer() => _guard(() => api.cancelTransfer());
 

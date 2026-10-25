@@ -6,6 +6,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:fluluks/src/app.dart';
 import 'package:fluluks/src/bridge/fluluks_api.g.dart';
 import 'package:fluluks/src/screens/about_screen.dart';
+import 'package:fluluks/src/screens/encrypt_sheet.dart';
 import 'package:fluluks/src/screens/explorer_screen.dart';
 import 'package:fluluks/src/screens/filter_screen.dart';
 import 'package:fluluks/src/screens/format_screen.dart';
@@ -23,6 +24,7 @@ import 'package:fluluks/src/terminal/terminal_screen.dart';
 import 'package:fluluks/src/terminal/tunnels_screen.dart';
 import 'package:fluluks/src/ui/root.dart';
 import 'package:fluluks/src/widgets/mini_player.dart';
+import 'package:fluluks/src/widgets/decrypt_dialog.dart';
 import 'package:fluluks/src/widgets/unlock_dialog.dart';
 
 import 'demo_data.dart';
@@ -32,6 +34,7 @@ import 'fake_host_api.dart';
 const screens = [
   'home', 'explorerList', 'explorerGrid', 'filterGrid', 'search', 'globalSearch', 'trash', 'space', 'settings', //
   'about', 'help', 'welcome', 'unlock', 'format', 'editor', 'serverForm', 'nowPlaying', 'terminal', 'sshKeys', 'tunnels',
+  'encrypt', 'decrypt',
 ];
 
 /// Pont et état du dernier [pumpScreen] (pour les tests qui agissent ensuite sur l'écran).
@@ -121,7 +124,8 @@ Future<void> pumpScreen(
     'terminal' => TerminalScreen(state: state, sessionId: terminalId!),
     'sshKeys' => SshKeysScreen(state: state),
     'tunnels' => TunnelsScreen(state: state, serverId: 's1', sessionId: terminalId),
-    'unlock' || 'nowPlaying' => null,
+    'encrypt' => EncryptSheet(state: state, sourceId: 'phone', paths: const ['/notes-1.txt', '/Documents'], dir: '/'),
+    'unlock' || 'nowPlaying' || 'decrypt' => null,
     _ => throw ArgumentError.value(screen, 'screen'),
   };
   final nav = t.state<NavigatorState>(find.byType(Navigator).first);
@@ -130,6 +134,17 @@ Future<void> pumpScreen(
   } else if (screen == 'nowPlaying') {
     // comme dans l'application : depuis le lecteur réduit, qui se cache pendant « Lecture en cours »
     await t.tap(find.descendant(of: find.byType(MiniPlayer), matching: find.text('Morceau 2.mp3')));
+  } else if (screen == 'decrypt') {
+    showDialog<void>(
+      context: nav.context,
+      builder: (_) => DecryptDialog(
+        state: state,
+        sourceId: 'phone',
+        entry: EntryMsg(name: 'rapport.pdf.age', path: '/rapport.pdf.age', type: 'file', size: 52000, mtime: 1700000000),
+        dir: '/',
+        folder: false,
+      ),
+    );
   } else if (screen == 'unlock') {
     showDialog<void>(
       context: nav.context,

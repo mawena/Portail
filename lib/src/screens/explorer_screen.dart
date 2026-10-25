@@ -18,10 +18,12 @@ import '../viewers.dart';
 import '../widgets/bottom_dock.dart';
 import '../widgets/breadcrumbs.dart';
 import '../widgets/clipboard_bar.dart';
+import '../widgets/decrypt_dialog.dart';
 import '../widgets/entry_collection.dart';
 import '../widgets/properties_sheet.dart';
 import '../widgets/thumb.dart';
 import 'batch_rename_screen.dart';
+import 'encrypt_sheet.dart';
 import 'search_screen.dart';
 import 'space_screen.dart';
 import 'trash_screen.dart';
@@ -186,6 +188,10 @@ class _ExplorerScreenState extends State<ExplorerScreen> {
   void _tap(EntryMsg e) {
     if (_selected.isNotEmpty) return _toggle(e, haptic: false);
     if (e.type == 'dir') return _go(e.path);
+    if (isEncryptedName(e.name)) {
+      _decrypt(e);
+      return;
+    }
     if (isArchiveName(e.name)) {
       _archiveSheet(e);
       return;
@@ -209,8 +215,7 @@ class _ExplorerScreenState extends State<ExplorerScreen> {
     if (!mounted) return;
     switch (choice) {
       case 'here':
-        await state.startExtract(widget.sourceId, e.path, widget.sourceId, _path, intoNewFolder: true);
-        _showStateError();
+        await _extract(widget.sourceId, e.path);
       case 'to':
         state.setPendingExtract(widget.sourceId, e.path);
       case 'open':
@@ -222,9 +227,77 @@ class _ExplorerScreenState extends State<ExplorerScreen> {
   Future<void> _extractPending() async {
     final x = state.pendingExtract;
     if (x == null) return;
-    await state.startExtract(x.sourceId, x.path, widget.sourceId, _path, intoNewFolder: true);
-    if (_showStateError()) return;
+    if (!await _extract(x.sourceId, x.path)) return;
     state.clearPendingExtract(); // extraction lancée : la barre disparaît
+  }
+
+  /// ZIP protégé par un mot de passe (AES ou ancien chiffrement), reconnu par ses premiers octets.
+  Future<bool> _isProtected(String sourceId, String path) async {
+    if (!path.toLowerCase().endsWith('.zip')) return false;
+    try {
+      final i = await state.api.encryptedInfo(sourceId, path);
+      return i.format == 'zip-aes' || i.format == 'zip-legacy';
+    } on PlatformException {
+      return false;
+    }
+  }
+
+  /// Extrait [archive] de [sourceId] dans le dossier ouvert ; le mot de passe d'un ZIP protégé est demandé d'abord.
+  /// Vrai si l'extraction est lancée.
+  Future<bool> _extract(String sourceId, String archive) async {
+    Uint8List? pass;
+    if (await _isProtected(sourceId, archive)) {
+      if (!mounted) return false;
+      pass = await askArchivePassword(context, nameOf(archive));
+      if (pass == null) return false;
+    }
+    try {
+      await state.startExtract(sourceId, archive, widget.sourceId, _path, intoNewFolder: true, password: pass);
+    } finally {
+      pass?.fillRange(0, pass.length, 0);
+    }
+    return !_showStateError();
+  }
+
+  /// Fichier chiffré touché : mot de passe, puis Ouvrir, Déchiffrer ou Vérifier. Ouvert, il est lu en mémoire par
+  /// les lecteurs de Portail (la vue est fermée en les quittant) ou par une autre application.
+  Future<void> _decrypt(EntryMsg e) async {
+    final view = await showDialog<SourceMsg>(
+      context: context,
+      builder: (_) => DecryptDialog(
+        state: state,
+        sourceId: widget.sourceId,
+        entry: e,
+        dir: _path,
+        folder: e.name.toLowerCase().endsWith('.zip.age'),
+      ),
+    );
+    if (view == null || !mounted) return;
+    final plain = EntryMsg(name: view.label, path: '/${view.label}', type: 'file', size: view.totalBytes, mtime: e.mtime);
+    if (opensInPortail(state, plain.name)) {
+      // photo et texte s'affichent dans Portail : la vue se ferme avec eux ; musique et vidéo continuent sans l'écran
+      final closeAfter = const {'image', 'text'}.contains(viewerFor(plain.name));
+      await _run(() => openViewer(context, state, view.id, plain, [plain]));
+      if (closeAfter) await state.closeDecrypted(view.id);
+    } else {
+      await _run(() => state.api.openWith(view.id, plain.path));
+    }
+  }
+
+  Future<void> _changePassword(EntryMsg e) async {
+    final ok = await showDialog<bool>(
+      context: context,
+      builder: (_) => ChangeFilePasswordDialog(state: state, sourceId: widget.sourceId, entry: e),
+    );
+    if (ok == true && mounted) {
+      showMessage(context, Fr.passwordChanged, kind: MessageKind.success);
+      _load(quiet: true);
+    }
+  }
+
+  Future<void> _encrypt(List<String> paths) async {
+    await openEncryptSheet(context, state, widget.sourceId, paths, _path);
+    if (mounted) setState(_selected.clear);
   }
 
   /// Montre l'erreur de la dernière action de l'état (opération refusée…) ; vrai s'il y en avait une.
@@ -397,6 +470,7 @@ class _ExplorerScreenState extends State<ExplorerScreen> {
   Future<void> _itemMenu(EntryMsg e) async {
     final file = e.type == 'file';
     final ro = _readOnly;
+    final encrypted = file && isEncryptedName(e.name);
     final a = await showActionSheet<String>(context, title: e.name, actions: [
       SheetAction('openWith', Icons.open_in_new_rounded, Fr.openWith, enabled: file),
       SheetAction('share', Icons.share_rounded, Fr.share, enabled: file),
@@ -404,6 +478,12 @@ class _ExplorerScreenState extends State<ExplorerScreen> {
       SheetAction('cut', Icons.content_cut_rounded, Fr.cut, enabled: !ro),
       SheetAction('rename', Icons.drive_file_rename_outline_rounded, Fr.rename, enabled: !ro),
       SheetAction('compress', Icons.folder_zip_rounded, Fr.compress, enabled: !ro),
+      const SheetAction('encrypt', Icons.lock_rounded, Fr.encryptAction),
+      if (encrypted) ...[
+        const SheetAction('decrypt', Icons.lock_open_rounded, Fr.decryptAction),
+        const SheetAction('verify', Icons.verified_rounded, Fr.verifyAction),
+        SheetAction('changePassword', Icons.password_rounded, Fr.changePasswordAction, enabled: !ro),
+      ],
       const SheetAction('properties', Icons.info_outline_rounded, Fr.properties),
       SheetAction('delete', Icons.delete_rounded, Fr.delete, enabled: !ro, destructive: true),
     ]);
@@ -422,6 +502,12 @@ class _ExplorerScreenState extends State<ExplorerScreen> {
         await _rename(e.path);
       case 'compress':
         await _compress(one);
+      case 'encrypt':
+        await _encrypt(one);
+      case 'decrypt' || 'verify':
+        await _decrypt(e);
+      case 'changePassword':
+        await _changePassword(e);
       case 'properties':
         await showProperties(context, state, widget.sourceId, e.path);
       case 'delete':
@@ -460,6 +546,7 @@ class _ExplorerScreenState extends State<ExplorerScreen> {
               'share' => _share(paths),
               'rename' => _selected.length == 1 ? _rename(_selected.single) : _batchRename(),
               'compress' => _compress(paths),
+              'encrypt' => _encrypt(paths),
               'openWith' => _run(() => state.api.openWith(widget.sourceId, _selected.single)),
               'editText' => _editAsText(_selected.single),
               _ => _properties(_selected.single),
@@ -470,6 +557,7 @@ class _ExplorerScreenState extends State<ExplorerScreen> {
               PopupMenuItem(value: 'editText', enabled: singleFile != null, child: const Text(Fr.editAsText)),
               PopupMenuItem(value: 'rename', enabled: !_readOnly, child: const Text(Fr.rename)),
               PopupMenuItem(value: 'compress', enabled: !_readOnly, child: const Text(Fr.compress)),
+              const PopupMenuItem(value: 'encrypt', child: Text(Fr.encryptAction)),
               PopupMenuItem(value: 'properties', enabled: _selected.length == 1, child: const Text(Fr.properties)),
             ],
           ),

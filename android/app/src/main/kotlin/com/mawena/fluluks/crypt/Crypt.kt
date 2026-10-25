@@ -314,6 +314,7 @@ object Crypt {
                     ?: throw FileNotFoundException("Trop d'éléments portent déjà ce nom")
                 dst.rename(partial, final)
                 keep = true
+                c.st = c.st.copy(currentName = final) // nom réellement donné (unique) : l'écran propose de le partager
                 c.publish(force = true)
             } finally {
                 if (!keep && Transfers.alive(dst)) runCatching { dst.delete(partial) }

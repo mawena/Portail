@@ -84,8 +84,8 @@ void main() {
           'lib/src/screens/search_screen.dart' ||
           'lib/src/screens/global_search_screen.dart' =>
             line.contains('debounce = Duration(milliseconds: 400)'),
-          // barre d'opération : reste affichée 4 s après la fin
-          'lib/src/widgets/transfer_bar.dart' => line.contains('Duration(seconds: 4)'),
+          // barre d'opération : reste affichée 4 s après la fin, 8 s pour partager un fichier chiffré (phase 14)
+          'lib/src/widgets/transfer_bar.dart' => line.contains('Duration(seconds: 4)') || line.contains('Duration(seconds: 8)'),
           _ => false,
         };
     final pattern = RegExp(r'\bDuration\(\s*(microseconds|milliseconds|seconds|minutes|hours|days)\s*:');

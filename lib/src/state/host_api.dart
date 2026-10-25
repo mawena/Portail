@@ -39,6 +39,16 @@ abstract class HostApi {
 
   /// Copie protégée d'un mot de passe (effacée après 60 s) ; [text] est mis à zéro par l'appelant.
   Future<void> copySecret(Uint8List text);
+
+  // chiffrement (phase 14) : les tampons de mots de passe sont mis à zéro par l'appelant après l'appel
+  Future<EncryptedInfoMsg> encryptedInfo(String sourceId, String path);
+  Future<void> startEncrypt(String srcId, List<String> paths, String dstId, String dstDir, String format, bool together,
+      String? name, bool deleteOriginal, Uint8List password);
+  Future<void> startDecrypt(String srcId, String path, String dstId, String dstDir, bool extractFolder, Uint8List password);
+  Future<void> startVerify(String srcId, String path, Uint8List password);
+  Future<void> changeFilePassword(String srcId, String path, Uint8List oldPassword, Uint8List newPassword);
+  Future<SourceMsg> openDecrypted(String srcId, String path, Uint8List password);
+  Future<void> closeDecrypted(String sourceId);
   Future<SearchResultMsg> search(String sourceId, String path, String query, bool showHidden);
   Future<void> cancelSearch();
   Future<SpaceReportMsg> analyzeSpace(String sourceId, String path);
@@ -183,6 +193,25 @@ class PigeonHostApi implements HostApi {
   Future<void> cancelTransfer() => _api.cancelTransfer();
   @override
   Future<void> copySecret(Uint8List text) => _api.copySecret(text);
+  @override
+  Future<EncryptedInfoMsg> encryptedInfo(String sourceId, String path) => _api.encryptedInfo(sourceId, path);
+  @override
+  Future<void> startEncrypt(String srcId, List<String> paths, String dstId, String dstDir, String format, bool together,
+          String? name, bool deleteOriginal, Uint8List password) =>
+      _api.startEncrypt(srcId, paths, dstId, dstDir, format, together, name, deleteOriginal, password);
+  @override
+  Future<void> startDecrypt(String srcId, String path, String dstId, String dstDir, bool extractFolder, Uint8List password) =>
+      _api.startDecrypt(srcId, path, dstId, dstDir, extractFolder, password);
+  @override
+  Future<void> startVerify(String srcId, String path, Uint8List password) => _api.startVerify(srcId, path, password);
+  @override
+  Future<void> changeFilePassword(String srcId, String path, Uint8List oldPassword, Uint8List newPassword) =>
+      _api.changeFilePassword(srcId, path, oldPassword, newPassword);
+  @override
+  Future<SourceMsg> openDecrypted(String srcId, String path, Uint8List password) =>
+      _api.openDecrypted(srcId, path, password);
+  @override
+  Future<void> closeDecrypted(String sourceId) => _api.closeDecrypted(sourceId);
   @override
   Future<SearchResultMsg> search(String sourceId, String path, String query, bool showHidden) =>
       _api.search(sourceId, path, query, showHidden);
