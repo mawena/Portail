@@ -98,7 +98,8 @@ récupérable**.
 - [x] Menu ⋮ → **Clé de secours** → **Créer une clé de secours** : la clé de 24 caractères s'affiche une seule fois,
       avec **Copier la clé** ; notez-la, puis **J'ai noté la clé**. Elle n'est plus jamais réaffichée.
       → piloté par adb : après le mot de passe, « Votre clé de secours » montre 6 groupes de 4 caractères avec **Copier la clé** (« Clé copiée, effacée du presse-papiers dans 60 s ») et **J'ai noté la clé** ; ensuite l'écran dit « Ce coffre a une clé de secours » (Remplacer, Retirer) et ne la réaffiche plus.
-- [ ] Ouvrir le coffre → **Utiliser la clé de secours** → taper la clé en minuscules, sans tirets : le coffre s'ouvre.
+- [x] Ouvrir le coffre → **Utiliser la clé de secours** → taper la clé en minuscules, sans tirets : le coffre s'ouvre.
+      → piloté par adb : « Utiliser la clé de secours » change le champ (« Afficher la clé ») ; la clé tapée en minuscules sans tirets ouvre « Course » (explorateur à sa racine).
 - [ ] Sous Ubuntu, la clé tapée telle quelle (tirets compris) à la place de la phrase ouvre aussi le coffre.
 - [ ] **Changer le mot de passe** en donnant la clé de secours comme mot de passe actuel : accepté.
 - [ ] **Retirer la clé de secours** : la clé n'ouvre plus le coffre, le mot de passe si.
