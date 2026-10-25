@@ -646,3 +646,11 @@ Prises en l'absence de l'utilisateur ; chacune se change à faible coût si l'es
     l'enregistrer), analyse planifiée. *Coût si faux : chacun une tâche d'une phase suivante.*
 16. **Numérotation** : l'analyseur prend la phase 16 (v1.9.0) à la demande de l'utilisateur ; les partitions passent
     en phase 17 (v1.10.0) et la réparation en phase 18 (v1.11.0), sans autre changement de leur contenu (spec § 26).
+
+### Réponses de l'utilisateur (2026-10-25)
+
+1. **Ordre** : la phase 16 commence après la fusion de la phase 15 (`feature/ia`, v1.8.0), pas en parallèle.
+2. **Dossiers distants** : gardés dans l'analyseur (décision 2 inchangée : depuis l'explorateur, en taille apparente).
+3. **Résultats** : en mémoire seulement (décision 10 inchangée).
+4. **Taille des applications** : à prévoir dans une phase suivante, avec la permission « accès aux données
+   d'utilisation » ; hors de la phase 16.

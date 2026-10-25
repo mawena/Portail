@@ -719,4 +719,5 @@ phase 16.)*
 - **Ce que l'analyseur ne fait pas** (phase 16) : taille des applications et de leurs données (il faudrait l'accès aux
   statistiques d'utilisation d'Android) ; recherche de doublons ; comparaison de deux analyses ; capture du graphique
   dans un fichier ; analyse planifiée ou en arrière-plan quand Portail est fermé ; écriture d'aucune sorte en dehors
-  des actions demandées par l'utilisateur (corbeille, suppression).
+  des actions demandées par l'utilisateur (corbeille, suppression). La taille des applications est prévue pour une
+  phase suivante (accord de l'utilisateur du 2026-10-25).
