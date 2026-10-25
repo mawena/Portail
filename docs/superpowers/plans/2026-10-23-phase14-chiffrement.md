@@ -549,15 +549,15 @@ Pigeon `@async void enableBiometric(String vaultId, Uint8List password)`, `@asyn
 **Files :** Create `android/app/src/androidTest/kotlin/com/mawena/fluluks/VaultInstrumentedTest.kt` ; Modify
 `CryptInstrumentedTest.kt`, `Fixtures.kt`
 
-- [ ] **Step 1** : essais sur le téléphone, dans le dossier privé de l'application et sur une image de disque de
+- [x] **Step 1** : essais sur le téléphone, dans le dossier privé de l'application et sur une image de disque de
   `/data/local/tmp/fluluks/` : chiffrer puis déchiffrer un dossier de 200 fichiers (age et ZIP AES), original
   supprimé après vérification, vue déchiffrée d'une vidéo par le fournisseur, coffre de 128 Mio créé puis ouvert, 50
   fichiers écrits, fermé, rouvert, mot de passe changé, clé de secours ; coffre dans un fichier d'un volume ext4
   d'image, éjection de l'image (coffre fermé avant) ; mesure des durées (scrypt, Argon2, débit dans le coffre).
-- [ ] **Step 2** : passage par `am instrument` (jamais `connectedAndroidTest`), journal
+- [x] **Step 2** : passage par `am instrument` (jamais `connectedAndroidTest`), journal
   `docs/superpowers/research/<date>-essais-phase14/instrumentes-<horodatage>.txt` ; les fichiers produits sont relus
   sur le PC par `agejuge.py`, `zipaesjuge.py` et `verify_vault_with_kernel.sh` (`adb pull`).
-- [ ] **Step 3 : commit** `test(chiffrement): essais instrumentés sur le Pixel`.
+- [x] **Step 3 : commit** `test(chiffrement): essais instrumentés sur le Pixel`.
 
 ### Task 16 *(utilisateur)* : essais sur le Pixel
 

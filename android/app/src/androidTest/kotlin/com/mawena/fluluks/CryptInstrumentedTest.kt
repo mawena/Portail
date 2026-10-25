@@ -5,9 +5,13 @@ import android.graphics.BitmapFactory
 import android.graphics.Color
 import android.os.ParcelFileDescriptor
 import android.system.Os
+import android.util.Log
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
+import com.mawena.fluluks.crypt.Crypt
 import com.mawena.fluluks.crypt.DecryptedSources
+import com.mawena.fluluks.files.TransferState
+import com.mawena.fluluks.files.Transfers
 import com.mawena.fluluks.engine.EngineError
 import com.mawena.fluluks.engine.NativeEngine
 import com.mawena.fluluks.files.Files
@@ -18,7 +22,10 @@ import kotlin.random.Random
 import org.junit.After
 import org.junit.Assert.assertArrayEquals
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotNull
+import org.junit.Assert.assertTrue
+import org.junit.Assert.assertNull
 import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -91,6 +98,65 @@ class CryptInstrumentedTest {
         }
         // rien d'autre que le chiffré dans le dossier
         assertEquals(listOf("film.mp4.age"), root.list()!!.toList())
+    }
+
+    /** Fin de l'opération en cours (chiffrement, déchiffrement), créneau libéré. */
+    private fun await(timeoutMs: Long = 300_000): TransferState {
+        val end = System.currentTimeMillis() + timeoutMs
+        while (true) {
+            val st = Transfers.state.value
+            if (st != null && st.finished && !Transfers.isBusy("essai")) return st
+            check(System.currentTimeMillis() < end) { "délai dépassé : $st" }
+            Thread.sleep(20)
+        }
+    }
+
+    private fun sha(b: ByteArray) = java.security.MessageDigest.getInstance("SHA-256").digest(b).joinToString("") { "%02x".format(it) }
+
+    /** Dossier de 200 fichiers (tailles variées, quatre sous-dossiers) ; rend le manifeste `sha256sum`. */
+    private fun folder200(name: String): Map<String, ByteArray> {
+        val r = Random(200)
+        val files = (1..200).associate { i -> "$name/s${i % 4}/f%03d.bin".format(i) to r.nextBytes(r.nextInt(1, 64 * 1024)) }
+        for ((p, d) in files) File(root, p).apply { parentFile!!.mkdirs() }.writeBytes(d)
+        return files
+    }
+
+    private fun checkFolder(files: Map<String, ByteArray>) {
+        for ((p, d) in files) assertArrayEquals(p, d, File(root, p).readBytes())
+    }
+
+    @Test fun encryptFolder200AgeAndZip() {
+        val exports = File(ctx.filesDir, "essais-phase14").apply { mkdirs() }
+        // age : original supprimé après vérification, puis déchiffré et comparé
+        val files = folder200("dossier-200")
+        var t0 = System.nanoTime()
+        Crypt.startEncrypt(Crypt.EncryptRequest("essai", listOf("/dossier-200"), "essai", "/", "age", false, null, true),
+            pass.toByteArray())
+        var st = await()
+        Log.i("PortailMesure", "chiffrement age de 200 fichiers (scrypt 2^18) : ${(System.nanoTime() - t0) / 1_000_000} ms")
+        assertNull(st.error)
+        assertFalse("original supprimé", File(root, "dossier-200").exists())
+        val age = File(root, "dossier-200.zip.age")
+        assertTrue(age.exists())
+        age.copyTo(File(exports, "dossier-200.zip.age"), overwrite = true)
+        t0 = System.nanoTime()
+        Crypt.startDecrypt("essai", "/dossier-200.zip.age", "essai", "/", pass.toByteArray(), true)
+        st = await()
+        Log.i("PortailMesure", "déchiffrement et extraction : ${(System.nanoTime() - t0) / 1_000_000} ms")
+        assertNull(st.error)
+        checkFolder(files)
+        File(exports, "dossier-200.sha256").writeText(files.entries.joinToString("") { (p, d) -> "${sha(d)}  $p\n" })
+
+        // ZIP AES-256 du même dossier, original gardé
+        File(root, "dossier-200.zip.age").delete()
+        Crypt.startEncrypt(Crypt.EncryptRequest("essai", listOf("/dossier-200"), "essai", "/", "zip", false, null, false),
+            pass.toByteArray())
+        st = await()
+        assertNull(st.error)
+        val zip = File(root, "dossier-200.zip")
+        assertTrue(zip.exists())
+        zip.copyTo(File(exports, "dossier-200-aes.zip"), overwrite = true)
+        checkFolder(files)
     }
 
     @Test fun decryptedImageViewer() {

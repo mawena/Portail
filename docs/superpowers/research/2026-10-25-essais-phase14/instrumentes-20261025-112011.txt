@@ -1,0 +1,199 @@
+Phase 14, T15 : essais instrumentés sur le Pixel 4 XL (Android 13), 2026-10-25 11:20 UTC
+APK de débogage de feature/chiffrement installée par-dessus celle de l'utilisateur (même certificat 4fdc7604…,
+données gardées ; APK 1.6.0+13 de l'utilisateur sauvegardée) ; paquet de test installé par adb install -r -t,
+passé par am instrument -w -r -e class …, puis désinstallé. Fichiers d'essai dans le dossier privé de
+l'application, retirés à la fin.
+
+Résultats
+  VaultInstrumentedTest          OK (4) : vaultLifecycle128MiB, ext4VaultForLinux,
+                                          vaultOnExt4ImageClosedBeforeEject, linuxLuks1ContainerOpens
+  CryptInstrumentedTest          OK (3) : encryptFolder200AgeAndZip, decryptedVideoSeeks, decryptedImageViewer
+  BiometricBoxInstrumentedTest   OK (2) : biometricSecretSealedWithAuthKey, deletedKeyIsInvalid
+
+Mesures (journal PortailMesure)
+  création d'un coffre de 64 Mio sur un volume ext4 d'image : 4411 ms
+  création d'un coffre exFAT de 128 Mio (zéros, LUKS2 Argon2 1 Gio, exFAT) : 4443 ms
+  ouverture (Argon2 1 Gio) : 3840 ms
+  écriture de 50 fichiers : 199 ms
+  écriture de 32 Mio dans le coffre, fermeture comprise : 366 ms (87 Mo/s)
+  lecture de 32 Mio dans le coffre : 221 ms
+  changement du mot de passe : 7137 ms
+  ouverture par la clé de secours : 3531 ms
+  chiffrement age de 200 fichiers (scrypt 2^18) : 2465 ms
+  déchiffrement et extraction : 2124 ms
+
+Relecture sur le PC des fichiers produits sur le téléphone (adb exec-out run-as … cat)
+  agejuge.py decrypt dossier-200.zip.age   : ok, ZIP de 6 770 668 octets ; 200 fichiers identiques au manifeste
+  zipaesjuge.py read dossier-200-aes.zip    : aes 200, zipcrypto 0 ; 200 fichiers identiques au manifeste
+  cryptsetup luksDump coffre-exfat.luks et coffre-ext4.luks : LUKS2, un emplacement (0), aes-xts-plain64,
+    argon2id t = 4, 1 Gio (après mot de passe changé puis remis, clé de secours créée puis retirée)
+  cryptsetup open --test-passphrase : phrase acceptée pour les deux coffres
+  À faire par l'utilisateur (sudo) : sudo tools/fixtures/verify_vault_with_kernel.sh build/pixel-phase14
+
+Défauts trouvés au premier passage (11:12 UTC), corrigés avant celui-ci
+  1. Clé de secours rendue vide : le moteur natif met à zéro les phrases reçues (take_pass), y compris la clé
+     passée à luksSlotSet ; Vaults.addRecoveryKey rendait ensuite ce même tableau. L'emplacement contenait la
+     bonne clé, l'écran aurait montré des zéros. Correction : copie passée au moteur ; le faux moteur des tests
+     JVM efface désormais les phrases comme le vrai (recoveryKeyOpensVault rouge, puis vert).
+  2. « Tout éjecter » laissait ouvert un disque qui porte un coffre ouvert : le coffre n'était rangé avant son
+     disque que s'il ne figurait pas déjà dans la liste ; l'hôte, ouvert avant, passait le premier et était
+     refusé (« fermez d'abord le coffre »). Correction : les coffres d'un volume toujours avant lui
+     (ejectAllClosesVaultsBeforeHosts rouge, puis vert).
+
+Sortie brute de am instrument
+=== VaultInstrumentedTest
+INSTRUMENTATION_STATUS: class=com.mawena.fluluks.VaultInstrumentedTest
+INSTRUMENTATION_STATUS: current=1
+INSTRUMENTATION_STATUS: id=AndroidJUnitRunner
+INSTRUMENTATION_STATUS: numtests=4
+INSTRUMENTATION_STATUS: stream=
+com.mawena.fluluks.VaultInstrumentedTest:
+INSTRUMENTATION_STATUS: test=vaultOnExt4ImageClosedBeforeEject
+INSTRUMENTATION_STATUS_CODE: 1
+INSTRUMENTATION_STATUS: class=com.mawena.fluluks.VaultInstrumentedTest
+INSTRUMENTATION_STATUS: current=1
+INSTRUMENTATION_STATUS: id=AndroidJUnitRunner
+INSTRUMENTATION_STATUS: numtests=4
+INSTRUMENTATION_STATUS: stream=.
+INSTRUMENTATION_STATUS: test=vaultOnExt4ImageClosedBeforeEject
+INSTRUMENTATION_STATUS_CODE: 0
+INSTRUMENTATION_STATUS: class=com.mawena.fluluks.VaultInstrumentedTest
+INSTRUMENTATION_STATUS: current=2
+INSTRUMENTATION_STATUS: id=AndroidJUnitRunner
+INSTRUMENTATION_STATUS: numtests=4
+INSTRUMENTATION_STATUS: stream=
+INSTRUMENTATION_STATUS: test=vaultLifecycle128MiB
+INSTRUMENTATION_STATUS_CODE: 1
+INSTRUMENTATION_STATUS: class=com.mawena.fluluks.VaultInstrumentedTest
+INSTRUMENTATION_STATUS: current=2
+INSTRUMENTATION_STATUS: id=AndroidJUnitRunner
+INSTRUMENTATION_STATUS: numtests=4
+INSTRUMENTATION_STATUS: stream=.
+INSTRUMENTATION_STATUS: test=vaultLifecycle128MiB
+INSTRUMENTATION_STATUS_CODE: 0
+INSTRUMENTATION_STATUS: class=com.mawena.fluluks.VaultInstrumentedTest
+INSTRUMENTATION_STATUS: current=3
+INSTRUMENTATION_STATUS: id=AndroidJUnitRunner
+INSTRUMENTATION_STATUS: numtests=4
+INSTRUMENTATION_STATUS: stream=
+INSTRUMENTATION_STATUS: test=ext4VaultForLinux
+INSTRUMENTATION_STATUS_CODE: 1
+INSTRUMENTATION_STATUS: class=com.mawena.fluluks.VaultInstrumentedTest
+INSTRUMENTATION_STATUS: current=3
+INSTRUMENTATION_STATUS: id=AndroidJUnitRunner
+INSTRUMENTATION_STATUS: numtests=4
+INSTRUMENTATION_STATUS: stream=.
+INSTRUMENTATION_STATUS: test=ext4VaultForLinux
+INSTRUMENTATION_STATUS_CODE: 0
+INSTRUMENTATION_STATUS: class=com.mawena.fluluks.VaultInstrumentedTest
+INSTRUMENTATION_STATUS: current=4
+INSTRUMENTATION_STATUS: id=AndroidJUnitRunner
+INSTRUMENTATION_STATUS: numtests=4
+INSTRUMENTATION_STATUS: stream=
+INSTRUMENTATION_STATUS: test=linuxLuks1ContainerOpens
+INSTRUMENTATION_STATUS_CODE: 1
+INSTRUMENTATION_STATUS: class=com.mawena.fluluks.VaultInstrumentedTest
+INSTRUMENTATION_STATUS: current=4
+INSTRUMENTATION_STATUS: id=AndroidJUnitRunner
+INSTRUMENTATION_STATUS: numtests=4
+INSTRUMENTATION_STATUS: stream=.
+INSTRUMENTATION_STATUS: test=linuxLuks1ContainerOpens
+INSTRUMENTATION_STATUS_CODE: 0
+INSTRUMENTATION_RESULT: stream=
+
+Time: 92,333
+
+OK (4 tests)
+
+
+INSTRUMENTATION_CODE: -1
+=== CryptInstrumentedTest
+INSTRUMENTATION_STATUS: class=com.mawena.fluluks.CryptInstrumentedTest
+INSTRUMENTATION_STATUS: current=1
+INSTRUMENTATION_STATUS: id=AndroidJUnitRunner
+INSTRUMENTATION_STATUS: numtests=3
+INSTRUMENTATION_STATUS: stream=
+com.mawena.fluluks.CryptInstrumentedTest:
+INSTRUMENTATION_STATUS: test=encryptFolder200AgeAndZip
+INSTRUMENTATION_STATUS_CODE: 1
+INSTRUMENTATION_STATUS: class=com.mawena.fluluks.CryptInstrumentedTest
+INSTRUMENTATION_STATUS: current=1
+INSTRUMENTATION_STATUS: id=AndroidJUnitRunner
+INSTRUMENTATION_STATUS: numtests=3
+INSTRUMENTATION_STATUS: stream=.
+INSTRUMENTATION_STATUS: test=encryptFolder200AgeAndZip
+INSTRUMENTATION_STATUS_CODE: 0
+INSTRUMENTATION_STATUS: class=com.mawena.fluluks.CryptInstrumentedTest
+INSTRUMENTATION_STATUS: current=2
+INSTRUMENTATION_STATUS: id=AndroidJUnitRunner
+INSTRUMENTATION_STATUS: numtests=3
+INSTRUMENTATION_STATUS: stream=
+INSTRUMENTATION_STATUS: test=decryptedImageViewer
+INSTRUMENTATION_STATUS_CODE: 1
+INSTRUMENTATION_STATUS: class=com.mawena.fluluks.CryptInstrumentedTest
+INSTRUMENTATION_STATUS: current=2
+INSTRUMENTATION_STATUS: id=AndroidJUnitRunner
+INSTRUMENTATION_STATUS: numtests=3
+INSTRUMENTATION_STATUS: stream=.
+INSTRUMENTATION_STATUS: test=decryptedImageViewer
+INSTRUMENTATION_STATUS_CODE: 0
+INSTRUMENTATION_STATUS: class=com.mawena.fluluks.CryptInstrumentedTest
+INSTRUMENTATION_STATUS: current=3
+INSTRUMENTATION_STATUS: id=AndroidJUnitRunner
+INSTRUMENTATION_STATUS: numtests=3
+INSTRUMENTATION_STATUS: stream=
+INSTRUMENTATION_STATUS: test=decryptedVideoSeeks
+INSTRUMENTATION_STATUS_CODE: 1
+INSTRUMENTATION_STATUS: class=com.mawena.fluluks.CryptInstrumentedTest
+INSTRUMENTATION_STATUS: current=3
+INSTRUMENTATION_STATUS: id=AndroidJUnitRunner
+INSTRUMENTATION_STATUS: numtests=3
+INSTRUMENTATION_STATUS: stream=.
+INSTRUMENTATION_STATUS: test=decryptedVideoSeeks
+INSTRUMENTATION_STATUS_CODE: 0
+INSTRUMENTATION_RESULT: stream=
+
+Time: 10,982
+
+OK (3 tests)
+
+
+INSTRUMENTATION_CODE: -1
+=== BiometricBoxInstrumentedTest
+INSTRUMENTATION_STATUS: class=com.mawena.fluluks.BiometricBoxInstrumentedTest
+INSTRUMENTATION_STATUS: current=1
+INSTRUMENTATION_STATUS: id=AndroidJUnitRunner
+INSTRUMENTATION_STATUS: numtests=2
+INSTRUMENTATION_STATUS: stream=
+com.mawena.fluluks.BiometricBoxInstrumentedTest:
+INSTRUMENTATION_STATUS: test=deletedKeyIsInvalid
+INSTRUMENTATION_STATUS_CODE: 1
+INSTRUMENTATION_STATUS: class=com.mawena.fluluks.BiometricBoxInstrumentedTest
+INSTRUMENTATION_STATUS: current=1
+INSTRUMENTATION_STATUS: id=AndroidJUnitRunner
+INSTRUMENTATION_STATUS: numtests=2
+INSTRUMENTATION_STATUS: stream=.
+INSTRUMENTATION_STATUS: test=deletedKeyIsInvalid
+INSTRUMENTATION_STATUS_CODE: 0
+INSTRUMENTATION_STATUS: class=com.mawena.fluluks.BiometricBoxInstrumentedTest
+INSTRUMENTATION_STATUS: current=2
+INSTRUMENTATION_STATUS: id=AndroidJUnitRunner
+INSTRUMENTATION_STATUS: numtests=2
+INSTRUMENTATION_STATUS: stream=
+INSTRUMENTATION_STATUS: test=biometricSecretSealedWithAuthKey
+INSTRUMENTATION_STATUS_CODE: 1
+INSTRUMENTATION_STATUS: class=com.mawena.fluluks.BiometricBoxInstrumentedTest
+INSTRUMENTATION_STATUS: current=2
+INSTRUMENTATION_STATUS: id=AndroidJUnitRunner
+INSTRUMENTATION_STATUS: numtests=2
+INSTRUMENTATION_STATUS: stream=.
+INSTRUMENTATION_STATUS: test=biometricSecretSealedWithAuthKey
+INSTRUMENTATION_STATUS_CODE: 0
+INSTRUMENTATION_RESULT: stream=
+
+Time: 0,147
+
+OK (2 tests)
+
+
+INSTRUMENTATION_CODE: -1

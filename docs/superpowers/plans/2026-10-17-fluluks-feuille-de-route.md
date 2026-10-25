@@ -396,7 +396,7 @@ dans le même commit que le travail.
 - [x] T12 — Déverrouillage biométrique d'un coffre (visage ou empreinte) *(BiometricBoxLogicTest 6, VaultsTest 35 ; vault_biometric_test 7 ; BiometricBoxInstrumentedTest écrit, passage sur le Pixel avec T15 ; 638 tests Flutter, 508 Kotlin)*
 - [x] T13 — Coffres fermés à l'écran éteint, masqués dans les captures *(VaultPrivacyTest 4 ; réglages Confidentialité désactivés par défaut ; 640 tests Flutter, 512 Kotlin)*
 - [x] T14 — Documentation *(README : chiffrement et coffres, lire sur un ordinateur, limites, licences de scrypt et de la liste EFF ; aide : trois questions ; fiche d'essai de la phase 14)*
-- [ ] T15 — Essais instrumentés sur le Pixel
+- [x] T15 — Essais instrumentés sur le Pixel *(9/9 : coffres, LUKS1 de Linux, dossier de 200 fichiers en age et ZIP AES relus par les juges, clé du Keystore ; coffre 128 Mio créé en 4,4 s, ouvert en 3,8 s, 87 Mo/s ; deux défauts trouvés et corrigés : clé de secours vide, Tout éjecter)*
 - [ ] *(utilisateur)* T16 — Essais sur le Pixel
 - [ ] Relecture finale de toute la branche
 - [ ] Fusion `feature/chiffrement` → `develop`
