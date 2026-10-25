@@ -135,7 +135,7 @@ class _DecryptDialogState extends State<DecryptDialog> {
               autofocus: true,
               onSubmitted: (_) => widget.folder ? _run((p) => _decryptTo(widget.sourceId, widget.dir, p)) : _run(_open),
             ),
-            if (_busy) const LinearProgressIndicator(),
+            if (_busy) ...[const LinearProgressIndicator(), const Text(Fr.workingOnKeys)],
             if (_error != null) StatusBanner(icon: Icons.error_rounded, text: _error!, tone: ChipTone.danger),
             if (!widget.folder)
               FilledButton.icon(
@@ -170,7 +170,7 @@ class _DecryptDialogState extends State<DecryptDialog> {
 
 /// Changer le mot de passe d'un fichier `.age` : le mot de passe actuel, puis le nouveau (confirmé, avec sa force et
 /// le générateur). Un mot de passe actuel faux garde le dialogue ouvert. Vrai si le mot de passe a changé.
-class ChangeFilePasswordDialog extends StatefulWidget {
+class ChangeFilePasswordDialog extends StatelessWidget {
   const ChangeFilePasswordDialog({super.key, required this.state, required this.sourceId, required this.entry});
 
   final AppState state;
@@ -178,10 +178,37 @@ class ChangeFilePasswordDialog extends StatefulWidget {
   final EntryMsg entry;
 
   @override
-  State<ChangeFilePasswordDialog> createState() => _ChangeFilePasswordDialogState();
+  Widget build(BuildContext context) => ChangePasswordDialog(
+        state: state,
+        title: entry.name,
+        change: (o, n) => state.changeFilePassword(sourceId, entry.path, o, n),
+      );
 }
 
-class _ChangeFilePasswordDialogState extends State<ChangeFilePasswordDialog> {
+/// Ancien mot de passe, puis le nouveau (force, générateur, confirmation) ; [change] reçoit les octets, mis à zéro
+/// ensuite par ce dialogue. [oldHelp] : aide sous l'ancien ; [blocked] : raison d'un refus d'avance (coffre ouvert),
+/// le bouton reste désactivé. Se ferme sur vrai quand le mot de passe est changé.
+class ChangePasswordDialog extends StatefulWidget {
+  const ChangePasswordDialog({
+    super.key,
+    required this.state,
+    required this.title,
+    required this.change,
+    this.oldHelp,
+    this.blocked,
+  });
+
+  final AppState state;
+  final String title;
+  final Future<void> Function(Uint8List oldPassword, Uint8List newPassword) change;
+  final String? oldHelp;
+  final String? blocked;
+
+  @override
+  State<ChangePasswordDialog> createState() => _ChangePasswordDialogState();
+}
+
+class _ChangePasswordDialogState extends State<ChangePasswordDialog> {
   final _old = TextEditingController();
   final _new = TextEditingController();
   final _confirm = TextEditingController();
@@ -204,7 +231,7 @@ class _ChangeFilePasswordDialogState extends State<ChangeFilePasswordDialog> {
   }
 
   Future<void> _submit() async {
-    if (_busy || !_valid || _old.text.isEmpty) return;
+    if (_busy || !_valid || _old.text.isEmpty || widget.blocked != null) return;
     final o = Uint8List.fromList(utf8.encode(_old.text));
     final n = Uint8List.fromList(utf8.encode(_new.text));
     setState(() {
@@ -213,7 +240,7 @@ class _ChangeFilePasswordDialogState extends State<ChangeFilePasswordDialog> {
     });
     String? error;
     try {
-      await widget.state.changeFilePassword(widget.sourceId, widget.entry.path, o, n);
+      await widget.change(o, n);
     } on PlatformException catch (e) {
       error = cryptErrorText(e);
     } finally {
@@ -238,10 +265,12 @@ class _ChangeFilePasswordDialogState extends State<ChangeFilePasswordDialog> {
       canPop: !_busy,
       child: AlertDialog(
         icon: const Icon(Icons.password_rounded),
-        title: Text(widget.entry.name, maxLines: 2, overflow: TextOverflow.ellipsis),
+        title: Text(widget.title, maxLines: 2, overflow: TextOverflow.ellipsis),
         scrollable: true,
         content: Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.stretch, spacing: Space.s, children: [
+          if (widget.blocked != null) StatusBanner(icon: Icons.lock_rounded, text: widget.blocked!, tone: ChipTone.warning),
           PasswordField(controller: _old, label: Fr.currentPassword, enabled: !_busy, autofocus: true),
+          if (widget.oldHelp != null) Text(widget.oldHelp!, style: Theme.of(context).textTheme.bodySmall),
           PasswordField(
             controller: _new,
             confirm: _confirm,
@@ -257,7 +286,7 @@ class _ChangeFilePasswordDialogState extends State<ChangeFilePasswordDialog> {
         actions: [
           TextButton(onPressed: _busy ? null : () => Navigator.of(context).pop(false), child: const Text(Fr.cancel)),
           FilledButton(
-            onPressed: !_busy && _valid && _old.text.isNotEmpty ? _submit : null,
+            onPressed: !_busy && _valid && _old.text.isNotEmpty && widget.blocked == null ? _submit : null,
             child: const Text(Fr.changeButton),
           ),
         ],

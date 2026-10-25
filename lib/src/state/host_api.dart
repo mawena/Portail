@@ -53,7 +53,11 @@ abstract class HostApi {
   // coffres (phase 14)
   Future<List<VaultMsg>> listVaults();
   Future<VaultMsg> createVault(String srcId, String dir, String name, int sizeBytes, String fs, Uint8List password);
-  Future<VolumeMsg> openVault(String? vaultId, String? srcId, String? path, Uint8List password, bool writable);
+  Future<VolumeMsg> openVault(String? vaultId, String? srcId, String? path, Uint8List password, bool writable,
+      {bool recovery = false});
+  Future<void> changeVaultPassword(String vaultId, Uint8List oldPassword, Uint8List newPassword);
+  Future<Uint8List> addRecoveryKey(String vaultId, Uint8List password);
+  Future<void> removeRecoveryKey(String vaultId, Uint8List password);
   Future<void> closeVault(String vaultId);
   Future<void> forgetVault(String vaultId);
   Future<SearchResultMsg> search(String sourceId, String path, String query, bool showHidden);
@@ -225,8 +229,19 @@ class PigeonHostApi implements HostApi {
   Future<VaultMsg> createVault(String srcId, String dir, String name, int sizeBytes, String fs, Uint8List password) =>
       _api.createVault(srcId, dir, name, sizeBytes, fs, password);
   @override
-  Future<VolumeMsg> openVault(String? vaultId, String? srcId, String? path, Uint8List password, bool writable) =>
-      _api.openVault(vaultId, srcId, path, password, writable);
+  Future<VolumeMsg> openVault(String? vaultId, String? srcId, String? path, Uint8List password, bool writable,
+          {bool recovery = false}) =>
+      _api.openVault(vaultId, srcId, path, password, writable, recovery);
+
+  @override
+  Future<void> changeVaultPassword(String vaultId, Uint8List oldPassword, Uint8List newPassword) =>
+      _api.changeVaultPassword(vaultId, oldPassword, newPassword);
+
+  @override
+  Future<Uint8List> addRecoveryKey(String vaultId, Uint8List password) => _api.addRecoveryKey(vaultId, password);
+
+  @override
+  Future<void> removeRecoveryKey(String vaultId, Uint8List password) => _api.removeRecoveryKey(vaultId, password);
   @override
   Future<void> closeVault(String vaultId) => _api.closeVault(vaultId);
   @override

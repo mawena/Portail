@@ -29,7 +29,7 @@ class VaultStoreTest {
         assertFalse(File(tmp.root, "vaults.json.tmp").exists())
         // aucun secret : seulement ces champs
         val o = org.json.JSONObject(File(tmp.root, "vaults.json").readText()).getJSONArray("vaults").getJSONObject(0)
-        assertEquals(setOf("id", "name", "source", "path", "size", "fs", "slots", "biometric"), o.keys().asSequence().toSet())
+        assertEquals(setOf("id", "name", "source", "path", "size", "fs", "slots", "biometric", "luks"), o.keys().asSequence().toSet())
     }
 
     @Test fun storeSurvivesDamage() {

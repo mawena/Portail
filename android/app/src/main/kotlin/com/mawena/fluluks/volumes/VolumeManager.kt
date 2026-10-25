@@ -757,6 +757,7 @@ object VolumeManager {
                     if (scan == null || scan.table != "none" || part == null || !part.encrypted) {
                         throw EngineError(EngineError.FL_ENOTSUP, MSG_NOT_VAULT)
                     }
+                    part.luks?.let { vaultLuks[host.vaultId] = it.version }
                     mountLocked(diskId, 0, pass.copyOf(), writable, slot, vaultTitle = name)
                 } catch (t: Throwable) {
                     if (mounts.values.none { it.state.diskId == diskId }) {
@@ -783,6 +784,11 @@ object VolumeManager {
             }
         }
     }
+
+    /** Version LUKS (1 ou 2) du coffre [vaultId], lue à sa dernière ouverture ; null s'il n'a pas été ouvert. */
+    fun vaultLuksVersion(vaultId: String): Int? = vaultLuks[vaultId]
+
+    private val vaultLuks = java.util.concurrent.ConcurrentHashMap<String, Int>()
 
     /** Ferme le coffre ouvert [vaultId] comme une éjection (synchronisé, démonté, clé effacée). */
     fun closeVault(vaultId: String) {

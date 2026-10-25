@@ -725,6 +725,46 @@ class FakeHostApi implements HostApi {
   List<VaultMsg> vaults = [];
   final createdVaults = <(String, String, String, int, String, String)>[];
   final openedVaults = <(String?, String?, String?, String, bool)>[];
+  final recoveryOpens = <bool>[];
+
+  /// Clé de secours des coffres de ce faux pont (rendue par [addRecoveryKey], acceptée par [openVault]).
+  String recoveryKey = 'ABCD-EFGH-JKMN-PQRS-TVWX-YZ01';
+  final changedVaultPasswords = <(String, String, String)>[];
+  final addedRecovery = <(String, String)>[];
+  final removedRecovery = <(String, String)>[];
+
+  /// Octets de la dernière clé rendue (le code appelant doit les mettre à zéro).
+  Uint8List? lastRecoveryBytes;
+
+  @override
+  Future<void> changeVaultPassword(String vaultId, Uint8List oldPassword, Uint8List newPassword) async {
+    final o = _take(oldPassword), n = _take(newPassword);
+    if (o != filePassword) throw _bad();
+    changedVaultPasswords.add((vaultId, o, n));
+  }
+
+  @override
+  Future<Uint8List> addRecoveryKey(String vaultId, Uint8List password) async {
+    final p = _take(password);
+    if (p != filePassword) throw _bad();
+    addedRecovery.add((vaultId, p));
+    vaults = [
+      for (final v in vaults)
+        if (v.id == vaultId) (VaultMsg.decode(v.encode())..hasRecovery = true) else v,
+    ];
+    return lastRecoveryBytes = Uint8List.fromList(utf8.encode(recoveryKey));
+  }
+
+  @override
+  Future<void> removeRecoveryKey(String vaultId, Uint8List password) async {
+    final p = _take(password);
+    if (p != filePassword) throw _bad();
+    removedRecovery.add((vaultId, p));
+    vaults = [
+      for (final v in vaults)
+        if (v.id == vaultId) (VaultMsg.decode(v.encode())..hasRecovery = false) else v,
+    ];
+  }
   final closedVaults = <String>[];
   final forgottenVaults = <String>[];
 
@@ -748,10 +788,14 @@ class FakeHostApi implements HostApi {
   }
 
   @override
-  Future<VolumeMsg> openVault(String? vaultId, String? srcId, String? path, Uint8List password, bool writable) async {
+  Future<VolumeMsg> openVault(String? vaultId, String? srcId, String? path, Uint8List password, bool writable,
+      {bool recovery = false}) async {
     final p = _take(password);
     openedVaults.add((vaultId, srcId, path, p, writable));
-    if (p != filePassword) throw _bad();
+    recoveryOpens.add(recovery);
+    if (recovery ? p.toUpperCase().replaceAll(RegExp(r'[^0-9A-Z]'), '') != recoveryKey.replaceAll('-', '') : p != filePassword) {
+      throw _bad();
+    }
     final id = 'vv${openedVaults.length}';
     final vid = vaultId ?? 'x${openedVaults.length}';
     final name = vaults.where((v) => v.id == vid).map((v) => v.name).firstOrNull ??

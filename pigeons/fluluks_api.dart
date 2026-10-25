@@ -664,10 +664,23 @@ abstract class FluLuksHostApi {
   VaultMsg createVault(String srcId, String dir, String name, int sizeBytes, String fs, Uint8List password);
 
   /// Ouvre un coffre connu (`vaultId`), ou le fichier `path` de `srcId` ; erreur `badPassword` si le mot de passe est
-  /// faux.
+  /// faux. `recovery` : `password` est la clé de secours (tirets, espaces et casse ignorés).
   @async
-  VolumeMsg openVault(String? vaultId, String? srcId, String? path, Uint8List password, bool writable);
+  VolumeMsg openVault(String? vaultId, String? srcId, String? path, Uint8List password, bool writable, bool recovery);
   void closeVault(String vaultId);
+
+  /// Change le mot de passe d'un coffre fermé (`oldPassword` : mot de passe ou clé de secours) ; erreur
+  /// `badPassword` si l'ancien est faux.
+  @async
+  void changeVaultPassword(String vaultId, Uint8List oldPassword, Uint8List newPassword);
+
+  /// Crée (ou remplace) la clé de secours d'un coffre fermé et la rend, une seule fois (24 caractères en groupes).
+  @async
+  Uint8List addRecoveryKey(String vaultId, Uint8List password);
+
+  /// Retire la clé de secours d'un coffre fermé.
+  @async
+  void removeRecoveryKey(String vaultId, Uint8List password);
 
   /// Retire le coffre de la liste (fermé d'abord) ; son fichier n'est pas touché.
   void forgetVault(String vaultId);

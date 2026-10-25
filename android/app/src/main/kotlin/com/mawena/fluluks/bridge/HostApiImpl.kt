@@ -732,12 +732,12 @@ class HostApiImpl(
     }
 
     override fun openVault(
-        vaultId: String?, srcId: String?, path: String?, password: ByteArray, writable: Boolean,
+        vaultId: String?, srcId: String?, path: String?, password: ByteArray, writable: Boolean, recovery: Boolean,
         callback: (Result<VolumeMsg>) -> Unit,
     ) {
         scope.launch {
             val result = try {
-                Result.success(volumeMsg(Vaults.open(vaultId, srcId, path, password, writable)))
+                Result.success(volumeMsg(Vaults.open(vaultId, srcId, path, password, writable, recovery = recovery)))
             } catch (e: CancellationException) {
                 throw e
             } catch (e: Throwable) {
@@ -750,6 +750,33 @@ class HostApiImpl(
     }
 
     override fun closeVault(vaultId: String) = guarded { Vaults.close(vaultId) }
+
+    /** [block] sur la portée du pont ; erreurs traduites ; les tableaux de secrets sont mis à zéro sur tous les chemins. */
+    private fun <T> vaultKeys(callback: (Result<T>) -> Unit, vararg secrets: ByteArray, block: suspend () -> T) {
+        scope.launch {
+            val result = try {
+                Result.success(block())
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: Throwable) {
+                Result.failure(toFlutterError(e))
+            } finally {
+                secrets.forEach { it.fill(0) }
+            }
+            callback(result)
+            (result.getOrNull() as? ByteArray)?.fill(0) // clé de secours : encodée pendant l'appel, effacée ensuite
+        }
+    }
+
+    override fun changeVaultPassword(
+        vaultId: String, oldPassword: ByteArray, newPassword: ByteArray, callback: (Result<Unit>) -> Unit,
+    ) = vaultKeys(callback, oldPassword, newPassword) { Vaults.changePassword(vaultId, oldPassword, newPassword) }
+
+    override fun addRecoveryKey(vaultId: String, password: ByteArray, callback: (Result<ByteArray>) -> Unit) =
+        vaultKeys(callback, password) { Vaults.addRecoveryKey(vaultId, password) }
+
+    override fun removeRecoveryKey(vaultId: String, password: ByteArray, callback: (Result<Unit>) -> Unit) =
+        vaultKeys(callback, password) { Vaults.removeRecoveryKey(vaultId, password) }
 
     override fun forgetVault(vaultId: String) = guarded { Vaults.forget(vaultId) }
 

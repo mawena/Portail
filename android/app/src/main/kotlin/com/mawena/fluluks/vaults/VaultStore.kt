@@ -6,8 +6,9 @@ import org.json.JSONObject
 
 /**
  * Coffre connu (phase 14) : où est son fichier (clé stable de la source, chemin), sa taille et son système de
- * fichiers ; [slots] : rôle de chaque emplacement de clé LUKS2 (`password`, `recovery`, `biometric`) ; [biometric] :
- * déverrouillage biométrique activé. Aucun secret.
+ * fichiers ; [slots] : rôle de chaque emplacement de clé LUKS2 posé par Portail (`password`, `recovery`,
+ * `biometric`), les autres emplacements ne sont jamais touchés ; [biometric] : déverrouillage biométrique activé ;
+ * [luksVersion] : 1 pour un conteneur LUKS1 créé ailleurs (rien n'y est réécrit). Aucun secret.
  */
 data class VaultRecord(
     val id: String,
@@ -18,6 +19,7 @@ data class VaultRecord(
     val fs: String,
     val slots: Map<Int, String> = mapOf(0 to "password"),
     val biometric: Boolean = false,
+    val luksVersion: Int = 2,
 )
 
 /**
@@ -64,7 +66,7 @@ class VaultStore(private val dir: File) {
 
     private fun json(r: VaultRecord) = JSONObject()
         .put("id", r.id).put("name", r.name).put("source", r.sourceKey).put("path", r.path)
-        .put("size", r.sizeBytes).put("fs", r.fs).put("biometric", r.biometric)
+        .put("size", r.sizeBytes).put("fs", r.fs).put("biometric", r.biometric).put("luks", r.luksVersion)
         .put("slots", JSONObject().apply { r.slots.forEach { (k, v) -> put(k.toString(), v) } })
 
     private fun parse(o: JSONObject): VaultRecord {
@@ -73,7 +75,7 @@ class VaultStore(private val dir: File) {
         return VaultRecord(
             id = o.getString("id"), name = o.getString("name"), sourceKey = o.getString("source"),
             path = o.getString("path"), sizeBytes = o.getLong("size"), fs = o.optString("fs"), slots = slots,
-            biometric = o.optBoolean("biometric"),
+            biometric = o.optBoolean("biometric"), luksVersion = o.optInt("luks", 2),
         )
     }
 

@@ -479,13 +479,13 @@ Test `VaultsTest.kt` (cas ajoutés), `test/vault_keys_test.dart`
 `@async void removeRecoveryKey(String vaultId, Uint8List password)` ; la clé de secours se saisit dans le dialogue
 d'ouverture (lien « Utiliser la clé de secours »).
 
-- [ ] **Step 1 : tests en échec** : `changePasswordRequiresClosedVault` (« Fermez d'abord le coffre »),
+- [x] **Step 1 : tests en échec** : `changePasswordRequiresClosedVault` (« Fermez d'abord le coffre »),
   `changePasswordKeepsSlot0`, `recoveryKeyFormat` (24 caractères Crockford, groupes de 4, sans I L O U),
   `recoveryKeyOpensVault` (tirets et casse ignorés), `recoveryKeyShownOnce` (écran avec Copier et « J'ai noté la
   clé », jamais réaffichée), `removeRecoveryKeepsPassword`, `luks1VaultOffersNothing` (« Coffre LUKS1 : changez la
   phrase sous Linux »), `foreignSlotsKept` (emplacements inconnus d'un coffre créé sous Linux jamais touchés).
-- [ ] **Step 2 : implémentation** (`luksSlotSet` / `luksSlotRemove` de T4, coffre fermé, progression pendant Argon2).
-- [ ] **Step 3 : commit** `feat(coffres): changer le mot de passe, clé de secours`.
+- [x] **Step 2 : implémentation** (`luksSlotSet` / `luksSlotRemove` de T4, coffre fermé, progression pendant Argon2).
+- [x] **Step 3 : commit** `feat(coffres): changer le mot de passe, clé de secours`.
 
 ### Task 12 : déverrouillage biométrique d'un coffre *(proposition du planificateur)*
 

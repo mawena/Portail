@@ -26,6 +26,7 @@ class UnlockDialog extends StatefulWidget {
   })  : vaultId = null,
         vaultSourceId = null,
         vaultPath = null,
+        offerRecovery = false,
         _vault = false;
 
   /// Ouvre le coffre connu [vaultId], ou le fichier [vaultPath] de [vaultSourceId] ; [name] : nom montré.
@@ -37,6 +38,7 @@ class UnlockDialog extends StatefulWidget {
     this.vaultSourceId,
     this.vaultPath,
     this.writable = true,
+    this.offerRecovery = true,
   })  : diskId = '',
         partIndex = 0,
         partitionName = name,
@@ -49,6 +51,9 @@ class UnlockDialog extends StatefulWidget {
   final String? vaultId;
   final String? vaultSourceId;
   final String? vaultPath;
+
+  /// Coffre : lien « Utiliser la clé de secours » (la clé se tape à la place du mot de passe).
+  final bool offerRecovery;
   final bool _vault;
 
   /// Écriture demandée au départ (faux si « Ouvrir les disques en lecture seule » est actif) : la case
@@ -64,6 +69,7 @@ class _UnlockDialogState extends State<UnlockDialog> {
   bool _busy = false;
   String? _error;
   late bool _readOnly = !widget.writable;
+  bool _recovery = false;
 
   @override
   void dispose() {
@@ -88,7 +94,12 @@ class _UnlockDialogState extends State<UnlockDialog> {
       final w = widget;
       if (w._vault) {
         result = await w.state.openVault(
-            vaultId: w.vaultId, srcId: w.vaultSourceId, path: w.vaultPath, password: pass, writable: !_readOnly);
+            vaultId: w.vaultId,
+            srcId: w.vaultSourceId,
+            path: w.vaultPath,
+            password: pass,
+            writable: !_readOnly,
+            recovery: _recovery);
       } else {
         await w.state.unlock(w.diskId, w.partIndex, pass, writable: !_readOnly);
       }
@@ -128,14 +139,29 @@ class _UnlockDialogState extends State<UnlockDialog> {
           children: [
             // champ de déverrouillage : ni règle, ni force, ni générateur (phrase LUKS existante)
             PasswordField(
+              key: ValueKey(_recovery), // champ neuf en changeant de mode
               controller: _controller,
-              label: widget._vault ? Fr.password : Fr.passphrase,
-              showLabel: widget._vault ? Fr.showPassword : Fr.showPassphrase,
-              hideLabel: widget._vault ? Fr.hidePassword : Fr.hidePassphrase,
+              label: _recovery ? Fr.recoveryKey : (widget._vault ? Fr.password : Fr.passphrase),
+              showLabel: _recovery ? Fr.showRecoveryKey : (widget._vault ? Fr.showPassword : Fr.showPassphrase),
+              hideLabel: _recovery ? Fr.hideRecoveryKey : (widget._vault ? Fr.hidePassword : Fr.hidePassphrase),
               enabled: !_busy,
               autofocus: true,
               onSubmitted: (_) => _submit(),
             ),
+            if (widget._vault && widget.offerRecovery)
+              Align(
+                alignment: AlignmentDirectional.centerStart,
+                child: TextButton(
+                  onPressed: _busy
+                      ? null
+                      : () => setState(() {
+                            _controller.clear();
+                            _error = null;
+                            _recovery = !_recovery;
+                          }),
+                  child: Text(_recovery ? Fr.usePassword : Fr.useRecoveryKey),
+                ),
+              ),
             const SizedBox(height: Space.s),
             CheckboxListTile(
               contentPadding: EdgeInsets.zero,
@@ -173,7 +199,7 @@ class _UnlockDialogState extends State<UnlockDialog> {
 
 /// Demande le mot de passe d'un coffre et l'ouvre ; rend son volume (stockage du même identifiant), ou null.
 Future<VolumeMsg?> openVaultDialog(BuildContext context, AppState state,
-        {required String name, String? vaultId, String? srcId, String? path}) =>
+        {required String name, String? vaultId, String? srcId, String? path, bool offerRecovery = true}) =>
     showDialog<Object>(
       context: context,
       barrierDismissible: false,
@@ -184,5 +210,6 @@ Future<VolumeMsg?> openVaultDialog(BuildContext context, AppState state,
         vaultSourceId: srcId,
         vaultPath: path,
         writable: !state.readOnlyPreference,
+        offerRecovery: offerRecovery,
       ),
     ).then((r) => r is VolumeMsg ? r : null);

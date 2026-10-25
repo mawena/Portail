@@ -5,6 +5,7 @@ import android.os.ParcelFileDescriptor
 import androidx.annotation.VisibleForTesting
 import com.mawena.fluluks.crypt.Crypt
 import com.mawena.fluluks.crypt.DecryptedSource
+import com.mawena.fluluks.crypt.Passwords
 import com.mawena.fluluks.engine.Engine
 import com.mawena.fluluks.engine.EngineError
 import com.mawena.fluluks.files.Archives
@@ -26,6 +27,8 @@ import java.io.File
 import java.io.FileNotFoundException
 import java.security.SecureRandom
 import kotlinx.coroutines.CompletableDeferred
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 
 /** Coffre tel que l'écran le montre ; [state] : `closed`, `open` ou `unavailable` (son stockage n'est pas là). */
 data class VaultInfo(
@@ -66,6 +69,21 @@ object Vaults {
     const val MSG_UNAVAILABLE = "Le stockage de ce coffre n'est pas disponible"
     const val MSG_CANCELLED = "Création du coffre annulée"
     const val MSG_OPEN = Crypt.MSG_VAULT_OPEN
+    const val MSG_LUKS1 = "Coffre LUKS1\u00A0: changez la phrase sous Linux"
+    const val MSG_NO_RECOVERY = "Ce coffre n'a pas de clé de secours"
+    const val MSG_BAD_RECOVERY = "Clé de secours non valable\u00A0: 24 caractères, chiffres et lettres"
+    const val MSG_FOREIGN_LAYOUT = "Emplacements de clé inconnus\u00A0: changez la phrase de ce coffre sous Linux"
+    const val MSG_SLOTS_FULL = "Plus aucun emplacement de clé libre dans ce coffre"
+    const val MSG_BUSY = "Une opération est déjà en cours sur ce coffre"
+
+    /** Emplacements LUKS2 d'un coffre de Portail : mot de passe, clé de secours, biométrie. */
+    const val SLOT_PASSWORD = 0
+    const val SLOT_RECOVERY = 1
+    const val SLOT_BIOMETRIC = 2
+    private const val KDF_TIME = 4
+
+    /** Alphabet Crockford base32 (ni I, ni L, ni O, ni U). */
+    private const val CROCKFORD = "0123456789ABCDEFGHJKMNPQRSTVWXYZ"
     private const val KDF_KIB = 1_048_576
     private const val KDF_LOW_KIB = 262_144
     private const val ROOT_ID = 1000
@@ -75,6 +93,9 @@ object Vaults {
     @Volatile private var sources: () -> List<FileSource> = Sources::list
     @Volatile private var openFdForTests: ((File, Boolean) -> Int)? = null
     private val rnd = SecureRandom()
+
+    /** Coffres dont les emplacements de clé sont en cours de réécriture (ni ouverture, ni seconde opération). */
+    private val busy = java.util.Collections.synchronizedSet(HashSet<String>())
 
     private val engine: Engine get() = Archives.engine
 
@@ -122,7 +143,8 @@ object Vaults {
         return VaultInfo(
             id = r.id, name = r.name, sourceKey = r.sourceKey, sourceLabel = host?.let { runCatching { it.label }.getOrNull() } ?: "",
             path = r.path, sizeBytes = r.sizeBytes, fs = vol?.fs?.takeIf { it.isNotEmpty() } ?: r.fs, state = state,
-            volumeId = vol?.id, hasRecovery = r.slots.containsValue("recovery"), biometric = r.biometric, luksVersion = 2,
+            volumeId = vol?.id, hasRecovery = r.slots.containsValue("recovery"), biometric = r.biometric,
+            luksVersion = r.luksVersion,
         )
     }
 
@@ -169,10 +191,13 @@ object Vaults {
         password: ByteArray,
         writable: Boolean,
         slot: Int = -1,
+        recovery: Boolean = false,
     ): VolumeState {
-        val pw = password.copyOf()
+        // clé de secours : tirets, espaces et casse ignorés, forme écrite par Portail rétablie
+        val pw = if (recovery) normalizeRecoveryKey(password) else password.copyOf()
         password.fill(0)
         try {
+            if (pw == null) throw FilesException(EngineError.FL_EBADPASS, MSG_BAD_RECOVERY)
             val known = vaultId?.let { st().get(it) ?: throw FilesException(EngineError.FL_ENOENT, MSG_UNKNOWN) }
             val src: FileSource
             val rec: VaultRecord
@@ -189,18 +214,22 @@ object Vaults {
                     ?: VaultRecord(newId(), WriteOps.nameOf(p).removeSuffix(EXT).ifEmpty { WriteOps.nameOf(p) }, key, p, e.size, "")
             }
             checkHost(src)
+            if (rec.id in busy) throw FilesException(EngineError.FL_EBUSY, MSG_BUSY)
             val p = PathRules.require(rec.path)
             src.stat(p) ?: throw FilesException(EngineError.FL_ENOENT, MSG_UNAVAILABLE)
             val rw = writable && src.readOnlyReason == null
-            val vol = VolumeManager.openVault(VaultHost(rec.id, src.id, p), rec.name, pw.copyOf(), rw, slot) {
+            // la clé de secours n'essaie que son emplacement (Argon2 d'un seul emplacement)
+            val s = if (recovery) rec.slots.entries.firstOrNull { it.value == "recovery" }?.key ?: -1 else slot
+            val vol = VolumeManager.openVault(VaultHost(rec.id, src.id, p), rec.name, pw.copyOf(), rw, s) {
                 openDisk(src, p, rw)
             }
-            if (st().get(rec.id) != rec.copy(fs = vol.fs)) st().put(rec.copy(fs = vol.fs))
+            val seen = rec.copy(fs = vol.fs, luksVersion = VolumeManager.vaultLuksVersion(rec.id) ?: rec.luksVersion)
+            if (st().get(rec.id) != seen) st().put(seen)
             return vol
         } catch (e: Throwable) {
             throw failure(e, "openDocument")
         } finally {
-            pw.fill(0)
+            pw?.fill(0)
         }
     }
 
@@ -224,6 +253,186 @@ object Vaults {
     fun checkSources() {
         for (h in VolumeManager.openVaultHosts().map { it.sourceId }.distinct()) {
             if (Files.sourceOrNull(h) == null) VolumeManager.closeVaultsOn(h)
+        }
+    }
+
+    // --- mot de passe et clé de secours ---------------------------------------------------------------------
+
+    /** Mémoire d'Argon2 des emplacements : 1 Gio, ou 256 Mio si la mémoire manque (comme à la création). */
+    private fun kdfKib(): Int {
+        val avail = VolumeManager.availableMemory()
+        return when {
+            KDF_KIB * 1024L <= 0.8 * avail -> KDF_KIB
+            KDF_LOW_KIB * 1024L <= 0.8 * avail -> KDF_LOW_KIB
+            else -> throw FilesException(EngineError.FL_ENOMEM, VolumeManager.MSG_LOW_MEMORY)
+        }
+    }
+
+    /** Nouvelle clé de secours : 24 caractères Crockford base32 (120 bits aléatoires) en 6 groupes de 4. */
+    fun newRecoveryKey(): ByteArray {
+        val r = ByteArray(15).also(rnd::nextBytes)
+        val sym = ByteArray(24)
+        try {
+            var bit = 0
+            for (i in sym.indices) {
+                var v = 0
+                repeat(5) {
+                    v = (v shl 1) or ((r[bit / 8].toInt() shr (7 - bit % 8)) and 1)
+                    bit++
+                }
+                sym[i] = CROCKFORD[v].code.toByte()
+            }
+            return grouped(sym)
+        } finally {
+            r.fill(0)
+            sym.fill(0)
+        }
+    }
+
+    /** « ABCD-EFGH-… » depuis 24 symboles. */
+    private fun grouped(sym: ByteArray): ByteArray {
+        val out = ByteArray(29)
+        var o = 0
+        for (i in sym.indices) {
+            if (i > 0 && i % 4 == 0) out[o++] = '-'.code.toByte()
+            out[o++] = sym[i]
+        }
+        return out
+    }
+
+    /**
+     * Clé de secours saisie, remise sous la forme écrite par Portail : tirets et blancs ignorés, minuscules
+     * acceptées, O lu 0, I et L lus 1 ; null si ce ne sont pas 24 caractères de l'alphabet. Ne modifie pas [input].
+     */
+    fun normalizeRecoveryKey(input: ByteArray): ByteArray? {
+        val sym = ByteArray(24)
+        try {
+            var n = 0
+            for (b in input) {
+                var c = (b.toInt() and 0xFF).toChar()
+                if (c == '-' || c == ' ' || c == '\t' || c == '\n' || c == '\r') continue
+                c = c.uppercaseChar()
+                c = when (c) {
+                    'O' -> '0'
+                    'I', 'L' -> '1'
+                    else -> c
+                }
+                if (c !in CROCKFORD || n == sym.size) return null
+                sym[n++] = c.code.toByte()
+            }
+            return if (n == sym.size) grouped(sym) else null
+        } finally {
+            sym.fill(0)
+        }
+    }
+
+    /**
+     * Ouvre le disque du coffre fermé [vaultId] (fichier en écriture, aucune autre opération ni ouverture pendant
+     * ce temps) et lit ses emplacements ; [block] reçoit le coffre, la poignée et les emplacements présents.
+     * LUKS1 : [MSG_LUKS1], rien n'est écrit.
+     */
+    private fun <T> withClosedDisk(vaultId: String, block: (VaultRecord, Long, Set<Int>) -> T): T {
+        val rec = st().get(vaultId) ?: throw FilesException(EngineError.FL_ENOENT, MSG_UNKNOWN)
+        if (VolumeManager.vaultVolume(vaultId) != null) throw FilesException(EngineError.FL_EBUSY, MSG_OPEN)
+        if (rec.luksVersion == 1) throw FilesException(EngineError.FL_ENOTSUP, MSG_LUKS1)
+        val src = hostOf(rec) ?: throw FilesException(EngineError.FL_ENODEV, MSG_UNAVAILABLE)
+        checkHost(src)
+        src.readOnlyReason?.let { throw FileNotFoundException(Files.readOnlyMessage(src, it)) }
+        val p = PathRules.require(rec.path)
+        src.stat(p) ?: throw FilesException(EngineError.FL_ENOENT, MSG_UNAVAILABLE)
+        if (!busy.add(vaultId)) throw FilesException(EngineError.FL_EBUSY, MSG_BUSY)
+        try {
+            if (VolumeManager.vaultVolume(vaultId) != null) throw FilesException(EngineError.FL_EBUSY, MSG_OPEN)
+            val h = EngineError.check(openDisk(src, p, true))
+            try {
+                val j = org.json.JSONObject(String(engine.luksSlots(h), Charsets.UTF_8))
+                if (j.has("err")) throw EngineError(j.getInt("err"))
+                val version = j.getInt("version")
+                val r = if (version != rec.luksVersion) rec.copy(luksVersion = version).also { st().put(it) } else rec
+                if (version != 2) throw FilesException(EngineError.FL_ENOTSUP, MSG_LUKS1)
+                val a = j.getJSONArray("slots")
+                return block(r, h, (0 until a.length()).map { a.getInt(it) }.toSet())
+            } finally {
+                engine.closeDisk(h)
+            }
+        } finally {
+            busy.remove(vaultId)
+        }
+    }
+
+    private fun slotOf(r: VaultRecord, role: String): Int? = r.slots.entries.firstOrNull { it.value == role }?.key
+
+    /**
+     * Change le mot de passe du coffre fermé [vaultId] sans réécrire son contenu : son emplacement est remplacé
+     * (sûr même interrompu). [old] peut aussi être la clé de secours. Les deux tableaux sont mis à zéro.
+     */
+    suspend fun changePassword(vaultId: String, old: ByteArray, new: ByteArray) {
+        val o = old.copyOf()
+        val n = new.copyOf()
+        old.fill(0)
+        new.fill(0)
+        try {
+            Passwords.check(n)?.let { throw FilesException(EngineError.FL_EINVAL, it) }
+            withContext(Dispatchers.IO) {
+                withClosedDisk(vaultId) { r, h, slots ->
+                    val slot = slotOf(r, "password") ?: SLOT_PASSWORD
+                    if (slot !in slots) throw FilesException(EngineError.FL_ENOTSUP, MSG_FOREIGN_LAYOUT)
+                    EngineError.check(engine.luksSlotSet(h, slot, o, n, kdfKib(), KDF_TIME))
+                }
+            }
+        } catch (e: Throwable) {
+            throw failure(e, "changePassword")
+        } finally {
+            o.fill(0)
+            n.fill(0)
+        }
+    }
+
+    /**
+     * Crée (ou remplace) la clé de secours du coffre fermé [vaultId] et la rend, une seule fois : elle n'est
+     * gardée nulle part. Emplacement 1, ou le premier libre à partir de 3 si un autre l'occupe (coffre créé sous
+     * Linux). [password] est mis à zéro.
+     */
+    suspend fun addRecoveryKey(vaultId: String, password: ByteArray): ByteArray {
+        val pw = password.copyOf()
+        password.fill(0)
+        val key = newRecoveryKey()
+        try {
+            withContext(Dispatchers.IO) {
+                withClosedDisk(vaultId) { r, h, slots ->
+                    val slot = slotOf(r, "recovery")
+                        ?: if (SLOT_RECOVERY !in slots) SLOT_RECOVERY
+                        else (SLOT_BIOMETRIC + 1 until 32).firstOrNull { it !in slots && it !in r.slots }
+                            ?: throw FilesException(EngineError.FL_ENOSPC, MSG_SLOTS_FULL)
+                    EngineError.check(engine.luksSlotSet(h, slot, pw, key, kdfKib(), KDF_TIME))
+                    st().put(r.copy(slots = r.slots + (slot to "recovery")))
+                }
+            }
+            return key
+        } catch (e: Throwable) {
+            key.fill(0)
+            throw failure(e, "addRecoveryKey")
+        } finally {
+            pw.fill(0)
+        }
+    }
+
+    /** Retire la clé de secours du coffre fermé [vaultId] ; le mot de passe l'ouvre toujours. */
+    suspend fun removeRecoveryKey(vaultId: String, password: ByteArray) {
+        val pw = password.copyOf()
+        password.fill(0)
+        try {
+            withContext(Dispatchers.IO) {
+                withClosedDisk(vaultId) { r, h, slots ->
+                    val slot = slotOf(r, "recovery") ?: throw FilesException(EngineError.FL_ENOENT, MSG_NO_RECOVERY)
+                    if (slot in slots) EngineError.check(engine.luksSlotRemove(h, slot, pw))
+                    st().put(r.copy(slots = r.slots - slot))
+                }
+            }
+        } catch (e: Throwable) {
+            throw failure(e, "removeRecoveryKey")
+        } finally {
+            pw.fill(0)
         }
     }
 
@@ -256,12 +465,7 @@ object Vaults {
             }
             val (free, total) = src.space()
             if (size > free - Archives.reserve(total)) throw FilesException(EngineError.FL_ENOSPC, MSG_TOO_BIG)
-            val avail = VolumeManager.availableMemory()
-            val kdf = when {
-                KDF_KIB * 1024L <= 0.8 * avail -> KDF_KIB
-                KDF_LOW_KIB * 1024L <= 0.8 * avail -> KDF_LOW_KIB
-                else -> throw FilesException(EngineError.FL_ENOMEM, VolumeManager.MSG_LOW_MEMORY)
-            }
+            val kdf = kdfKib()
             val done = CompletableDeferred<VaultInfo>()
             val job = pw.copyOf()
             try {

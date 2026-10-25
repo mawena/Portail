@@ -68,20 +68,51 @@ class VaultsTest {
             return fd
         }
 
-        fun header(pass: String, fs: String): ByteArray =
-            MAGIC + ("\n" + JSONObject().put("pw", tag(pass.toByteArray())).put("fs", fs) + "\n").toByteArray()
+        /** En-tête du faux coffre : version LUKS, empreinte de la phrase de chaque emplacement, système de fichiers. */
+        fun header(pass: String, fs: String, version: Int = 2, others: Map<Int, String> = emptyMap()): ByteArray {
+            val slots = JSONObject().put("0", tag(pass.toByteArray()))
+            others.forEach { (k, v) -> slots.put(k.toString(), tag(v.toByteArray())) }
+            return headerOf(JSONObject().put("v", version).put("slots", slots).put("fs", fs))
+        }
+
+        private fun headerOf(o: JSONObject) = MAGIC + ("\n" + o + "\n").toByteArray()
+
+        /** Disques dont un volume est monté (emplacements intouchables, comme le moteur : FL_EBUSY). */
+        private val mountedDisks = HashMap<Long, Long>()
+        var lastKdfKib = 0
+
+        fun slotsOf(f: File): Map<Int, String> {
+            val o = hdrOf(f.readBytes())!!.getJSONObject("slots")
+            return o.keys().asSequence().associate { it.toInt() to o.getString(it) }
+        }
+
+        fun tagOf(pass: String) = tag(pass.toByteArray())
+
+        private fun hdrOf(d: ByteArray): JSONObject? {
+            if (d.size < 8 || !d.copyOf(6).contentEquals(MAGIC)) return null
+            val t = String(d, 7, minOf(d.size - 7, 1024), Charsets.UTF_8)
+            return JSONObject(t.substringBefore('\n'))
+        }
+
+        private fun writeHdr(b: Back, o: JSONObject) {
+            val h = headerOf(o)
+            when (b) {
+                is Back.Local -> RandomAccessFile(b.file, "rw").use { it.seek(0); it.write(h) }
+                is Back.Eng -> nodes[b.path] = h + nodes[b.path]!!.copyOfRange(minOf(h.size, nodes[b.path]!!.size), nodes[b.path]!!.size)
+            }
+        }
+
+        private fun opens(h: JSONObject, pass: ByteArray, slot: Int = -1): Boolean {
+            val slots = h.getJSONObject("slots")
+            return slots.keys().asSequence().any { (slot < 0 || it == slot.toString()) && slots.getString(it) == tag(pass) }
+        }
 
         private fun bytes(b: Back) = when (b) {
             is Back.Local -> b.file.readBytes()
             is Back.Eng -> nodes[b.path] ?: ByteArray(0)
         }
 
-        private fun hdr(b: Back): JSONObject? {
-            val d = bytes(b)
-            if (d.size < 8 || !d.copyOf(6).contentEquals(MAGIC)) return null
-            val t = String(d, 7, minOf(d.size - 7, 512), Charsets.UTF_8)
-            return JSONObject(t.substringBefore('\n'))
-        }
+        private fun hdr(b: Back): JSONObject? = hdrOf(bytes(b))
 
         override fun openDiskFd(fd: Int, readOnly: Boolean): Long {
             viaFd++
@@ -108,7 +139,7 @@ class VaultsTest {
             val size = bytes(d.back).size
             val part = if (hdr(d.back) != null) {
                 """{"index":0,"first_lba":0,"size":$size,"content":"LUKS2","label":"","uuid":"","supported":true,
-                    "luks":{"version":2,"cipher":"aes-xts-plain64","primary_damaged":false,"max_kdf_memory_kib":1024}}"""
+                    "luks":{"version":${hdr(d.back)!!.optInt("v", 2)},"cipher":"aes-xts-plain64","primary_damaged":false,"max_kdf_memory_kib":1024}}"""
             } else {
                 """{"index":0,"first_lba":0,"size":$size,"content":"inconnu","label":"","uuid":"","supported":false}"""
             }
@@ -134,11 +165,59 @@ class VaultsTest {
 
         override fun mount(disk: Long, partIndex: Int, pass: ByteArray?, writable: Boolean): Long {
             val d = vdisks[disk] ?: return super.mount(disk, partIndex, pass, writable)
+            return mountAt(disk, d, pass, -1)
+        }
+
+        override fun mountSlot(disk: Long, partIndex: Int, slot: Int, pass: ByteArray, writable: Boolean): Long {
+            val d = vdisks[disk] ?: return EngineError.FL_ENOTSUP.toLong()
             val h = hdr(d.back) ?: return EngineError.FL_ENOTSUP.toLong()
-            if (pass == null || tag(pass) != h.getString("pw")) return EngineError.FL_EBADPASS.toLong()
+            if (!h.getJSONObject("slots").has(slot.toString())) return EngineError.FL_ENOENT.toLong()
+            return mountAt(disk, d, pass, slot)
+        }
+
+        val mountSlots = ArrayList<Int>()
+
+        private fun mountAt(disk: Long, d: VDisk, pass: ByteArray?, slot: Int): Long {
+            val h = hdr(d.back) ?: return EngineError.FL_ENOTSUP.toLong()
+            if (pass == null || !opens(h, pass, slot)) return EngineError.FL_EBADPASS.toLong()
+            mountSlots.add(slot)
             val v = nextH++
             vaultVols[v] = h.getString("fs")
+            mountedDisks[v] = disk
             return v
+        }
+
+        override fun luksSlots(disk: Long): ByteArray {
+            val d = vdisks[disk] ?: return super.luksSlots(disk)
+            val h = hdr(d.back) ?: return """{"err":${EngineError.FL_ENOTSUP}}""".toByteArray()
+            val slots = h.getJSONObject("slots").keys().asSequence().map { it.toInt() }.sorted().toList()
+            return JSONObject().put("version", h.optInt("v", 2)).put("slots", org.json.JSONArray(slots)).toString().toByteArray()
+        }
+
+        override fun luksSlotSet(disk: Long, slot: Int, auth: ByteArray, new: ByteArray, kdfMemKib: Int, kdfTime: Int): Int {
+            val d = vdisks[disk] ?: return EngineError.FL_ENOTSUP
+            val h = hdr(d.back) ?: return EngineError.FL_ENOTSUP
+            if (h.optInt("v", 2) != 2) return EngineError.FL_ENOTSUP
+            if (disk in mountedDisks.values) return EngineError.FL_EBUSY
+            if (!opens(h, auth)) return EngineError.FL_EBADPASS
+            lastKdfKib = kdfMemKib
+            h.getJSONObject("slots").put(slot.toString(), tag(new))
+            writeHdr(d.back, h)
+            return 0
+        }
+
+        override fun luksSlotRemove(disk: Long, slot: Int, auth: ByteArray): Int {
+            val d = vdisks[disk] ?: return EngineError.FL_ENOTSUP
+            val h = hdr(d.back) ?: return EngineError.FL_ENOTSUP
+            if (h.optInt("v", 2) != 2) return EngineError.FL_ENOTSUP
+            if (disk in mountedDisks.values) return EngineError.FL_EBUSY
+            val slots = h.getJSONObject("slots")
+            if (!slots.has(slot.toString())) return EngineError.FL_ENOENT
+            if (!opens(h, auth)) return EngineError.FL_EBADPASS
+            if (slots.length() == 1) return EngineError.FL_EBUSY
+            slots.remove(slot.toString())
+            writeHdr(d.back, h)
+            return 0
         }
 
         override fun statfs(vol: Long): ByteArray {
@@ -150,6 +229,7 @@ class VaultsTest {
         override fun unmount(vol: Long, force: Boolean): Int {
             unmounted.add(vol)
             vaultVols.remove(vol)
+            mountedDisks.remove(vol)
             return 0
         }
 
@@ -493,5 +573,129 @@ class VaultsTest {
         } catch (x: FilesException) {
             assertEquals(EngineError.FL_ENOENT, x.code)
         }
+    }
+
+    // --- T11 : mot de passe et clé de secours -----------------------------------------------------------------
+
+    private fun known(): String = Vaults.list().single().id
+
+    /** Coffre « C.luks » du téléphone, connu (ouvert une fois) puis fermé. */
+    private fun knownClosed(file: File = fakeVault(phoneRoot, "C.luks")): String {
+        open("phone", "/${file.name}")
+        val id = known()
+        Vaults.close(id)
+        return id
+    }
+
+    private fun opensWith(id: String, pass: String, recovery: Boolean = false): Boolean = try {
+        runBlocking { Vaults.open(id, null, null, pass.toByteArray(), writable = true, recovery = recovery) }
+        Vaults.close(id)
+        true
+    } catch (x: FilesException) {
+        assertEquals(Crypt.MSG_BAD_PASSWORD, x.message)
+        false
+    }
+
+    @Test fun changePasswordRequiresClosedVault() {
+        fakeVault(phoneRoot, "C.luks")
+        open("phone", "/C.luks")
+        refused(Vaults.MSG_OPEN) {
+            runBlocking { Vaults.changePassword(known(), pw.toByteArray(), "nouveau mot de passe".toByteArray()) }
+        }
+        refused(Vaults.MSG_OPEN) { runBlocking { Vaults.addRecoveryKey(known(), pw.toByteArray()) } }
+    }
+
+    @Test fun changePasswordKeepsSlot0() {
+        val f = fakeVault(phoneRoot, "C.luks")
+        val id = knownClosed(f)
+        val old = pw.toByteArray()
+        val nw = "nouveau mot de passe".toByteArray()
+        runBlocking { Vaults.changePassword(id, old, nw) }
+        assertTrue("mots de passe mis à zéro", old.all { it == 0.toByte() } && nw.all { it == 0.toByte() })
+        assertEquals(setOf(0), e.slotsOf(f).keys)
+        assertEquals(e.tagOf("nouveau mot de passe"), e.slotsOf(f)[0])
+        assertEquals(1 shl 20, e.lastKdfKib) // même Argon2 que la création : 1 Gio
+        assertFalse(opensWith(id, pw))
+        assertTrue(opensWith(id, "nouveau mot de passe"))
+        refused(Crypt.MSG_BAD_PASSWORD) {
+            runBlocking { Vaults.changePassword(id, "faux mot de passe".toByteArray(), "autre chose".toByteArray()) }
+        }
+    }
+
+    @Test fun recoveryKeyFormat() {
+        val crockford = Regex("^[0-9ABCDEFGHJKMNPQRSTVWXYZ]{4}(-[0-9ABCDEFGHJKMNPQRSTVWXYZ]{4}){5}$")
+        val keys = (1..50).map { String(Vaults.newRecoveryKey(), Charsets.US_ASCII) }
+        keys.forEach { assertTrue(it, crockford.matches(it)) }
+        assertEquals(50, keys.toSet().size)
+        // saisie : tirets, espaces et casse ignorés, O lu 0, I et L lus 1 (Crockford)
+        val k = "ABCD-EFGH-JKMN-PQRS-TVWX-YZ01"
+        assertEquals(k, String(Vaults.normalizeRecoveryKey(" abcd efgh jkmn-pqrs tvwx yzoi ".toByteArray())!!, Charsets.US_ASCII))
+        assertEquals(k, String(Vaults.normalizeRecoveryKey("ABCDEFGHJKMNPQRSTVWXYZOL".toByteArray())!!, Charsets.US_ASCII))
+        assertNull(Vaults.normalizeRecoveryKey("ABCD-EFGH".toByteArray())) // trop courte
+        assertNull(Vaults.normalizeRecoveryKey("ABCD-EFGH-JKMN-PQRS-TVWX-YZ0U".toByteArray())) // U absent de l'alphabet
+    }
+
+    @Test fun recoveryKeyOpensVault() {
+        val f = fakeVault(phoneRoot, "C.luks")
+        val id = knownClosed(f)
+        val key = String(runBlocking { Vaults.addRecoveryKey(id, pw.toByteArray()) }, Charsets.US_ASCII)
+        assertEquals(setOf(0, 1), e.slotsOf(f).keys) // emplacement 1 : clé de secours
+        assertTrue(Vaults.get(id)!!.hasRecovery)
+        val typed = key.lowercase().replace("-", " ")
+        assertTrue(opensWith(id, typed, recovery = true))
+        assertEquals(1, e.mountSlots.last()) // seul l'emplacement de la clé est essayé
+        assertTrue(opensWith(id, pw)) // le mot de passe ouvre toujours
+        assertFalse(opensWith(id, "ABCD-EFGH-JKMN-PQRS-TVWX-YZ01", recovery = true))
+    }
+
+    @Test fun recoveryKeyShownOnce() {
+        val id = knownClosed()
+        val key = String(runBlocking { Vaults.addRecoveryKey(id, pw.toByteArray()) }, Charsets.US_ASCII)
+        // nulle part sur le téléphone : ni dans la liste des coffres, ni ailleurs dans les données
+        val data = File(tmp.root, "donnees")
+        data.walk().filter { it.isFile }.forEach { assertFalse(it.readText().contains(key)) }
+        // une nouvelle clé remplace l'ancienne (même emplacement)
+        val key2 = String(runBlocking { Vaults.addRecoveryKey(id, pw.toByteArray()) }, Charsets.US_ASCII)
+        assertTrue(key != key2)
+        assertFalse(opensWith(id, key, recovery = true))
+        assertTrue(opensWith(id, key2, recovery = true))
+    }
+
+    @Test fun removeRecoveryKeepsPassword() {
+        val f = fakeVault(phoneRoot, "C.luks")
+        val id = knownClosed(f)
+        val key = String(runBlocking { Vaults.addRecoveryKey(id, pw.toByteArray()) }, Charsets.US_ASCII)
+        runBlocking { Vaults.removeRecoveryKey(id, pw.toByteArray()) }
+        assertEquals(setOf(0), e.slotsOf(f).keys)
+        assertFalse(Vaults.get(id)!!.hasRecovery)
+        assertFalse(opensWith(id, key, recovery = true))
+        assertTrue(opensWith(id, pw))
+        refused(Vaults.MSG_NO_RECOVERY) { runBlocking { Vaults.removeRecoveryKey(id, pw.toByteArray()) } }
+    }
+
+    @Test fun luks1VaultOffersNothing() {
+        val f = File(phoneRoot, "L.luks").apply { writeBytes(e.header(pw, "ext4", version = 1) + ByteArray(4096)) }
+        val id = knownClosed(f)
+        assertEquals(1, Vaults.get(id)!!.luksVersion)
+        val before = f.readBytes()
+        refused(Vaults.MSG_LUKS1) { runBlocking { Vaults.changePassword(id, pw.toByteArray(), "nouveau mot de passe".toByteArray()) } }
+        refused(Vaults.MSG_LUKS1) { runBlocking { Vaults.addRecoveryKey(id, pw.toByteArray()) } }
+        assertTrue(before.contentEquals(f.readBytes()))
+    }
+
+    @Test fun foreignSlotsKept() {
+        // conteneur créé sous Linux : emplacements 1 et 5 à d'autres phrases, inconnus de Portail
+        val f = File(phoneRoot, "Linux.luks").apply {
+            writeBytes(e.header(pw, "ext4", others = mapOf(1 to "phrase de Paul", 5 to "phrase de Jeanne")) + ByteArray(4096))
+        }
+        val id = knownClosed(f)
+        val foreign = e.slotsOf(f).filterKeys { it == 1 || it == 5 }
+        val key = String(runBlocking { Vaults.addRecoveryKey(id, pw.toByteArray()) }, Charsets.US_ASCII)
+        assertEquals(setOf(0, 1, 3, 5), e.slotsOf(f).keys) // ni 1 (pris), ni 2 (biométrie) : 3
+        runBlocking { Vaults.changePassword(id, pw.toByteArray(), "nouveau mot de passe".toByteArray()) }
+        runBlocking { Vaults.removeRecoveryKey(id, "nouveau mot de passe".toByteArray()) }
+        assertEquals(foreign, e.slotsOf(f).filterKeys { it == 1 || it == 5 }) // intacts
+        assertEquals(setOf(0, 1, 5), e.slotsOf(f).keys)
+        assertFalse(opensWith(id, key, recovery = true))
     }
 }

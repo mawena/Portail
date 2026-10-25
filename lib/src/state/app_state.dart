@@ -477,11 +477,42 @@ class AppState extends ChangeNotifier implements FluLuksEventsApi {
   /// Ouvre un coffre connu ([vaultId]) ou le fichier [path] de [srcId] ; rend son volume (le stockage du coffre a
   /// le même identifiant). Erreur `badPassword` rendue telle quelle ; [password] mis à zéro après l'appel.
   Future<VolumeMsg> openVault({String? vaultId, String? srcId, String? path, required Uint8List password,
-      required bool writable}) async {
+      required bool writable, bool recovery = false}) async {
     try {
-      final v = await api.openVault(vaultId, srcId, path, password, writable);
+      final v = await api.openVault(vaultId, srcId, path, password, writable, recovery: recovery);
       await refresh();
       return v;
+    } finally {
+      password.fillRange(0, password.length, 0);
+    }
+  }
+
+  /// Change le mot de passe d'un coffre fermé ([oldPassword] : mot de passe ou clé de secours). Lève
+  /// [PlatformException] ; les deux tableaux sont mis à zéro après l'appel.
+  Future<void> changeVaultPassword(String id, Uint8List oldPassword, Uint8List newPassword) async {
+    try {
+      await api.changeVaultPassword(id, oldPassword, newPassword);
+    } finally {
+      oldPassword.fillRange(0, oldPassword.length, 0);
+      newPassword.fillRange(0, newPassword.length, 0);
+    }
+  }
+
+  /// Crée la clé de secours d'un coffre fermé et la rend (l'appelant la montre une fois, puis la met à zéro).
+  Future<Uint8List> addRecoveryKey(String id, Uint8List password) async {
+    try {
+      final k = await api.addRecoveryKey(id, password);
+      await refreshSources();
+      return k;
+    } finally {
+      password.fillRange(0, password.length, 0);
+    }
+  }
+
+  Future<void> removeRecoveryKey(String id, Uint8List password) async {
+    try {
+      await api.removeRecoveryKey(id, password);
+      await refreshSources();
     } finally {
       password.fillRange(0, password.length, 0);
     }

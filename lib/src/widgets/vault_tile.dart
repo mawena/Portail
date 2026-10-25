@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../bridge/fluluks_api.g.dart';
 import '../screens/explorer_screen.dart';
+import '../screens/vault_keys_screen.dart';
 import '../state/app_state.dart';
 import '../strings_fr.dart';
 import '../ui/tokens.dart';
@@ -18,7 +19,8 @@ String vaultFsName(String fs) => switch (fs.toLowerCase()) {
 
 /// Un coffre de l'accueil (phase 14) : nom, taille, système de fichiers et emplacement ; état (fermé, ouvert,
 /// indisponible si son stockage n'est pas là) ; Ouvrir, ou Parcourir et Fermer ; menu ⋮ : Ouvrir ou Fermer,
-/// Parcourir, Ouvrir dans Fichiers, Afficher l'emplacement, Retirer de la liste (le fichier reste).
+/// Parcourir, Ouvrir dans Fichiers, Changer le mot de passe, Clé de secours (rien de cela pour un coffre LUKS1),
+/// Afficher l'emplacement, Retirer de la liste (le fichier reste).
 class VaultTile extends StatelessWidget {
   const VaultTile({super.key, required this.state, required this.vault});
 
@@ -37,7 +39,8 @@ class VaultTile extends StatelessWidget {
   }
 
   Future<void> _openVault(BuildContext context) async {
-    final vol = await openVaultDialog(context, state, name: vault.name, vaultId: vault.id);
+    final vol =
+        await openVaultDialog(context, state, name: vault.name, vaultId: vault.id, offerRecovery: vault.hasRecovery);
     if (vol != null && context.mounted) await openExplorer(context, state, vol.id);
   }
 
@@ -70,6 +73,10 @@ class VaultTile extends StatelessWidget {
       case 'location':
         final h = _host;
         if (h != null) openExplorer(context, state, h.id, path: parentOf(vault.path));
+      case 'password':
+        changeVaultPassword(context, state, vault);
+      case 'recovery':
+        openRecoveryKey(context, state, vault.id);
       case 'forget':
         _forget(context);
     }
@@ -113,6 +120,15 @@ class VaultTile extends StatelessWidget {
                   item('close', Icons.lock_rounded, Fr.vaultClose),
                 ] else if (!_unavailable)
                   item('open', Icons.lock_open_rounded, Fr.open),
+                if (!_unavailable && vault.luksVersion == 1)
+                  const PopupMenuItem(
+                    enabled: false,
+                    child: ListTile(leading: Icon(Icons.info_outline_rounded), title: Text(Fr.vaultLuks1)),
+                  )
+                else if (!_unavailable) ...[
+                  item('password', Icons.password_rounded, Fr.changePasswordAction),
+                  item('recovery', Icons.key_rounded, Fr.recoveryKey),
+                ],
                 if (_host != null) item('location', Icons.place_rounded, Fr.showLocation),
                 item('forget', Icons.playlist_remove_rounded, Fr.vaultForget),
               ],

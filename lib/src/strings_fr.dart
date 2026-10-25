@@ -142,6 +142,36 @@ class Fr {
   static const vaultForgetConfirm = 'Retirer';
   static const kindVault = 'coffre';
 
+  // mot de passe et clé de secours d'un coffre (phase 14)
+  static String changeVaultPasswordTitle(String name) => 'Mot de passe du coffre $name';
+  static const oldPasswordOrRecovery = 'Le mot de passe actuel, ou la clé de secours';
+  static const closeVaultFirst = "Fermez d'abord le coffre";
+  static const vaultLuks1 = 'Coffre LUKS1 : changez la phrase sous Linux';
+  static const recoveryKey = 'Clé de secours';
+  static const useRecoveryKey = 'Utiliser la clé de secours';
+  static const usePassword = 'Utiliser le mot de passe';
+  static const showRecoveryKey = 'Afficher la clé';
+  static const hideRecoveryKey = 'Masquer la clé';
+  static const recoveryKeyHelp =
+      'Une clé de secours de 24 caractères ouvre le coffre si le mot de passe est oublié, et permet alors de le '
+      "changer. Elle n'est montrée qu'une fois : notez-la et rangez-la ailleurs que sur ce téléphone.";
+  static const recoveryKeyPresent = 'Ce coffre a une clé de secours.';
+  static const recoveryKeyAbsent = "Ce coffre n'a pas de clé de secours.";
+  static const recoveryKeyCreate = 'Créer une clé de secours';
+  static const recoveryKeyReplace = 'Remplacer la clé de secours';
+  static const recoveryKeyReplaceHelp = "L'ancienne clé n'ouvrira plus le coffre.";
+  static const recoveryKeyRemove = 'Retirer la clé de secours';
+  static const recoveryKeyRemoved = 'Clé de secours retirée';
+  static const vaultPasswordTitle = 'Mot de passe du coffre';
+  static const recoveryKeyShownTitle = 'Votre clé de secours';
+  static const recoveryKeyShownOnce =
+      'Notez-la maintenant : elle ne sera plus jamais affichée. Rangez-la ailleurs que sur ce téléphone.';
+  static const recoveryKeyLinux = 'Sous Linux, elle se tape telle quelle, tirets compris, à la place de la phrase de passe.';
+  static const copyRecoveryKey = 'Copier la clé';
+  static const recoveryKeyCopied = 'Clé copiée, effacée du presse-papiers dans 60 s';
+  static const recoveryKeyNoted = "J'ai noté la clé";
+  static const workingOnKeys = 'Calcul de la clé… quelques secondes';
+
   /// Taille binaire d'un coffre : « 256 Mio », « 1 Gio », « 1,5 Gio ».
   static String binarySize(int bytes) {
     const m = 1 << 20, g = 1 << 30;

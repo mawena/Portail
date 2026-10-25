@@ -2454,10 +2454,19 @@ interface FluLuksHostApi {
   fun createVault(srcId: String, dir: String, name: String, sizeBytes: Long, fs: String, password: ByteArray, callback: (Result<VaultMsg>) -> Unit)
   /**
    * Ouvre un coffre connu (`vaultId`), ou le fichier `path` de `srcId` ; erreur `badPassword` si le mot de passe est
-   * faux.
+   * faux. `recovery` : `password` est la clé de secours (tirets, espaces et casse ignorés).
    */
-  fun openVault(vaultId: String?, srcId: String?, path: String?, password: ByteArray, writable: Boolean, callback: (Result<VolumeMsg>) -> Unit)
+  fun openVault(vaultId: String?, srcId: String?, path: String?, password: ByteArray, writable: Boolean, recovery: Boolean, callback: (Result<VolumeMsg>) -> Unit)
   fun closeVault(vaultId: String)
+  /**
+   * Change le mot de passe d'un coffre fermé (`oldPassword` : mot de passe ou clé de secours) ; erreur
+   * `badPassword` si l'ancien est faux.
+   */
+  fun changeVaultPassword(vaultId: String, oldPassword: ByteArray, newPassword: ByteArray, callback: (Result<Unit>) -> Unit)
+  /** Crée (ou remplace) la clé de secours d'un coffre fermé et la rend, une seule fois (24 caractères en groupes). */
+  fun addRecoveryKey(vaultId: String, password: ByteArray, callback: (Result<ByteArray>) -> Unit)
+  /** Retire la clé de secours d'un coffre fermé. */
+  fun removeRecoveryKey(vaultId: String, password: ByteArray, callback: (Result<Unit>) -> Unit)
   /** Retire le coffre de la liste (fermé d'abord) ; son fichier n'est pas touché. */
   fun forgetVault(vaultId: String)
   fun cancelTransfer()
@@ -3374,7 +3383,8 @@ interface FluLuksHostApi {
             val pathArg = args[2] as String?
             val passwordArg = args[3] as ByteArray
             val writableArg = args[4] as Boolean
-            api.openVault(vaultIdArg, srcIdArg, pathArg, passwordArg, writableArg) { result: Result<VolumeMsg> ->
+            val recoveryArg = args[5] as Boolean
+            api.openVault(vaultIdArg, srcIdArg, pathArg, passwordArg, writableArg, recoveryArg) { result: Result<VolumeMsg> ->
               val error = result.exceptionOrNull()
               if (error != null) {
                 reply.reply(FluLuksApiPigeonUtils.wrapError(error))
@@ -3401,6 +3411,68 @@ interface FluLuksHostApi {
               FluLuksApiPigeonUtils.wrapError(exception)
             }
             reply.reply(wrapped)
+          }
+        } else {
+          channel.setMessageHandler(null)
+        }
+      }
+      run {
+        val channel = BasicMessageChannel<Any?>(binaryMessenger, "dev.flutter.pigeon.fluluks.FluLuksHostApi.changeVaultPassword$separatedMessageChannelSuffix", codec)
+        if (api != null) {
+          channel.setMessageHandler { message, reply ->
+            val args = message as List<Any?>
+            val vaultIdArg = args[0] as String
+            val oldPasswordArg = args[1] as ByteArray
+            val newPasswordArg = args[2] as ByteArray
+            api.changeVaultPassword(vaultIdArg, oldPasswordArg, newPasswordArg) { result: Result<Unit> ->
+              val error = result.exceptionOrNull()
+              if (error != null) {
+                reply.reply(FluLuksApiPigeonUtils.wrapError(error))
+              } else {
+                reply.reply(FluLuksApiPigeonUtils.wrapResult(null))
+              }
+            }
+          }
+        } else {
+          channel.setMessageHandler(null)
+        }
+      }
+      run {
+        val channel = BasicMessageChannel<Any?>(binaryMessenger, "dev.flutter.pigeon.fluluks.FluLuksHostApi.addRecoveryKey$separatedMessageChannelSuffix", codec)
+        if (api != null) {
+          channel.setMessageHandler { message, reply ->
+            val args = message as List<Any?>
+            val vaultIdArg = args[0] as String
+            val passwordArg = args[1] as ByteArray
+            api.addRecoveryKey(vaultIdArg, passwordArg) { result: Result<ByteArray> ->
+              val error = result.exceptionOrNull()
+              if (error != null) {
+                reply.reply(FluLuksApiPigeonUtils.wrapError(error))
+              } else {
+                val data = result.getOrNull()
+                reply.reply(FluLuksApiPigeonUtils.wrapResult(data))
+              }
+            }
+          }
+        } else {
+          channel.setMessageHandler(null)
+        }
+      }
+      run {
+        val channel = BasicMessageChannel<Any?>(binaryMessenger, "dev.flutter.pigeon.fluluks.FluLuksHostApi.removeRecoveryKey$separatedMessageChannelSuffix", codec)
+        if (api != null) {
+          channel.setMessageHandler { message, reply ->
+            val args = message as List<Any?>
+            val vaultIdArg = args[0] as String
+            val passwordArg = args[1] as ByteArray
+            api.removeRecoveryKey(vaultIdArg, passwordArg) { result: Result<Unit> ->
+              val error = result.exceptionOrNull()
+              if (error != null) {
+                reply.reply(FluLuksApiPigeonUtils.wrapError(error))
+              } else {
+                reply.reply(FluLuksApiPigeonUtils.wrapResult(null))
+              }
+            }
           }
         } else {
           channel.setMessageHandler(null)
