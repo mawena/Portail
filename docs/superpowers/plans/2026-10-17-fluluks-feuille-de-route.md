@@ -414,7 +414,7 @@ dans le même commit que le travail.
 - [x] T8 — Automatisations : modèles de prompt à variables, lancement manuel ou planifié (WorkManager), historique *(TemplateTest 9, AutomationsTest 24 ; WorkManager 2.10.1 ; AutomationWorkerInstrumentedTest écrit, passage sur le Pixel en T12 ; 723 tests Flutter, 595 Kotlin)*
 - [x] T9 — Écrans des automatisations *(automations_test 11 ; liste, fiche et historique, formulaire à variables détectées, exécution suivie en direct ; entrée « Automatisations » sur l'accueil ; 778 tests Flutter, 595 Kotlin)*
 - [x] T10 — Certificats auto-signés de confiance, conversations masquées dans les captures *(TrustedCertsTest 8 ; http:// permis par la configuration de sécurité réseau, absente jusque-là ; règle de source noLogsInAiCode ; 782 tests Flutter, 604 Kotlin)*
-- [ ] T11 — Documentation
+- [x] T11 — Documentation *(README : intégration IA, limites, sécurité, serveur d'essai, licences d'OkHttp, Room, WorkManager et markdown ; aide : trois questions ; [fiche d'essai](../research/2026-10-25-essais-phase15/essais.md))*
 - [ ] T12 — Essais instrumentés sur le Pixel
 - [ ] *(utilisateur)* T13 — Essais sur le Pixel
 - [ ] Relecture finale de toute la branche
