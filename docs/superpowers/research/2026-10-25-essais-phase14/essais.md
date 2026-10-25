@@ -28,7 +28,8 @@ récupérable**.
 - [x] Toucher `photo.jpg.age` → mot de passe → **Ouvrir** : la photo s'affiche dans la visionneuse de Portail.
       Aucun `photo.jpg` en clair n'apparaît dans le dossier.
       → piloté par adb : la visionneuse de Portail montre « photo.jpg 1 / 1 » ; dossier inchangé, aucune copie en clair dans les fichiers de l'application (recherche par SHA-256).
-- [ ] Chiffrer la vidéo, la toucher → **Ouvrir** : elle se lit ; l'avance rapide (glisser sur la barre) fonctionne.
+- [x] Chiffrer la vidéo, la toucher → **Ouvrir** : elle se lit ; l'avance rapide (glisser sur la barre) fonctionne.
+      → piloté par adb : la vidéo déchiffrée se lit en entier (20 s) ; « Lecture » depuis la fin repart de 0 (retour en arrière) ; une touche vers 17 s, 3 s après le départ, termine la lecture 2 s plus tard (journal du décodeur : flush, puis arrêt de l'AudioTrack).
 - [x] Toucher un fichier chiffré et saisir un **mauvais mot de passe** : « Mot de passe incorrect », le dialogue reste
       ouvert.
       → piloté par adb : « Mot de passe incorrect », le dialogue reste ouvert, le champ est vidé.
