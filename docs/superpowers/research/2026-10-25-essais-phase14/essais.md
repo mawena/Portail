@@ -100,7 +100,8 @@ récupérable**.
       → piloté par adb : après le mot de passe, « Votre clé de secours » montre 6 groupes de 4 caractères avec **Copier la clé** (« Clé copiée, effacée du presse-papiers dans 60 s ») et **J'ai noté la clé** ; ensuite l'écran dit « Ce coffre a une clé de secours » (Remplacer, Retirer) et ne la réaffiche plus.
 - [x] Ouvrir le coffre → **Utiliser la clé de secours** → taper la clé en minuscules, sans tirets : le coffre s'ouvre.
       → piloté par adb : « Utiliser la clé de secours » change le champ (« Afficher la clé ») ; la clé tapée en minuscules sans tirets ouvre « Course » (explorateur à sa racine).
-- [ ] Sous Ubuntu, la clé tapée telle quelle (tirets compris) à la place de la phrase ouvre aussi le coffre.
+- [x] Sous Ubuntu, la clé tapée telle quelle (tirets compris) à la place de la phrase ouvre aussi le coffre.
+      → contrôlé sur le PC (en-tête de Course.luks, `cryptsetup luksOpen --test-passphrase`, sans root) : la clé avec ses tirets ouvre le coffre (code 0), le mot de passe aussi ; la forme minuscule sans tirets est refusée sous Linux, comme attendu (seul Portail la normalise). Emplacements 0 et 1.
 - [ ] **Changer le mot de passe** en donnant la clé de secours comme mot de passe actuel : accepté.
 - [ ] **Retirer la clé de secours** : la clé n'ouvre plus le coffre, le mot de passe si.
 
