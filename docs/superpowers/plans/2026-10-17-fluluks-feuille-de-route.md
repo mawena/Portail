@@ -395,7 +395,7 @@ dans le même commit que le travail.
 - [x] T11 — Mot de passe et clé de secours d'un coffre *(VaultsTest 29 ; vault_keys_test 6 ; clé de secours Crockford 24 caractères, emplacements inconnus jamais touchés ; 631 tests Flutter, 496 Kotlin)*
 - [x] T12 — Déverrouillage biométrique d'un coffre (visage ou empreinte) *(BiometricBoxLogicTest 6, VaultsTest 35 ; vault_biometric_test 7 ; BiometricBoxInstrumentedTest écrit, passage sur le Pixel avec T15 ; 638 tests Flutter, 508 Kotlin)*
 - [x] T13 — Coffres fermés à l'écran éteint, masqués dans les captures *(VaultPrivacyTest 4 ; réglages Confidentialité désactivés par défaut ; 640 tests Flutter, 512 Kotlin)*
-- [ ] T14 — Documentation
+- [x] T14 — Documentation *(README : chiffrement et coffres, lire sur un ordinateur, limites, licences de scrypt et de la liste EFF ; aide : trois questions ; fiche d'essai de la phase 14)*
 - [ ] T15 — Essais instrumentés sur le Pixel
 - [ ] *(utilisateur)* T16 — Essais sur le Pixel
 - [ ] Relecture finale de toute la branche
