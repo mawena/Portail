@@ -746,3 +746,88 @@ abstract class FluLuksEventsApi {
   /// Phase 13 : état d'un terminal changé (ouvert, fermé par le serveur, connexion perdue, fermé à la demande).
   void onTerminalChanged(TerminalSessionMsg session);
 }
+
+// --- intégration IA (phase 15) : API à part, pour ne pas mêler les serveurs IA au reste du pont
+
+/// Serveur IA enregistré (« fournisseur ») : [baseUrl] normalisée ; [hasKey] : une clé API est enregistrée (elle
+/// n'est jamais renvoyée) ; [isDefault] : serveur des nouvelles conversations ; [defaultModel] : modèle par défaut.
+class AiServerMsg {
+  AiServerMsg({
+    required this.id,
+    required this.name,
+    required this.baseUrl,
+    required this.hasKey,
+    required this.isDefault,
+    this.defaultModel,
+  });
+  String id;
+  String name;
+  String baseUrl;
+  bool hasKey;
+  bool isDefault;
+  String? defaultModel;
+}
+
+/// Résultat de « Tester la connexion » : [version] lue sur `/health` ; [models] ; [log] : journal de la tentative,
+/// sans aucun secret ; en cas d'échec, [error] (français, dit quoi faire) et [detail] (message du serveur tel quel).
+class AiTestResultMsg {
+  AiTestResultMsg({
+    required this.ok,
+    this.version,
+    required this.models,
+    required this.log,
+    this.error,
+    this.detail,
+  });
+  bool ok;
+  String? version;
+  List<String> models;
+  List<String> log;
+  String? error;
+  String? detail;
+}
+
+/// État d'un serveur IA : [state] ∈ `online`, `offline`, `key-refused` ; [error] et [detail] comme pour le test.
+class AiHealthMsg {
+  AiHealthMsg({
+    required this.serverId,
+    required this.state,
+    this.version,
+    this.modelCount,
+    this.error,
+    this.detail,
+  });
+  String serverId;
+  String state;
+  String? version;
+  int? modelCount;
+  String? error;
+  String? detail;
+}
+
+/// Serveurs IA (phase 15). Erreurs : code `ai` (message français ; détails : message du serveur), ou les codes du
+/// moteur pour une fiche invalide (`saveAiServer` : adresse ou nom refusés).
+@HostApi()
+abstract class AiHostApi {
+  List<AiServerMsg> aiServers();
+
+  /// `server.id` vide : nouveau serveur ; `key` null ou vide : la clé enregistrée est gardée (mise à zéro après).
+  AiServerMsg saveAiServer(AiServerMsg server, Uint8List? key);
+
+  /// « Retirer la clé » : le fichier scellé est supprimé.
+  void removeAiServerKey(String serverId);
+
+  /// Supprime le serveur et sa clé ; ses conversations restent lisibles.
+  void deleteAiServer(String serverId);
+  void setDefaultAiServer(String serverId);
+  @async
+  AiTestResultMsg testAiServer(String serverId);
+  @async
+  List<String> aiModels(String serverId);
+  void setAiDefaultModel(String serverId, String? model);
+  @async
+  AiHealthMsg aiHealth(String serverId);
+
+  /// Journal du dernier test du serveur, sans aucun secret.
+  List<String> aiAttemptLog(String serverId);
+}

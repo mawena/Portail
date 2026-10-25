@@ -9,6 +9,7 @@ import android.os.Bundle
 import com.mawena.fluluks.files.Sources
 import com.mawena.fluluks.remote.Remotes
 import com.mawena.fluluks.volumes.VolumeManager
+import com.mawena.fluluks.bridge.AiHostApiImpl
 import com.mawena.fluluks.bridge.FilePicker
 import com.mawena.fluluks.bridge.HostApiImpl
 import io.flutter.embedding.android.FlutterActivity
@@ -16,16 +17,20 @@ import io.flutter.embedding.engine.FlutterEngine
 
 class MainActivity : FlutterActivity() {
     private var hostApi: HostApiImpl? = null
+    private var aiApi: AiHostApiImpl? = null
 
     override fun configureFlutterEngine(flutterEngine: FlutterEngine) {
         super.configureFlutterEngine(flutterEngine)
         val messenger = flutterEngine.dartExecutor.binaryMessenger
         hostApi = HostApiImpl(applicationContext, messenger).also { it.attach(messenger) }
+        aiApi = AiHostApiImpl(applicationContext).also { it.attach(messenger) }
     }
 
     override fun cleanUpFlutterEngine(flutterEngine: FlutterEngine) {
         hostApi?.detach(flutterEngine.dartExecutor.binaryMessenger)
         hostApi = null
+        aiApi?.detach(flutterEngine.dartExecutor.binaryMessenger)
+        aiApi = null
         super.cleanUpFlutterEngine(flutterEngine)
     }
 

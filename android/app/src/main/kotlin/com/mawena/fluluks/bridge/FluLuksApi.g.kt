@@ -1944,6 +1944,191 @@ data class FavoriteMsg (
     return "FavoriteMsg(key=$key, path=$path, label=$label, sourceId=$sourceId)"
   }
 }
+
+/**
+ * Serveur IA enregistré (« fournisseur ») : [baseUrl] normalisée ; [hasKey] : une clé API est enregistrée (elle
+ * n'est jamais renvoyée) ; [isDefault] : serveur des nouvelles conversations ; [defaultModel] : modèle par défaut.
+ *
+ * Generated class from Pigeon that represents data sent in messages.
+ */
+data class AiServerMsg (
+  val id: String,
+  val name: String,
+  val baseUrl: String,
+  val hasKey: Boolean,
+  val isDefault: Boolean,
+  val defaultModel: String? = null
+)
+ {
+  companion object {
+    fun fromList(pigeonVar_list: List<Any?>): AiServerMsg {
+      val id = pigeonVar_list[0] as String
+      val name = pigeonVar_list[1] as String
+      val baseUrl = pigeonVar_list[2] as String
+      val hasKey = pigeonVar_list[3] as Boolean
+      val isDefault = pigeonVar_list[4] as Boolean
+      val defaultModel = pigeonVar_list[5] as String?
+      return AiServerMsg(id, name, baseUrl, hasKey, isDefault, defaultModel)
+    }
+  }
+  fun toList(): List<Any?> {
+    return listOf(
+      id,
+      name,
+      baseUrl,
+      hasKey,
+      isDefault,
+      defaultModel,
+    )
+  }
+  override fun equals(other: Any?): Boolean {
+    if (other == null || other.javaClass != javaClass) {
+      return false
+    }
+    if (this === other) {
+      return true
+    }
+    val other = other as AiServerMsg
+    return FluLuksApiPigeonUtils.deepEquals(this.id, other.id) && FluLuksApiPigeonUtils.deepEquals(this.name, other.name) && FluLuksApiPigeonUtils.deepEquals(this.baseUrl, other.baseUrl) && FluLuksApiPigeonUtils.deepEquals(this.hasKey, other.hasKey) && FluLuksApiPigeonUtils.deepEquals(this.isDefault, other.isDefault) && FluLuksApiPigeonUtils.deepEquals(this.defaultModel, other.defaultModel)
+  }
+
+  override fun hashCode(): Int {
+    var result = javaClass.hashCode()
+    result = 31 * result + FluLuksApiPigeonUtils.deepHash(this.id)
+    result = 31 * result + FluLuksApiPigeonUtils.deepHash(this.name)
+    result = 31 * result + FluLuksApiPigeonUtils.deepHash(this.baseUrl)
+    result = 31 * result + FluLuksApiPigeonUtils.deepHash(this.hasKey)
+    result = 31 * result + FluLuksApiPigeonUtils.deepHash(this.isDefault)
+    result = 31 * result + FluLuksApiPigeonUtils.deepHash(this.defaultModel)
+    return result
+  }
+  override fun toString(): String {
+    return "AiServerMsg(id=$id, name=$name, baseUrl=$baseUrl, hasKey=$hasKey, isDefault=$isDefault, defaultModel=$defaultModel)"
+  }
+}
+
+/**
+ * Résultat de « Tester la connexion » : [version] lue sur `/health` ; [models] ; [log] : journal de la tentative,
+ * sans aucun secret ; en cas d'échec, [error] (français, dit quoi faire) et [detail] (message du serveur tel quel).
+ *
+ * Generated class from Pigeon that represents data sent in messages.
+ */
+data class AiTestResultMsg (
+  val ok: Boolean,
+  val version: String? = null,
+  val models: List<String>,
+  val log: List<String>,
+  val error: String? = null,
+  val detail: String? = null
+)
+ {
+  companion object {
+    fun fromList(pigeonVar_list: List<Any?>): AiTestResultMsg {
+      val ok = pigeonVar_list[0] as Boolean
+      val version = pigeonVar_list[1] as String?
+      val models = pigeonVar_list[2] as List<String>
+      val log = pigeonVar_list[3] as List<String>
+      val error = pigeonVar_list[4] as String?
+      val detail = pigeonVar_list[5] as String?
+      return AiTestResultMsg(ok, version, models, log, error, detail)
+    }
+  }
+  fun toList(): List<Any?> {
+    return listOf(
+      ok,
+      version,
+      models,
+      log,
+      error,
+      detail,
+    )
+  }
+  override fun equals(other: Any?): Boolean {
+    if (other == null || other.javaClass != javaClass) {
+      return false
+    }
+    if (this === other) {
+      return true
+    }
+    val other = other as AiTestResultMsg
+    return FluLuksApiPigeonUtils.deepEquals(this.ok, other.ok) && FluLuksApiPigeonUtils.deepEquals(this.version, other.version) && FluLuksApiPigeonUtils.deepEquals(this.models, other.models) && FluLuksApiPigeonUtils.deepEquals(this.log, other.log) && FluLuksApiPigeonUtils.deepEquals(this.error, other.error) && FluLuksApiPigeonUtils.deepEquals(this.detail, other.detail)
+  }
+
+  override fun hashCode(): Int {
+    var result = javaClass.hashCode()
+    result = 31 * result + FluLuksApiPigeonUtils.deepHash(this.ok)
+    result = 31 * result + FluLuksApiPigeonUtils.deepHash(this.version)
+    result = 31 * result + FluLuksApiPigeonUtils.deepHash(this.models)
+    result = 31 * result + FluLuksApiPigeonUtils.deepHash(this.log)
+    result = 31 * result + FluLuksApiPigeonUtils.deepHash(this.error)
+    result = 31 * result + FluLuksApiPigeonUtils.deepHash(this.detail)
+    return result
+  }
+  override fun toString(): String {
+    return "AiTestResultMsg(ok=$ok, version=$version, models=$models, log=$log, error=$error, detail=$detail)"
+  }
+}
+
+/**
+ * État d'un serveur IA : [state] ∈ `online`, `offline`, `key-refused` ; [error] et [detail] comme pour le test.
+ *
+ * Generated class from Pigeon that represents data sent in messages.
+ */
+data class AiHealthMsg (
+  val serverId: String,
+  val state: String,
+  val version: String? = null,
+  val modelCount: Long? = null,
+  val error: String? = null,
+  val detail: String? = null
+)
+ {
+  companion object {
+    fun fromList(pigeonVar_list: List<Any?>): AiHealthMsg {
+      val serverId = pigeonVar_list[0] as String
+      val state = pigeonVar_list[1] as String
+      val version = pigeonVar_list[2] as String?
+      val modelCount = pigeonVar_list[3] as Long?
+      val error = pigeonVar_list[4] as String?
+      val detail = pigeonVar_list[5] as String?
+      return AiHealthMsg(serverId, state, version, modelCount, error, detail)
+    }
+  }
+  fun toList(): List<Any?> {
+    return listOf(
+      serverId,
+      state,
+      version,
+      modelCount,
+      error,
+      detail,
+    )
+  }
+  override fun equals(other: Any?): Boolean {
+    if (other == null || other.javaClass != javaClass) {
+      return false
+    }
+    if (this === other) {
+      return true
+    }
+    val other = other as AiHealthMsg
+    return FluLuksApiPigeonUtils.deepEquals(this.serverId, other.serverId) && FluLuksApiPigeonUtils.deepEquals(this.state, other.state) && FluLuksApiPigeonUtils.deepEquals(this.version, other.version) && FluLuksApiPigeonUtils.deepEquals(this.modelCount, other.modelCount) && FluLuksApiPigeonUtils.deepEquals(this.error, other.error) && FluLuksApiPigeonUtils.deepEquals(this.detail, other.detail)
+  }
+
+  override fun hashCode(): Int {
+    var result = javaClass.hashCode()
+    result = 31 * result + FluLuksApiPigeonUtils.deepHash(this.serverId)
+    result = 31 * result + FluLuksApiPigeonUtils.deepHash(this.state)
+    result = 31 * result + FluLuksApiPigeonUtils.deepHash(this.version)
+    result = 31 * result + FluLuksApiPigeonUtils.deepHash(this.modelCount)
+    result = 31 * result + FluLuksApiPigeonUtils.deepHash(this.error)
+    result = 31 * result + FluLuksApiPigeonUtils.deepHash(this.detail)
+    return result
+  }
+  override fun toString(): String {
+    return "AiHealthMsg(serverId=$serverId, state=$state, version=$version, modelCount=$modelCount, error=$error, detail=$detail)"
+  }
+}
 private open class FluLuksApiPigeonCodec : StandardMessageCodec() {
   override fun readValueOfType(type: Byte, buffer: ByteBuffer): Any? {
     return when (type) {
@@ -2087,6 +2272,21 @@ private open class FluLuksApiPigeonCodec : StandardMessageCodec() {
           FavoriteMsg.fromList(it)
         }
       }
+      157.toByte() -> {
+        return (readValue(buffer) as? List<Any?>)?.let {
+          AiServerMsg.fromList(it)
+        }
+      }
+      158.toByte() -> {
+        return (readValue(buffer) as? List<Any?>)?.let {
+          AiTestResultMsg.fromList(it)
+        }
+      }
+      159.toByte() -> {
+        return (readValue(buffer) as? List<Any?>)?.let {
+          AiHealthMsg.fromList(it)
+        }
+      }
       else -> super.readValueOfType(type, buffer)
     }
   }
@@ -2202,6 +2402,18 @@ private open class FluLuksApiPigeonCodec : StandardMessageCodec() {
       }
       is FavoriteMsg -> {
         stream.write(156)
+        writeValue(stream, value.toList())
+      }
+      is AiServerMsg -> {
+        stream.write(157)
+        writeValue(stream, value.toList())
+      }
+      is AiTestResultMsg -> {
+        stream.write(158)
+        writeValue(stream, value.toList())
+      }
+      is AiHealthMsg -> {
+        stream.write(159)
         writeValue(stream, value.toList())
       }
       else -> super.writeValue(stream, value)
@@ -4306,6 +4518,223 @@ class FluLuksEventsApi(private val binaryMessenger: BinaryMessenger, private val
       } else {
         callback(Result.failure(FluLuksApiPigeonUtils.createConnectionError(channelName)))
       } 
+    }
+  }
+}
+/**
+ * Serveurs IA (phase 15). Erreurs : code `ai` (message français ; détails : message du serveur), ou les codes du
+ * moteur pour une fiche invalide (`saveAiServer` : adresse ou nom refusés).
+ *
+ * Generated interface from Pigeon that represents a handler of messages from Flutter.
+ */
+interface AiHostApi {
+  fun aiServers(): List<AiServerMsg>
+  /** `server.id` vide : nouveau serveur ; `key` null ou vide : la clé enregistrée est gardée (mise à zéro après). */
+  fun saveAiServer(server: AiServerMsg, key: ByteArray?): AiServerMsg
+  /** « Retirer la clé » : le fichier scellé est supprimé. */
+  fun removeAiServerKey(serverId: String)
+  /** Supprime le serveur et sa clé ; ses conversations restent lisibles. */
+  fun deleteAiServer(serverId: String)
+  fun setDefaultAiServer(serverId: String)
+  fun testAiServer(serverId: String, callback: (Result<AiTestResultMsg>) -> Unit)
+  fun aiModels(serverId: String, callback: (Result<List<String>>) -> Unit)
+  fun setAiDefaultModel(serverId: String, model: String?)
+  fun aiHealth(serverId: String, callback: (Result<AiHealthMsg>) -> Unit)
+  /** Journal du dernier test du serveur, sans aucun secret. */
+  fun aiAttemptLog(serverId: String): List<String>
+
+  companion object {
+    /** The codec used by AiHostApi. */
+    val codec: MessageCodec<Any?> by lazy {
+      FluLuksApiPigeonCodec()
+    }
+    /** Sets up an instance of `AiHostApi` to handle messages through the `binaryMessenger`. */
+    @JvmOverloads
+    fun setUp(binaryMessenger: BinaryMessenger, api: AiHostApi?, messageChannelSuffix: String = "") {
+      val separatedMessageChannelSuffix = if (messageChannelSuffix.isNotEmpty()) ".$messageChannelSuffix" else ""
+      run {
+        val channel = BasicMessageChannel<Any?>(binaryMessenger, "dev.flutter.pigeon.fluluks.AiHostApi.aiServers$separatedMessageChannelSuffix", codec)
+        if (api != null) {
+          channel.setMessageHandler { _, reply ->
+            val wrapped: List<Any?> = try {
+              listOf(api.aiServers())
+            } catch (exception: Throwable) {
+              FluLuksApiPigeonUtils.wrapError(exception)
+            }
+            reply.reply(wrapped)
+          }
+        } else {
+          channel.setMessageHandler(null)
+        }
+      }
+      run {
+        val channel = BasicMessageChannel<Any?>(binaryMessenger, "dev.flutter.pigeon.fluluks.AiHostApi.saveAiServer$separatedMessageChannelSuffix", codec)
+        if (api != null) {
+          channel.setMessageHandler { message, reply ->
+            val args = message as List<Any?>
+            val serverArg = args[0] as AiServerMsg
+            val keyArg = args[1] as ByteArray?
+            val wrapped: List<Any?> = try {
+              listOf(api.saveAiServer(serverArg, keyArg))
+            } catch (exception: Throwable) {
+              FluLuksApiPigeonUtils.wrapError(exception)
+            }
+            reply.reply(wrapped)
+          }
+        } else {
+          channel.setMessageHandler(null)
+        }
+      }
+      run {
+        val channel = BasicMessageChannel<Any?>(binaryMessenger, "dev.flutter.pigeon.fluluks.AiHostApi.removeAiServerKey$separatedMessageChannelSuffix", codec)
+        if (api != null) {
+          channel.setMessageHandler { message, reply ->
+            val args = message as List<Any?>
+            val serverIdArg = args[0] as String
+            val wrapped: List<Any?> = try {
+              api.removeAiServerKey(serverIdArg)
+              listOf(null)
+            } catch (exception: Throwable) {
+              FluLuksApiPigeonUtils.wrapError(exception)
+            }
+            reply.reply(wrapped)
+          }
+        } else {
+          channel.setMessageHandler(null)
+        }
+      }
+      run {
+        val channel = BasicMessageChannel<Any?>(binaryMessenger, "dev.flutter.pigeon.fluluks.AiHostApi.deleteAiServer$separatedMessageChannelSuffix", codec)
+        if (api != null) {
+          channel.setMessageHandler { message, reply ->
+            val args = message as List<Any?>
+            val serverIdArg = args[0] as String
+            val wrapped: List<Any?> = try {
+              api.deleteAiServer(serverIdArg)
+              listOf(null)
+            } catch (exception: Throwable) {
+              FluLuksApiPigeonUtils.wrapError(exception)
+            }
+            reply.reply(wrapped)
+          }
+        } else {
+          channel.setMessageHandler(null)
+        }
+      }
+      run {
+        val channel = BasicMessageChannel<Any?>(binaryMessenger, "dev.flutter.pigeon.fluluks.AiHostApi.setDefaultAiServer$separatedMessageChannelSuffix", codec)
+        if (api != null) {
+          channel.setMessageHandler { message, reply ->
+            val args = message as List<Any?>
+            val serverIdArg = args[0] as String
+            val wrapped: List<Any?> = try {
+              api.setDefaultAiServer(serverIdArg)
+              listOf(null)
+            } catch (exception: Throwable) {
+              FluLuksApiPigeonUtils.wrapError(exception)
+            }
+            reply.reply(wrapped)
+          }
+        } else {
+          channel.setMessageHandler(null)
+        }
+      }
+      run {
+        val channel = BasicMessageChannel<Any?>(binaryMessenger, "dev.flutter.pigeon.fluluks.AiHostApi.testAiServer$separatedMessageChannelSuffix", codec)
+        if (api != null) {
+          channel.setMessageHandler { message, reply ->
+            val args = message as List<Any?>
+            val serverIdArg = args[0] as String
+            api.testAiServer(serverIdArg) { result: Result<AiTestResultMsg> ->
+              val error = result.exceptionOrNull()
+              if (error != null) {
+                reply.reply(FluLuksApiPigeonUtils.wrapError(error))
+              } else {
+                val data = result.getOrNull()
+                reply.reply(FluLuksApiPigeonUtils.wrapResult(data))
+              }
+            }
+          }
+        } else {
+          channel.setMessageHandler(null)
+        }
+      }
+      run {
+        val channel = BasicMessageChannel<Any?>(binaryMessenger, "dev.flutter.pigeon.fluluks.AiHostApi.aiModels$separatedMessageChannelSuffix", codec)
+        if (api != null) {
+          channel.setMessageHandler { message, reply ->
+            val args = message as List<Any?>
+            val serverIdArg = args[0] as String
+            api.aiModels(serverIdArg) { result: Result<List<String>> ->
+              val error = result.exceptionOrNull()
+              if (error != null) {
+                reply.reply(FluLuksApiPigeonUtils.wrapError(error))
+              } else {
+                val data = result.getOrNull()
+                reply.reply(FluLuksApiPigeonUtils.wrapResult(data))
+              }
+            }
+          }
+        } else {
+          channel.setMessageHandler(null)
+        }
+      }
+      run {
+        val channel = BasicMessageChannel<Any?>(binaryMessenger, "dev.flutter.pigeon.fluluks.AiHostApi.setAiDefaultModel$separatedMessageChannelSuffix", codec)
+        if (api != null) {
+          channel.setMessageHandler { message, reply ->
+            val args = message as List<Any?>
+            val serverIdArg = args[0] as String
+            val modelArg = args[1] as String?
+            val wrapped: List<Any?> = try {
+              api.setAiDefaultModel(serverIdArg, modelArg)
+              listOf(null)
+            } catch (exception: Throwable) {
+              FluLuksApiPigeonUtils.wrapError(exception)
+            }
+            reply.reply(wrapped)
+          }
+        } else {
+          channel.setMessageHandler(null)
+        }
+      }
+      run {
+        val channel = BasicMessageChannel<Any?>(binaryMessenger, "dev.flutter.pigeon.fluluks.AiHostApi.aiHealth$separatedMessageChannelSuffix", codec)
+        if (api != null) {
+          channel.setMessageHandler { message, reply ->
+            val args = message as List<Any?>
+            val serverIdArg = args[0] as String
+            api.aiHealth(serverIdArg) { result: Result<AiHealthMsg> ->
+              val error = result.exceptionOrNull()
+              if (error != null) {
+                reply.reply(FluLuksApiPigeonUtils.wrapError(error))
+              } else {
+                val data = result.getOrNull()
+                reply.reply(FluLuksApiPigeonUtils.wrapResult(data))
+              }
+            }
+          }
+        } else {
+          channel.setMessageHandler(null)
+        }
+      }
+      run {
+        val channel = BasicMessageChannel<Any?>(binaryMessenger, "dev.flutter.pigeon.fluluks.AiHostApi.aiAttemptLog$separatedMessageChannelSuffix", codec)
+        if (api != null) {
+          channel.setMessageHandler { message, reply ->
+            val args = message as List<Any?>
+            val serverIdArg = args[0] as String
+            val wrapped: List<Any?> = try {
+              listOf(api.aiAttemptLog(serverIdArg))
+            } catch (exception: Throwable) {
+              FluLuksApiPigeonUtils.wrapError(exception)
+            }
+            reply.reply(wrapped)
+          }
+        } else {
+          channel.setMessageHandler(null)
+        }
+      }
     }
   }
 }
