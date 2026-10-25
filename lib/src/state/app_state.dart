@@ -4,6 +4,7 @@ import 'package:flutter/painting.dart';
 import 'package:flutter/services.dart';
 
 import '../ai/ai_hub.dart';
+import '../ai/chat_hub.dart';
 import '../bridge/fluluks_api.g.dart';
 import '../strings_fr.dart';
 import '../terminal/terminal_hub.dart';
@@ -21,6 +22,9 @@ class AppState extends ChangeNotifier implements FluLuksEventsApi {
 
   /// Serveurs IA (phase 15), gardés hors des écrans.
   late final ai = AiHub(api);
+
+  /// Conversations avec les modèles (phase 15), gardées hors des écrans.
+  late final chats = ChatHub(api);
 
   void _bell() {
     if (uiPrefs.haptics) HapticFeedback.vibrate();
@@ -210,6 +214,11 @@ class AppState extends ChangeNotifier implements FluLuksEventsApi {
       _biometricUnavailable = await api.biometricUnavailable();
       notifyListeners();
       await terminals.restore(); // sessions gardées par le service pendant que l'application était fermée
+      try {
+        await chats.load(); // nombre de conversations sur l'accueil, réponses encore en cours
+      } on PlatformException {
+        // historique illisible : l'écran du chat le dira à son ouverture
+      }
     } on PlatformException catch (e) {
       _fail(e);
     }

@@ -866,4 +866,41 @@ class Fr {
         'key-refused' => aiStatusKeyRefused,
         _ => aiStatusUnknown,
       };
+
+  // chat (phase 15, T7)
+  static const sectionAiHome = 'IA';
+  static const chatTitle = 'Chat IA';
+  static String chatCount(int n) => n == 0 ? 'Discuter avec vos modèles' : count(n, 'conversation', 'conversations');
+  static const chatNew = 'Nouvelle conversation';
+  static const chatNoConversations = 'Aucune conversation';
+  static const chatNoConversationsBody =
+      'Touchez «\u00A0Nouvelle conversation\u00A0» pour poser une question à un modèle.';
+  static const chatNoServersBody = 'Ajoutez un serveur IA pour discuter avec un modèle.';
+  static const chatEmptyThread = 'Écrivez un message pour commencer.';
+  static const chatInputHint = 'Message';
+  static const chatSend = 'Envoyer';
+  static const chatStop = 'Arrêter';
+  static const chatRegenerate = 'Régénérer';
+  static const chatCopyReply = 'Copier la réponse';
+  static const chatCopyCode = 'Copier le code';
+  static const chatCopied = 'Copié';
+  static const chatOpenLinkTitle = 'Ouvrir ce lien\u202F?';
+  static const chatOpenLink = 'Ouvrir';
+  static const chatGenerating = 'Réponse en cours';
+  static const chatStopped = 'Arrêtée';
+  static const chatInterrupted = 'Interrompue\u00A0: Portail a été fermé pendant la réponse';
+  static const chatYou = 'Vous';
+  static const chatAssistant = 'Modèle';
+  static const chatSystemPrompt = 'Prompt système';
+  static const chatSystemPromptHelp =
+      'Consignes données au modèle avant chaque échange de cette conversation. Laissez vide pour aucune.';
+  static const chatRenameTitle = 'Renommer la conversation';
+  static const chatTitleLabel = 'Titre';
+  static const chatTitleEmpty = 'Saisissez un titre';
+  static const chatDeleteTitle = 'Supprimer la conversation\u202F?';
+  static const chatDeleteBody = 'Ses messages seront effacés de ce téléphone.';
+  static const chatChooseModel = 'Serveur et modèle';
+  static const chatNoModel = 'Choisir un modèle';
+  static const chatServerGone = 'Serveur supprimé';
+  static const chatPickModelFirst = "Choisissez un serveur et un modèle, en haut de l'écran.";
 }

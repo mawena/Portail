@@ -21,6 +21,9 @@ void main() {
     'ai_servers_dark': ('aiServers', Brightness.dark),
     'ai_server_form_light': ('aiServerForm', Brightness.light),
     'ai_server_form_dark': ('aiServerForm', Brightness.dark),
+    'chat_list_light': ('chatList', Brightness.light),
+    'chat_light': ('chat', Brightness.light),
+    'chat_dark': ('chat', Brightness.dark),
   };
   for (final MapEntry(key: name, value: (screen, b)) in cases.entries) {
     testWidgets(name, (t) async {

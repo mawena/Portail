@@ -212,6 +212,9 @@ mixin FakeAiApi implements AiApi {
   final chatRunning = <int>{};
   int _msgNext = 1;
 
+  /// Erreur levée par le prochain `sendChatMessage`, s'il y en a une (rien n'est alors écrit).
+  PlatformException? chatSendError;
+
   ChatMessageMsg _msg(int conv, String role, String content, String state) => ChatMessageMsg(
         id: _msgNext++,
         conversationId: conv,
@@ -224,6 +227,11 @@ mixin FakeAiApi implements AiApi {
   @override
   Future<ChatMessageMsg> sendChatMessage(int conversationId, String text) async {
     aiCalls.add('sendChatMessage $conversationId $text');
+    final e = chatSendError;
+    if (e != null) {
+      chatSendError = null;
+      throw e;
+    }
     final c = _conv(conversationId);
     final list = chatMessages.putIfAbsent(conversationId, () => []);
     list.add(_msg(conversationId, 'user', text, 'done'));

@@ -5,6 +5,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:fluluks/src/ai/ai_server_form.dart';
 import 'package:fluluks/src/ai/ai_servers_screen.dart';
+import 'package:fluluks/src/ai/chat_list_screen.dart';
+import 'package:fluluks/src/ai/chat_screen.dart';
 import 'package:fluluks/src/app.dart';
 import 'package:fluluks/src/bridge/fluluks_api.g.dart';
 import 'package:fluluks/src/screens/about_screen.dart';
@@ -39,7 +41,7 @@ const screens = [
   'home', 'explorerList', 'explorerGrid', 'filterGrid', 'search', 'globalSearch', 'trash', 'space', 'settings', //
   'about', 'help', 'welcome', 'unlock', 'format', 'editor', 'serverForm', 'nowPlaying', 'terminal', 'sshKeys', 'tunnels',
   'encrypt', 'decrypt', 'vaultCreate', 'homeVaults',
-  'aiServers', 'aiServerForm', //
+  'aiServers', 'aiServerForm', 'chatList', 'chat', //
 ];
 
 /// Pont et état du dernier [pumpScreen] (pour les tests qui agissent ensuite sur l'écran).
@@ -81,7 +83,7 @@ Future<void> pumpScreen(
           usedBy: []),
     ]);
   }
-  if (screen.startsWith('ai')) {
+  if (screen.startsWith('ai') || screen.startsWith('chat')) {
     api.aiServerList.addAll([
       aiServer('a1', 'Atelier', 'https://atelier.mawena.cloud', isDefault: true, model: 'essai-court'),
       aiServer('a2', 'PC du salon', 'http://192.168.0.20:11434', hasKey: false),
@@ -89,6 +91,18 @@ Future<void> pumpScreen(
     ]);
     api.aiHealthById['a2'] = AiHealthMsg(serverId: 'a2', state: 'offline', error: 'Connexion refusée');
     api.aiHealthById['a3'] = AiHealthMsg(serverId: 'a3', state: 'key-refused');
+  }
+  if (screen.startsWith('chat')) {
+    // une conversation en Markdown (titre, liste, code), une autre terminée par un échec
+    await api.createConversation('a1', 'essai-court');
+    await api.sendChatMessage(1, 'Comment sauvegarder mon dossier Photos chaque soir ?');
+    api.finishFakeReply(1, '## Sauvegarde du soir\n\nDeux étapes :\n\n1. Créez le script ci-dessous.\n'
+        '2. Ajoutez-le à **cron** avec `crontab -e`.\n\n```bash\nrsync -a --delete ~/Photos/ /mnt/sauvegarde/Photos/\n```\n\n'
+        '> Vérifiez d\'abord que le disque est monté.');
+    await api.createConversation('a2', 'llama3.2');
+    await api.sendChatMessage(2, 'Résume ce texte');
+    api.finishFakeReply(2, '', state: 'failed', error: 'Le serveur ne répond pas. Vérifiez qu\'il est allumé.',
+        errorDetail: 'Connection refused');
   }
   if (screen == 'homeVaults') {
     // un coffre fermé, un ouvert, un indisponible (carte SD absente)
@@ -157,6 +171,8 @@ Future<void> pumpScreen(
     'tunnels' => TunnelsScreen(state: state, serverId: 's1', sessionId: terminalId),
     'aiServers' => AiServersScreen(state: state),
     'aiServerForm' => AiServerForm(state: state, server: api.aiServerList.first),
+    'chatList' => ChatListScreen(state: state),
+    'chat' => ChatScreen(state: state, conversationId: 1),
     'encrypt' => EncryptSheet(state: state, sourceId: 'phone', paths: const ['/notes-1.txt', '/Documents'], dir: '/'),
     'vaultCreate' => VaultCreateScreen(state: state, sourceId: 'phone', dir: '/Documents'),
     'unlock' || 'nowPlaying' || 'decrypt' => null,
