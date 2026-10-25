@@ -903,4 +903,74 @@ class Fr {
   static const chatNoModel = 'Choisir un modèle';
   static const chatServerGone = 'Serveur supprimé';
   static const chatPickModelFirst = "Choisissez un serveur et un modèle, en haut de l'écran.";
+
+  // automatisations (phase 15, T9)
+  static const automations = 'Automatisations';
+  static String automationsCount(int n) =>
+      n == 0 ? 'Prompts réutilisables, lancés à la main ou planifiés' : count(n, 'automatisation', 'automatisations');
+  static const automationNew = 'Nouvelle automatisation';
+  static const automationNoneTitle = 'Aucune automatisation';
+  static const automationNoneBody =
+      'Une automatisation garde un prompt à réutiliser, à lancer à la main ou à intervalle régulier.';
+  static const automationNoServersBody = 'Ajoutez un serveur IA pour créer une automatisation.';
+  static const automationName = 'Nom';
+  static const automationNameRequired = "Donnez un nom à l'automatisation";
+  static const automationTemplate = 'Modèle de prompt';
+  static const automationTemplateRequired = 'Écrivez le prompt à envoyer';
+  static const automationTemplateHelp =
+      'Écrivez {{nom}} pour une valeur à saisir au lancement\u00A0; {{date}} et {{heure}} sont remplies par Portail.';
+  static const automationVariables = 'Variables';
+  static String automationDefaultFor(String name) => 'Valeur par défaut de {{$name}}';
+  static const automationDefaultRequired = 'Obligatoire pour une automatisation planifiée';
+  static const automationModel = 'Serveur et modèle';
+  static const automationTrigger = 'Déclenchement';
+  static const automationManual = 'À la demande';
+  static const automationPeriodic = 'Planifiée';
+  static const automationIntervals = [15, 30, 60, 120, 360, 720, 1440];
+  static String automationInterval(int minutes) => switch (minutes) {
+        < 60 => 'Toutes les $minutes\u00A0min',
+        60 => 'Toutes les heures',
+        1440 => 'Tous les jours',
+        _ when minutes % 60 == 0 => 'Toutes les ${minutes ~/ 60}\u00A0h',
+        _ => 'Toutes les $minutes\u00A0min',
+      };
+  static const automationEnabled = 'Activée';
+  static const automationDisabled = 'Désactivée';
+  static const automationPeriodicHelp =
+      "Exécutée en arrière-plan quand le réseau est disponible, avec les valeurs par défaut\u00A0; une notification "
+      "signale la fin, sans montrer le résultat.";
+  static const automationRun = 'Lancer';
+  static String automationRunTitle(String name) => 'Lancer «\u00A0$name\u00A0»';
+  static const automationEdit = 'Modifier';
+  static const automationDuplicate = 'Dupliquer';
+  static const automationDeleteTitle = "Supprimer l'automatisation\u202F?";
+  static const automationDeleteBody = 'Son historique sera effacé et sa planification annulée.';
+  static const automationHistory = 'Historique';
+  static const automationNoRuns = 'Aucune exécution';
+  static const automationNeverRun = 'Jamais lancée';
+  static const automationClearHistory = "Effacer l'historique";
+  static const automationClearTitle = "Effacer l'historique\u202F?";
+  static const automationClearBody = 'Les résultats des exécutions passées seront effacés de ce téléphone.';
+  static String automationRunState(String state) => switch (state) {
+        'running' => 'En cours',
+        'done' => 'Terminée',
+        'failed' => 'Échec',
+        'stopped' => 'Arrêtée',
+        'interrupted' => 'Interrompue',
+        _ => state,
+      };
+  static const automationScheduledRun = 'Planifiée';
+  static const automationManualRun = 'À la main';
+  static String automationDuration(int ms) {
+    final s = (ms / 1000).round();
+    if (s < 60) return '$s\u00A0s';
+    return '${s ~/ 60}\u00A0min\u00A0${(s % 60).toString().padLeft(2, '0')}\u00A0s';
+  }
+
+  static const automationInput = 'Prompt envoyé';
+  static const automationResult = 'Résultat';
+  static const automationCopyResult = 'Copier le résultat';
+  static const automationShareResult = 'Partager le résultat';
+  static const automationStopped = 'Exécution arrêtée';
+  static const automationInterrupted = "Interrompue\u00A0: Portail a été fermé pendant l'exécution";
 }

@@ -412,7 +412,7 @@ dans le même commit que le travail.
 - [x] T6 — Réponses en flux vers l'écran, arrêter, régénérer *(lots de 50 ms ou 16 Kio, 4 en route au plus, réponse écrite une fois à la fin ; 3 générations en parallèle)*
 - [x] T7 — Écran de chat : Markdown, blocs de code, serveur, modèle et prompt système par conversation *(chat_screen_test 16, markdown_view_test 8 ; écrans chatList et chat au banc, deux volets sur grand écran ; 723 tests Flutter, 562 Kotlin)*
 - [x] T8 — Automatisations : modèles de prompt à variables, lancement manuel ou planifié (WorkManager), historique *(TemplateTest 9, AutomationsTest 24 ; WorkManager 2.10.1 ; AutomationWorkerInstrumentedTest écrit, passage sur le Pixel en T12 ; 723 tests Flutter, 595 Kotlin)*
-- [ ] T9 — Écrans des automatisations
+- [x] T9 — Écrans des automatisations *(automations_test 11 ; liste, fiche et historique, formulaire à variables détectées, exécution suivie en direct ; entrée « Automatisations » sur l'accueil ; 778 tests Flutter, 595 Kotlin)*
 - [ ] T10 — Certificats auto-signés de confiance, conversations masquées dans les captures
 - [ ] T11 — Documentation
 - [ ] T12 — Essais instrumentés sur le Pixel

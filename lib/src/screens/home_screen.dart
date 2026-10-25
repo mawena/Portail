@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../ai/automations_screen.dart';
 import '../ai/chat_list_screen.dart';
 import '../state/app_state.dart';
 import '../strings_fr.dart';
@@ -195,8 +196,8 @@ class HomeScreen extends StatelessWidget {
         ),
       ];
 
-  /// Chat avec les modèles des serveurs IA (phase 15) ; le nombre de conversations suit le hub, sans reconstruire
-  /// l'accueil à chaque morceau de réponse.
+  /// Chat avec les modèles des serveurs IA et automatisations (phase 15) ; les nombres suivent les hubs, sans
+  /// reconstruire l'accueil à chaque morceau de réponse.
   List<Widget> _ai(BuildContext context) => [
         const SectionHeader(Fr.sectionAiHome),
         _gap(Card(
@@ -210,6 +211,20 @@ class HomeScreen extends StatelessWidget {
               trailing: const Icon(Icons.chevron_right_rounded),
               onTap: () => Navigator.of(context)
                   .push(MaterialPageRoute<void>(builder: (_) => ChatListScreen(state: state))),
+            ),
+          ),
+        )),
+        _gap(Card(
+          clipBehavior: Clip.antiAlias,
+          child: ListenableBuilder(
+            listenable: state.automations,
+            builder: (context, _) => ListTile(
+              leading: const TonalIcon(Icons.bolt_rounded),
+              title: const Text(Fr.automations),
+              subtitle: Text(Fr.automationsCount(state.automations.automations.length)),
+              trailing: const Icon(Icons.chevron_right_rounded),
+              onTap: () => Navigator.of(context)
+                  .push(MaterialPageRoute<void>(builder: (_) => AutomationsScreen(state: state))),
             ),
           ),
         )),

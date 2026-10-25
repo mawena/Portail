@@ -24,6 +24,10 @@ void main() {
     'chat_list_light': ('chatList', Brightness.light),
     'chat_light': ('chat', Brightness.light),
     'chat_dark': ('chat', Brightness.dark),
+    'automations_light': ('automations', Brightness.light),
+    'automations_dark': ('automations', Brightness.dark),
+    'automation_form_light': ('automationForm', Brightness.light),
+    'automation_run_dark': ('automationRun', Brightness.dark),
   };
   for (final MapEntry(key: name, value: (screen, b)) in cases.entries) {
     testWidgets(name, (t) async {

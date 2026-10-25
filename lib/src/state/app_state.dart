@@ -220,6 +220,7 @@ class AppState extends ChangeNotifier implements FluLuksEventsApi {
       await terminals.restore(); // sessions gardées par le service pendant que l'application était fermée
       try {
         await chats.load(); // nombre de conversations sur l'accueil, réponses encore en cours
+        await automations.load();
       } on PlatformException {
         // historique illisible : l'écran du chat le dira à son ouverture
       }
