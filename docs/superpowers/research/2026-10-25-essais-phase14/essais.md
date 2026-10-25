@@ -93,7 +93,8 @@ récupérable**.
 
 ## 5. Mot de passe et clé de secours
 
-- [ ] Coffre fermé, menu ⋮ → **Changer le mot de passe** : l'ancien ne l'ouvre plus, le nouveau si.
+- [x] Coffre fermé, menu ⋮ → **Changer le mot de passe** : l'ancien ne l'ouvre plus, le nouveau si.
+      → piloté par adb sur le coffre « Course » ; contrôlé sur le PC par `cryptsetup luksOpen --test-passphrase` : l'ancien mot de passe est refusé (« Aucune clé disponible »), le nouveau accepté ; toujours un seul emplacement (0), argon2id 1 Gio.
 - [ ] Menu ⋮ → **Clé de secours** → **Créer une clé de secours** : la clé de 24 caractères s'affiche une seule fois,
       avec **Copier la clé** ; notez-la, puis **J'ai noté la clé**. Elle n'est plus jamais réaffichée.
 - [ ] Ouvrir le coffre → **Utiliser la clé de secours** → taper la clé en minuscules, sans tirets : le coffre s'ouvre.
