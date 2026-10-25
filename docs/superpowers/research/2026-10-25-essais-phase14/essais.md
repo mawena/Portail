@@ -36,7 +36,8 @@ récupérable**.
 - [x] `Essai.zip.age` → **Déchiffrer ici** : le dossier `Essai` revient (nom différent s'il existe déjà), avec ses
       fichiers intacts.
       → piloté par adb : pour une archive chiffrée le bouton s'appelle « Extraire ici » ; le dossier revient sous le nom « Essai (1) », ses 5 fichiers identiques à l'original (SHA-256).
-- [ ] Un fichier chiffré → **Vérifier** : « Fichier intact ».
+- [x] Un fichier chiffré → **Vérifier** : « Fichier intact ».
+      → piloté par adb : « Fichier intact » pour photo.jpg.age.
 - [ ] Menu ⋮ d'un `.age` → **Changer le mot de passe** : l'ancien ne l'ouvre plus, le nouveau si.
 - [ ] Chiffrer en **ZIP chiffré (AES-256)** : la mise en garde (noms visibles) s'affiche ; après le chiffrement,
       **Partager le fichier chiffré** propose les applications de partage.
