@@ -6,6 +6,9 @@
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_MEDIA_PLAYBACK" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_SPECIAL_USE" />
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+    <!-- Dossiers distants (SFTP, FTP), terminal et tunnels SSH. Les manifestes de debug et de profile la déclarent
+         aussi pour les outils de Flutter : seule celle-ci compte dans la version de publication. -->
+    <uses-permission android:name="android.permission.INTERNET" />
     <!-- Gestionnaire de fichiers (phase 6) : accès à tout le stockage du téléphone et aux cartes SD. -->
     <uses-permission android:name="android.permission.MANAGE_EXTERNAL_STORAGE"
         tools:ignore="ScopedStorage" />
