@@ -15,18 +15,23 @@ récupérable**.
 
 ## 1. Chiffrer et déchiffrer des fichiers
 
-- [ ] Dans l'explorateur du téléphone, menu ⋮ d'une photo → **Chiffrer…** : chiffrement fort, ce dossier, un mot de
+- [x] Dans l'explorateur du téléphone, menu ⋮ d'une photo → **Chiffrer…** : chiffrement fort, ce dossier, un mot de
       passe de 8 caractères au moins (la force s'affiche), confirmé → `photo.jpg.age` apparaît à côté de la photo.
-- [ ] Menu ⋮ du dossier `Essai` → **Chiffrer…** : `Essai.zip.age` apparaît.
+      → piloté par adb le 2026-10-25 : force « moyen » affichée, `photo.jpg.age` créé (68,8 ko).
+- [x] Menu ⋮ du dossier `Essai` → **Chiffrer…** : `Essai.zip.age` apparaît.
+      → piloté par adb : « Terminé : 5 fichiers », `Essai.zip.age` créé (293,5 ko).
 - [ ] Sur le disque USB déverrouillé, sélectionner un dossier → **Chiffrer…** → **Autre dossier…** : un dossier du
       disque comme destination. Le fichier chiffré y apparaît ; la barre du bas a montré la progression.
-- [ ] **Générer un mot de passe** : « 20 caractères » puis « 6 mots » remplissent les deux champs ; **Copier**
+- [x] **Générer un mot de passe** : « 20 caractères » puis « 6 mots » remplissent les deux champs ; **Copier**
       annonce l'effacement du presse-papiers dans 60 s (vérifiez en collant ailleurs une minute plus tard).
-- [ ] Toucher `photo.jpg.age` → mot de passe → **Ouvrir** : la photo s'affiche dans la visionneuse de Portail.
+      → piloté par adb : « 20 caractères » (force excellent) et « 6 mots » (force bon) remplissent les deux champs ; message « effacé du presse-papiers dans 60 s ». **Défaut trouvé** : le presse-papiers n'était jamais effacé (Android 13 notifie deux fois chaque copie). Corrigé (90865d4) ; vérifié : 80 s après la copie, « Coller » n'est plus proposé.
+- [x] Toucher `photo.jpg.age` → mot de passe → **Ouvrir** : la photo s'affiche dans la visionneuse de Portail.
       Aucun `photo.jpg` en clair n'apparaît dans le dossier.
+      → piloté par adb : la visionneuse de Portail montre « photo.jpg 1 / 1 » ; dossier inchangé, aucune copie en clair dans les fichiers de l'application (recherche par SHA-256).
 - [ ] Chiffrer la vidéo, la toucher → **Ouvrir** : elle se lit ; l'avance rapide (glisser sur la barre) fonctionne.
-- [ ] Toucher un fichier chiffré et saisir un **mauvais mot de passe** : « Mot de passe incorrect », le dialogue reste
+- [x] Toucher un fichier chiffré et saisir un **mauvais mot de passe** : « Mot de passe incorrect », le dialogue reste
       ouvert.
+      → piloté par adb : « Mot de passe incorrect », le dialogue reste ouvert, le champ est vidé.
 - [ ] `Essai.zip.age` → **Déchiffrer ici** : le dossier `Essai` revient (nom différent s'il existe déjà), avec ses
       fichiers intacts.
 - [ ] Un fichier chiffré → **Vérifier** : « Fichier intact ».
@@ -37,8 +42,10 @@ récupérable**.
 ## 2. Sur le PC
 
 - [ ] Le ZIP chiffré, copié sur le PC : `7z x fichier.zip` demande le mot de passe et extrait les fichiers.
-- [ ] `age -d photo.jpg.age > photo.jpg` demande le mot de passe ; la photo s'ouvre.
-- [ ] `age -d Essai.zip.age | bsdtar -xf -` rend le dossier.
+- [x] `age -d photo.jpg.age > photo.jpg` demande le mot de passe ; la photo s'ouvre.
+      → `age` absent du PC : déchiffré par le juge indépendant `tools/fixtures/agejuge.py`, photo identique (SHA-256), mauvais mot de passe refusé.
+- [x] `age -d Essai.zip.age | bsdtar -xf -` rend le dossier.
+      → `age` et `bsdtar` absents du PC : déchiffré par `agejuge.py`, extrait par le module zipfile de Python ; les 5 fichiers et le sous-dossier sont identiques (sha256sum -c).
 - [ ] (facultatif) Un ZIP protégé créé sur le PC (`7z a -p -tzip essai.zip dossier`) : copié sur le téléphone et
       touché → **Extraire ici** demande le mot de passe et extrait.
 
