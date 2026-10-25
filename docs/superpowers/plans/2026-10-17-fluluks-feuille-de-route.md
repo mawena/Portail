@@ -399,7 +399,7 @@ dans le même commit que le travail.
 - [x] T15 — Essais instrumentés sur le Pixel *(9/9 : coffres, LUKS1 de Linux, dossier de 200 fichiers en age et ZIP AES relus par les juges, clé du Keystore ; coffre 128 Mio créé en 4,4 s, ouvert en 3,8 s, 87 Mo/s ; deux défauts trouvés et corrigés : clé de secours vide, Tout éjecter)*
 - [x] *(utilisateur)* T16 — Essais sur le Pixel *(fiche : 41 lignes réussies, 2 facultatives non faites ; coffres du Pixel vérifiés par le noyau ; trois défauts trouvés et corrigés : mot de passe copié jamais effacé du presse-papiers, explorateur non ouvert à la première ouverture d'un coffre, chemin du manifeste dans le script de vérification)*
 - [x] Relecture finale de toute la branche *(relue par l'auteur, sans relecteur neuf ; points mineurs reportés au registre)*
-- [ ] Fusion `feature/chiffrement` → `develop`
+- [x] Fusion `feature/chiffrement` → `develop` *(2026-10-25, commit 493d989)*
 - [ ] Version `v1.7.0`
 
 ### Phase 15 — Intégration IA : serveurs auto-hébergés, chat, automatisations ([plan](2026-10-24-phase15-ia.md))
