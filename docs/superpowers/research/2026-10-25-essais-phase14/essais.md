@@ -52,8 +52,9 @@ récupérable**.
       → `age` absent du PC : déchiffré par le juge indépendant `tools/fixtures/agejuge.py`, photo identique (SHA-256), mauvais mot de passe refusé.
 - [x] `age -d Essai.zip.age | bsdtar -xf -` rend le dossier.
       → `age` et `bsdtar` absents du PC : déchiffré par `agejuge.py`, extrait par le module zipfile de Python ; les 5 fichiers et le sous-dossier sont identiques (sha256sum -c).
-- [ ] (facultatif) Un ZIP protégé créé sur le PC (`7z a -p -tzip essai.zip dossier`) : copié sur le téléphone et
+- [x] (facultatif) Un ZIP protégé créé sur le PC (`7z a -p -tzip essai.zip dossier`) : copié sur le téléphone et
       touché → **Extraire ici** demande le mot de passe et extrait.
+      → `7z` absent : deux ZIP protégés fabriqués sur le PC par `zipaesjuge.py write` (AES-256 et ancien ZipCrypto), copiés sur le téléphone ; **Extraire ici** demande le mot de passe (« Archive protégée par un mot de passe ») et extrait les 5 fichiers, identiques (SHA-256).
 
 ## 3. Coffres
 
