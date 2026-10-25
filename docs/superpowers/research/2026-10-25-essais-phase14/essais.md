@@ -38,7 +38,8 @@ récupérable**.
       → piloté par adb : pour une archive chiffrée le bouton s'appelle « Extraire ici » ; le dossier revient sous le nom « Essai (1) », ses 5 fichiers identiques à l'original (SHA-256).
 - [x] Un fichier chiffré → **Vérifier** : « Fichier intact ».
       → piloté par adb : « Fichier intact » pour photo.jpg.age.
-- [ ] Menu ⋮ d'un `.age` → **Changer le mot de passe** : l'ancien ne l'ouvre plus, le nouveau si.
+- [x] Menu ⋮ d'un `.age` → **Changer le mot de passe** : l'ancien ne l'ouvre plus, le nouveau si.
+      → piloté par adb : photo.jpg.age réécrit ; contrôlé par agejuge.py : l'ancien mot de passe est refusé, le nouveau rend la photo identique (SHA-256).
 - [ ] Chiffrer en **ZIP chiffré (AES-256)** : la mise en garde (noms visibles) s'affiche ; après le chiffrement,
       **Partager le fichier chiffré** propose les applications de partage.
 
