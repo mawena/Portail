@@ -71,12 +71,16 @@ dependencies {
     // SFTP : JSch (fork mwiede) ; Bouncy Castle pour Ed25519 et Curve25519 sur Android.
     implementation("com.github.mwiede:jsch:2.28.8")
     implementation("org.bouncycastle:bcprov-jdk18on:1.86")
+    // Phase 15 : serveurs IA compatibles OpenAI (HTTP, flux SSE lu par Portail).
+    implementation("com.squareup.okhttp3:okhttp:4.12.0")
     testImplementation("junit:junit:4.13.2")
     testImplementation("org.apache.sshd:sshd-core:2.20.0")
     testImplementation("org.apache.sshd:sshd-sftp:2.20.0")
     testImplementation("org.jetbrains.kotlinx:kotlinx-coroutines-test:1.10.2")
     testImplementation("org.json:json:20240303")
     testImplementation("org.apache.ftpserver:ftpserver-core:1.2.1")
+    testImplementation("com.squareup.okhttp3:mockwebserver:4.12.0")
+    testImplementation("com.squareup.okhttp3:okhttp-tls:4.12.0") // certificats d'essai (HTTPS de MockWebServer)
     androidTestImplementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.10.2")
     androidTestImplementation("androidx.test:runner:1.6.2")
     androidTestImplementation("androidx.test.ext:junit:1.2.1")
