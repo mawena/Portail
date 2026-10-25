@@ -104,7 +104,8 @@ récupérable**.
       → contrôlé sur le PC (en-tête de Course.luks, `cryptsetup luksOpen --test-passphrase`, sans root) : la clé avec ses tirets ouvre le coffre (code 0), le mot de passe aussi ; la forme minuscule sans tirets est refusée sous Linux, comme attendu (seul Portail la normalise). Emplacements 0 et 1.
 - [x] **Changer le mot de passe** en donnant la clé de secours comme mot de passe actuel : accepté.
       → piloté par adb : la clé (avec tirets) donnée comme mot de passe actuel est acceptée ; contrôle sur le PC : le nouveau mot de passe ouvre, l'ancien est refusé, la clé ouvre toujours (emplacements 0 et 1).
-- [ ] **Retirer la clé de secours** : la clé n'ouvre plus le coffre, le mot de passe si.
+- [x] **Retirer la clé de secours** : la clé n'ouvre plus le coffre, le mot de passe si.
+      → piloté par adb : « Clé de secours retirée », l'écran dit « Ce coffre n'a pas de clé de secours » ; contrôle sur le PC : la clé est refusée, le mot de passe ouvre ; seul l'emplacement 0 reste.
 
 ## 6. Déverrouillage biométrique
 
