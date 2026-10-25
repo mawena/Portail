@@ -624,8 +624,9 @@ Le dépôt suit git flow :
 | 13 | Connexions SSH : terminal, sessions en arrière-plan, clés, commandes enregistrées, tunnels | **v1.6.0** (correctif **v1.6.1** : permission Internet de la version de publication) |
 | 14 | Chiffrement de fichiers et de dossiers, coffres de fichiers, chacun avec son mot de passe | v1.7.0 |
 | 15 | Intégration IA : serveurs auto-hébergés compatibles OpenAI, chat en flux, automatisations | v1.8.0 |
-| 16 | Gestion des partitions comme GParted : taille au formatage, créer, supprimer, redimensionner | v1.9.0 |
-| 17 | Vérification et réparation des disques : e2fsck, ntfsfix, fsck.fat, fsck.exfat, en-têtes LUKS | v1.10.0 |
+| 16 | Analyseur de stockage comme celui d'Ubuntu (Baobab) : place réelle, anneaux et carte proportionnelle, arbre, corbeille | v1.9.0 |
+| 17 | Gestion des partitions comme GParted : taille au formatage, créer, supprimer, redimensionner | v1.10.0 |
+| 18 | Vérification et réparation des disques : e2fsck, ntfsfix, fsck.fat, fsck.exfat, en-têtes LUKS | v1.11.0 |
 
 Suivi détaillé, étape par étape : [docs/superpowers/plans/2026-10-17-fluluks-feuille-de-route.md](docs/superpowers/plans/2026-10-17-fluluks-feuille-de-route.md).
 Conception : [docs/superpowers/specs/2026-10-17-fluluks-design.md](docs/superpowers/specs/2026-10-17-fluluks-design.md).
