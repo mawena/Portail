@@ -58,9 +58,10 @@ récupérable**.
 
 ## 3. Coffres
 
-- [ ] Accueil → section **Coffres** → **Créer un coffre** : nom « Essai », emplacement le téléphone, 256 Mio, exFAT,
+- [x] Accueil → section **Coffres** → **Créer un coffre** : nom « Essai », emplacement le téléphone, 256 Mio, exFAT,
       mot de passe. La progression s'affiche, **Annuler** est possible ; à la fin, « Coffre « Essai » créé » et le
       coffre apparaît, « Fermé ».
+      → piloté par adb, emplacement Download/portail-tests/phase14 : la progression s'affiche (« Création du coffre de Essai.luks · 79 % ») avec **Annuler** ; « Coffre « Essai » créé », tuile « 256 Mio · exFAT · Fermé ». Annulation essayée sur un coffre de 4 Gio : « Création du coffre annulée », aucun fichier laissé. 16 Gio grisé (12,4 Go libres).
 - [ ] **Ouvrir** → mot de passe : l'explorateur s'ouvre à la racine du coffre ; y copier quelques photos et une vidéo.
 - [ ] L'application **Fichiers** d'Android montre une racine « Coffre Essai » ; la vidéo du coffre se lit dans VLC.
 - [ ] **Fermer** depuis la tuile : le coffre redevient « Fermé », sa racine disparaît de Fichiers.
