@@ -404,7 +404,7 @@ dans le même commit que le travail.
 
 ### Phase 15 — Intégration IA : serveurs auto-hébergés, chat, automatisations ([plan](2026-10-24-phase15-ia.md))
 - [x] Plan de la phase 15 écrit *(demande du 2026-10-24 ; spec § 23 à § 25 ; phase 15, puis 17, puis 15 depuis le 2026-10-25 ; jamais avant la validation de la phase 14 ; serveur réel : atelier.mawena.cloud)*
-- [ ] T1 — Contrat d'API (compatible OpenAI) et serveur d'essai
+- [x] T1 — Contrat d'API (compatible OpenAI) et serveur d'essai
 - [ ] T2 — Couche réseau `AiProvider` compatible OpenAI, lecture du flux SSE, erreurs traduites *(MockWebServer)*
 - [ ] T3 — Serveurs IA : stockage, clé API scellée, serveur par défaut, Tester la connexion
 - [ ] T4 — Écrans des serveurs IA : modèles, modèle par défaut, état en ligne ou hors ligne
