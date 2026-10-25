@@ -40,8 +40,9 @@ récupérable**.
       → piloté par adb : « Fichier intact » pour photo.jpg.age.
 - [x] Menu ⋮ d'un `.age` → **Changer le mot de passe** : l'ancien ne l'ouvre plus, le nouveau si.
       → piloté par adb : photo.jpg.age réécrit ; contrôlé par agejuge.py : l'ancien mot de passe est refusé, le nouveau rend la photo identique (SHA-256).
-- [ ] Chiffrer en **ZIP chiffré (AES-256)** : la mise en garde (noms visibles) s'affiche ; après le chiffrement,
+- [x] Chiffrer en **ZIP chiffré (AES-256)** : la mise en garde (noms visibles) s'affiche ; après le chiffrement,
       **Partager le fichier chiffré** propose les applications de partage.
+      → piloté par adb : la mise en garde (noms et tailles visibles) s'affiche ; « Terminé : 5 fichiers » pour Essai.zip ; **Partager le fichier chiffré** (sur photo.zip) ouvre le choix d'applications d'Android, qui montre « photo.zip » (fermé sans envoyer).
 
 ## 2. Sur le PC
 
