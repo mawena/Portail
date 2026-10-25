@@ -644,6 +644,27 @@ class Fr {
           "passe en donnant la clé à la place de l'ancien. Le déverrouillage biométrique, s'il est activé, ouvre "
           'aussi le coffre.'
     ),
+    (
+      'Connecter un serveur IA',
+      "Réglages, Serveurs IA, Ajouter un serveur IA\u00A0: son adresse (votre serveur, Ollama, vLLM ou LocalAI), et sa "
+          "clé API s'il en demande une. Tester la connexion vérifie le serveur et liste ses modèles\u00A0; touchez un "
+          "modèle pour en faire celui par défaut. Un certificat que le téléphone ne reconnaît pas n'est accepté "
+          "qu'après avoir comparé son empreinte à celle du serveur."
+    ),
+    (
+      'Discuter avec un modèle',
+      "Chat IA, dans la section IA de l'accueil, puis Nouvelle conversation\u00A0: la réponse s'affiche au fur et à "
+          "mesure, et Arrêter la coupe. Le serveur et le modèle se changent en touchant leur nom sous le titre, le "
+          'prompt système dans le menu ⋮. Les conversations restent sur le téléphone et ne partent que vers le '
+          'serveur choisi.'
+    ),
+    (
+      'Créer une automatisation',
+      "Automatisations, dans la section IA de l'accueil, puis Nouvelle automatisation\u00A0: un prompt réutilisable où "
+          "{{nom}} devient une valeur à saisir au lancement, {{date}} et {{heure}} étant remplies par Portail. Lancez-la "
+          "à la main depuis sa fiche, ou planifiez-la toutes les 15 minutes au plus souvent, avec les valeurs par "
+          'défaut\u00A0; son historique garde les 50 dernières exécutions.'
+    ),
   ];
   static const addFavorite = 'Ajouter aux favoris';
   static const add = 'Ajouter';
