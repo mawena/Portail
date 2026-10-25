@@ -3,6 +3,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/painting.dart';
 import 'package:flutter/services.dart';
 
+import '../ai/ai_hub.dart';
 import '../bridge/fluluks_api.g.dart';
 import '../strings_fr.dart';
 import '../terminal/terminal_hub.dart';
@@ -17,6 +18,9 @@ class AppState extends ChangeNotifier implements FluLuksEventsApi {
 
   /// Terminaux SSH ouverts (phase 13), gardés hors des écrans.
   late final terminals = TerminalHub(api, onBell: _bell);
+
+  /// Serveurs IA (phase 15), gardés hors des écrans.
+  late final ai = AiHub(api);
 
   void _bell() {
     if (uiPrefs.haptics) HapticFeedback.vibrate();

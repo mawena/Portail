@@ -626,4 +626,49 @@ class Fr {
       'Tout le contenu de «\u00A0$name\u00A0» ($size) sera effacé définitivement, sur toutes ses partitions.';
   static String formatting(int pct) => 'Formatage… $pct\u202F%';
   static const formatted = 'Disque formaté';
+
+  // --- intégration IA (phase 15)
+  static const sectionAi = 'Intelligence artificielle';
+  static const aiServers = 'Serveurs IA';
+  static const aiServersHelp = 'Vos serveurs compatibles OpenAI, pour le chat et les automatisations';
+  static const aiAddServer = 'Ajouter un serveur IA';
+  static const aiNoServers = 'Aucun serveur IA';
+  static const aiNoServersBody =
+      'Ajoutez un serveur compatible OpenAI (le vôtre, Ollama, vLLM ou LocalAI) pour discuter avec un modèle.';
+  static const aiServerName = 'Nom';
+  static const aiServerUrl = 'Adresse (URL de base)';
+  static const aiServerUrlHelp = 'Par exemple https://atelier.mawena.cloud ou http://192.168.0.20:11434';
+  static const aiUrlRequired = "Saisissez l'adresse du serveur";
+  static const aiUrlScheme = "L'adresse doit commencer par http:// ou https://";
+  static const aiApiKey = 'Clé API';
+  static const aiApiKeyHelp = "Facultative (Ollama n'en demande pas)";
+  static const aiApiKeyKeep = 'Clé enregistrée, laissez vide pour la garder';
+  static const aiRemoveKey = 'Retirer la clé';
+  static const aiKeyRemoved = 'Clé retirée';
+  static const aiClearTextWarning = 'La clé et les conversations passent en clair sur Internet';
+  static const aiClearTextHelp = 'Préférez https:// pour un serveur hors de votre réseau local.';
+  static const aiDefaultServer = 'Serveur par défaut';
+  static const aiDefaultServerHelp = 'Utilisé pour les nouvelles conversations';
+  static const aiDefaultBadge = 'Par défaut';
+  static const aiDeleteServer = 'Supprimer le serveur IA';
+  static String aiDeleteServerBody(String name) =>
+      '« $name » et sa clé seront supprimés. Ses conversations restent lisibles.';
+  static String aiConnectionOk(String? version, int models) => version == null
+      ? 'Connexion réussie (${count(models, 'modèle', 'modèles')})'
+      : 'Connexion réussie (version $version, ${count(models, 'modèle', 'modèles')})';
+  static const aiModels = 'Modèles';
+  static const aiRefreshModels = 'Actualiser les modèles';
+  static const aiNoModels =
+      'Ce serveur ne propose aucun modèle : installez-en un sur le serveur (par exemple « ollama pull llama3.2 »), puis actualisez.';
+  static const aiModelsHelp = 'Touchez un modèle pour en faire le modèle par défaut de ce serveur.';
+  static const aiStatusOnline = 'En ligne';
+  static const aiStatusOffline = 'Hors ligne';
+  static const aiStatusKeyRefused = 'Clé refusée';
+  static const aiStatusUnknown = 'Inconnu';
+  static String aiStatusLabel(String state) => switch (state) {
+        'online' => aiStatusOnline,
+        'offline' => aiStatusOffline,
+        'key-refused' => aiStatusKeyRefused,
+        _ => aiStatusUnknown,
+      };
 }

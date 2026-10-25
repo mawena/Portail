@@ -5,6 +5,8 @@ import 'package:flutter/services.dart';
 import 'package:fluluks/src/bridge/fluluks_api.g.dart';
 import 'package:fluluks/src/state/host_api.dart';
 
+import 'fake_ai_api.dart';
+
 PartitionMsg part({
   int index = 1,
   int size = 2000000000,
@@ -46,7 +48,7 @@ VolumeMsg volume({String id = 'v1', bool readOnly = false, String roReason = ''}
 
 /// Faux pont : enregistre les appels. Les octets de phrase de passe sont copiés à l'appel, et la
 /// référence d'origine est gardée pour vérifier qu'elle est mise à zéro ensuite.
-class FakeHostApi implements HostApi {
+class FakeHostApi with FakeAiApi implements HostApi {
   List<DiskMsg> disks = [];
   List<VolumeMsg> volumes = [];
   final ejected = <String>[];

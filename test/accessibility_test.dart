@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:fluluks/src/ai/ai_server_form.dart';
+import 'package:fluluks/src/ai/ai_servers_screen.dart';
 import 'package:fluluks/src/licenses.dart';
 import 'package:fluluks/src/screens/about_screen.dart';
 import 'package:fluluks/src/screens/explorer_screen.dart';
@@ -35,6 +37,7 @@ void main() {
     'unlock': UnlockDialog, 'format': FormatScreen, 'editor': TextEditorScreen, 'serverForm': ServerFormScreen,
     'nowPlaying': NowPlayingScreen, 'terminal': TerminalScreen,
     'sshKeys': SshKeysScreen, 'tunnels': TunnelsScreen,
+    'aiServers': AiServersScreen, 'aiServerForm': AiServerForm,
   };
   testWidgets('harnessShowsEachScreen', (t) async {
     for (final screen in screens) {

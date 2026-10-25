@@ -17,6 +17,10 @@ void main() {
     'unlock_light': ('unlock', Brightness.light),
     'settings_light': ('settings', Brightness.light),
     'welcome_light': ('welcome', Brightness.light),
+    'ai_servers_light': ('aiServers', Brightness.light),
+    'ai_servers_dark': ('aiServers', Brightness.dark),
+    'ai_server_form_light': ('aiServerForm', Brightness.light),
+    'ai_server_form_dark': ('aiServerForm', Brightness.dark),
   };
   for (final MapEntry(key: name, value: (screen, b)) in cases.entries) {
     testWidgets(name, (t) async {

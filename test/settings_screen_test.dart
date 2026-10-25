@@ -27,12 +27,13 @@ void main() {
     addTearDown(tester.view.reset);
     await pumpSettings(tester, FakeHostApi());
     final headers = tester.widgetList<SectionHeader>(find.byType(SectionHeader)).map((h) => h.title).toList();
-    expect(headers, [Fr.sectionAppearance, Fr.sectionFiles, Fr.sectionDisks, Fr.sectionComfort, Fr.title]);
-    expect(headers, ['Apparence', 'Fichiers', 'Disques', 'Confort', 'Portail']);
+    expect(headers, [Fr.sectionAppearance, Fr.sectionFiles, Fr.sectionAi, Fr.sectionDisks, Fr.sectionComfort, Fr.title]);
+    expect(headers, ['Apparence', 'Fichiers', 'Intelligence artificielle', 'Disques', 'Confort', 'Portail']);
     // chaque réglage sous son en-tête, dans l'ordre
     const order = [
       Fr.sectionAppearance, Fr.theme, Fr.display, Fr.showHidden, //
       Fr.sectionFiles, Fr.builtInViewers, Fr.allFilesTitle, //
+      Fr.sectionAi, Fr.aiServers, //
       Fr.sectionDisks, Fr.readOnlySwitch, Fr.autoLock, //
       Fr.sectionComfort, Fr.haptics, //
       Fr.title, Fr.help, Fr.about,

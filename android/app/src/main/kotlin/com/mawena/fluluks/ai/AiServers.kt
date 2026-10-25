@@ -155,7 +155,7 @@ class AiServers(private val dir: File, private val box: SecretBox) {
     fun provider(id: String, log: AiAttemptLog = AiAttemptLog(), timeouts: AiTimeouts = AiTimeouts()): OpenAiCompatibleProvider {
         val c = get(id) ?: throw FilesException(EngineError.FL_ENOENT, MSG_GONE)
         val key = openKey(id)
-        if (c.hasKey && key == null) throw FilesException(EngineError.FL_EIO, "Clé API illisible : enregistrez-la de nouveau")
+        if (c.hasKey && key == null) throw FilesException(EngineError.FL_EIO, "Clé API illisible\u00A0: enregistrez-la de nouveau")
         try {
             return OpenAiCompatibleProvider(c.baseUrl, key, timeouts, log, AiHttp.client)
         } finally {
@@ -242,7 +242,7 @@ class AiServers(private val dir: File, private val box: SecretBox) {
             }
             if (u.rawUserInfo != null) throw IllegalArgumentException("L'adresse ne doit pas contenir d'identifiants")
             if (u.rawQuery != null || u.rawFragment != null || s.contains('?') || s.contains('#')) {
-                throw IllegalArgumentException("L'adresse ne doit contenir ni « ? » ni « # »")
+                throw IllegalArgumentException("L'adresse ne doit contenir ni «\u00A0?\u00A0» ni «\u00A0#\u00A0»")
             }
             val host = u.host
             if (host.isNullOrEmpty()) {

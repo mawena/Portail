@@ -3,6 +3,8 @@ import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:fluluks/src/ai/ai_server_form.dart';
+import 'package:fluluks/src/ai/ai_servers_screen.dart';
 import 'package:fluluks/src/app.dart';
 import 'package:fluluks/src/bridge/fluluks_api.g.dart';
 import 'package:fluluks/src/screens/about_screen.dart';
@@ -26,12 +28,14 @@ import 'package:fluluks/src/widgets/mini_player.dart';
 import 'package:fluluks/src/widgets/unlock_dialog.dart';
 
 import 'demo_data.dart';
+import 'fake_ai_api.dart';
 import 'fake_host_api.dart';
 
 /// Écrans que [pumpScreen] sait afficher, sur les données de [demoApi].
 const screens = [
   'home', 'explorerList', 'explorerGrid', 'filterGrid', 'search', 'globalSearch', 'trash', 'space', 'settings', //
   'about', 'help', 'welcome', 'unlock', 'format', 'editor', 'serverForm', 'nowPlaying', 'terminal', 'sshKeys', 'tunnels',
+  'aiServers', 'aiServerForm', //
 ];
 
 /// Pont et état du dernier [pumpScreen] (pour les tests qui agissent ensuite sur l'écran).
@@ -72,6 +76,15 @@ Future<void> pumpScreen(
       SshKeyMsg(id: 'k2', name: 'Ancien portable', type: 'ssh-rsa', fingerprint: 'SHA256:Zt8mWq1bLc7r', encrypted: true,
           usedBy: []),
     ]);
+  }
+  if (screen.startsWith('ai')) {
+    api.aiServerList.addAll([
+      aiServer('a1', 'Atelier', 'https://atelier.mawena.cloud', isDefault: true, model: 'essai-court'),
+      aiServer('a2', 'PC du salon', 'http://192.168.0.20:11434', hasKey: false),
+      aiServer('a3', 'VPS de secours', 'http://203.0.113.5:8000'),
+    ]);
+    api.aiHealthById['a2'] = AiHealthMsg(serverId: 'a2', state: 'offline', error: 'Connexion refusée');
+    api.aiHealthById['a3'] = AiHealthMsg(serverId: 'a3', state: 'key-refused');
   }
   if (screen == 'welcome') api.uiPrefs = UiPrefsMsg(theme: 'system', haptics: true, welcomeSeen: false);
   final state = AppState(api);
@@ -121,6 +134,8 @@ Future<void> pumpScreen(
     'terminal' => TerminalScreen(state: state, sessionId: terminalId!),
     'sshKeys' => SshKeysScreen(state: state),
     'tunnels' => TunnelsScreen(state: state, serverId: 's1', sessionId: terminalId),
+    'aiServers' => AiServersScreen(state: state),
+    'aiServerForm' => AiServerForm(state: state, server: api.aiServerList.first),
     'unlock' || 'nowPlaying' => null,
     _ => throw ArgumentError.value(screen, 'screen'),
   };

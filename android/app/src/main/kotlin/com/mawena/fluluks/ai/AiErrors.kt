@@ -27,7 +27,7 @@ class AiException(
     cause: Throwable? = null,
     /** Précision ajoutée au message français (« réponse du serveur illisible »). */
     detail: String? = null,
-) : IOException(AiErrors.message(kind) + (detail?.let { " : $it" } ?: ""), cause) {
+) : IOException(AiErrors.message(kind) + (detail?.let { "\u00A0: $it" } ?: ""), cause) {
     enum class Kind {
         KEY_REFUSED, FORBIDDEN, MODEL_NOT_FOUND, NOT_FOUND, BAD_REQUEST, RATE_LIMITED, SERVER_ERROR,
         CONNECT_TIMEOUT, READ_TIMEOUT, STREAM_TIMEOUT, UNKNOWN_HOST, REFUSED, UNREACHABLE, CLOSED, CERTIFICATE,
@@ -43,25 +43,25 @@ class AiException(
 /** Traduction des réponses HTTP et des exceptions réseau en [AiException]. */
 object AiErrors {
     fun message(k: AiException.Kind): String = when (k) {
-        AiException.Kind.KEY_REFUSED -> "Clé API refusée : vérifiez la clé enregistrée pour ce serveur"
-        AiException.Kind.FORBIDDEN -> "Accès refusé par le serveur : cette clé n'a pas le droit de faire cela"
-        AiException.Kind.MODEL_NOT_FOUND -> "Modèle introuvable sur ce serveur : choisissez-en un autre"
-        AiException.Kind.NOT_FOUND -> "Adresse introuvable sur ce serveur : vérifiez l'URL de base"
-        AiException.Kind.BAD_REQUEST -> "Requête refusée par le serveur : vérifiez le modèle et les réglages"
+        AiException.Kind.KEY_REFUSED -> "Clé API refusée\u00A0: vérifiez la clé enregistrée pour ce serveur"
+        AiException.Kind.FORBIDDEN -> "Accès refusé par le serveur\u00A0: cette clé n'a pas le droit de faire cela"
+        AiException.Kind.MODEL_NOT_FOUND -> "Modèle introuvable sur ce serveur\u00A0: choisissez-en un autre"
+        AiException.Kind.NOT_FOUND -> "Adresse introuvable sur ce serveur\u00A0: vérifiez l'URL de base"
+        AiException.Kind.BAD_REQUEST -> "Requête refusée par le serveur\u00A0: vérifiez le modèle et les réglages"
         AiException.Kind.RATE_LIMITED ->
-            "Le serveur est surchargé ou la limite de requêtes est atteinte : réessayez plus tard"
-        AiException.Kind.SERVER_ERROR -> "Le serveur a rencontré une erreur : réessayez plus tard"
-        AiException.Kind.CONNECT_TIMEOUT -> "Le serveur ne répond pas : vérifiez l'adresse et le réseau"
-        AiException.Kind.READ_TIMEOUT -> "Le serveur met trop de temps à répondre : réessayez plus tard"
+            "Le serveur est surchargé ou la limite de requêtes est atteinte\u00A0: réessayez plus tard"
+        AiException.Kind.SERVER_ERROR -> "Le serveur a rencontré une erreur\u00A0: réessayez plus tard"
+        AiException.Kind.CONNECT_TIMEOUT -> "Le serveur ne répond pas\u00A0: vérifiez l'adresse et le réseau"
+        AiException.Kind.READ_TIMEOUT -> "Le serveur met trop de temps à répondre\u00A0: réessayez plus tard"
         AiException.Kind.STREAM_TIMEOUT -> "Le serveur ne répond plus"
-        AiException.Kind.UNKNOWN_HOST -> "Serveur introuvable : vérifiez l'adresse"
-        AiException.Kind.REFUSED -> "Connexion refusée : aucun serveur IA n'écoute à cette adresse"
-        AiException.Kind.UNREACHABLE -> "Réseau injoignable : vérifiez la connexion du téléphone"
-        AiException.Kind.CLOSED -> "Le serveur a fermé la connexion : réessayez"
-        AiException.Kind.CERTIFICATE -> "Certificat du serveur refusé : connexion non sûre"
+        AiException.Kind.UNKNOWN_HOST -> "Serveur introuvable\u00A0: vérifiez l'adresse"
+        AiException.Kind.REFUSED -> "Connexion refusée\u00A0: aucun serveur IA n'écoute à cette adresse"
+        AiException.Kind.UNREACHABLE -> "Réseau injoignable\u00A0: vérifiez la connexion du téléphone"
+        AiException.Kind.CLOSED -> "Le serveur a fermé la connexion\u00A0: réessayez"
+        AiException.Kind.CERTIFICATE -> "Certificat du serveur refusé\u00A0: connexion non sûre"
         AiException.Kind.INTERRUPTED -> "La réponse a été interrompue"
         AiException.Kind.STREAM_ERROR -> "Le serveur a signalé une erreur pendant la réponse"
-        AiException.Kind.PROTOCOL -> "Réponse du serveur illisible : est-ce bien un serveur compatible OpenAI ?"
+        AiException.Kind.PROTOCOL -> "Réponse du serveur illisible\u00A0: est-ce bien un serveur compatible OpenAI\u202F?"
         AiException.Kind.OTHER -> "Échec de la requête au serveur IA"
     }
 

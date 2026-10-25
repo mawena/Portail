@@ -1,9 +1,10 @@
 import 'dart:typed_data';
 
+import '../ai/ai_api.dart';
 import '../bridge/fluluks_api.g.dart';
 
-/// Interface de l'API hôte, substituable dans les tests.
-abstract class HostApi {
+/// Interface de l'API hôte, substituable dans les tests (intégration IA : [AiApi]).
+abstract class HostApi implements AiApi {
   Future<List<DiskMsg>> listDisks();
   Future<List<VolumeMsg>> listVolumes();
   Future<void> requestPermission(String diskId);
@@ -101,7 +102,7 @@ abstract class HostApi {
 }
 
 /// Implémentation réelle : délègue au client Pigeon généré.
-class PigeonHostApi implements HostApi {
+class PigeonHostApi with PigeonAiApi implements HostApi {
   PigeonHostApi([FluLuksHostApi? api]) : _api = api ?? FluLuksHostApi();
   final FluLuksHostApi _api;
 
