@@ -46,6 +46,9 @@ typedef struct {
   const char *label;
   uint32_t kdf_mem_kib;        /* mémoire Argon2 si chiffré */
   uint32_t root_uid, root_gid; /* ext4 : propriétaire de la racine */
+  /* Coffre (phase 14) : LUKS2 (ou système de fichiers) sur tout `disk`, sans table de partitions, sans
+   * effacer de secteurs de table (le dernier Mio n'est pas touché). */
+  bool no_table;
 } fl_fmt_opts;
 
 /* Formate tout `disk` : vérifications (taille minimale, étiquette, phrase) avant toute écriture, table à

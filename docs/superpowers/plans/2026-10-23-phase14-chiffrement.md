@@ -220,7 +220,7 @@ JUnit 4, AndroidX Test.
     dernier) ; `int fl_luks_slots(fl_bdev *dev, uint32_t *mask)` ; `int fl_luks_unlock_slot(fl_luks *l, int slot, const void *pass, size_t passlen, fl_bdev **decrypted)`
     (`slot` −1 : tous) ; LUKS1 : `FL_ENOTSUP` pour les modifications.
 
-- [ ] **Step 1 : tests en échec** (`test_vault`) : `vaultFormatHasNoTable` (scan : table `none`, partie 0 LUKS2),
+- [x] **Step 1 : tests en échec** (`test_vault`) : `vaultFormatHasNoTable` (scan : table `none`, partie 0 LUKS2),
   `vaultExfatAndExt4MountAndWrite`, `fdBdevOwnsDescriptor`, `vaultOnEngineFileRoundTrip` (coffre de 64 Mio dans un
   fichier d'une image ext4 puis d'une image exFAT : écriture, démontage, `e2fsck -fn` de l'hôte et `fsck.exfat -n`
   du coffre propres), `vaultOnEngineFileNoDeadlock` (4 fils : écritures dans le coffre et dans son hôte en même
@@ -228,7 +228,7 @@ JUnit 4, AndroidX Test.
   (`FL_EFBIG` au-delà de 4 Gio − 1 octet), `cryptsetupOpensVault` (`cryptsetup luksDump` et
   `cryptsetup open --test-passphrase` sur le fichier, sans root ; test ignoré si `cryptsetup` est absent, en le
   disant).
-- [ ] **Step 2 : tests en échec** (`test_luks2_slots`) : `changeSlot0` (nouveau mot de passe ouvre, ancien refusé, données
+- [x] **Step 2 : tests en échec** (`test_luks2_slots`) : `changeSlot0` (nouveau mot de passe ouvre, ancien refusé, données
   intactes), `addRecoveryAndBiometricSlots`, `removeSlot`, `lastSlotNeverRemoved`, `wrongAuthChangesNothing` (en-têtes
   identiques octet pour octet), `slotChangeSurvivesCutAtEveryWrite` (coupure par `fault_bdev` à chaque écriture
   possible : ensuite l'ancien **ou** le nouveau mot de passe ouvre, jamais aucun), `newerSecondaryWins` (primaire
@@ -236,15 +236,15 @@ JUnit 4, AndroidX Test.
   `cryptsetupAcceptsChangedHeader` (`luksDump` et `open --test-passphrase --key-slot n` pour chaque emplacement),
   `unlockSlotSkipsOthers` (l'emplacement 2 s'ouvre sans calculer l'Argon2 de 1 Gio de l'emplacement 0),
   `luks1Refused`, `jsonStaysUnder12KiB`.
-- [ ] **Step 3 : implémentation.** Emplacement écrit dans une zone libre de la zone des emplacements (32 Kio à 16 Mio,
+- [x] **Step 3 : implémentation.** Emplacement écrit dans une zone libre de la zone des emplacements (32 Kio à 16 Mio,
   ≈ 64 emplacements de 252 Kio) ; puis JSON réécrit avec cJSON (emplacement, `digests.0.keyslots`), seqid + 1,
   sommes, en-tête **primaire puis secondaire**, vidage après chaque écriture ; l'ancienne zone n'est effacée
   qu'après. Clé maîtresse obtenue par `auth`, vérifiée par le digest, en mémoire sécurisée, jamais rendue.
   `fl_fsfile_bdev` : lectures et écritures par `fl_file_pread`/`pwrite` du volume hôte (verrou du coffre puis
   verrou de l'hôte, jamais l'inverse).
-- [ ] **Step 4 :** `verify_vault_with_kernel.sh` (sudo, sur le PC) : `cryptsetup open`, `fsck.exfat -n` ou `e2fsck -fn`,
+- [x] **Step 4 :** `verify_vault_with_kernel.sh` (sudo, sur le PC) : `cryptsetup open`, `fsck.exfat -n` ou `e2fsck -fn`,
   montage, comparaison avec le manifeste écrit par `test_vault` ; note dans le registre.
-- [ ] **Step 5 : commit** `feat(moteur): coffres LUKS2 dans un fichier et gestion des emplacements de clé`.
+- [x] **Step 5 : commit** `feat(moteur): coffres LUKS2 dans un fichier et gestion des emplacements de clé`.
 
 ### Task 4 : poignées JNI et moteur Kotlin
 

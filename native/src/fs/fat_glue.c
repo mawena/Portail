@@ -1,7 +1,8 @@
 /* FAT12, FAT16, FAT32 et exFAT par FatFs R0.16 (ChaN), branchés sur fl_bdev (phase 4).
  *
  * Fils d'exécution : FatFs garde des variables globales (table des volumes, compteur d'identifiants) et
- * n'est pas réentrant (FF_FS_REENTRANT 0). Tout appel à FatFs passe donc sous le mutex global g_fat_lock,
+ * n'est pas réentrant (FF_FS_REENTRANT 0). Tout appel à FatFs passe donc sous le mutex global g_fat_lock
+ * (verrou commun, récursif, de fs_internal.h),
  * qui protège aussi la table des emplacements (g_slot) et l'état de chaque volume. Aucun rappel
  * utilisateur n'est appelé sous ce verrou.
  *
@@ -40,7 +41,7 @@
 #include "fs/fs_internal.h"
 #include "fs/ro_reasons.h"
 
-static pthread_mutex_t g_fat_lock = PTHREAD_MUTEX_INITIALIZER;
+#define g_fat_lock (*fl_fs_glue_lock()) /* verrou commun et récursif des systèmes de fichiers (fs_internal.h) */
 static bool g_slot[FF_VOLUMES]; /* emplacements FatFs pris (g_fat_lock) */
 
 /* Fichier ouvert : un seul FIL par fichier, partagé par toutes ses poignées (FatFs interdit deux FIL en

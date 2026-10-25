@@ -25,6 +25,7 @@ set(FL_SOURCES
   src/blockdev/file_bdev.c
   src/blockdev/slice_bdev.c
   src/blockdev/cache_bdev.c
+  src/blockdev/fsfile_bdev.c
   src/part/crc32.c
   src/part/gpt.c
   src/part/mbr.c
@@ -36,6 +37,7 @@ set(FL_SOURCES
   src/luks/luks1.c
   src/luks/luks2.c
   src/luks/luks2_json.c
+  src/luks/luks2_slots.c
   src/luks/b64.c
   src/luks/af.c
   src/luks/crypt_bdev.c
@@ -154,6 +156,9 @@ if(FL_TESTS)
   fl_add_test(test_luks1)
   fl_add_test(test_luks2)
   fl_add_test(test_luks2_lent LABELS lent)
+  fl_add_test(test_luks2_slots)
+  target_link_libraries(test_luks2_slots PRIVATE fl_testsupport)
+  set_tests_properties(test_luks2_slots PROPERTIES TIMEOUT 900)
   fl_add_test(test_ext4)
   fl_add_test(test_fat)
   target_link_libraries(test_fat PRIVATE fl_testsupport)
@@ -200,6 +205,10 @@ if(FL_TESTS)
   target_link_libraries(test_archive_crypt PRIVATE fl_testsupport)
   target_compile_definitions(test_archive_crypt PRIVATE FL_TOOLS_DIR="${CMAKE_SOURCE_DIR}/../tools")
   set_tests_properties(test_archive_crypt PROPERTIES TIMEOUT 600)
+  # Coffres (phase 14, T3) : fichier LUKS2 sans table, sur un descripteur ou un fichier du moteur.
+  fl_add_test(test_vault)
+  target_link_libraries(test_vault PRIVATE fl_testsupport)
+  set_tests_properties(test_vault PROPERTIES TIMEOUT 900)
   fl_add_test(test_cache)
   fl_add_test(test_crc32c)
   add_test(NAME test_crc32c_debit COMMAND test_crc32c debit)

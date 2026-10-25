@@ -50,10 +50,34 @@ int fl_luks_max_kdf_memory_kib(const fl_luks *l, uint32_t *out) {
 }
 
 int fl_luks_unlock(fl_luks *l, const void *pass, size_t passlen, fl_bdev **decrypted) {
+  return fl_luks_unlock_slot(l, -1, pass, passlen, decrypted);
+}
+
+int fl_luks_unlock_slot(fl_luks *l, int slot, const void *pass, size_t passlen, fl_bdev **decrypted) {
   if (!decrypted) return FL_EINVAL;
   *decrypted = NULL;
-  if (!l || !l->ops || (!pass && passlen)) return FL_EINVAL;
-  return l->ops->unlock(l, pass, passlen, decrypted);
+  if (!l || !l->ops || (!pass && passlen) || slot < -1) return FL_EINVAL;
+  return l->ops->unlock(l, slot, pass, passlen, decrypted);
+}
+
+int fl_luks_peek(fl_bdev *dev, bool *magic_ok, int *version) {
+  uint8_t hdr[8];
+  if (fl_bdev_size_bytes(dev) < FL_LUKS1_HDR_LEN) return FL_ENOTSUP;
+  int rc = fl_bdev_read_bytes(dev, 0, sizeof hdr, hdr);
+  if (rc != FL_OK) return rc;
+  *magic_ok = memcmp(hdr, k_magic, sizeof k_magic) == 0;
+  *version = (hdr[6] << 8) | hdr[7];
+  return FL_OK;
+}
+
+int fl_luks_slots(fl_bdev *dev, uint32_t *mask) {
+  if (!dev || !mask) return FL_EINVAL;
+  fl_luks *l = NULL;
+  int rc = fl_luks_open(dev, &l);
+  if (rc != FL_OK) return rc;
+  *mask = l->ops->slot_mask(l);
+  fl_luks_close(l);
+  return FL_OK;
 }
 
 void fl_luks_close(fl_luks *l) {
