@@ -721,6 +721,41 @@ class FakeHostApi implements HostApi {
   @override
   Future<void> closeDecrypted(String sourceId) async => closedDecrypted.add(sourceId);
 
+  // --- coffres (phase 14) ---
+  List<VaultMsg> vaults = [];
+  final createdVaults = <(String, String, String, int, String, String)>[];
+  final openedVaults = <(String?, String?, String?, String, bool)>[];
+  final closedVaults = <String>[];
+  final forgottenVaults = <String>[];
+
+  @override
+  Future<List<VaultMsg>> listVaults() async => vaults;
+
+  @override
+  Future<VaultMsg> createVault(String srcId, String dir, String name, int sizeBytes, String fs, Uint8List password) async {
+    createdVaults.add((srcId, dir, name, sizeBytes, fs, _take(password)));
+    final v = VaultMsg(id: 'c${createdVaults.length}', name: name, sourceKey: srcId, sourceLabel: srcId,
+        path: '$dir/$name.luks'.replaceFirst('//', '/'), sizeBytes: sizeBytes, fs: fs, state: 'closed',
+        hasRecovery: false, biometric: false, luksVersion: 2);
+    vaults = [...vaults, v];
+    return v;
+  }
+
+  @override
+  Future<VolumeMsg> openVault(String? vaultId, String? srcId, String? path, Uint8List password, bool writable) async {
+    final p = _take(password);
+    openedVaults.add((vaultId, srcId, path, p, writable));
+    if (p != filePassword) throw _bad();
+    return VolumeMsg(id: 'vv${openedVaults.length}', diskId: 'vault:$vaultId', partIndex: 0, title: 'Coffre',
+        totalBytes: 1000, freeBytes: 500, needsRecovery: false, roReason: '', readOnly: !writable, vaultId: vaultId ?? 'x');
+  }
+
+  @override
+  Future<void> closeVault(String vaultId) async => closedVaults.add(vaultId);
+
+  @override
+  Future<void> forgetVault(String vaultId) async => forgottenVaults.add(vaultId);
+
   /// Copies protégées reçues (copies des octets, l'appelant met les siens à zéro).
   final secretCopies = <Uint8List>[];
 

@@ -376,6 +376,7 @@ void main() {
     expect(Fr.transferLine('encrypt', 'a.txt', 1, 2, 50), 'Chiffrement de a.txt — 1 sur 2 · 50 %');
     expect(Fr.transferLine('decrypt', 'a.txt', 1, 1, 50), 'Déchiffrement de a.txt — 1 sur 1 · 50 %');
     expect(Fr.transferLine('verify', 'a.txt', 1, 1, 50), 'Vérification de a.txt — 1 sur 1 · 50 %');
+    expect(Fr.transferLine('vault', 'Photos.luks', 1, 1, 50), 'Création du coffre de Photos.luks — 1 sur 1 · 50 %');
     expect(utf8.encode(goodPass).length, goodPass.length);
   });
 }

@@ -15,6 +15,7 @@ import com.mawena.fluluks.files.Transfers
 import com.mawena.fluluks.provider.DocNames
 import com.mawena.fluluks.provider.DocumentIds
 import com.mawena.fluluks.provider.WriteOps
+import com.mawena.fluluks.vaults.Vaults
 import com.mawena.fluluks.volumes.VolumeManager
 import java.io.FileNotFoundException
 import java.io.OutputStream
@@ -64,7 +65,7 @@ object Crypt {
     data class EncryptedInfo(val format: String, val folder: Boolean, val workFactor: Int?)
 
     /** Vrai si [path] de [sourceId] est le fichier d'un coffre ouvert (branché par les coffres, phase 14 T9). */
-    @Volatile var isOpenVaultFile: (sourceId: String, path: String) -> Boolean = { _, _ -> false }
+    @Volatile var isOpenVaultFile: (sourceId: String, path: String) -> Boolean = { s, p -> Vaults.isOpenFile(s, p) }
 
     private val engine: Engine get() = Archives.engine
 

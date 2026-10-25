@@ -390,7 +390,7 @@ dans le même commit que le travail.
 - [x] T6 — Ouvrir un fichier chiffré sans copie en clair (source déchiffrée en mémoire, fournisseur de flux) *(DecryptedSourceTest 8 ; essais instrumentés CryptInstrumentedTest écrits, passage sur le Pixel avec T15)*
 - [x] T7 — Saisie des mots de passe : force, générateur de mots de passe et de phrases, copie protégée *(liste de l'EFF, 7776 mots, CC BY 3.0 US ; 554 tests Flutter)*
 - [x] T8 — Écrans Chiffrer et Déchiffrer dans l'explorateur, ZIP protégés, partage d'un fichier chiffré *(encrypt_screens_test 16 ; écrans au banc d'accessibilité ; 590 tests Flutter)*
-- [ ] T9 — Coffres (Kotlin) : création, ouverture comme un stockage, fermeture avant le stockage porteur
+- [x] T9 — Coffres (Kotlin) : création, ouverture comme un stockage, fermeture avant le stockage porteur *(VaultsTest 21, VaultStoreTest 2 ; conteneur LUKS1 de Linux à essayer sur le Pixel avec T15)*
 - [ ] T10 — Coffres (écrans) : création, section « Coffres » de l'accueil, ouvrir, fermer, parcourir
 - [ ] T11 — Mot de passe et clé de secours d'un coffre
 - [ ] T12 — Déverrouillage biométrique d'un coffre (visage ou empreinte)

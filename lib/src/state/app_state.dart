@@ -30,6 +30,7 @@ class AppState extends ChangeNotifier implements FluLuksEventsApi {
   bool _ejecting = false;
   String? _ejectError;
   List<SourceMsg> _sources = const [];
+  List<VaultMsg> _vaults = const [];
   List<RemoteServerMsg> _servers = const [];
   bool _allFilesAccess = false;
   TransferMsg? _transfer;
@@ -54,6 +55,9 @@ class AppState extends ChangeNotifier implements FluLuksEventsApi {
 
   /// Stockages du gestionnaire de fichiers : téléphone, cartes SD, volumes ouverts.
   List<SourceMsg> get sources => _sources;
+
+  /// Coffres connus (phase 14) : fermés, ouverts ou indisponibles.
+  List<VaultMsg> get vaults => _vaults;
 
   /// Serveurs distants enregistrés (phase 10).
   List<RemoteServerMsg> get servers => _servers;
@@ -189,6 +193,7 @@ class AppState extends ChangeNotifier implements FluLuksEventsApi {
       _uiPrefs.value = await api.getUiPrefs();
       _favorites = await api.listFavorites();
       _servers = await api.listServers();
+      _vaults = await api.listVaults();
       notifyListeners();
       await terminals.restore(); // sessions gardées par le service pendant que l'application était fermée
     } on PlatformException catch (e) {
@@ -252,9 +257,10 @@ class AppState extends ChangeNotifier implements FluLuksEventsApi {
   }
 
   @override
-  void onStateChanged(List<DiskMsg> disks, List<VolumeMsg> volumes) {
+  void onStateChanged(List<DiskMsg> disks, List<VolumeMsg> volumes, List<VaultMsg> vaults) {
     _disks = disks;
     _volumes = volumes;
+    _vaults = vaults;
     notifyListeners();
     refreshSources(); // un volume ouvert ou fermé ajoute ou retire un stockage
   }
@@ -280,6 +286,7 @@ class AppState extends ChangeNotifier implements FluLuksEventsApi {
       _allFilesAccess = await api.hasAllFilesAccess();
       _favorites = await api.listFavorites();
       _servers = await api.listServers();
+      _vaults = await api.listVaults();
       notifyListeners();
     } on PlatformException catch (e) {
       _fail(e);

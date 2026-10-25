@@ -6,6 +6,7 @@ import com.mawena.fluluks.engine.FileType
 import com.mawena.fluluks.provider.DocNames
 import com.mawena.fluluks.provider.DocumentIds
 import com.mawena.fluluks.provider.WriteOps
+import com.mawena.fluluks.vaults.Vaults
 import java.io.File
 import java.io.FileInputStream
 import java.io.FileNotFoundException
@@ -52,6 +53,9 @@ class LocalSource(
         if (c != canonRoot && !c.path.startsWith(canonRoot.path + File.separator)) throw FileNotFoundException(Files.MSG_BAD_PATH)
         return f
     }
+
+    /** Fichier de [path], chemin vérifié (sous la racine) : le fichier d'un coffre (phase 14). */
+    internal fun fileOf(path: String): File = file(path)
 
     private fun entry(f: File, path: String): Entry {
         val p = f.toPath()
@@ -120,6 +124,7 @@ class LocalSource(
 
     override fun rename(path: String, newName: String): String {
         requireWritable()
+        Vaults.requireClosed(id, PathRules.require(path))
         if (PathRules.require(path) == "/") throw FileNotFoundException("La racine ne peut pas être renommée")
         val f = file(path, linkItself = true)
         if (!NioFiles.exists(f.toPath(), LinkOption.NOFOLLOW_LINKS)) throw FileNotFoundException("Document introuvable")
@@ -135,6 +140,7 @@ class LocalSource(
 
     override fun delete(path: String) {
         requireWritable()
+        Vaults.requireClosed(id, PathRules.require(path))
         if (PathRules.require(path) == "/") throw FileNotFoundException("La racine ne peut pas être supprimée")
         val f = file(path, linkItself = true)
         if (!NioFiles.exists(f.toPath(), LinkOption.NOFOLLOW_LINKS)) throw FileNotFoundException("Document introuvable")
@@ -154,6 +160,7 @@ class LocalSource(
 
     override fun move(path: String, targetParent: String): String {
         requireWritable()
+        Vaults.requireClosed(id, PathRules.require(path))
         val p = PathRules.require(path)
         val tp = PathRules.require(targetParent)
         if (p == "/") throw FileNotFoundException("La racine ne peut pas être déplacée")
@@ -191,6 +198,7 @@ class LocalSource(
 
     override fun openOverwrite(path: String): OutputStream {
         requireWritable()
+        Vaults.requireClosed(id, PathRules.require(path))
         val f = file(path)
         if (!f.isFile) throw FileNotFoundException("Ce n'est pas un fichier ordinaire")
         return try {

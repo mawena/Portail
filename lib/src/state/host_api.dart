@@ -49,6 +49,13 @@ abstract class HostApi {
   Future<void> changeFilePassword(String srcId, String path, Uint8List oldPassword, Uint8List newPassword);
   Future<SourceMsg> openDecrypted(String srcId, String path, Uint8List password);
   Future<void> closeDecrypted(String sourceId);
+
+  // coffres (phase 14)
+  Future<List<VaultMsg>> listVaults();
+  Future<VaultMsg> createVault(String srcId, String dir, String name, int sizeBytes, String fs, Uint8List password);
+  Future<VolumeMsg> openVault(String? vaultId, String? srcId, String? path, Uint8List password, bool writable);
+  Future<void> closeVault(String vaultId);
+  Future<void> forgetVault(String vaultId);
   Future<SearchResultMsg> search(String sourceId, String path, String query, bool showHidden);
   Future<void> cancelSearch();
   Future<SpaceReportMsg> analyzeSpace(String sourceId, String path);
@@ -212,6 +219,18 @@ class PigeonHostApi implements HostApi {
       _api.openDecrypted(srcId, path, password);
   @override
   Future<void> closeDecrypted(String sourceId) => _api.closeDecrypted(sourceId);
+  @override
+  Future<List<VaultMsg>> listVaults() => _api.listVaults();
+  @override
+  Future<VaultMsg> createVault(String srcId, String dir, String name, int sizeBytes, String fs, Uint8List password) =>
+      _api.createVault(srcId, dir, name, sizeBytes, fs, password);
+  @override
+  Future<VolumeMsg> openVault(String? vaultId, String? srcId, String? path, Uint8List password, bool writable) =>
+      _api.openVault(vaultId, srcId, path, password, writable);
+  @override
+  Future<void> closeVault(String vaultId) => _api.closeVault(vaultId);
+  @override
+  Future<void> forgetVault(String vaultId) => _api.forgetVault(vaultId);
   @override
   Future<SearchResultMsg> search(String sourceId, String path, String query, bool showHidden) =>
       _api.search(sourceId, path, query, showHidden);

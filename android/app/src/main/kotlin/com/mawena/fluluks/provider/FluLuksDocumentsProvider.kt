@@ -24,6 +24,7 @@ import com.mawena.fluluks.engine.FsStat
 import com.mawena.fluluks.engine.NativeEngine
 import com.mawena.fluluks.engine.OpenFlags
 import com.mawena.fluluks.engine.VolumeStat
+import com.mawena.fluluks.vaults.Vaults
 import com.mawena.fluluks.volumes.VolumeManager
 import com.mawena.fluluks.volumes.VolumeState
 import java.io.FileNotFoundException
@@ -60,7 +61,7 @@ class FluLuksDocumentsProvider : DocumentsProvider() {
                     Root.COLUMN_ROOT_ID -> row.add(c, v.id)
                     Root.COLUMN_FLAGS -> row.add(c, flags)
                     Root.COLUMN_ICON -> row.add(c, R.drawable.ic_disk)
-                    Root.COLUMN_TITLE -> row.add(c, v.title)
+                    Root.COLUMN_TITLE -> row.add(c, if (v.vaultId != null) "Coffre ${v.title}" else v.title)
                     Root.COLUMN_SUMMARY -> row.add(c, RootSummary.of(part, mode.readOnly, mode.reason))
                     Root.COLUMN_DOCUMENT_ID -> row.add(c, DocumentIds.encode(v.id, "/"))
                     Root.COLUMN_AVAILABLE_BYTES -> row.add(c, v.freeBytes)
@@ -132,7 +133,10 @@ class FluLuksDocumentsProvider : DocumentsProvider() {
             val bytes = path.toByteArray(Charsets.UTF_8)
             val st = FsStat.parse(NativeEngine.stat(vol.handle, bytes))
             if (st.type != FileType.FILE) throw FileNotFoundException("Ce n'est pas un fichier ordinaire")
-            if (m.write) requireWritable(vol)
+            if (m.write) {
+                requireWritable(vol)
+                Vaults.requireClosed(vol.state.id, path)
+            }
             val flags = if (!m.write) OpenFlags.RDONLY else OpenFlags.RDWR or (if (m.truncate) OpenFlags.TRUNC else 0)
             val file = EngineError.check(NativeEngine.openFile(vol.handle, bytes, flags))
             if (m.truncate) VolumeManager.noteWrite(vol.state.id) // la troncature est une écriture
@@ -166,6 +170,7 @@ class FluLuksDocumentsProvider : DocumentsProvider() {
     override fun deleteDocument(documentId: String?) = guard("deleteDocument", documentId) {
         val (vol, path) = resolve(documentId)
         requireWritable(vol)
+        Vaults.requireClosed(vol.state.id, path)
         try {
             synchronized(VolumeManager.writeLock) { WriteOps(NativeEngine, vol.handle).delete(path) }
         } finally {
@@ -176,6 +181,7 @@ class FluLuksDocumentsProvider : DocumentsProvider() {
     override fun renameDocument(documentId: String?, displayName: String?): String = guard("renameDocument", documentId) {
         val (vol, path) = resolve(documentId)
         requireWritable(vol)
+        Vaults.requireClosed(vol.state.id, path)
         val target = synchronized(VolumeManager.writeLock) { WriteOps(NativeEngine, vol.handle).rename(path, displayName) }
         written(vol, WriteOps.parentOf(path))
         DocumentIds.encode(vol.state.id, target)
@@ -189,6 +195,7 @@ class FluLuksDocumentsProvider : DocumentsProvider() {
             val (vol, path) = resolve(sourceDocumentId)
             val (_, target) = resolve(targetParentDocumentId)
             requireWritable(vol)
+            Vaults.requireClosed(vol.state.id, path)
             val moved = synchronized(VolumeManager.writeLock) { WriteOps(NativeEngine, vol.handle).move(path, target) }
             written(vol, WriteOps.parentOf(path), target)
             DocumentIds.encode(vol.state.id, moved)
@@ -201,6 +208,7 @@ class FluLuksDocumentsProvider : DocumentsProvider() {
             val (vol, path) = resolve(sourceDocumentId)
             val (_, target) = resolve(targetParentDocumentId)
             requireWritable(vol)
+            Vaults.requireClosed(vol.state.id, path)
             try {
                 // chaque morceau compte comme activité : jamais de verrouillage automatique au milieu de la copie
                 val ops = WriteOps(NativeEngine, vol.handle, onChunk = { VolumeManager.noteActivity(vol.state.id) })

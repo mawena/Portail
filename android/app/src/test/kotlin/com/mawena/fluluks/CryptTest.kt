@@ -364,7 +364,7 @@ class CryptTest {
         Transfers.resetForTests()
         Archives.resetForTests(null, null, null)
         Files.setResolverForTests(null)
-        Crypt.isOpenVaultFile = { _, _ -> false }
+        Crypt.isOpenVaultFile = { id, p -> com.mawena.fluluks.vaults.Vaults.isOpenFile(id, p) } // crochet rendu aux coffres
     }
 
     private fun u(s: String) = s.toByteArray(Charsets.UTF_8)

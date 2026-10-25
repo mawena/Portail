@@ -98,6 +98,7 @@ class VolumeMsg {
     required this.needsRecovery,
     required this.roReason,
     required this.readOnly,
+    this.vaultId,
   });
   String id;
   String diskId;
@@ -108,6 +109,40 @@ class VolumeMsg {
   bool needsRecovery;
   String roReason;
   bool readOnly;
+
+  /// Coffre ouvert (phase 14) : son identifiant ; null pour un volume de disque.
+  String? vaultId;
+}
+
+/// Coffre connu (phase 14) : `state` vaut `closed`, `open` ou `unavailable` (son stockage n'est pas là) ;
+/// `volumeId` quand il est ouvert ; `sourceLabel` : stockage qui porte son fichier.
+class VaultMsg {
+  VaultMsg({
+    required this.id,
+    required this.name,
+    required this.sourceKey,
+    required this.sourceLabel,
+    required this.path,
+    required this.sizeBytes,
+    required this.fs,
+    required this.state,
+    this.volumeId,
+    required this.hasRecovery,
+    required this.biometric,
+    required this.luksVersion,
+  });
+  String id;
+  String name;
+  String sourceKey;
+  String sourceLabel;
+  String path;
+  int sizeBytes;
+  String fs;
+  String state;
+  String? volumeId;
+  bool hasRecovery;
+  bool biometric;
+  int luksVersion;
 }
 
 /// Un stockage du gestionnaire de fichiers. `kind` : `phone`, `removable`, `disk`, `remote` ou `decrypted` (vue
@@ -619,6 +654,23 @@ abstract class FluLuksHostApi {
 
   /// Copie un mot de passe dans le presse-papiers, marqué sensible ; effacé après 60 s s'il n'a pas changé.
   void copySecret(Uint8List text);
+
+  // --- coffres (phase 14)
+  List<VaultMsg> listVaults();
+
+  /// Crée le coffre `name.luks` sous `dir` de `srcId` (`fs` : `exfat` ou `ext4`) ; progression par TransferMsg
+  /// (`vault`), annulable ; le mot de passe est mis à zéro.
+  @async
+  VaultMsg createVault(String srcId, String dir, String name, int sizeBytes, String fs, Uint8List password);
+
+  /// Ouvre un coffre connu (`vaultId`), ou le fichier `path` de `srcId` ; erreur `badPassword` si le mot de passe est
+  /// faux.
+  @async
+  VolumeMsg openVault(String? vaultId, String? srcId, String? path, Uint8List password, bool writable);
+  void closeVault(String vaultId);
+
+  /// Retire le coffre de la liste (fermé d'abord) ; son fichier n'est pas touché.
+  void forgetVault(String vaultId);
   void cancelTransfer();
   @async
   SearchResultMsg search(String sourceId, String path, String query, bool showHidden);
@@ -767,7 +819,7 @@ abstract class FluLuksHostApi {
 
 @FlutterApi()
 abstract class FluLuksEventsApi {
-  void onStateChanged(List<DiskMsg> disks, List<VolumeMsg> volumes);
+  void onStateChanged(List<DiskMsg> disks, List<VolumeMsg> volumes, List<VaultMsg> vaults);
 
   /// Éjection en cours (synchronisation, démontage) et dernier échec (« Éjection impossible : … »).
   void onEjectStateChanged(bool ejecting, String? error);

@@ -452,7 +452,9 @@ data class VolumeMsg (
   val freeBytes: Long,
   val needsRecovery: Boolean,
   val roReason: String,
-  val readOnly: Boolean
+  val readOnly: Boolean,
+  /** Coffre ouvert (phase 14) : son identifiant ; null pour un volume de disque. */
+  val vaultId: String? = null
 )
  {
   companion object {
@@ -466,7 +468,8 @@ data class VolumeMsg (
       val needsRecovery = pigeonVar_list[6] as Boolean
       val roReason = pigeonVar_list[7] as String
       val readOnly = pigeonVar_list[8] as Boolean
-      return VolumeMsg(id, diskId, partIndex, title, totalBytes, freeBytes, needsRecovery, roReason, readOnly)
+      val vaultId = pigeonVar_list[9] as String?
+      return VolumeMsg(id, diskId, partIndex, title, totalBytes, freeBytes, needsRecovery, roReason, readOnly, vaultId)
     }
   }
   fun toList(): List<Any?> {
@@ -480,6 +483,7 @@ data class VolumeMsg (
       needsRecovery,
       roReason,
       readOnly,
+      vaultId,
     )
   }
   override fun equals(other: Any?): Boolean {
@@ -490,7 +494,7 @@ data class VolumeMsg (
       return true
     }
     val other = other as VolumeMsg
-    return FluLuksApiPigeonUtils.deepEquals(this.id, other.id) && FluLuksApiPigeonUtils.deepEquals(this.diskId, other.diskId) && FluLuksApiPigeonUtils.deepEquals(this.partIndex, other.partIndex) && FluLuksApiPigeonUtils.deepEquals(this.title, other.title) && FluLuksApiPigeonUtils.deepEquals(this.totalBytes, other.totalBytes) && FluLuksApiPigeonUtils.deepEquals(this.freeBytes, other.freeBytes) && FluLuksApiPigeonUtils.deepEquals(this.needsRecovery, other.needsRecovery) && FluLuksApiPigeonUtils.deepEquals(this.roReason, other.roReason) && FluLuksApiPigeonUtils.deepEquals(this.readOnly, other.readOnly)
+    return FluLuksApiPigeonUtils.deepEquals(this.id, other.id) && FluLuksApiPigeonUtils.deepEquals(this.diskId, other.diskId) && FluLuksApiPigeonUtils.deepEquals(this.partIndex, other.partIndex) && FluLuksApiPigeonUtils.deepEquals(this.title, other.title) && FluLuksApiPigeonUtils.deepEquals(this.totalBytes, other.totalBytes) && FluLuksApiPigeonUtils.deepEquals(this.freeBytes, other.freeBytes) && FluLuksApiPigeonUtils.deepEquals(this.needsRecovery, other.needsRecovery) && FluLuksApiPigeonUtils.deepEquals(this.roReason, other.roReason) && FluLuksApiPigeonUtils.deepEquals(this.readOnly, other.readOnly) && FluLuksApiPigeonUtils.deepEquals(this.vaultId, other.vaultId)
   }
 
   override fun hashCode(): Int {
@@ -504,10 +508,97 @@ data class VolumeMsg (
     result = 31 * result + FluLuksApiPigeonUtils.deepHash(this.needsRecovery)
     result = 31 * result + FluLuksApiPigeonUtils.deepHash(this.roReason)
     result = 31 * result + FluLuksApiPigeonUtils.deepHash(this.readOnly)
+    result = 31 * result + FluLuksApiPigeonUtils.deepHash(this.vaultId)
     return result
   }
   override fun toString(): String {
-    return "VolumeMsg(id=$id, diskId=$diskId, partIndex=$partIndex, title=$title, totalBytes=$totalBytes, freeBytes=$freeBytes, needsRecovery=$needsRecovery, roReason=$roReason, readOnly=$readOnly)"
+    return "VolumeMsg(id=$id, diskId=$diskId, partIndex=$partIndex, title=$title, totalBytes=$totalBytes, freeBytes=$freeBytes, needsRecovery=$needsRecovery, roReason=$roReason, readOnly=$readOnly, vaultId=$vaultId)"
+  }
+}
+
+/**
+ * Coffre connu (phase 14) : `state` vaut `closed`, `open` ou `unavailable` (son stockage n'est pas là) ;
+ * `volumeId` quand il est ouvert ; `sourceLabel` : stockage qui porte son fichier.
+ *
+ * Generated class from Pigeon that represents data sent in messages.
+ */
+data class VaultMsg (
+  val id: String,
+  val name: String,
+  val sourceKey: String,
+  val sourceLabel: String,
+  val path: String,
+  val sizeBytes: Long,
+  val fs: String,
+  val state: String,
+  val volumeId: String? = null,
+  val hasRecovery: Boolean,
+  val biometric: Boolean,
+  val luksVersion: Long
+)
+ {
+  companion object {
+    fun fromList(pigeonVar_list: List<Any?>): VaultMsg {
+      val id = pigeonVar_list[0] as String
+      val name = pigeonVar_list[1] as String
+      val sourceKey = pigeonVar_list[2] as String
+      val sourceLabel = pigeonVar_list[3] as String
+      val path = pigeonVar_list[4] as String
+      val sizeBytes = pigeonVar_list[5] as Long
+      val fs = pigeonVar_list[6] as String
+      val state = pigeonVar_list[7] as String
+      val volumeId = pigeonVar_list[8] as String?
+      val hasRecovery = pigeonVar_list[9] as Boolean
+      val biometric = pigeonVar_list[10] as Boolean
+      val luksVersion = pigeonVar_list[11] as Long
+      return VaultMsg(id, name, sourceKey, sourceLabel, path, sizeBytes, fs, state, volumeId, hasRecovery, biometric, luksVersion)
+    }
+  }
+  fun toList(): List<Any?> {
+    return listOf(
+      id,
+      name,
+      sourceKey,
+      sourceLabel,
+      path,
+      sizeBytes,
+      fs,
+      state,
+      volumeId,
+      hasRecovery,
+      biometric,
+      luksVersion,
+    )
+  }
+  override fun equals(other: Any?): Boolean {
+    if (other == null || other.javaClass != javaClass) {
+      return false
+    }
+    if (this === other) {
+      return true
+    }
+    val other = other as VaultMsg
+    return FluLuksApiPigeonUtils.deepEquals(this.id, other.id) && FluLuksApiPigeonUtils.deepEquals(this.name, other.name) && FluLuksApiPigeonUtils.deepEquals(this.sourceKey, other.sourceKey) && FluLuksApiPigeonUtils.deepEquals(this.sourceLabel, other.sourceLabel) && FluLuksApiPigeonUtils.deepEquals(this.path, other.path) && FluLuksApiPigeonUtils.deepEquals(this.sizeBytes, other.sizeBytes) && FluLuksApiPigeonUtils.deepEquals(this.fs, other.fs) && FluLuksApiPigeonUtils.deepEquals(this.state, other.state) && FluLuksApiPigeonUtils.deepEquals(this.volumeId, other.volumeId) && FluLuksApiPigeonUtils.deepEquals(this.hasRecovery, other.hasRecovery) && FluLuksApiPigeonUtils.deepEquals(this.biometric, other.biometric) && FluLuksApiPigeonUtils.deepEquals(this.luksVersion, other.luksVersion)
+  }
+
+  override fun hashCode(): Int {
+    var result = javaClass.hashCode()
+    result = 31 * result + FluLuksApiPigeonUtils.deepHash(this.id)
+    result = 31 * result + FluLuksApiPigeonUtils.deepHash(this.name)
+    result = 31 * result + FluLuksApiPigeonUtils.deepHash(this.sourceKey)
+    result = 31 * result + FluLuksApiPigeonUtils.deepHash(this.sourceLabel)
+    result = 31 * result + FluLuksApiPigeonUtils.deepHash(this.path)
+    result = 31 * result + FluLuksApiPigeonUtils.deepHash(this.sizeBytes)
+    result = 31 * result + FluLuksApiPigeonUtils.deepHash(this.fs)
+    result = 31 * result + FluLuksApiPigeonUtils.deepHash(this.state)
+    result = 31 * result + FluLuksApiPigeonUtils.deepHash(this.volumeId)
+    result = 31 * result + FluLuksApiPigeonUtils.deepHash(this.hasRecovery)
+    result = 31 * result + FluLuksApiPigeonUtils.deepHash(this.biometric)
+    result = 31 * result + FluLuksApiPigeonUtils.deepHash(this.luksVersion)
+    return result
+  }
+  override fun toString(): String {
+    return "VaultMsg(id=$id, name=$name, sourceKey=$sourceKey, sourceLabel=$sourceLabel, path=$path, sizeBytes=$sizeBytes, fs=$fs, state=$state, volumeId=$volumeId, hasRecovery=$hasRecovery, biometric=$biometric, luksVersion=$luksVersion)"
   }
 }
 
@@ -2026,120 +2117,125 @@ private open class FluLuksApiPigeonCodec : StandardMessageCodec() {
       }
       134.toByte() -> {
         return (readValue(buffer) as? List<Any?>)?.let {
-          SourceMsg.fromList(it)
+          VaultMsg.fromList(it)
         }
       }
       135.toByte() -> {
         return (readValue(buffer) as? List<Any?>)?.let {
-          EntryMsg.fromList(it)
+          SourceMsg.fromList(it)
         }
       }
       136.toByte() -> {
         return (readValue(buffer) as? List<Any?>)?.let {
-          PlayerMsg.fromList(it)
+          EntryMsg.fromList(it)
         }
       }
       137.toByte() -> {
         return (readValue(buffer) as? List<Any?>)?.let {
-          TransferMsg.fromList(it)
+          PlayerMsg.fromList(it)
         }
       }
       138.toByte() -> {
         return (readValue(buffer) as? List<Any?>)?.let {
-          EncryptedInfoMsg.fromList(it)
+          TransferMsg.fromList(it)
         }
       }
       139.toByte() -> {
         return (readValue(buffer) as? List<Any?>)?.let {
-          TrashItemMsg.fromList(it)
+          EncryptedInfoMsg.fromList(it)
         }
       }
       140.toByte() -> {
         return (readValue(buffer) as? List<Any?>)?.let {
-          DetailsMsg.fromList(it)
+          TrashItemMsg.fromList(it)
         }
       }
       141.toByte() -> {
         return (readValue(buffer) as? List<Any?>)?.let {
-          TextFileMsg.fromList(it)
+          DetailsMsg.fromList(it)
         }
       }
       142.toByte() -> {
         return (readValue(buffer) as? List<Any?>)?.let {
-          TextSaveMsg.fromList(it)
+          TextFileMsg.fromList(it)
         }
       }
       143.toByte() -> {
         return (readValue(buffer) as? List<Any?>)?.let {
-          RenameRuleMsg.fromList(it)
+          TextSaveMsg.fromList(it)
         }
       }
       144.toByte() -> {
         return (readValue(buffer) as? List<Any?>)?.let {
-          RenamePreviewMsg.fromList(it)
+          RenameRuleMsg.fromList(it)
         }
       }
       145.toByte() -> {
         return (readValue(buffer) as? List<Any?>)?.let {
-          FilterItemMsg.fromList(it)
+          RenamePreviewMsg.fromList(it)
         }
       }
       146.toByte() -> {
         return (readValue(buffer) as? List<Any?>)?.let {
-          FolderSizeMsg.fromList(it)
+          FilterItemMsg.fromList(it)
         }
       }
       147.toByte() -> {
         return (readValue(buffer) as? List<Any?>)?.let {
-          SpaceItemMsg.fromList(it)
+          FolderSizeMsg.fromList(it)
         }
       }
       148.toByte() -> {
         return (readValue(buffer) as? List<Any?>)?.let {
-          SpaceReportMsg.fromList(it)
+          SpaceItemMsg.fromList(it)
         }
       }
       149.toByte() -> {
         return (readValue(buffer) as? List<Any?>)?.let {
-          SearchResultMsg.fromList(it)
+          SpaceReportMsg.fromList(it)
         }
       }
       150.toByte() -> {
         return (readValue(buffer) as? List<Any?>)?.let {
-          RemoteServerMsg.fromList(it)
+          SearchResultMsg.fromList(it)
         }
       }
       151.toByte() -> {
         return (readValue(buffer) as? List<Any?>)?.let {
-          SnippetMsg.fromList(it)
+          RemoteServerMsg.fromList(it)
         }
       }
       152.toByte() -> {
         return (readValue(buffer) as? List<Any?>)?.let {
-          TunnelMsg.fromList(it)
+          SnippetMsg.fromList(it)
         }
       }
       153.toByte() -> {
         return (readValue(buffer) as? List<Any?>)?.let {
-          SshKeyMsg.fromList(it)
+          TunnelMsg.fromList(it)
         }
       }
       154.toByte() -> {
         return (readValue(buffer) as? List<Any?>)?.let {
-          ViewPrefsMsg.fromList(it)
+          SshKeyMsg.fromList(it)
         }
       }
       155.toByte() -> {
         return (readValue(buffer) as? List<Any?>)?.let {
-          UiPrefsMsg.fromList(it)
+          ViewPrefsMsg.fromList(it)
         }
       }
       156.toByte() -> {
         return (readValue(buffer) as? List<Any?>)?.let {
-          AppInfoMsg.fromList(it)
+          UiPrefsMsg.fromList(it)
         }
       }
       157.toByte() -> {
+        return (readValue(buffer) as? List<Any?>)?.let {
+          AppInfoMsg.fromList(it)
+        }
+      }
+      158.toByte() -> {
         return (readValue(buffer) as? List<Any?>)?.let {
           FavoriteMsg.fromList(it)
         }
@@ -2169,100 +2265,104 @@ private open class FluLuksApiPigeonCodec : StandardMessageCodec() {
         stream.write(133)
         writeValue(stream, value.toList())
       }
-      is SourceMsg -> {
+      is VaultMsg -> {
         stream.write(134)
         writeValue(stream, value.toList())
       }
-      is EntryMsg -> {
+      is SourceMsg -> {
         stream.write(135)
         writeValue(stream, value.toList())
       }
-      is PlayerMsg -> {
+      is EntryMsg -> {
         stream.write(136)
         writeValue(stream, value.toList())
       }
-      is TransferMsg -> {
+      is PlayerMsg -> {
         stream.write(137)
         writeValue(stream, value.toList())
       }
-      is EncryptedInfoMsg -> {
+      is TransferMsg -> {
         stream.write(138)
         writeValue(stream, value.toList())
       }
-      is TrashItemMsg -> {
+      is EncryptedInfoMsg -> {
         stream.write(139)
         writeValue(stream, value.toList())
       }
-      is DetailsMsg -> {
+      is TrashItemMsg -> {
         stream.write(140)
         writeValue(stream, value.toList())
       }
-      is TextFileMsg -> {
+      is DetailsMsg -> {
         stream.write(141)
         writeValue(stream, value.toList())
       }
-      is TextSaveMsg -> {
+      is TextFileMsg -> {
         stream.write(142)
         writeValue(stream, value.toList())
       }
-      is RenameRuleMsg -> {
+      is TextSaveMsg -> {
         stream.write(143)
         writeValue(stream, value.toList())
       }
-      is RenamePreviewMsg -> {
+      is RenameRuleMsg -> {
         stream.write(144)
         writeValue(stream, value.toList())
       }
-      is FilterItemMsg -> {
+      is RenamePreviewMsg -> {
         stream.write(145)
         writeValue(stream, value.toList())
       }
-      is FolderSizeMsg -> {
+      is FilterItemMsg -> {
         stream.write(146)
         writeValue(stream, value.toList())
       }
-      is SpaceItemMsg -> {
+      is FolderSizeMsg -> {
         stream.write(147)
         writeValue(stream, value.toList())
       }
-      is SpaceReportMsg -> {
+      is SpaceItemMsg -> {
         stream.write(148)
         writeValue(stream, value.toList())
       }
-      is SearchResultMsg -> {
+      is SpaceReportMsg -> {
         stream.write(149)
         writeValue(stream, value.toList())
       }
-      is RemoteServerMsg -> {
+      is SearchResultMsg -> {
         stream.write(150)
         writeValue(stream, value.toList())
       }
-      is SnippetMsg -> {
+      is RemoteServerMsg -> {
         stream.write(151)
         writeValue(stream, value.toList())
       }
-      is TunnelMsg -> {
+      is SnippetMsg -> {
         stream.write(152)
         writeValue(stream, value.toList())
       }
-      is SshKeyMsg -> {
+      is TunnelMsg -> {
         stream.write(153)
         writeValue(stream, value.toList())
       }
-      is ViewPrefsMsg -> {
+      is SshKeyMsg -> {
         stream.write(154)
         writeValue(stream, value.toList())
       }
-      is UiPrefsMsg -> {
+      is ViewPrefsMsg -> {
         stream.write(155)
         writeValue(stream, value.toList())
       }
-      is AppInfoMsg -> {
+      is UiPrefsMsg -> {
         stream.write(156)
         writeValue(stream, value.toList())
       }
-      is FavoriteMsg -> {
+      is AppInfoMsg -> {
         stream.write(157)
+        writeValue(stream, value.toList())
+      }
+      is FavoriteMsg -> {
+        stream.write(158)
         writeValue(stream, value.toList())
       }
       else -> super.writeValue(stream, value)
@@ -2346,6 +2446,20 @@ interface FluLuksHostApi {
   fun closeDecrypted(sourceId: String)
   /** Copie un mot de passe dans le presse-papiers, marqué sensible ; effacé après 60 s s'il n'a pas changé. */
   fun copySecret(text: ByteArray)
+  fun listVaults(): List<VaultMsg>
+  /**
+   * Crée le coffre `name.luks` sous `dir` de `srcId` (`fs` : `exfat` ou `ext4`) ; progression par TransferMsg
+   * (`vault`), annulable ; le mot de passe est mis à zéro.
+   */
+  fun createVault(srcId: String, dir: String, name: String, sizeBytes: Long, fs: String, password: ByteArray, callback: (Result<VaultMsg>) -> Unit)
+  /**
+   * Ouvre un coffre connu (`vaultId`), ou le fichier `path` de `srcId` ; erreur `badPassword` si le mot de passe est
+   * faux.
+   */
+  fun openVault(vaultId: String?, srcId: String?, path: String?, password: ByteArray, writable: Boolean, callback: (Result<VolumeMsg>) -> Unit)
+  fun closeVault(vaultId: String)
+  /** Retire le coffre de la liste (fermé d'abord) ; son fichier n'est pas touché. */
+  fun forgetVault(vaultId: String)
   fun cancelTransfer()
   fun search(sourceId: String, path: String, query: String, showHidden: Boolean, callback: (Result<SearchResultMsg>) -> Unit)
   fun cancelSearch()
@@ -3200,6 +3314,106 @@ interface FluLuksHostApi {
             val textArg = args[0] as ByteArray
             val wrapped: List<Any?> = try {
               api.copySecret(textArg)
+              listOf(null)
+            } catch (exception: Throwable) {
+              FluLuksApiPigeonUtils.wrapError(exception)
+            }
+            reply.reply(wrapped)
+          }
+        } else {
+          channel.setMessageHandler(null)
+        }
+      }
+      run {
+        val channel = BasicMessageChannel<Any?>(binaryMessenger, "dev.flutter.pigeon.fluluks.FluLuksHostApi.listVaults$separatedMessageChannelSuffix", codec)
+        if (api != null) {
+          channel.setMessageHandler { _, reply ->
+            val wrapped: List<Any?> = try {
+              listOf(api.listVaults())
+            } catch (exception: Throwable) {
+              FluLuksApiPigeonUtils.wrapError(exception)
+            }
+            reply.reply(wrapped)
+          }
+        } else {
+          channel.setMessageHandler(null)
+        }
+      }
+      run {
+        val channel = BasicMessageChannel<Any?>(binaryMessenger, "dev.flutter.pigeon.fluluks.FluLuksHostApi.createVault$separatedMessageChannelSuffix", codec)
+        if (api != null) {
+          channel.setMessageHandler { message, reply ->
+            val args = message as List<Any?>
+            val srcIdArg = args[0] as String
+            val dirArg = args[1] as String
+            val nameArg = args[2] as String
+            val sizeBytesArg = args[3] as Long
+            val fsArg = args[4] as String
+            val passwordArg = args[5] as ByteArray
+            api.createVault(srcIdArg, dirArg, nameArg, sizeBytesArg, fsArg, passwordArg) { result: Result<VaultMsg> ->
+              val error = result.exceptionOrNull()
+              if (error != null) {
+                reply.reply(FluLuksApiPigeonUtils.wrapError(error))
+              } else {
+                val data = result.getOrNull()
+                reply.reply(FluLuksApiPigeonUtils.wrapResult(data))
+              }
+            }
+          }
+        } else {
+          channel.setMessageHandler(null)
+        }
+      }
+      run {
+        val channel = BasicMessageChannel<Any?>(binaryMessenger, "dev.flutter.pigeon.fluluks.FluLuksHostApi.openVault$separatedMessageChannelSuffix", codec)
+        if (api != null) {
+          channel.setMessageHandler { message, reply ->
+            val args = message as List<Any?>
+            val vaultIdArg = args[0] as String?
+            val srcIdArg = args[1] as String?
+            val pathArg = args[2] as String?
+            val passwordArg = args[3] as ByteArray
+            val writableArg = args[4] as Boolean
+            api.openVault(vaultIdArg, srcIdArg, pathArg, passwordArg, writableArg) { result: Result<VolumeMsg> ->
+              val error = result.exceptionOrNull()
+              if (error != null) {
+                reply.reply(FluLuksApiPigeonUtils.wrapError(error))
+              } else {
+                val data = result.getOrNull()
+                reply.reply(FluLuksApiPigeonUtils.wrapResult(data))
+              }
+            }
+          }
+        } else {
+          channel.setMessageHandler(null)
+        }
+      }
+      run {
+        val channel = BasicMessageChannel<Any?>(binaryMessenger, "dev.flutter.pigeon.fluluks.FluLuksHostApi.closeVault$separatedMessageChannelSuffix", codec)
+        if (api != null) {
+          channel.setMessageHandler { message, reply ->
+            val args = message as List<Any?>
+            val vaultIdArg = args[0] as String
+            val wrapped: List<Any?> = try {
+              api.closeVault(vaultIdArg)
+              listOf(null)
+            } catch (exception: Throwable) {
+              FluLuksApiPigeonUtils.wrapError(exception)
+            }
+            reply.reply(wrapped)
+          }
+        } else {
+          channel.setMessageHandler(null)
+        }
+      }
+      run {
+        val channel = BasicMessageChannel<Any?>(binaryMessenger, "dev.flutter.pigeon.fluluks.FluLuksHostApi.forgetVault$separatedMessageChannelSuffix", codec)
+        if (api != null) {
+          channel.setMessageHandler { message, reply ->
+            val args = message as List<Any?>
+            val vaultIdArg = args[0] as String
+            val wrapped: List<Any?> = try {
+              api.forgetVault(vaultIdArg)
               listOf(null)
             } catch (exception: Throwable) {
               FluLuksApiPigeonUtils.wrapError(exception)
@@ -4409,12 +4623,12 @@ class FluLuksEventsApi(private val binaryMessenger: BinaryMessenger, private val
       FluLuksApiPigeonCodec()
     }
   }
-  fun onStateChanged(disksArg: List<DiskMsg>, volumesArg: List<VolumeMsg>, callback: (Result<Unit>) -> Unit)
+  fun onStateChanged(disksArg: List<DiskMsg>, volumesArg: List<VolumeMsg>, vaultsArg: List<VaultMsg>, callback: (Result<Unit>) -> Unit)
 {
     val separatedMessageChannelSuffix = if (messageChannelSuffix.isNotEmpty()) ".$messageChannelSuffix" else ""
     val channelName = "dev.flutter.pigeon.fluluks.FluLuksEventsApi.onStateChanged$separatedMessageChannelSuffix"
     val channel = BasicMessageChannel<Any?>(binaryMessenger, channelName, codec)
-    channel.send(listOf(disksArg, volumesArg)) {
+    channel.send(listOf(disksArg, volumesArg, vaultsArg)) {
       if (it is List<*>) {
         if (it.size > 1) {
           callback(Result.failure(FlutterError(it[0] as String, it[1] as String, it[2] as String?)))

@@ -575,6 +575,7 @@ class Fr {
       'encrypt' => 'Chiffrement',
       'decrypt' => 'Déchiffrement',
       'verify' => 'Vérification',
+      'vault' => 'Création du coffre',
       _ => 'Copie',
     };
     return '$what de $name — $i sur $n · $pct\u202F%';

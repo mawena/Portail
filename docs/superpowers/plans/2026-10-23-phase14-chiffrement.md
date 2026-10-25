@@ -427,7 +427,7 @@ JUnit 4, AndroidX Test.
   `void closeVault(String vaultId)`, `void forgetVault(String vaultId)` ; `VolumeMsg.vaultId` ; FlutterApi
   `onStateChanged` porte aussi la liste des coffres.
 
-- [ ] **Step 1 : tests en échec** : `createWritesZerosThenFormats` (partiel `.nom.luks.portail-partiel`, progression
+- [x] **Step 1 : tests en échec** : `createWritesZerosThenFormats` (partiel `.nom.luks.portail-partiel`, progression
   0 à 80 % pour la place, puis formatage ; renommé seulement à la fin), `createCancelRemovesPartial`,
   `createChecksSizeBounds` (32 Mio, place libre moins la réserve, 4 Gio − 1 sur FAT32), `createRefusedOnRemote`,
   `createRefusedInsideVault`, `openOnPhoneUsesFd`, `openOnDiskUsesEngineFile`, `vaultVolumeIsEncryptedAndListed`
@@ -440,12 +440,12 @@ JUnit 4, AndroidX Test.
   (« Ce fichier n'est pas un coffre »), `linuxLuks1ContainerOpens` (image LUKS1 + ext4 du jeu de tests),
   `dirtyExfatOpensReadOnlyWithAdvice` (raison de la phase 7 complétée : « vérifiez-le sous Linux :
   cryptsetup open, puis fsck.exfat »).
-- [ ] **Step 2 : implémentation.** Un coffre est un `DiskEntry` de plus dans `VolumeManager` (pas de `UsbDevice`),
+- [x] **Step 2 : implémentation.** Un coffre est un `DiskEntry` de plus dans `VolumeManager` (pas de `UsbDevice`),
   ouvert par `openDiskFd` (`ParcelFileDescriptor.open(...).detachFd()` sur le fichier vérifié par `LocalSource`) ou
   `openDiskOnFile` (fichier du volume porteur ouvert en écriture, gardé jusqu'à la fermeture) ; scan, puis
   `mount(part 0)` ; `VolumeService` le garde ouvert comme un disque. Les opérations « éjecter », « débrancher »,
   « verrouiller » d'un volume ferment d'abord les coffres qu'il porte.
-- [ ] **Step 3 : commit** `feat(coffres): créer et ouvrir des coffres comme des stockages`.
+- [x] **Step 3 : commit** `feat(coffres): créer et ouvrir des coffres comme des stockages`.
 
 ### Task 10 : coffres (écrans)
 

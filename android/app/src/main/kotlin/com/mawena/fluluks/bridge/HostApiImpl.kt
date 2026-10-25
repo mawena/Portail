@@ -48,6 +48,8 @@ import com.mawena.fluluks.remote.PrivateKeys
 import com.mawena.fluluks.remote.RemoteIOException
 import com.mawena.fluluks.remote.Remotes
 import com.mawena.fluluks.remote.ServerConfig
+import com.mawena.fluluks.vaults.VaultInfo
+import com.mawena.fluluks.vaults.Vaults
 import com.mawena.fluluks.volumes.AutoLock
 import com.mawena.fluluks.volumes.DiskState
 import com.mawena.fluluks.volumes.FormatOptions
@@ -103,11 +105,12 @@ class HostApiImpl(
         TerminalSessions.init(context)
         TerminalSessions.listener = terminalListener
         if (Music.backend == null) Music.backend = AndroidMusic(context)
+        Vaults.init(context)
         scope.launch {
             combine(VolumeManager.disks, VolumeManager.volumes) { d, v -> toMsgs(d, v) }
                 .collect { (d, v) ->
                     Music.checkSources() // musique d'un volume éjecté ou arraché : arrêtée
-                    events.onStateChanged(d, v) { /* réponse ignorée */ }
+                    events.onStateChanged(d, v, vaultMsgs()) { /* réponse ignorée */ }
                 }
         }
         scope.launch {
@@ -155,8 +158,11 @@ class HostApiImpl(
         object : StorageManager.StorageVolumeCallback() {
             override fun onStateChanged(volume: StorageVolume) {
                 Music.checkSources() // carte SD retirée
-                val (d, v) = toMsgs(VolumeManager.disks.value, VolumeManager.volumes.value)
-                events.onStateChanged(d, v) { /* réponse ignorée */ }
+                Vaults.checkSources() // coffres de la carte retirée : fermés
+                scope.launch {
+                    val (d, v) = toMsgs(VolumeManager.disks.value, VolumeManager.volumes.value)
+                    events.onStateChanged(d, v, vaultMsgs()) { /* réponse ignorée */ }
+                }
             }
         }
     } else {
@@ -269,8 +275,13 @@ class HostApiImpl(
     private fun sourceMsg(src: FileSource, v: VolumeState?): SourceMsg =
         if (src is DiskSource && v != null) {
             SourceMsg(
-                id = v.id, stableKey = if (v.partUuid.isBlank()) "disk:${v.diskId}#${v.partIndex}" else "disk:${v.partUuid}",
-                kind = "disk", label = v.title, totalBytes = v.totalBytes, freeBytes = v.freeBytes,
+                id = v.id,
+                stableKey = when {
+                    v.vaultId != null -> "vault:${v.vaultId}" // favoris d'un coffre : retrouvés à sa réouverture
+                    v.partUuid.isBlank() -> "disk:${v.diskId}#${v.partIndex}"
+                    else -> "disk:${v.partUuid}"
+                },
+                kind = if (v.vaultId != null) "vault" else "disk", label = v.title, totalBytes = v.totalBytes, freeBytes = v.freeBytes,
                 readOnly = v.readOnly, roReason = v.roReason, encrypted = v.encrypted,
             )
         } else {
@@ -693,6 +704,55 @@ class HostApiImpl(
 
     override fun copySecret(text: ByteArray) = guarded { SecretClipboard.copy(context, text) }
 
+    // ---------------------------------------------------------------- coffres (phase 14)
+
+    /** Coffres connus ; lus hors du fil principal (l'état « indisponible » regarde si leur fichier est là). */
+    private suspend fun vaultMsgs(): List<VaultMsg> = withContext(Dispatchers.IO) {
+        runCatching { Vaults.list().map(::vaultMsg) }.getOrDefault(emptyList())
+    }
+
+    override fun listVaults(): List<VaultMsg> = guardedValue { Vaults.list().map(::vaultMsg) }
+
+    override fun createVault(
+        srcId: String, dir: String, name: String, sizeBytes: Long, fs: String, password: ByteArray,
+        callback: (Result<VaultMsg>) -> Unit,
+    ) {
+        scope.launch {
+            val result = try {
+                Result.success(vaultMsg(Vaults.create(srcId, dir, name, sizeBytes, fs, password)))
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: Throwable) {
+                Result.failure(toFlutterError(e))
+            } finally {
+                password.fill(0)
+            }
+            callback(result)
+        }
+    }
+
+    override fun openVault(
+        vaultId: String?, srcId: String?, path: String?, password: ByteArray, writable: Boolean,
+        callback: (Result<VolumeMsg>) -> Unit,
+    ) {
+        scope.launch {
+            val result = try {
+                Result.success(volumeMsg(Vaults.open(vaultId, srcId, path, password, writable)))
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: Throwable) {
+                Result.failure(toFlutterError(e))
+            } finally {
+                password.fill(0)
+            }
+            callback(result)
+        }
+    }
+
+    override fun closeVault(vaultId: String) = guarded { Vaults.close(vaultId) }
+
+    override fun forgetVault(vaultId: String) = guarded { Vaults.forget(vaultId) }
+
     override fun changeFilePassword(
         srcId: String, path: String, oldPassword: ByteArray, newPassword: ByteArray, callback: (Result<Unit>) -> Unit,
     ) {
@@ -966,7 +1026,13 @@ class HostApiImpl(
         private fun volumeMsg(v: VolumeState) = VolumeMsg(
             id = v.id, diskId = v.diskId, partIndex = v.partIndex.toLong(), title = v.title,
             totalBytes = v.totalBytes, freeBytes = v.freeBytes,
-            needsRecovery = v.needsRecovery, roReason = v.roReason, readOnly = v.readOnly,
+            needsRecovery = v.needsRecovery, roReason = v.roReason, readOnly = v.readOnly, vaultId = v.vaultId,
+        )
+
+        internal fun vaultMsg(v: VaultInfo) = VaultMsg(
+            id = v.id, name = v.name, sourceKey = v.sourceKey, sourceLabel = v.sourceLabel, path = v.path,
+            sizeBytes = v.sizeBytes, fs = v.fs, state = v.state, volumeId = v.volumeId, hasRecovery = v.hasRecovery,
+            biometric = v.biometric, luksVersion = v.luksVersion.toLong(),
         )
     }
 }

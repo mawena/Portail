@@ -92,6 +92,7 @@ object Sources {
         s is LocalSource -> "removable"
         s is RemoteSource -> "remote"
         s is DecryptedSource -> "decrypted"
+        s is DiskSource && VolumeManager.volume(s.id)?.vaultId != null -> "vault"
         else -> "disk"
     }
 }
