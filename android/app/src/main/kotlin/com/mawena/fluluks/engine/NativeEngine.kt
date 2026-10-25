@@ -93,14 +93,36 @@ object NativeEngine : Engine {
     external override fun format(disk: Long, opts: ByteArray, pass: ByteArray?, progress: FormatProgress?): Int
 
     /** Archives (phase 9, fj_arc_* et fj_arcw_*) : voir [Engine]. */
-    external override fun arcOpenFd(fd: Int): Long
-    external override fun arcOpenFile(file: Long, size: Long): Long
+    external override fun arcOpenFd(fd: Int, mode: Int, pass: ByteArray?): Long
+    external override fun arcOpenFile(file: Long, size: Long, mode: Int, pass: ByteArray?): Long
     external override fun arcNext(arc: Long): ByteArray?
     external override fun arcRead(arc: Long, buf: ByteArray, len: Int): Int
     external override fun arcClose(arc: Long): Int
-    external override fun arcwOpenFd(fd: Int): Long
-    external override fun arcwOpenFile(file: Long): Long
+    external override fun arcwOpenFd(fd: Int, mode: Int, pass: ByteArray?): Long
+    external override fun arcwOpenFile(file: Long, mode: Int, pass: ByteArray?): Long
     external override fun arcwAdd(arc: Long, json: ByteArray): Int
     external override fun arcwWrite(arc: Long, buf: ByteArray, len: Int): Int
     external override fun arcwClose(arc: Long, commit: Boolean): Int
+
+    /** Fichiers age et coffres (phase 14, fj_age*, fj_open_disk_*, fj_luks_*) : voir [Engine]. */
+    external override fun ageWriterOpenFd(fd: Int, pass: ByteArray, log2n: Int): Long
+    external override fun ageWriterOpenFile(file: Long, pass: ByteArray, log2n: Int): Long
+    external override fun ageWrite(w: Long, buf: ByteArray, len: Int): Int
+    external override fun ageWriterClose(w: Long, commit: Boolean): Int
+    external override fun ageReaderOpenFd(fd: Int, pass: ByteArray): Long
+    external override fun ageReaderOpenFile(file: Long, size: Long, pass: ByteArray): Long
+    external override fun ageSize(r: Long): Long
+    external override fun agePread(r: Long, offset: Long, buf: ByteArray, len: Int): Int
+    external override fun ageReaderClose(r: Long): Int
+    external override fun agePeekFd(fd: Int): Int
+    external override fun agePeekFile(file: Long, size: Long): Int
+    external override fun ageRewrap(inFd: Int, inFile: Long, inSize: Long, outFd: Int, outFile: Long, old: ByteArray,
+                                    new: ByteArray, log2n: Int): Int
+    external override fun openDiskFd(fd: Int, readOnly: Boolean): Long
+    external override fun openDiskOnFile(file: Long, size: Long): Long
+    external override fun luksSlots(disk: Long): ByteArray
+    external override fun luksSlotSet(disk: Long, slot: Int, auth: ByteArray, new: ByteArray, kdfMemKib: Int,
+                                      kdfTime: Int): Int
+    external override fun luksSlotRemove(disk: Long, slot: Int, auth: ByteArray): Int
+    external override fun mountSlot(disk: Long, partIndex: Int, slot: Int, pass: ByteArray, writable: Boolean): Long
 }

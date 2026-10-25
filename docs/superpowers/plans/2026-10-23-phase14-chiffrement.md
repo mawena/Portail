@@ -271,15 +271,15 @@ JUnit 4, AndroidX Test.
   `luksSlotSet(disk, slot, auth: ByteArray, new: ByteArray, kdfMemKib: Int, kdfTime: Int): Int`,
   `luksSlotRemove(disk, slot, auth): Int`, `mountSlot(disk, part, slot, pass, writable): Long`.
 
-- [ ] **Step 1 : tests en échec** (`test_handles`) : `closingHostFileClosesVaultDisk` (fichier hôte fermé → volume du
+- [x] **Step 1 : tests en échec** (`test_handles`) : `closingHostFileClosesVaultDisk` (fichier hôte fermé → volume du
   coffre démonté et synchronisé, poignées invalides, rien ne fuit), `ejectHostDiskCascades`, `agerChildOfFile`,
   `staleAgeHandleIsEinval`, `slotChangeRefusedWhileMounted`, `passWipedOnEveryPath` (crochet : copie native effacée
   après succès comme après échec).
-- [ ] **Step 2 : implémentation** ; `fj_debug_used` revient à son compte initial dans chaque test.
-- [ ] **Step 3 : essais instrumentés en échec puis verts** (`EngineTest`, sur le Pixel, dossier privé) :
+- [x] **Step 2 : implémentation** ; `fj_debug_used` revient à son compte initial dans chaque test.
+- [x] **Step 3 : essais instrumentés en échec puis verts** (`EngineTest`, sur le Pixel, dossier privé) :
   `ageRoundTripOnPhone`, `zipAesRoundTripOnPhone`, `vaultCreateMountWriteOnPhone` (coffre de 64 Mio par
   `openDiskFd`), `slotChangeOnPhone`.
-- [ ] **Step 4 : commit** `feat(moteur): poignées de chiffrement et de coffres pour Kotlin`.
+- [x] **Step 4 : commit** `feat(moteur): poignées de chiffrement et de coffres pour Kotlin`.
 
 ### Task 5 : chiffrer et déchiffrer fichiers et dossiers (Kotlin)
 

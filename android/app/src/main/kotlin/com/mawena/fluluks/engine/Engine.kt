@@ -41,11 +41,16 @@ interface Engine {
      * fichier du moteur est abandonnée si le fichier, le volume ou le disque est fermé.
      */
 
-    /** Poignée d'archive en lecture ; FL_ENOTSUP si le fichier n'est pas une archive reconnue. */
-    fun arcOpenFd(fd: Int): Long = EngineError.FL_ENOTSUP.toLong()
+    /**
+     * Poignée d'archive en lecture ; FL_ENOTSUP si le fichier n'est pas une archive reconnue. [mode] : [ArcMode] ;
+     * [pass] (phase 14) lit un ZIP protégé ([ArcMode.PLAIN] ou [ArcMode.AES]) ou ouvre un ZIP dans un fichier age
+     * ([ArcMode.AGE], FL_EBADPASS dès l'ouverture). Le tableau est mis à zéro par le moteur.
+     */
+    fun arcOpenFd(fd: Int, mode: Int = ArcMode.PLAIN, pass: ByteArray? = null): Long = EngineError.FL_ENOTSUP.toLong()
 
     /** [size] : taille du fichier (stat). */
-    fun arcOpenFile(file: Long, size: Long): Long = EngineError.FL_ENOTSUP.toLong()
+    fun arcOpenFile(file: Long, size: Long, mode: Int = ArcMode.PLAIN, pass: ByteArray? = null): Long =
+        EngineError.FL_ENOTSUP.toLong()
 
     /**
      * JSON UTF-8 de l'entrée suivante ({"name": base64 des octets bruts du nom, "type", "size", "mtime",
@@ -56,8 +61,9 @@ interface Engine {
     /** Données de l'entrée courante : octets lus (4 Mio au plus), 0 à la fin de l'entrée, ou fl_err. */
     fun arcRead(arc: Long, buf: ByteArray, len: Int): Int = EngineError.FL_ENOTSUP
     fun arcClose(arc: Long): Int = EngineError.FL_ENOTSUP
-    fun arcwOpenFd(fd: Int): Long = EngineError.FL_ENOTSUP.toLong()
-    fun arcwOpenFile(file: Long): Long = EngineError.FL_ENOTSUP.toLong()
+    /** [mode] : [ArcMode.PLAIN], [ArcMode.AES] (ZIP AES-256) ou [ArcMode.AGE] (ZIP dans un fichier age) ; [pass] exigé sauf en clair. */
+    fun arcwOpenFd(fd: Int, mode: Int = ArcMode.PLAIN, pass: ByteArray? = null): Long = EngineError.FL_ENOTSUP.toLong()
+    fun arcwOpenFile(file: Long, mode: Int = ArcMode.PLAIN, pass: ByteArray? = null): Long = EngineError.FL_ENOTSUP.toLong()
 
     /** `json` : {"name": chemin UTF-8 relatif, "type": "f"|"d", "size", "mtime", "store"}. */
     fun arcwAdd(arc: Long, json: ByteArray): Int = EngineError.FL_ENOTSUP
@@ -65,6 +71,82 @@ interface Engine {
 
     /** [commit] : termine le ZIP ; sinon abandon. Ferme la destination dans les deux cas. */
     fun arcwClose(arc: Long, commit: Boolean): Int = EngineError.FL_ENOTSUP
+
+    /*
+     * Fichiers age (phase 14), mêmes règles que les archives : la source ou la destination (descripteur, ou poignée de
+     * fichier dont la poignée age devient l'enfant) appartient à la poignée dès l'appel, même en cas d'échec. Toute
+     * phrase passée en ByteArray est mise à zéro par le moteur, succès comme échec.
+     */
+
+    /** Écrivain age ; [log2n] : facteur scrypt ([AGE_LOG2N] dans l'application). */
+    fun ageWriterOpenFd(fd: Int, pass: ByteArray, log2n: Int = AGE_LOG2N): Long = EngineError.FL_ENOTSUP.toLong()
+    fun ageWriterOpenFile(file: Long, pass: ByteArray, log2n: Int = AGE_LOG2N): Long = EngineError.FL_ENOTSUP.toLong()
+    fun ageWrite(w: Long, buf: ByteArray, len: Int): Int = EngineError.FL_ENOTSUP
+
+    /** [commit] : fichier terminé ; sinon abandon (destination incomplète, illisible). Ferme la destination. */
+    fun ageWriterClose(w: Long, commit: Boolean): Int = EngineError.FL_ENOTSUP
+
+    /** Lecteur age à accès aléatoire ; FL_EBADPASS, FL_ECORRUPT, FL_ENOTSUP (pas un fichier age scrypt), FL_ENOMEM. */
+    fun ageReaderOpenFd(fd: Int, pass: ByteArray): Long = EngineError.FL_ENOTSUP.toLong()
+    fun ageReaderOpenFile(file: Long, size: Long, pass: ByteArray): Long = EngineError.FL_ENOTSUP.toLong()
+
+    /** Taille en clair, ou fl_err. */
+    fun ageSize(r: Long): Long = EngineError.FL_ENOTSUP.toLong()
+
+    /** Octets lus (4 Mio au plus) dans `buf[0..]`, 0 à la fin, ou fl_err. */
+    fun agePread(r: Long, offset: Long, buf: ByteArray, len: Int): Int = EngineError.FL_ENOTSUP
+    fun ageReaderClose(r: Long): Int = EngineError.FL_ENOTSUP
+
+    /** log2 N d'un fichier age scrypt, 0 si ce n'en est pas un, ou fl_err. Ne prend ni le descripteur ni le fichier. */
+    fun agePeekFd(fd: Int): Int = EngineError.FL_ENOTSUP
+    fun agePeekFile(file: Long, size: Long): Int = EngineError.FL_ENOTSUP
+
+    /**
+     * Nouvelle phrase d'un fichier age (charge utile recopiée sans être déchiffrée, puis vérifiée). Source : [inFd] ≥ 0,
+     * sinon [inFile] de [inSize] octets ; destination : [outFd] ≥ 0, sinon [outFile]. Les deux sont fermées.
+     */
+    fun ageRewrap(inFd: Int, inFile: Long, inSize: Long, outFd: Int, outFile: Long, old: ByteArray, new: ByteArray,
+                  log2n: Int = AGE_LOG2N): Int = EngineError.FL_ENOTSUP
+
+    /*
+     * Coffres (phase 14) : disque LUKS2 sans table, sur un fichier du téléphone ou d'un volume du moteur.
+     */
+
+    /** Disque d'un coffre sur un descripteur, qui lui appartient dès l'appel (fermé avec lui, ou en cas d'échec). */
+    fun openDiskFd(fd: Int, readOnly: Boolean): Long = EngineError.FL_ENOTSUP.toLong()
+
+    /**
+     * Disque d'un coffre sur le fichier [file] (openFile) d'un volume du moteur, de [size] octets : enfant du fichier,
+     * qui lui appartient (fermé par [closeDisk], ou tout de suite en cas d'échec). Fermer le fichier, démonter son
+     * volume ou fermer son disque démonte d'abord le coffre de force (synchronisé).
+     */
+    fun openDiskOnFile(file: Long, size: Long): Long = EngineError.FL_ENOTSUP.toLong()
+
+    /** JSON {"version", "slots": [numéros]} des emplacements de clé d'un coffre, ou {"err"} (FL_ENOTSUP : disque avec une table). */
+    fun luksSlots(disk: Long): ByteArray = """{"err":${EngineError.FL_ENOTSUP}}""".toByteArray()
+
+    /** Crée ou remplace l'emplacement [slot] ; [auth] ouvre n'importe quel emplacement. FL_EBUSY si un volume du disque est monté. */
+    fun luksSlotSet(disk: Long, slot: Int, auth: ByteArray, new: ByteArray, kdfMemKib: Int, kdfTime: Int): Int =
+        EngineError.FL_ENOTSUP
+
+    /** FL_EBUSY : dernier emplacement, ou volume monté ; FL_ENOENT : emplacement absent. */
+    fun luksSlotRemove(disk: Long, slot: Int, auth: ByteArray): Int = EngineError.FL_ENOTSUP
+
+    /** [mount] avec le seul emplacement [slot] (FL_ENOENT s'il n'existe pas). */
+    fun mountSlot(disk: Long, partIndex: Int, slot: Int, pass: ByteArray, writable: Boolean): Long =
+        EngineError.FL_ENOTSUP.toLong()
+
+    companion object {
+        /** Facteur scrypt des fichiers age écrits par Portail (256 Mio, comme l'outil age). */
+        const val AGE_LOG2N = 18
+    }
+}
+
+/** Mode d'une archive (phase 14) : en clair, ZIP AES-256, ou ZIP dans un fichier age. */
+object ArcMode {
+    const val PLAIN = 0
+    const val AES = 1
+    const val AGE = 2
 }
 
 /** Progression du formatage, appelée par le moteur natif (méthode `onProgress(I)V`). */

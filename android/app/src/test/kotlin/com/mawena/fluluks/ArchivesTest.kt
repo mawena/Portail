@@ -139,8 +139,8 @@ class ArchivesTest {
             }
         }
 
-        override fun arcOpenFd(fd: Int): Long = open(fd, -1)
-        override fun arcOpenFile(file: Long, size: Long): Long = open(-1, file)
+        override fun arcOpenFd(fd: Int, mode: Int, pass: ByteArray?): Long = open(fd, -1)
+        override fun arcOpenFile(file: Long, size: Long, mode: Int, pass: ByteArray?): Long = open(-1, file)
 
         private fun open(fd: Int, file: Long): Long {
             if (openCode < 0) {
@@ -180,8 +180,8 @@ class ArchivesTest {
             return 0
         }
 
-        override fun arcwOpenFd(fd: Int): Long = openW(fd, -1)
-        override fun arcwOpenFile(file: Long): Long = openW(-1, file)
+        override fun arcwOpenFd(fd: Int, mode: Int, pass: ByteArray?): Long = openW(fd, -1)
+        override fun arcwOpenFile(file: Long, mode: Int, pass: ByteArray?): Long = openW(-1, file)
 
         private fun openW(fd: Int, file: Long): Long {
             val h = nextArc++
