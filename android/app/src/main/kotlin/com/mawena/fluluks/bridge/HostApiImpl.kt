@@ -919,7 +919,7 @@ class HostApiImpl(
     override fun getUiPrefs(): UiPrefsMsg = uiPrefs.get().let {
         UiPrefsMsg(
             it.theme, it.haptics, it.welcomeSeen, it.terminalFontSize.toLong(), it.terminalSecure,
-            it.closeVaultsOnScreenOff, it.hideVaults,
+            it.closeVaultsOnScreenOff, it.hideVaults, it.hideChats,
         )
     }
 
@@ -932,6 +932,7 @@ class HostApiImpl(
                 prefs.terminalSecure ?: old.terminalSecure,
                 prefs.closeVaultsOnScreenOff ?: old.closeVaultsOnScreenOff,
                 prefs.hideVaults ?: old.hideVaults,
+                prefs.hideChats ?: old.hideChats,
             ),
         )
     }

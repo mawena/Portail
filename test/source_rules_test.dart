@@ -9,19 +9,20 @@ import 'package:flutter_test/flutter_test.dart';
 /// Une ligne fautive : chemin relatif à la racine du paquet, numéro de ligne (à partir de 1), texte.
 typedef Hit = ({String path, int line, String text});
 
-/// Lignes de code des fichiers Dart sous [root] qui correspondent à [pattern], hors de [except] (chemins
-/// `lib/...`) et des lignes acceptées par [allow].
+/// Lignes de code des fichiers Dart (ou d'extension [ext]) sous [root] qui correspondent à [pattern], hors de
+/// [except] (chemins `lib/...`) et des lignes acceptées par [allow].
 List<Hit> scan(
   String root,
   RegExp pattern, {
   Set<String> except = const {},
   bool Function(String path, String line)? allow,
+  String ext = '.dart',
 }) {
   final hits = <Hit>[];
   final files = Directory(root)
       .listSync(recursive: true)
       .whereType<File>()
-      .where((f) => f.path.endsWith('.dart') && !f.path.endsWith('.g.dart'))
+      .where((f) => f.path.endsWith(ext) && !f.path.endsWith('.g.dart'))
       .toList()
     ..sort((a, b) => a.path.compareTo(b.path));
   for (final f in files) {
@@ -96,5 +97,19 @@ void main() {
       ],
       'Durée en dur dans un écran ou un widget : Motion.short/medium/long (Motion.of(context, …) pour une animation).',
     );
+  });
+
+  // phase 15, T10 : ni clé, ni prompt, ni réponse, ni résultat d'automatisation dans un journal ; le code de l'IA
+  // (Kotlin et Dart, pont compris) n'écrit dans aucun
+  test('noLogsInAiCode', () {
+    const kotlinRoot = 'android/app/src/main/kotlin/com/mawena/fluluks';
+    final kotlin = RegExp(r'\bLog\.[a-z]+\(|\bprintln\(|printStackTrace\(|System\.(out|err)\b|android\.util\.Log\b');
+    final dart = RegExp(r'\b(print|debugPrint)\(|developer\.log\(|dart:developer');
+    final hits = [
+      ...scan('$kotlinRoot/ai', kotlin, ext: '.kt'),
+      ...scan('$kotlinRoot/bridge', kotlin, ext: '.kt').where((h) => h.path.endsWith('/AiHostApiImpl.kt')),
+      ...scan('lib/src/ai', dart),
+    ];
+    expect(hits, isEmpty);
   });
 }

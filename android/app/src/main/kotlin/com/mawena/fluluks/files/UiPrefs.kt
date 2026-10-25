@@ -5,7 +5,8 @@ package com.mawena.fluluks.files
  * [welcomeSeen] : l'écran de bienvenue a été montré ; [terminalFontSize] : taille du texte du terminal SSH (8 à 32,
  * phase 13) ; [terminalSecure] : terminal masqué dans les captures et les applications récentes ;
  * [closeVaultsOnScreenOff] : coffres fermés quand l'écran s'éteint ; [hideVaults] : coffres parcourus et fichiers
- * déchiffrés masqués dans les captures et les applications récentes (phase 14, désactivés par défaut).
+ * déchiffrés masqués dans les captures et les applications récentes (phase 14, désactivés par défaut) ; [hideChats] :
+ * conversations et automatisations masquées de même (phase 15, désactivé par défaut).
  */
 data class UiSettings(
     val theme: String = "system",
@@ -15,6 +16,7 @@ data class UiSettings(
     val terminalSecure: Boolean = false,
     val closeVaultsOnScreenOff: Boolean = false,
     val hideVaults: Boolean = false,
+    val hideChats: Boolean = false,
 ) {
     companion object {
         const val TERMINAL_FONT_DEFAULT = 13
@@ -33,6 +35,7 @@ class UiPrefs(private val store: PrefStore) {
         store.getBoolean(TERMINAL_SECURE, false),
         store.getBoolean(VAULTS_SCREEN_OFF, false),
         store.getBoolean(VAULTS_HIDDEN, false),
+        store.getBoolean(CHATS_HIDDEN, false),
     )
 
     fun set(v: UiSettings) {
@@ -43,6 +46,7 @@ class UiPrefs(private val store: PrefStore) {
         store.putBoolean(TERMINAL_SECURE, v.terminalSecure)
         store.putBoolean(VAULTS_SCREEN_OFF, v.closeVaultsOnScreenOff)
         store.putBoolean(VAULTS_HIDDEN, v.hideVaults)
+        store.putBoolean(CHATS_HIDDEN, v.hideChats)
     }
 
     private fun font(size: Int) = size.coerceIn(UiSettings.TERMINAL_FONT_MIN, UiSettings.TERMINAL_FONT_MAX)
@@ -56,5 +60,6 @@ class UiPrefs(private val store: PrefStore) {
         private const val TERMINAL_SECURE = "ui_terminal_secure"
         private const val VAULTS_SCREEN_OFF = "coffres_ecran_eteint"
         private const val VAULTS_HIDDEN = "coffres_masques"
+        private const val CHATS_HIDDEN = "ia_conversations_masquees"
     }
 }

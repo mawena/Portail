@@ -5,6 +5,8 @@ import com.mawena.fluluks.ai.Ai
 import com.mawena.fluluks.ai.AiException
 import com.mawena.fluluks.ai.AiHealth
 import com.mawena.fluluks.ai.AiServerConfig
+import com.mawena.fluluks.ai.AiServers
+import com.mawena.fluluks.ai.TrustedCerts
 import com.mawena.fluluks.ai.auto.Automation
 import com.mawena.fluluks.ai.auto.AutomationRun
 import com.mawena.fluluks.ai.auto.AutomationSink
@@ -16,6 +18,8 @@ import com.mawena.fluluks.ai.chat.ChatSink
 import com.mawena.fluluks.ai.chat.Chats
 import com.mawena.fluluks.ai.chat.Conversation
 import com.mawena.fluluks.ai.chat.Message
+import com.mawena.fluluks.engine.EngineError
+import com.mawena.fluluks.files.FilesException
 import io.flutter.plugin.common.BinaryMessenger
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
@@ -87,17 +91,26 @@ class AiHostApiImpl(private val context: Context) : AiHostApi {
 
     override fun removeAiServerKey(serverId: String) = sync { Ai.servers().removeKey(serverId) }
 
-    /** Ses automatisations sont désactivées et leur planification annulée. */
+    /** Ses automatisations sont désactivées et leur planification annulée ; son certificat approuvé est oublié. */
     override fun deleteAiServer(serverId: String) = sync {
+        val hostPort = Ai.servers().get(serverId)?.let { TrustedCerts.hostPort(it.baseUrl) }
         Ai.servers().delete(serverId)
         Autos.get().serverDeleted(serverId)
+        if (hostPort != null && Ai.servers().list().none { TrustedCerts.hostPort(it.baseUrl) == hostPort }) {
+            Ai.certs().forget(hostPort)
+        }
+    }
+
+    override fun trustAiCertificate(serverId: String, fingerprint: String) = sync {
+        val s = Ai.servers().get(serverId) ?: throw FilesException(EngineError.FL_ENOENT, AiServers.MSG_GONE)
+        Ai.certs().trust(TrustedCerts.hostPort(s.baseUrl), fingerprint)
     }
 
     override fun setDefaultAiServer(serverId: String) = sync { Ai.servers().setDefault(serverId) }
 
     override fun testAiServer(serverId: String, callback: (Result<AiTestResultMsg>) -> Unit) = io(callback) {
         val r = Ai.servers().test(serverId)
-        AiTestResultMsg(r.ok, r.version, r.models, r.log, r.error, r.detail)
+        AiTestResultMsg(r.ok, r.version, r.models, r.log, r.error, r.detail, r.certificate?.fingerprint, r.certificate?.changed)
     }
 
     override fun aiModels(serverId: String, callback: (Result<List<String>>) -> Unit) = io(callback) {

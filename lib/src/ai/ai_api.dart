@@ -15,6 +15,7 @@ abstract class AiApi {
   Future<void> setAiDefaultModel(String serverId, String? model);
   Future<AiHealthMsg> aiHealth(String serverId);
   Future<List<String>> aiAttemptLog(String serverId);
+  Future<void> trustAiCertificate(String serverId, String fingerprint);
 
   // historique des conversations (T5)
   Future<List<ConversationMsg>> conversations();
@@ -70,6 +71,9 @@ mixin PigeonAiApi implements AiApi {
   Future<AiHealthMsg> aiHealth(String serverId) => _ai.aiHealth(serverId);
   @override
   Future<List<String>> aiAttemptLog(String serverId) => _ai.aiAttemptLog(serverId);
+  @override
+  Future<void> trustAiCertificate(String serverId, String fingerprint) =>
+      _ai.trustAiCertificate(serverId, fingerprint);
 
   @override
   Future<List<ConversationMsg>> conversations() => _ai.conversations();

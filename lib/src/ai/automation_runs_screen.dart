@@ -13,6 +13,7 @@ import '../ui/tokens.dart';
 import '../ui/widgets.dart';
 import 'automation_form.dart';
 import 'automations_screen.dart';
+import 'hide_chats.dart';
 import 'markdown_view.dart';
 
 IconData _stateIcon(String state) => switch (state) {
@@ -41,7 +42,10 @@ class AutomationRunsScreen extends StatefulWidget {
   State<AutomationRunsScreen> createState() => _AutomationRunsScreenState();
 }
 
-class _AutomationRunsScreenState extends State<AutomationRunsScreen> {
+class _AutomationRunsScreenState extends State<AutomationRunsScreen> with HideChats {
+  @override
+  AppState get appState => widget.state;
+
   late final hub = widget.state.automations;
   List<AutomationRunMsg>? _runs;
 
@@ -270,7 +274,10 @@ class AutomationRunScreen extends StatefulWidget {
   State<AutomationRunScreen> createState() => _AutomationRunScreenState();
 }
 
-class _AutomationRunScreenState extends State<AutomationRunScreen> {
+class _AutomationRunScreenState extends State<AutomationRunScreen> with HideChats {
+  @override
+  AppState get appState => widget.state;
+
   late final hub = widget.state.automations;
   AutomationRunMsg? _run;
 

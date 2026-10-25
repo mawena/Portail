@@ -27,10 +27,12 @@ class AiException(
     cause: Throwable? = null,
     /** Précision ajoutée au message français (« réponse du serveur illisible »). */
     detail: String? = null,
+    /** Certificat refusé : son empreinte, à montrer avant « Faire confiance » (T10). */
+    val certificate: CertProblem? = null,
 ) : IOException(AiErrors.message(kind) + (detail?.let { "\u00A0: $it" } ?: ""), cause) {
     enum class Kind {
         KEY_REFUSED, FORBIDDEN, MODEL_NOT_FOUND, NOT_FOUND, BAD_REQUEST, RATE_LIMITED, SERVER_ERROR,
-        CONNECT_TIMEOUT, READ_TIMEOUT, STREAM_TIMEOUT, UNKNOWN_HOST, REFUSED, UNREACHABLE, CLOSED, CERTIFICATE,
+        CONNECT_TIMEOUT, READ_TIMEOUT, STREAM_TIMEOUT, UNKNOWN_HOST, REFUSED, UNREACHABLE, CLOSED, CERTIFICATE, CERT_CHANGED,
         INTERRUPTED, STREAM_ERROR, PROTOCOL, OTHER,
     }
 
@@ -59,6 +61,8 @@ object AiErrors {
         AiException.Kind.UNREACHABLE -> "Réseau injoignable\u00A0: vérifiez la connexion du téléphone"
         AiException.Kind.CLOSED -> "Le serveur a fermé la connexion\u00A0: réessayez"
         AiException.Kind.CERTIFICATE -> "Certificat du serveur refusé\u00A0: connexion non sûre"
+        AiException.Kind.CERT_CHANGED ->
+            "Le certificat du serveur a changé depuis que vous lui faites confiance\u00A0: connexion refusée"
         AiException.Kind.INTERRUPTED -> "La réponse a été interrompue"
         AiException.Kind.STREAM_ERROR -> "Le serveur a signalé une erreur pendant la réponse"
         AiException.Kind.PROTOCOL -> "Réponse du serveur illisible\u00A0: est-ce bien un serveur compatible OpenAI\u202F?"
@@ -106,6 +110,10 @@ object AiErrors {
     fun fromException(e: Throwable, streaming: Boolean): AiException {
         if (e is AiException) return e
         val chain = generateSequence(e) { it.cause }.take(8).toList()
+        chain.firstNotNullOfOrNull { it as? UntrustedCertificateException }?.let { u ->
+            val kind = if (u.problem.changed) AiException.Kind.CERT_CHANGED else AiException.Kind.CERTIFICATE
+            return AiException(kind, cause = e, certificate = u.problem)
+        }
         for (c in chain) {
             val m = c.message.orEmpty().lowercase()
             val kind = when (c) {

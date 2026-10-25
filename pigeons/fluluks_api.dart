@@ -530,6 +530,7 @@ class UiPrefsMsg {
     this.terminalSecure,
     this.closeVaultsOnScreenOff,
     this.hideVaults,
+    this.hideChats,
   });
   String theme;
   bool haptics;
@@ -543,6 +544,9 @@ class UiPrefsMsg {
   /// captures et les applications récentes (null : non).
   bool? closeVaultsOnScreenOff;
   bool? hideVaults;
+
+  /// Phase 15 : conversations et automatisations masquées dans les captures et les applications récentes (null : non).
+  bool? hideChats;
 }
 
 /// Version de Portail (`versionName`, `versionCode` du paquet) et appareil (`Build.VERSION.RELEASE`, `Build.MODEL`),
@@ -915,6 +919,8 @@ class AiTestResultMsg {
     required this.log,
     this.error,
     this.detail,
+    this.certFingerprint,
+    this.certChanged,
   });
   bool ok;
   String? version;
@@ -922,6 +928,11 @@ class AiTestResultMsg {
   List<String> log;
   String? error;
   String? detail;
+
+  /// Certificat refusé (T10) : son empreinte SHA-256, à montrer avant « Faire confiance » ; [certChanged] : une autre
+  /// empreinte avait été approuvée pour ce serveur.
+  String? certFingerprint;
+  bool? certChanged;
 }
 
 /// État d'un serveur IA : [state] ∈ `online`, `offline`, `key-refused` ; [error] et [detail] comme pour le test.
@@ -1082,6 +1093,10 @@ abstract class AiHostApi {
 
   /// Journal du dernier test du serveur, sans aucun secret.
   List<String> aiAttemptLog(String serverId);
+
+  /// « Faire confiance » (T10) : le certificat d'empreinte [fingerprint] (celle montrée à l'utilisateur) est accepté
+  /// pour ce serveur, puis vérifié à chaque connexion.
+  void trustAiCertificate(String serverId, String fingerprint);
 
   // --- historique des conversations (T5) ; erreur FL_ENOENT : conversation supprimée
 

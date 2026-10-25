@@ -140,6 +140,12 @@ class SettingsScreen extends StatelessWidget {
               value: state.hideVaults,
               onChanged: (on) => state.setUiPrefs(state.uiPrefs.copyWith(hideVaults: on)),
             ),
+            SwitchListTile(
+              title: const Text(Fr.hideChats),
+              subtitle: const Text(Fr.hideChatsHelp),
+              value: state.hideChats,
+              onChanged: (on) => state.setUiPrefs(state.uiPrefs.copyWith(hideChats: on)),
+            ),
             const SectionHeader(Fr.sectionComfort),
             SwitchListTile(
               title: const Text(Fr.haptics),

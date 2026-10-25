@@ -118,6 +118,10 @@ mixin FakeAiApi implements AiApi {
   @override
   Future<List<String>> aiAttemptLog(String serverId) async => List.of(aiLog);
 
+  @override
+  Future<void> trustAiCertificate(String serverId, String fingerprint) async =>
+      aiCalls.add('trustAiCertificate $serverId $fingerprint');
+
   // --- historique des conversations (T5), en mémoire
 
   final chatConversations = <ConversationMsg>[];

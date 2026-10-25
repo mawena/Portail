@@ -230,6 +230,9 @@ class Fr {
   static const closeVaultsOnScreenOffHelp = "Une copie en cours dans un coffre se termine d'abord";
   static const hideVaults = 'Masquer les coffres et les fichiers déchiffrés';
   static const hideVaultsHelp = "Dans les captures d'écran et les applications récentes";
+  static const hideChats = 'Masquer les conversations avec les modèles';
+  static const hideChatsHelp =
+      "Conversations et résultats d'automatisations, dans les captures d'écran et les applications récentes";
   static const never = 'Jamais';
 
   /// « 15 min », « 1 h ».
@@ -856,6 +859,16 @@ class Fr {
   static const aiNoModels =
       'Ce serveur ne propose aucun modèle : installez-en un sur le serveur (par exemple « ollama pull llama3.2 »), puis actualisez.';
   static const aiModelsHelp = 'Touchez un modèle pour en faire le modèle par défaut de ce serveur.';
+  static const aiCertUnknownTitle = 'Certificat non reconnu';
+  static const aiCertUnknownBody =
+      "Ce serveur présente un certificat qu'Android ne reconnaît pas, comme souvent un serveur personnel. Avant de lui "
+      'faire confiance, vérifiez sur le serveur que son empreinte SHA-256 est bien celle-ci\u00A0:';
+  static const aiCertChangedTitle = 'Le certificat a changé';
+  static const aiCertChangedBody =
+      "Ce serveur présentait un autre certificat. Si vous ne l'avez pas renouvelé vous-même, quelqu'un se fait peut-être "
+      'passer pour lui\u00A0: ne lui faites confiance que si vous en êtes sûr. Empreinte SHA-256 présentée\u00A0:';
+  static const aiCertHelp = 'Sur le serveur\u00A0: openssl x509 -in cert.pem -noout -fingerprint -sha256';
+  static const aiTrustCert = 'Faire confiance';
   static const aiStatusOnline = 'En ligne';
   static const aiStatusOffline = 'Hors ligne';
   static const aiStatusKeyRefused = 'Clé refusée';

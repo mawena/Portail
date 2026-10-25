@@ -5,6 +5,7 @@ import 'package:fluluks/src/ai/ai_servers_screen.dart';
 import 'package:fluluks/src/ai/chat_list_screen.dart';
 import 'package:fluluks/src/ai/chat_screen.dart';
 import 'package:fluluks/src/app.dart';
+import 'package:fluluks/src/bridge/fluluks_api.g.dart';
 import 'package:fluluks/src/state/app_state.dart';
 import 'package:fluluks/src/strings_fr.dart';
 import 'package:fluluks/src/ui/root.dart';
@@ -308,6 +309,26 @@ void main() {
     await send(t, 'Encore');
     expect(find.text('Trois réponses sont déjà en cours'), findsOneWidget);
     expect(t.widget<TextField>(find.byType(TextField)).controller!.text, 'Encore');
+  });
+
+  testWidgets('hiddenFromCapturesOnlyWhenSettingOn', (t) async {
+    final off = await withConversation();
+    await pumpPage(t, off, (s) => ChatScreen(state: s, conversationId: 1));
+    expect(off.secureScreen, isNull, reason: 'réglage désactivé par défaut');
+
+    final on = await withConversation()
+      ..uiPrefs = UiPrefsMsg(theme: 'system', haptics: true, welcomeSeen: true, hideChats: true);
+    await pumpPage(t, on, (s) => ChatListScreen(state: s));
+    expect(on.secureScreen, isTrue);
+    await t.tap(find.text('Bonjour'));
+    await settle(t);
+    expect(on.secureScreen, isTrue);
+    t.state<NavigatorState>(find.byType(Navigator).first).pop();
+    await settle(t);
+    expect(on.secureScreen, isTrue, reason: 'la liste reste affichée');
+    t.state<NavigatorState>(find.byType(Navigator).first).pop();
+    await settle(t);
+    expect(on.secureScreen, isFalse);
   });
 
   testWidgets('wideScreenShowsListAndConversationSideBySide', (t) async {

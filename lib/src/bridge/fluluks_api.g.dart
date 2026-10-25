@@ -2141,6 +2141,7 @@ class UiPrefsMsg {
     this.terminalSecure,
     this.closeVaultsOnScreenOff,
     this.hideVaults,
+    this.hideChats,
   });
 
   String theme;
@@ -2160,6 +2161,9 @@ class UiPrefsMsg {
 
   bool? hideVaults;
 
+  /// Phase 15 : conversations et automatisations masquées dans les captures et les applications récentes (null : non).
+  bool? hideChats;
+
   List<Object?> _toList() {
     return <Object?>[
       theme,
@@ -2169,6 +2173,7 @@ class UiPrefsMsg {
       terminalSecure,
       closeVaultsOnScreenOff,
       hideVaults,
+      hideChats,
     ];
   }
 
@@ -2185,6 +2190,7 @@ class UiPrefsMsg {
       terminalSecure: result[4] as bool?,
       closeVaultsOnScreenOff: result[5] as bool?,
       hideVaults: result[6] as bool?,
+      hideChats: result[7] as bool?,
     );
   }
 
@@ -2197,7 +2203,7 @@ class UiPrefsMsg {
     if (identical(this, other)) {
       return true;
     }
-    return _deepEquals(theme, other.theme) && _deepEquals(haptics, other.haptics) && _deepEquals(welcomeSeen, other.welcomeSeen) && _deepEquals(terminalFontSize, other.terminalFontSize) && _deepEquals(terminalSecure, other.terminalSecure) && _deepEquals(closeVaultsOnScreenOff, other.closeVaultsOnScreenOff) && _deepEquals(hideVaults, other.hideVaults);
+    return _deepEquals(theme, other.theme) && _deepEquals(haptics, other.haptics) && _deepEquals(welcomeSeen, other.welcomeSeen) && _deepEquals(terminalFontSize, other.terminalFontSize) && _deepEquals(terminalSecure, other.terminalSecure) && _deepEquals(closeVaultsOnScreenOff, other.closeVaultsOnScreenOff) && _deepEquals(hideVaults, other.hideVaults) && _deepEquals(hideChats, other.hideChats);
   }
 
   @override
@@ -2206,7 +2212,7 @@ class UiPrefsMsg {
 
   @override
   String toString() {
-    return 'UiPrefsMsg(theme: $theme, haptics: $haptics, welcomeSeen: $welcomeSeen, terminalFontSize: $terminalFontSize, terminalSecure: $terminalSecure, closeVaultsOnScreenOff: $closeVaultsOnScreenOff, hideVaults: $hideVaults)';
+    return 'UiPrefsMsg(theme: $theme, haptics: $haptics, welcomeSeen: $welcomeSeen, terminalFontSize: $terminalFontSize, terminalSecure: $terminalSecure, closeVaultsOnScreenOff: $closeVaultsOnScreenOff, hideVaults: $hideVaults, hideChats: $hideChats)';
   }
 }
 
@@ -2415,6 +2421,8 @@ class AiTestResultMsg {
     required this.log,
     this.error,
     this.detail,
+    this.certFingerprint,
+    this.certChanged,
   });
 
   bool ok;
@@ -2429,6 +2437,12 @@ class AiTestResultMsg {
 
   String? detail;
 
+  /// Certificat refusé (T10) : son empreinte SHA-256, à montrer avant « Faire confiance » ; [certChanged] : une autre
+  /// empreinte avait été approuvée pour ce serveur.
+  String? certFingerprint;
+
+  bool? certChanged;
+
   List<Object?> _toList() {
     return <Object?>[
       ok,
@@ -2437,6 +2451,8 @@ class AiTestResultMsg {
       log,
       error,
       detail,
+      certFingerprint,
+      certChanged,
     ];
   }
 
@@ -2452,6 +2468,8 @@ class AiTestResultMsg {
       log: (result[3]! as List<Object?>).cast<String>(),
       error: result[4] as String?,
       detail: result[5] as String?,
+      certFingerprint: result[6] as String?,
+      certChanged: result[7] as bool?,
     );
   }
 
@@ -2464,7 +2482,7 @@ class AiTestResultMsg {
     if (identical(this, other)) {
       return true;
     }
-    return _deepEquals(ok, other.ok) && _deepEquals(version, other.version) && _deepEquals(models, other.models) && _deepEquals(log, other.log) && _deepEquals(error, other.error) && _deepEquals(detail, other.detail);
+    return _deepEquals(ok, other.ok) && _deepEquals(version, other.version) && _deepEquals(models, other.models) && _deepEquals(log, other.log) && _deepEquals(error, other.error) && _deepEquals(detail, other.detail) && _deepEquals(certFingerprint, other.certFingerprint) && _deepEquals(certChanged, other.certChanged);
   }
 
   @override
@@ -2473,7 +2491,7 @@ class AiTestResultMsg {
 
   @override
   String toString() {
-    return 'AiTestResultMsg(ok: $ok, version: $version, models: $models, log: $log, error: $error, detail: $detail)';
+    return 'AiTestResultMsg(ok: $ok, version: $version, models: $models, log: $log, error: $error, detail: $detail, certFingerprint: $certFingerprint, certChanged: $certChanged)';
   }
 }
 
@@ -5821,6 +5839,26 @@ class AiHostApi {
     )
     ;
     return (pigeonVar_replyValue! as List<Object?>).cast<String>();
+  }
+
+  /// « Faire confiance » (T10) : le certificat d'empreinte [fingerprint] (celle montrée à l'utilisateur) est accepté
+  /// pour ce serveur, puis vérifié à chaque connexion.
+  Future<void> trustAiCertificate(String serverId, String fingerprint) async {
+    final pigeonVar_channelName = 'dev.flutter.pigeon.fluluks.AiHostApi.trustAiCertificate$pigeonVar_messageChannelSuffix';
+    final pigeonVar_channel = BasicMessageChannel<Object?>(
+      pigeonVar_channelName,
+      pigeonChannelCodec,
+      binaryMessenger: pigeonVar_binaryMessenger,
+    );
+    final Future<Object?> pigeonVar_sendFuture = pigeonVar_channel.send(<Object?>[serverId, fingerprint]);
+    final pigeonVar_replyList = await pigeonVar_sendFuture as List<Object?>?;
+
+    _extractReplyValueOrThrow(
+        pigeonVar_replyList,
+        pigeonVar_channelName,
+        isNullValid: true,
+    )
+    ;
   }
 
   /// Plus récente d'abord.

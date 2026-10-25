@@ -140,6 +140,9 @@ class AiHub extends ChangeNotifier {
 
   Future<List<String>> models(String id) => api.aiModels(id);
 
+  /// « Faire confiance » au certificat d'empreinte [fingerprint] (celle montrée), puis vérifié à chaque connexion.
+  Future<void> trustCertificate(String id, String fingerprint) => api.trustAiCertificate(id, fingerprint);
+
   Future<List<String>> attemptLog(String id) => api.aiAttemptLog(id);
 
   @override

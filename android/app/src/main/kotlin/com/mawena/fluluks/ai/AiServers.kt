@@ -39,6 +39,8 @@ data class AiTestResult(
     val log: List<String>,
     val error: String? = null,
     val detail: String? = null,
+    /** Certificat refusé : son empreinte, à montrer avant « Faire confiance » (T10). */
+    val certificate: CertProblem? = null,
 )
 
 /**
@@ -173,12 +175,12 @@ class AiServers(private val dir: File, private val box: SecretBox) {
         val result = provider(id, log).use { p ->
             val h = p.health()
             if (h.state != AiHealth.State.ONLINE) {
-                AiTestResult(false, h.version, emptyList(), emptyList(), h.error?.message, h.error?.serverMessage)
+                AiTestResult(false, h.version, emptyList(), emptyList(), h.error?.message, h.error?.serverMessage, h.error?.certificate)
             } else {
                 try {
                     AiTestResult(true, h.version, p.models().map { it.id }, emptyList())
                 } catch (e: AiException) {
-                    AiTestResult(false, h.version, emptyList(), emptyList(), e.message, e.serverMessage)
+                    AiTestResult(false, h.version, emptyList(), emptyList(), e.message, e.serverMessage, e.certificate)
                 }
             }
         }
@@ -267,10 +269,18 @@ object Ai {
     @Volatile private var store: AiServers? = null
 
     fun init(context: Context) {
-        if (store == null) store = AiServers(context.applicationContext.filesDir, KeystoreSecretBox())
+        if (store != null) return
+        val dir = context.applicationContext.filesDir
+        AiHttp.trusted = TrustedCerts(File(dir, CERTS_FILE))
+        store = AiServers(dir, KeystoreSecretBox())
     }
 
     fun servers(): AiServers = store ?: throw FilesException(EngineError.FL_ENODEV, "Serveurs IA indisponibles")
+
+    /** Empreintes des certificats approuvés (« hôte:port » → SHA-256). */
+    fun certs(): TrustedCerts = AiHttp.trusted
+
+    const val CERTS_FILE = "ai-certs.json"
 
     @VisibleForTesting
     fun resetForTests(s: AiServers?) {

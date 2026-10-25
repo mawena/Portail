@@ -26,8 +26,11 @@ import org.json.JSONObject
 
 /** Client HTTP commun des serveurs IA : un seul pool de connexions ; délais réglés par fournisseur. */
 object AiHttp {
+    /** Certificats approuvés par l'utilisateur, consultés à chaque connexion (posés par `Ai.init`). */
+    @Volatile var trusted: TrustedCerts = TrustedCerts(null)
+
     val client: OkHttpClient by lazy {
-        OkHttpClient.Builder()
+        TrustedCerts.secure(OkHttpClient.Builder(), { trusted })
             // reprise par OkHttp seulement sur une connexion morte du pool ou une adresse injoignable ; jamais sur
             // une réponse (un 401 n'est jamais relancé)
             .retryOnConnectionFailure(true)

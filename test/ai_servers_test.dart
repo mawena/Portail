@@ -176,6 +176,56 @@ void main() {
     expect(find.textContaining('GET /v1/models → 401'), findsOneWidget);
   });
 
+  testWidgets('selfSignedCertificateTrustedOnlyAfterConfirmingFingerprint', (t) async {
+    final api = withServers();
+    const fp = 'AB:CD:EF:01:23:45:67:89:AB:CD:EF:01:23:45:67:89:AB:CD:EF:01:23:45:67:89:AB:CD:EF:01:23:45:67:89';
+    api.aiTestResult = AiTestResultMsg(
+      ok: false,
+      models: [],
+      log: [],
+      error: 'Certificat du serveur refusé\u00A0: connexion non sûre',
+      certFingerprint: fp,
+      certChanged: false,
+    );
+    await pumpPage(t, api, (s) => AiServerForm(state: s, server: api.aiServerList.first));
+    await scrollTo(t, find.text(Fr.testConnection));
+    await t.tap(find.text(Fr.testConnection));
+    await t.pumpAndSettle();
+    expect(find.text(Fr.aiCertUnknownTitle), findsOneWidget);
+    expect(find.text(fp), findsOneWidget); // empreinte montrée avant toute décision
+    await t.tap(find.text(Fr.cancel));
+    await t.pumpAndSettle();
+    expect(api.aiCalls.where((c) => c.startsWith('trustAiCertificate')), isEmpty);
+
+    await t.tap(find.text(Fr.testConnection));
+    await t.pumpAndSettle();
+    api.aiTestResult = null; // une fois approuvé, le serveur répond
+    await t.tap(find.text(Fr.aiTrustCert));
+    await t.pumpAndSettle();
+    expect(api.aiCalls, contains('trustAiCertificate a1 $fp'));
+    expect(api.aiCalls.where((c) => c == 'testAiServer a1').length, 3, reason: 'nouveau test après la confiance');
+    expect(find.text(Fr.aiConnectionOk('0.1.0', 2)), findsOneWidget);
+  });
+
+  testWidgets('changedCertificateExplained', (t) async {
+    final api = withServers()
+      ..aiTestResult = AiTestResultMsg(
+        ok: false,
+        models: [],
+        log: [],
+        error: 'Le certificat du serveur a changé',
+        certFingerprint: '00:11',
+        certChanged: true,
+      );
+    await pumpPage(t, api, (s) => AiServerForm(state: s, server: api.aiServerList.first));
+    await scrollTo(t, find.text(Fr.testConnection));
+    await t.tap(find.text(Fr.testConnection));
+    await t.pumpAndSettle();
+    expect(find.text(Fr.aiCertChangedTitle), findsOneWidget);
+    expect(find.text(Fr.aiCertChangedBody), findsOneWidget);
+    expect(find.text('00:11'), findsOneWidget);
+  });
+
   testWidgets('modelsListedDefaultChosenEmptyExplained', (t) async {
     final api = withServers();
     await pumpPage(t, api, (s) => AiServerForm(state: s, server: api.aiServerList.first));

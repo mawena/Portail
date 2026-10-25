@@ -611,6 +611,9 @@ class AppState extends ChangeNotifier implements FluLuksEventsApi {
   /// Réglage « Masquer les coffres et les fichiers déchiffrés » (phase 14).
   bool get hideVaults => uiPrefs.hideVaults ?? false;
 
+  /// Conversations et résultats d'automatisations masqués dans les captures (phase 15, désactivé par défaut).
+  bool get hideChats => uiPrefs.hideChats ?? false;
+
   /// Masque l'application dans les captures et les applications récentes tant que [releaseSecure] n'a pas été
   /// appelé autant de fois (terminal masqué, coffre parcouru) ; une vue déchiffrée ouverte masque aussi, si
   /// [hideVaults].

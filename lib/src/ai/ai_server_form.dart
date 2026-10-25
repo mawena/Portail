@@ -183,6 +183,12 @@ class _AiServerFormState extends State<AiServerForm> {
         setState(() => _models = r.models);
         showMessage(context, Fr.aiConnectionOk(r.version, r.models.length),
             kind: MessageKind.success, actionLabel: Fr.details, onAction: details);
+      } else if (r.certFingerprint != null) {
+        setState(() => _testing = false); // le test est fini : la décision appartient à l'utilisateur
+        if (await _trustDialog(r.certFingerprint!, r.certChanged ?? false) && mounted) {
+          await _state.ai.trustCertificate(id, r.certFingerprint!);
+          if (mounted) return _test();
+        }
       } else {
         showMessage(context, r.error ?? Fr.genericError,
             kind: MessageKind.error, actionLabel: Fr.details, onAction: details);
@@ -192,6 +198,33 @@ class _AiServerFormState extends State<AiServerForm> {
     } finally {
       if (mounted) setState(() => _testing = false);
     }
+  }
+
+  /// Certificat inconnu ou changé : son empreinte, puis « Faire confiance » ; vrai si l'utilisateur l'approuve.
+  Future<bool> _trustDialog(String fingerprint, bool changed) async {
+    final s = Theme.of(context).colorScheme;
+    final ok = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        icon: Icon(changed ? Icons.gpp_bad_rounded : Icons.gpp_maybe_rounded),
+        title: Text(changed ? Fr.aiCertChangedTitle : Fr.aiCertUnknownTitle),
+        scrollable: true,
+        content: Column(crossAxisAlignment: CrossAxisAlignment.start, spacing: Space.m, children: [
+          Text(changed ? Fr.aiCertChangedBody : Fr.aiCertUnknownBody),
+          SelectableText(fingerprint, style: const TextStyle(fontFamily: 'monospace')),
+          Text(Fr.aiCertHelp, style: Theme.of(ctx).textTheme.bodySmall),
+        ]),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text(Fr.cancel)),
+          FilledButton(
+            style: changed ? FilledButton.styleFrom(backgroundColor: s.error, foregroundColor: s.onError) : null,
+            onPressed: () => Navigator.pop(ctx, true),
+            child: const Text(Fr.aiTrustCert),
+          ),
+        ],
+      ),
+    );
+    return ok == true;
   }
 
   Widget _field(

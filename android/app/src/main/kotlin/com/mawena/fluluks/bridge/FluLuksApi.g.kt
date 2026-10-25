@@ -1940,7 +1940,9 @@ data class UiPrefsMsg (
    * captures et les applications récentes (null : non).
    */
   val closeVaultsOnScreenOff: Boolean? = null,
-  val hideVaults: Boolean? = null
+  val hideVaults: Boolean? = null,
+  /** Phase 15 : conversations et automatisations masquées dans les captures et les applications récentes (null : non). */
+  val hideChats: Boolean? = null
 )
  {
   companion object {
@@ -1952,7 +1954,8 @@ data class UiPrefsMsg (
       val terminalSecure = pigeonVar_list[4] as Boolean?
       val closeVaultsOnScreenOff = pigeonVar_list[5] as Boolean?
       val hideVaults = pigeonVar_list[6] as Boolean?
-      return UiPrefsMsg(theme, haptics, welcomeSeen, terminalFontSize, terminalSecure, closeVaultsOnScreenOff, hideVaults)
+      val hideChats = pigeonVar_list[7] as Boolean?
+      return UiPrefsMsg(theme, haptics, welcomeSeen, terminalFontSize, terminalSecure, closeVaultsOnScreenOff, hideVaults, hideChats)
     }
   }
   fun toList(): List<Any?> {
@@ -1964,6 +1967,7 @@ data class UiPrefsMsg (
       terminalSecure,
       closeVaultsOnScreenOff,
       hideVaults,
+      hideChats,
     )
   }
   override fun equals(other: Any?): Boolean {
@@ -1974,7 +1978,7 @@ data class UiPrefsMsg (
       return true
     }
     val other = other as UiPrefsMsg
-    return FluLuksApiPigeonUtils.deepEquals(this.theme, other.theme) && FluLuksApiPigeonUtils.deepEquals(this.haptics, other.haptics) && FluLuksApiPigeonUtils.deepEquals(this.welcomeSeen, other.welcomeSeen) && FluLuksApiPigeonUtils.deepEquals(this.terminalFontSize, other.terminalFontSize) && FluLuksApiPigeonUtils.deepEquals(this.terminalSecure, other.terminalSecure) && FluLuksApiPigeonUtils.deepEquals(this.closeVaultsOnScreenOff, other.closeVaultsOnScreenOff) && FluLuksApiPigeonUtils.deepEquals(this.hideVaults, other.hideVaults)
+    return FluLuksApiPigeonUtils.deepEquals(this.theme, other.theme) && FluLuksApiPigeonUtils.deepEquals(this.haptics, other.haptics) && FluLuksApiPigeonUtils.deepEquals(this.welcomeSeen, other.welcomeSeen) && FluLuksApiPigeonUtils.deepEquals(this.terminalFontSize, other.terminalFontSize) && FluLuksApiPigeonUtils.deepEquals(this.terminalSecure, other.terminalSecure) && FluLuksApiPigeonUtils.deepEquals(this.closeVaultsOnScreenOff, other.closeVaultsOnScreenOff) && FluLuksApiPigeonUtils.deepEquals(this.hideVaults, other.hideVaults) && FluLuksApiPigeonUtils.deepEquals(this.hideChats, other.hideChats)
   }
 
   override fun hashCode(): Int {
@@ -1986,10 +1990,11 @@ data class UiPrefsMsg (
     result = 31 * result + FluLuksApiPigeonUtils.deepHash(this.terminalSecure)
     result = 31 * result + FluLuksApiPigeonUtils.deepHash(this.closeVaultsOnScreenOff)
     result = 31 * result + FluLuksApiPigeonUtils.deepHash(this.hideVaults)
+    result = 31 * result + FluLuksApiPigeonUtils.deepHash(this.hideChats)
     return result
   }
   override fun toString(): String {
-    return "UiPrefsMsg(theme=$theme, haptics=$haptics, welcomeSeen=$welcomeSeen, terminalFontSize=$terminalFontSize, terminalSecure=$terminalSecure, closeVaultsOnScreenOff=$closeVaultsOnScreenOff, hideVaults=$hideVaults)"
+    return "UiPrefsMsg(theme=$theme, haptics=$haptics, welcomeSeen=$welcomeSeen, terminalFontSize=$terminalFontSize, terminalSecure=$terminalSecure, closeVaultsOnScreenOff=$closeVaultsOnScreenOff, hideVaults=$hideVaults, hideChats=$hideChats)"
   }
 }
 
@@ -2174,7 +2179,13 @@ data class AiTestResultMsg (
   val models: List<String>,
   val log: List<String>,
   val error: String? = null,
-  val detail: String? = null
+  val detail: String? = null,
+  /**
+   * Certificat refusé (T10) : son empreinte SHA-256, à montrer avant « Faire confiance » ; [certChanged] : une autre
+   * empreinte avait été approuvée pour ce serveur.
+   */
+  val certFingerprint: String? = null,
+  val certChanged: Boolean? = null
 )
  {
   companion object {
@@ -2185,7 +2196,9 @@ data class AiTestResultMsg (
       val log = pigeonVar_list[3] as List<String>
       val error = pigeonVar_list[4] as String?
       val detail = pigeonVar_list[5] as String?
-      return AiTestResultMsg(ok, version, models, log, error, detail)
+      val certFingerprint = pigeonVar_list[6] as String?
+      val certChanged = pigeonVar_list[7] as Boolean?
+      return AiTestResultMsg(ok, version, models, log, error, detail, certFingerprint, certChanged)
     }
   }
   fun toList(): List<Any?> {
@@ -2196,6 +2209,8 @@ data class AiTestResultMsg (
       log,
       error,
       detail,
+      certFingerprint,
+      certChanged,
     )
   }
   override fun equals(other: Any?): Boolean {
@@ -2206,7 +2221,7 @@ data class AiTestResultMsg (
       return true
     }
     val other = other as AiTestResultMsg
-    return FluLuksApiPigeonUtils.deepEquals(this.ok, other.ok) && FluLuksApiPigeonUtils.deepEquals(this.version, other.version) && FluLuksApiPigeonUtils.deepEquals(this.models, other.models) && FluLuksApiPigeonUtils.deepEquals(this.log, other.log) && FluLuksApiPigeonUtils.deepEquals(this.error, other.error) && FluLuksApiPigeonUtils.deepEquals(this.detail, other.detail)
+    return FluLuksApiPigeonUtils.deepEquals(this.ok, other.ok) && FluLuksApiPigeonUtils.deepEquals(this.version, other.version) && FluLuksApiPigeonUtils.deepEquals(this.models, other.models) && FluLuksApiPigeonUtils.deepEquals(this.log, other.log) && FluLuksApiPigeonUtils.deepEquals(this.error, other.error) && FluLuksApiPigeonUtils.deepEquals(this.detail, other.detail) && FluLuksApiPigeonUtils.deepEquals(this.certFingerprint, other.certFingerprint) && FluLuksApiPigeonUtils.deepEquals(this.certChanged, other.certChanged)
   }
 
   override fun hashCode(): Int {
@@ -2217,10 +2232,12 @@ data class AiTestResultMsg (
     result = 31 * result + FluLuksApiPigeonUtils.deepHash(this.log)
     result = 31 * result + FluLuksApiPigeonUtils.deepHash(this.error)
     result = 31 * result + FluLuksApiPigeonUtils.deepHash(this.detail)
+    result = 31 * result + FluLuksApiPigeonUtils.deepHash(this.certFingerprint)
+    result = 31 * result + FluLuksApiPigeonUtils.deepHash(this.certChanged)
     return result
   }
   override fun toString(): String {
-    return "AiTestResultMsg(ok=$ok, version=$version, models=$models, log=$log, error=$error, detail=$detail)"
+    return "AiTestResultMsg(ok=$ok, version=$version, models=$models, log=$log, error=$error, detail=$detail, certFingerprint=$certFingerprint, certChanged=$certChanged)"
   }
 }
 
@@ -5636,6 +5653,11 @@ interface AiHostApi {
   fun aiHealth(serverId: String, callback: (Result<AiHealthMsg>) -> Unit)
   /** Journal du dernier test du serveur, sans aucun secret. */
   fun aiAttemptLog(serverId: String): List<String>
+  /**
+   * « Faire confiance » (T10) : le certificat d'empreinte [fingerprint] (celle montrée à l'utilisateur) est accepté
+   * pour ce serveur, puis vérifié à chaque connexion.
+   */
+  fun trustAiCertificate(serverId: String, fingerprint: String)
   /** Plus récente d'abord. */
   fun conversations(callback: (Result<List<ConversationMsg>>) -> Unit)
   fun conversation(id: Long, callback: (Result<ConversationDetailMsg>) -> Unit)
@@ -5863,6 +5885,25 @@ interface AiHostApi {
             val serverIdArg = args[0] as String
             val wrapped: List<Any?> = try {
               listOf(api.aiAttemptLog(serverIdArg))
+            } catch (exception: Throwable) {
+              FluLuksApiPigeonUtils.wrapError(exception)
+            }
+            reply.reply(wrapped)
+          }
+        } else {
+          channel.setMessageHandler(null)
+        }
+      }
+      run {
+        val channel = BasicMessageChannel<Any?>(binaryMessenger, "dev.flutter.pigeon.fluluks.AiHostApi.trustAiCertificate$separatedMessageChannelSuffix", codec)
+        if (api != null) {
+          channel.setMessageHandler { message, reply ->
+            val args = message as List<Any?>
+            val serverIdArg = args[0] as String
+            val fingerprintArg = args[1] as String
+            val wrapped: List<Any?> = try {
+              api.trustAiCertificate(serverIdArg, fingerprintArg)
+              listOf(null)
             } catch (exception: Throwable) {
               FluLuksApiPigeonUtils.wrapError(exception)
             }

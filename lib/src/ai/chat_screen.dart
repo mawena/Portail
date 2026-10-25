@@ -12,6 +12,7 @@ import '../ui/states.dart';
 import '../ui/tokens.dart';
 import 'ai_servers_screen.dart';
 import 'chat_hub.dart';
+import 'hide_chats.dart';
 import 'markdown_view.dart';
 import 'model_picker.dart';
 
@@ -35,7 +36,10 @@ class ChatScreen extends StatefulWidget {
   State<ChatScreen> createState() => _ChatScreenState();
 }
 
-class _ChatScreenState extends State<ChatScreen> {
+class _ChatScreenState extends State<ChatScreen> with HideChats {
+  @override
+  AppState get appState => widget.state;
+
   late final ChatHub chats = widget.state.chats;
   late final ai = widget.state.ai;
   late int? _id = widget.conversationId;

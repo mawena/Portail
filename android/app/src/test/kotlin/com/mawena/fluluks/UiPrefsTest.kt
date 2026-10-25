@@ -37,6 +37,14 @@ class UiPrefsTest {
         assertEquals("system", store.m["ui_theme"]) // une valeur inconnue n'est jamais écrite
     }
 
+    /** Phase 15 : conversations et automatisations masquées dans les captures, désactivé par défaut. */
+    @Test fun hideChatsOffByDefaultAndKept() {
+        assertEquals(false, UiPrefs(store).get().hideChats)
+        UiPrefs(store).set(UiSettings(hideChats = true))
+        assertEquals(true, UiPrefs(store).get().hideChats)
+        assertEquals(true, store.m["ia_conversations_masquees"])
+    }
+
     @Test fun terminalPrefsDefaultsAndBounds() {
         val d = UiPrefs(store).get()
         assertEquals(13, d.terminalFontSize)

@@ -14,6 +14,7 @@ import '../ui/tokens.dart';
 import '../ui/widgets.dart';
 import 'ai_servers_screen.dart';
 import 'chat_screen.dart';
+import 'hide_chats.dart';
 
 /// Conversations avec les modèles (phase 15), la plus récente d'abord ; appui long : renommer ou supprimer. Sur grand
 /// écran, la conversation choisie s'affiche à côté de la liste. Aucun serveur IA : écran vide qui mène aux serveurs.
@@ -26,7 +27,10 @@ class ChatListScreen extends StatefulWidget {
   State<ChatListScreen> createState() => _ChatListScreenState();
 }
 
-class _ChatListScreenState extends State<ChatListScreen> {
+class _ChatListScreenState extends State<ChatListScreen> with HideChats {
+  @override
+  AppState get appState => widget.state;
+
   late final chats = widget.state.chats;
   late final ai = widget.state.ai;
 
