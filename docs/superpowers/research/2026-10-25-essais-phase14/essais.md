@@ -20,8 +20,9 @@ récupérable**.
       → piloté par adb le 2026-10-25 : force « moyen » affichée, `photo.jpg.age` créé (68,8 ko).
 - [x] Menu ⋮ du dossier `Essai` → **Chiffrer…** : `Essai.zip.age` apparaît.
       → piloté par adb : « Terminé : 5 fichiers », `Essai.zip.age` créé (293,5 ko).
-- [ ] Sur le disque USB déverrouillé, sélectionner un dossier → **Chiffrer…** → **Autre dossier…** : un dossier du
+- [x] Sur le disque USB déverrouillé, sélectionner un dossier → **Chiffrer…** → **Autre dossier…** : un dossier du
       disque comme destination. Le fichier chiffré y apparaît ; la barre du bas a montré la progression.
+      → essayé par l'utilisateur sur le Pixel, concluant (2026-10-25).
 - [x] **Générer un mot de passe** : « 20 caractères » puis « 6 mots » remplissent les deux champs ; **Copier**
       annonce l'effacement du presse-papiers dans 60 s (vérifiez en collant ailleurs une minute plus tard).
       → piloté par adb : « 20 caractères » (force excellent) et « 6 mots » (force bon) remplissent les deux champs ; message « effacé du presse-papiers dans 60 s ». **Défaut trouvé** : le presse-papiers n'était jamais effacé (Android 13 notifie deux fois chaque copie). Corrigé (90865d4) ; vérifié : 80 s après la copie, « Coller » n'est plus proposé.
@@ -71,10 +72,13 @@ récupérable**.
 - [x] Tant qu'il est ouvert, essayer de supprimer, renommer ou copier `Essai.luks` dans l'explorateur : refusé
       (« Fermez d'abord le coffre »).
       → piloté par adb : Supprimer (après confirmation), Renommer (en Essai2.luks) et Copier puis « Coller ici » sont tous refusés par « Fermez d'abord le coffre » ; Essai.luks reste intact (256 Mio).
-- [ ] Sur le disque USB déverrouillé : bouton **Créer** de l'explorateur → **Nouveau coffre…** → 1 Gio, ext4
+- [x] Sur le disque USB déverrouillé : bouton **Créer** de l'explorateur → **Nouveau coffre…** → 1 Gio, ext4
       (l'explication sur l'utilisateur 1000 s'affiche). Ouvrir, écrire un fichier.
-- [ ] Avec ce coffre ouvert, **Éjecter** le disque : le coffre se ferme d'abord, puis le disque s'éjecte.
-- [ ] Débrancher le disque avec le coffre ouvert (sans éjecter) : avertissement, le coffre est fermé.
+      → essayé par l'utilisateur sur le Pixel, concluant (2026-10-25).
+- [x] Avec ce coffre ouvert, **Éjecter** le disque : le coffre se ferme d'abord, puis le disque s'éjecte.
+      → essayé par l'utilisateur sur le Pixel, concluant (2026-10-25).
+- [x] Débrancher le disque avec le coffre ouvert (sans éjecter) : avertissement, le coffre est fermé.
+      → essayé par l'utilisateur sur le Pixel, concluant (2026-10-25).
 - [x] Verrouillage automatique à 5 min (Réglages → Disques) : un coffre ouvert et inactif se ferme après 5 min.
       → piloté par adb : réglage à 5 min ; « Annule », ouvert à 13:59:38 et laissé inactif, est « Fermé » entre 14:05:09 et 14:05:32. Réglage remis ensuite sur « Jamais ».
 - [x] **Retirer de la liste** : le coffre disparaît de l'accueil ; le fichier `.luks` est toujours là ; le toucher
@@ -83,11 +87,14 @@ récupérable**.
 
 ## 4. Coffre sous Ubuntu
 
-- [ ] Copier `Essai.luks` sur le PC (Portail fermé ou coffre fermé), puis
+- [x] Copier `Essai.luks` sur le PC (Portail fermé ou coffre fermé), puis
       `udisksctl loop-setup -f Essai.luks` : le bureau demande le mot de passe et montre les fichiers.
-- [ ] Ou `sudo cryptsetup open Essai.luks coffre && sudo mount /dev/mapper/coffre /mnt` : les fichiers écrits sur
+      → essayé par l'utilisateur sur le Pixel, concluant (2026-10-25).
+- [x] Ou `sudo cryptsetup open Essai.luks coffre && sudo mount /dev/mapper/coffre /mnt` : les fichiers écrits sur
       le téléphone sont là. Démonter (`sudo umount /mnt && sudo cryptsetup close coffre`).
-- [ ] Le coffre ext4 du disque, ouvert sous Ubuntu : les fichiers vous appartiennent (`ls -l`).
+      → essayé par l'utilisateur sur le Pixel, concluant (2026-10-25).
+- [x] Le coffre ext4 du disque, ouvert sous Ubuntu : les fichiers vous appartiennent (`ls -l`).
+      → essayé par l'utilisateur sur le Pixel, concluant (2026-10-25).
 - [ ] (facultatif) Un conteneur créé sous Ubuntu (`fallocate -l 64M linux.luks && cryptsetup luksFormat linux.luks`,
       puis un exFAT dedans), copié sur le téléphone et touché : il s'ouvre dans Portail.
 
@@ -109,22 +116,27 @@ récupérable**.
 
 ## 6. Déverrouillage biométrique
 
-- [ ] Coffre fermé, menu ⋮ → **Activer le déverrouillage biométrique** → mot de passe, puis le visage : « Déverrouillage
+- [x] Coffre fermé, menu ⋮ → **Activer le déverrouillage biométrique** → mot de passe, puis le visage : « Déverrouillage
       biométrique activé », la puce « Biométrie » apparaît sur la tuile.
-- [ ] **Ouvrir** : l'invite du visage s'affiche (« Ouvrir le coffre … ») ; regarder le téléphone ouvre le coffre,
+      → essayé par l'utilisateur sur le Pixel, concluant (2026-10-25).
+- [x] **Ouvrir** : l'invite du visage s'affiche (« Ouvrir le coffre … ») ; regarder le téléphone ouvre le coffre,
       sans mot de passe.
-- [ ] **Utiliser le mot de passe** dans l'invite : le dialogue du mot de passe s'ouvre, sans message d'erreur.
+      → essayé par l'utilisateur sur le Pixel, concluant (2026-10-25).
+- [x] **Utiliser le mot de passe** dans l'invite : le dialogue du mot de passe s'ouvre, sans message d'erreur.
+      → essayé par l'utilisateur sur le Pixel, concluant (2026-10-25).
 - [ ] (facultatif, si vous l'acceptez) Réenregistrer le visage dans les réglages d'Android : à l'ouverture suivante,
       « Déverrouillage biométrique désactivé : la biométrie du téléphone a changé… », puis le mot de passe.
-- [ ] **Désactiver le déverrouillage biométrique** : le visage n'est plus proposé.
+- [x] **Désactiver le déverrouillage biométrique** : le visage n'est plus proposé.
+      → essayé par l'utilisateur sur le Pixel, concluant (2026-10-25).
 
 ## 7. Confidentialité
 
 - [x] Réglages → **Confidentialité** : les deux réglages sont désactivés par défaut.
       → piloté par adb : section « Confidentialité », « Fermer les coffres quand l'écran s'éteint » et « Masquer les coffres et les fichiers déchiffrés » tous deux désactivés (checked=false).
-- [ ] **Fermer les coffres quand l'écran s'éteint** activé : coffre ouvert, éteindre l'écran, le rallumer : le coffre
+- [x] **Fermer les coffres quand l'écran s'éteint** activé : coffre ouvert, éteindre l'écran, le rallumer : le coffre
       est fermé. Pendant une longue copie vers le coffre, éteindre l'écran : la copie se termine, puis le coffre se
       ferme (si l'écran est resté éteint).
+      → essayé par l'utilisateur sur le Pixel, concluant (2026-10-25).
 - [x] **Masquer les coffres et les fichiers déchiffrés** activé : en parcourant un coffre, l'aperçu des applications
       récentes est masqué ; sur l'accueil, il ne l'est plus. Même chose pour une photo chiffrée ouverte.
       → piloté par adb, vérifié sur le drapeau FLAG_SECURE de la fenêtre (dumpsys window, sans capture) : explorateur du coffre « Essai » → masquée ; accueil et réglages → non masquée ; photo.jpg.age ouverte dans la visionneuse → masquée ; dossier ordinaire ensuite → non masquée.
