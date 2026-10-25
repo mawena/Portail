@@ -33,8 +33,9 @@ récupérable**.
 - [x] Toucher un fichier chiffré et saisir un **mauvais mot de passe** : « Mot de passe incorrect », le dialogue reste
       ouvert.
       → piloté par adb : « Mot de passe incorrect », le dialogue reste ouvert, le champ est vidé.
-- [ ] `Essai.zip.age` → **Déchiffrer ici** : le dossier `Essai` revient (nom différent s'il existe déjà), avec ses
+- [x] `Essai.zip.age` → **Déchiffrer ici** : le dossier `Essai` revient (nom différent s'il existe déjà), avec ses
       fichiers intacts.
+      → piloté par adb : pour une archive chiffrée le bouton s'appelle « Extraire ici » ; le dossier revient sous le nom « Essai (1) », ses 5 fichiers identiques à l'original (SHA-256).
 - [ ] Un fichier chiffré → **Vérifier** : « Fichier intact ».
 - [ ] Menu ⋮ d'un `.age` → **Changer le mot de passe** : l'ancien ne l'ouvre plus, le nouveau si.
 - [ ] Chiffrer en **ZIP chiffré (AES-256)** : la mise en garde (noms visibles) s'affiche ; après le chiffrement,
