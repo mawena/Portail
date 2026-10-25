@@ -46,7 +46,7 @@ JUnit 4, AndroidX Test.
   tâche coche ses étapes ici et sa ligne dans la feuille de route, sur la branche **et** aussitôt sur `develop`
   (commit `docs(feuille-de-route): phase 14, Tn faite sur feature/chiffrement` qui ne nomme que la feuille de route,
   au texte identique à celui de la branche).
-- **Version :** `v1.7.0`, pubspec `1.7.0+14`.
+- **Version :** `v1.7.0`, pubspec `1.7.0+15` (la v1.6.1, correctif de la permission Internet, porte `1.6.1+14`).
 - **Dépendances :** aucune nouvelle bibliothèque Java, Kotlin ni Dart. Code tiers nouveau : `crypto_scrypt-ref.c` et
   `sysendian.h` de scrypt 1.3.2, copiés **sans modification** dans `native/third_party/scrypt/` avec `COPYRIGHT`,
   empreinte SHA-256 de l'archive d'amont notée dans `native/third_party/PATCHES.md`. Donnée : `assets/words/eff_large.txt`
@@ -573,7 +573,7 @@ Pigeon `@async void enableBiometric(String vaultId, Uint8List password)`, `@asyn
 ### Fin de phase
 
 - [ ] Relecture finale de toute la branche.
-- [ ] Fusion `feature/chiffrement` → `develop`, puis `release/1.7.0` (pubspec `1.7.0+14`), `main`, étiquette signée
+- [ ] Fusion `feature/chiffrement` → `develop`, puis `release/1.7.0` (pubspec `1.7.0+15`), `main`, étiquette signée
   `v1.7.0`. Pas de push sans l'accord de l'utilisateur.
 
 ---
