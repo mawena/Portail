@@ -520,13 +520,13 @@ Pigeon `@async void enableBiometric(String vaultId, Uint8List password)`, `@asyn
 `pigeons/fluluks_api.dart` (+ générés), `lib/src/strings_fr.dart` ; Test `VaultPrivacyTest.kt`,
 `test/settings_screen_test.dart` (cas ajoutés)
 
-- [ ] **Step 1 : tests en échec** : `screenOffClosesVaultsWhenEnabled`, `screenOffWaitsForRunningOperation` (fermés à
+- [x] **Step 1 : tests en échec** : `screenOffClosesVaultsWhenEnabled`, `screenOffWaitsForRunningOperation` (fermés à
   la fin de l'opération en cours), `screenOffLeavesDisksAlone` (seuls les coffres), `secureFlagWhileVaultOrDecryptedView`
   (posé tant qu'un coffre est parcouru ou qu'une vue déchiffrée est affichée, si le réglage est actif),
   `bothSettingsOffByDefault`.
-- [ ] **Step 2 : implémentation** ; le délai du verrouillage automatique de la phase 7 s'applique déjà aux coffres :
+- [x] **Step 2 : implémentation** ; le délai du verrouillage automatique de la phase 7 s'applique déjà aux coffres :
   son libellé devient « Verrouiller les disques chiffrés et les coffres après ».
-- [ ] **Step 3 : commit** `feat(coffres): fermeture à l'écran éteint et masquage dans les captures`.
+- [x] **Step 3 : commit** `feat(coffres): fermeture à l'écran éteint et masquage dans les captures`.
 
 ### Task 14 : documentation
 

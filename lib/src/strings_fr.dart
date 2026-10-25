@@ -224,7 +224,12 @@ class Fr {
   static const settings = 'Réglages';
   static const readOnlyHelp = "S'applique aux prochaines ouvertures de disques";
   static const autoLock = 'Verrouillage automatique';
-  static const autoLockHelp = 'Disques chiffrés, après ce délai sans activité';
+  static const autoLockHelp = 'Verrouiller les disques chiffrés et les coffres après ce délai sans activité';
+  static const sectionPrivacy = 'Confidentialité';
+  static const closeVaultsOnScreenOff = "Fermer les coffres quand l'écran s'éteint";
+  static const closeVaultsOnScreenOffHelp = "Une copie en cours dans un coffre se termine d'abord";
+  static const hideVaults = 'Masquer les coffres et les fichiers déchiffrés';
+  static const hideVaultsHelp = "Dans les captures d'écran et les applications récentes";
   static const never = 'Jamais';
 
   /// « 15 min », « 1 h ».

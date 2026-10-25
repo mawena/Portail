@@ -2139,6 +2139,8 @@ class UiPrefsMsg {
     required this.welcomeSeen,
     this.terminalFontSize,
     this.terminalSecure,
+    this.closeVaultsOnScreenOff,
+    this.hideVaults,
   });
 
   String theme;
@@ -2152,6 +2154,12 @@ class UiPrefsMsg {
 
   bool? terminalSecure;
 
+  /// Phase 14 : coffres fermés à l'extinction de l'écran ; coffres parcourus et fichiers déchiffrés masqués dans les
+  /// captures et les applications récentes (null : non).
+  bool? closeVaultsOnScreenOff;
+
+  bool? hideVaults;
+
   List<Object?> _toList() {
     return <Object?>[
       theme,
@@ -2159,6 +2167,8 @@ class UiPrefsMsg {
       welcomeSeen,
       terminalFontSize,
       terminalSecure,
+      closeVaultsOnScreenOff,
+      hideVaults,
     ];
   }
 
@@ -2173,6 +2183,8 @@ class UiPrefsMsg {
       welcomeSeen: result[2]! as bool,
       terminalFontSize: result[3] as int?,
       terminalSecure: result[4] as bool?,
+      closeVaultsOnScreenOff: result[5] as bool?,
+      hideVaults: result[6] as bool?,
     );
   }
 
@@ -2185,7 +2197,7 @@ class UiPrefsMsg {
     if (identical(this, other)) {
       return true;
     }
-    return _deepEquals(theme, other.theme) && _deepEquals(haptics, other.haptics) && _deepEquals(welcomeSeen, other.welcomeSeen) && _deepEquals(terminalFontSize, other.terminalFontSize) && _deepEquals(terminalSecure, other.terminalSecure);
+    return _deepEquals(theme, other.theme) && _deepEquals(haptics, other.haptics) && _deepEquals(welcomeSeen, other.welcomeSeen) && _deepEquals(terminalFontSize, other.terminalFontSize) && _deepEquals(terminalSecure, other.terminalSecure) && _deepEquals(closeVaultsOnScreenOff, other.closeVaultsOnScreenOff) && _deepEquals(hideVaults, other.hideVaults);
   }
 
   @override
@@ -2194,7 +2206,7 @@ class UiPrefsMsg {
 
   @override
   String toString() {
-    return 'UiPrefsMsg(theme: $theme, haptics: $haptics, welcomeSeen: $welcomeSeen, terminalFontSize: $terminalFontSize, terminalSecure: $terminalSecure)';
+    return 'UiPrefsMsg(theme: $theme, haptics: $haptics, welcomeSeen: $welcomeSeen, terminalFontSize: $terminalFontSize, terminalSecure: $terminalSecure, closeVaultsOnScreenOff: $closeVaultsOnScreenOff, hideVaults: $hideVaults)';
   }
 }
 

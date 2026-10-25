@@ -5,8 +5,10 @@ import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.app.PendingIntent
 import android.app.Service
+import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
+import android.content.IntentFilter
 import android.content.pm.ServiceInfo
 import android.os.Build
 import android.os.IBinder
@@ -14,6 +16,8 @@ import android.os.SystemClock
 import android.util.Log
 import com.mawena.fluluks.MainActivity
 import com.mawena.fluluks.R
+import com.mawena.fluluks.files.Transfers
+import com.mawena.fluluks.vaults.VaultPrivacy
 import com.mawena.fluluks.volumes.AutoLock
 import com.mawena.fluluks.volumes.VolumeManager
 import com.mawena.fluluks.volumes.VolumeState
@@ -33,6 +37,8 @@ import kotlinx.coroutines.launch
  */
 class VolumeService : Service() {
     companion object {
+        /** Délai entre la fin publiée d'une opération et la libération de son créneau. */
+        private const val VAULT_CHECK_DELAY_MS = 200L
         /** Vrai entre onCreate et onDestroy (utilisé par les tests instrumentés). */
         @Volatile @JvmStatic var running: Boolean = false
         const val ACTION_EJECT_ALL = "com.mawena.fluluks.EJECT_ALL"
@@ -81,6 +87,17 @@ class VolumeService : Service() {
         super.onCreate()
         VolumeManager.init(this)
         AutoLock.bind(this) { msg -> warn(this, msg) }
+        VaultPrivacy.bind(this)
+        // coffres fermés à l'extinction de l'écran (réglage, phase 14)
+        val screen = IntentFilter().apply {
+            addAction(Intent.ACTION_SCREEN_OFF)
+            addAction(Intent.ACTION_SCREEN_ON)
+        }
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            registerReceiver(screenReceiver, screen, Context.RECEIVER_NOT_EXPORTED) // diffusions du système seulement
+        } else {
+            registerReceiver(screenReceiver, screen)
+        }
         running = true
         createChannel()
         val notif = buildNotification(VolumeManager.volumes.value)
@@ -96,6 +113,16 @@ class VolumeService : Service() {
             while (true) {
                 delay(AutoLock.PERIOD_MS)
                 AutoLock.check(SystemClock.elapsedRealtime())
+                VaultPrivacy.check()
+            }
+        }
+        scope.launch {
+            // fin d'une opération : un coffre en attente de fermeture se ferme (le créneau se libère juste après)
+            Transfers.state.collect { st ->
+                if (st?.finished == true) {
+                    delay(VAULT_CHECK_DELAY_MS)
+                    VaultPrivacy.check()
+                }
             }
         }
         scope.launch {
@@ -127,8 +154,18 @@ class VolumeService : Service() {
         return START_NOT_STICKY
     }
 
+    private val screenReceiver = object : BroadcastReceiver() {
+        override fun onReceive(context: Context?, intent: Intent?) {
+            when (intent?.action) {
+                Intent.ACTION_SCREEN_OFF -> VaultPrivacy.onScreenOff()
+                Intent.ACTION_SCREEN_ON -> VaultPrivacy.onScreenOn()
+            }
+        }
+    }
+
     override fun onDestroy() {
         running = false
+        runCatching { unregisterReceiver(screenReceiver) }
         scope.cancel()
         super.onDestroy()
     }

@@ -528,6 +528,8 @@ class UiPrefsMsg {
     required this.welcomeSeen,
     this.terminalFontSize,
     this.terminalSecure,
+    this.closeVaultsOnScreenOff,
+    this.hideVaults,
   });
   String theme;
   bool haptics;
@@ -536,6 +538,11 @@ class UiPrefsMsg {
   /// Phase 13 : taille du texte du terminal (8 à 32 ; null : 13) ; terminal masqué dans les captures (null : non).
   int? terminalFontSize;
   bool? terminalSecure;
+
+  /// Phase 14 : coffres fermés à l'extinction de l'écran ; coffres parcourus et fichiers déchiffrés masqués dans les
+  /// captures et les applications récentes (null : non).
+  bool? closeVaultsOnScreenOff;
+  bool? hideVaults;
 }
 
 /// Version de Portail (`versionName`, `versionCode` du paquet) et appareil (`Build.VERSION.RELEASE`, `Build.MODEL`),

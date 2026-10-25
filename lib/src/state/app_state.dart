@@ -49,6 +49,11 @@ class AppState extends ChangeNotifier implements FluLuksEventsApi {
 
   /// Vues déchiffrées ouvertes (phase 14) et le stockage de leur fichier chiffré.
   final _decrypted = <String, (SourceMsg, String)>{};
+
+  /// Écrans qui demandent FLAG_SECURE (terminal masqué, coffre parcouru avec le réglage) ; [_secureApplied] : état
+  /// demandé à Android.
+  int _secureHolds = 0;
+  bool _secureApplied = false;
   ({String dstId, String dstDir, String format, bool single})? _lastEncrypt;
 
   List<DiskMsg> get disks => _disks;
@@ -286,6 +291,7 @@ class AppState extends ChangeNotifier implements FluLuksEventsApi {
         if (_clipboard != null && !now.contains(_clipboard!.sourceId)) _clipboard = null;
         if (_pendingExtract != null && !now.contains(_pendingExtract!.sourceId)) _pendingExtract = null;
         _decrypted.removeWhere((_, v) => !now.contains(v.$2)); // retirées côté Kotlin avec leur stockage
+        _applySecure();
         PaintingBinding.instance.imageCache.clear();
       }
       _allFilesAccess = await api.hasAllFilesAccess();
@@ -447,11 +453,13 @@ class AppState extends ChangeNotifier implements FluLuksEventsApi {
   Future<SourceMsg> openDecrypted(String srcId, String path, Uint8List password) async {
     final s = await api.openDecrypted(srcId, path, password);
     _decrypted[s.id] = (s, srcId);
+    _applySecure();
     return s;
   }
 
   Future<void> closeDecrypted(String id) async {
     if (_decrypted.remove(id) == null) return;
+    _applySecure();
     try {
       await api.closeDecrypted(id);
     } on PlatformException {
@@ -578,8 +586,32 @@ class AppState extends ChangeNotifier implements FluLuksEventsApi {
   Future<void> setUiPrefs(UiPrefsMsg prefs) => _guard(() async {
         await api.setUiPrefs(prefs);
         _uiPrefs.value = prefs;
+        _applySecure();
         notifyListeners();
       });
+
+  /// Réglage « Masquer les coffres et les fichiers déchiffrés » (phase 14).
+  bool get hideVaults => uiPrefs.hideVaults ?? false;
+
+  /// Masque l'application dans les captures et les applications récentes tant que [releaseSecure] n'a pas été
+  /// appelé autant de fois (terminal masqué, coffre parcouru) ; une vue déchiffrée ouverte masque aussi, si
+  /// [hideVaults].
+  void holdSecure() {
+    _secureHolds++;
+    _applySecure();
+  }
+
+  void releaseSecure() {
+    if (_secureHolds > 0) _secureHolds--;
+    _applySecure();
+  }
+
+  void _applySecure() {
+    final want = _secureHolds > 0 || (hideVaults && _decrypted.isNotEmpty);
+    if (want == _secureApplied) return;
+    _secureApplied = want;
+    api.setSecureScreen(want).catchError((_) {}); // sans activité (tests, arrière-plan) : rien à masquer
+  }
 
   Future<void> addFavorite(String sourceId, String path, String label) => _guard(() async {
         await api.addFavorite(sourceId, path, label);

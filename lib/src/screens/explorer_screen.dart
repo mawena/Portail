@@ -100,9 +100,16 @@ class _ExplorerScreenState extends State<ExplorerScreen> {
     await state.addFavorite(widget.sourceId, _path, label);
   }
 
+  /// Coffre parcouru avec le réglage « Masquer les coffres… » : l'écran est masqué tant qu'il est là.
+  bool _secure = false;
+
   @override
   void initState() {
     super.initState();
+    if (_source?.kind == 'vault' && state.hideVaults) {
+      _secure = true;
+      state.holdSecure();
+    }
     _lastHidden = state.viewPrefs.showHidden;
     state.addListener(_onState);
     _load();
@@ -112,6 +119,7 @@ class _ExplorerScreenState extends State<ExplorerScreen> {
   void dispose() {
     _thumbs.dispose();
     state.removeListener(_onState);
+    if (_secure) state.releaseSecure();
     super.dispose();
   }
 

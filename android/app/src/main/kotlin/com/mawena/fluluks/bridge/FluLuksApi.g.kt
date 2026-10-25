@@ -1934,7 +1934,13 @@ data class UiPrefsMsg (
   val welcomeSeen: Boolean,
   /** Phase 13 : taille du texte du terminal (8 à 32 ; null : 13) ; terminal masqué dans les captures (null : non). */
   val terminalFontSize: Long? = null,
-  val terminalSecure: Boolean? = null
+  val terminalSecure: Boolean? = null,
+  /**
+   * Phase 14 : coffres fermés à l'extinction de l'écran ; coffres parcourus et fichiers déchiffrés masqués dans les
+   * captures et les applications récentes (null : non).
+   */
+  val closeVaultsOnScreenOff: Boolean? = null,
+  val hideVaults: Boolean? = null
 )
  {
   companion object {
@@ -1944,7 +1950,9 @@ data class UiPrefsMsg (
       val welcomeSeen = pigeonVar_list[2] as Boolean
       val terminalFontSize = pigeonVar_list[3] as Long?
       val terminalSecure = pigeonVar_list[4] as Boolean?
-      return UiPrefsMsg(theme, haptics, welcomeSeen, terminalFontSize, terminalSecure)
+      val closeVaultsOnScreenOff = pigeonVar_list[5] as Boolean?
+      val hideVaults = pigeonVar_list[6] as Boolean?
+      return UiPrefsMsg(theme, haptics, welcomeSeen, terminalFontSize, terminalSecure, closeVaultsOnScreenOff, hideVaults)
     }
   }
   fun toList(): List<Any?> {
@@ -1954,6 +1962,8 @@ data class UiPrefsMsg (
       welcomeSeen,
       terminalFontSize,
       terminalSecure,
+      closeVaultsOnScreenOff,
+      hideVaults,
     )
   }
   override fun equals(other: Any?): Boolean {
@@ -1964,7 +1974,7 @@ data class UiPrefsMsg (
       return true
     }
     val other = other as UiPrefsMsg
-    return FluLuksApiPigeonUtils.deepEquals(this.theme, other.theme) && FluLuksApiPigeonUtils.deepEquals(this.haptics, other.haptics) && FluLuksApiPigeonUtils.deepEquals(this.welcomeSeen, other.welcomeSeen) && FluLuksApiPigeonUtils.deepEquals(this.terminalFontSize, other.terminalFontSize) && FluLuksApiPigeonUtils.deepEquals(this.terminalSecure, other.terminalSecure)
+    return FluLuksApiPigeonUtils.deepEquals(this.theme, other.theme) && FluLuksApiPigeonUtils.deepEquals(this.haptics, other.haptics) && FluLuksApiPigeonUtils.deepEquals(this.welcomeSeen, other.welcomeSeen) && FluLuksApiPigeonUtils.deepEquals(this.terminalFontSize, other.terminalFontSize) && FluLuksApiPigeonUtils.deepEquals(this.terminalSecure, other.terminalSecure) && FluLuksApiPigeonUtils.deepEquals(this.closeVaultsOnScreenOff, other.closeVaultsOnScreenOff) && FluLuksApiPigeonUtils.deepEquals(this.hideVaults, other.hideVaults)
   }
 
   override fun hashCode(): Int {
@@ -1974,10 +1984,12 @@ data class UiPrefsMsg (
     result = 31 * result + FluLuksApiPigeonUtils.deepHash(this.welcomeSeen)
     result = 31 * result + FluLuksApiPigeonUtils.deepHash(this.terminalFontSize)
     result = 31 * result + FluLuksApiPigeonUtils.deepHash(this.terminalSecure)
+    result = 31 * result + FluLuksApiPigeonUtils.deepHash(this.closeVaultsOnScreenOff)
+    result = 31 * result + FluLuksApiPigeonUtils.deepHash(this.hideVaults)
     return result
   }
   override fun toString(): String {
-    return "UiPrefsMsg(theme=$theme, haptics=$haptics, welcomeSeen=$welcomeSeen, terminalFontSize=$terminalFontSize, terminalSecure=$terminalSecure)"
+    return "UiPrefsMsg(theme=$theme, haptics=$haptics, welcomeSeen=$welcomeSeen, terminalFontSize=$terminalFontSize, terminalSecure=$terminalSecure, closeVaultsOnScreenOff=$closeVaultsOnScreenOff, hideVaults=$hideVaults)"
   }
 }
 

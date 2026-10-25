@@ -917,7 +917,10 @@ class HostApiImpl(
     private val uiPrefs by lazy { UiPrefs(SharedPrefStore(context)) }
 
     override fun getUiPrefs(): UiPrefsMsg = uiPrefs.get().let {
-        UiPrefsMsg(it.theme, it.haptics, it.welcomeSeen, it.terminalFontSize.toLong(), it.terminalSecure)
+        UiPrefsMsg(
+            it.theme, it.haptics, it.welcomeSeen, it.terminalFontSize.toLong(), it.terminalSecure,
+            it.closeVaultsOnScreenOff, it.hideVaults,
+        )
     }
 
     override fun setUiPrefs(prefs: UiPrefsMsg) = guarded {
@@ -927,11 +930,13 @@ class HostApiImpl(
                 prefs.theme, prefs.haptics, prefs.welcomeSeen,
                 prefs.terminalFontSize?.toInt() ?: old.terminalFontSize,
                 prefs.terminalSecure ?: old.terminalSecure,
+                prefs.closeVaultsOnScreenOff ?: old.closeVaultsOnScreenOff,
+                prefs.hideVaults ?: old.hideVaults,
             ),
         )
     }
 
-    /** FLAG_SECURE sur la fenêtre de l'activité (terminal SSH, réglage « Masquer le terminal… »). */
+    /** FLAG_SECURE sur la fenêtre de l'activité (terminal SSH, coffres et fichiers déchiffrés, selon les réglages). */
     override fun setSecureScreen(secure: Boolean) {
         val w = FilePicker.activity?.get()?.window ?: return
         if (secure) {
