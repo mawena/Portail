@@ -173,6 +173,8 @@ open class MemEngine : Engine {
     private class AgeR(val file: Long, val plain: ByteArray)
     private val ageWriters = HashMap<Long, AgeW>()
     private val ageReaders = HashMap<Long, AgeR>()
+    /** Lecteurs age encore ouverts (tests). */
+    val openAgeReaders get() = ageReaders.size
     /** Phrases reçues (copies faites avant la mise à zéro), pour les tests. */
     val agePasses = mutableListOf<String>()
 

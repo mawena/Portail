@@ -443,16 +443,21 @@ object Crypt {
     }
 
     /** Lecteur age sur [path] de [src] (une copie de [pw] est donnée au moteur). */
-    private fun openAgeReader(src: FileSource, path: String, pw: ByteArray): Long {
+    private fun openAgeReader(src: FileSource, path: String, pw: ByteArray): Long = openAgeReaderFor(src, path, pw).first
+
+    /** Lecteur age sur [path] de [src], et l'activité à signaler à chaque lecture (fichier d'un disque). */
+    internal fun openAgeReaderFor(src: FileSource, path: String, pw: ByteArray): Pair<Long, () -> Unit> {
         val pass = pw.copyOf()
         try {
-            return check(
-                when (val n = src.openNative(path)) {
+            val n = src.openNative(path)
+            val r = check(
+                when (n) {
                     is NativeIn.Fd -> engine.ageReaderOpenFd(Archives.openFd(n.file, false), pass)
                     is NativeIn.EngineFile -> engine.ageReaderOpenFile(n.handle, n.size, pass)
                     is NativeIn.Proxy -> engine.ageReaderOpenFd(n.open(), pass)
                 },
             )
+            return r to ((n as? NativeIn.EngineFile)?.onActivity ?: {})
         } finally {
             pass.fill(0)
         }

@@ -11,6 +11,7 @@ import androidx.core.content.pm.PackageInfoCompat
 import com.mawena.fluluks.engine.EngineError
 import com.mawena.fluluks.engine.FileType
 import com.mawena.fluluks.crypt.Crypt
+import com.mawena.fluluks.crypt.DecryptedSources
 import com.mawena.fluluks.files.Archives
 import com.mawena.fluluks.files.BatchRename
 import com.mawena.fluluks.files.Details
@@ -683,6 +684,11 @@ class HostApiImpl(
         guarded { Crypt.startDecrypt(srcId, path, dstId, dstDir, password, extractFolder) }
 
     override fun startVerify(srcId: String, path: String, password: ByteArray) = guarded { Crypt.startVerify(srcId, path, password) }
+
+    override fun openDecrypted(srcId: String, path: String, password: ByteArray, callback: (Result<SourceMsg>) -> Unit) =
+        io(callback) { sourceMsg(DecryptedSources.open(srcId, path, password), null) }
+
+    override fun closeDecrypted(sourceId: String) = guarded { DecryptedSources.close(sourceId) }
 
     override fun changeFilePassword(
         srcId: String, path: String, oldPassword: ByteArray, newPassword: ByteArray, callback: (Result<Unit>) -> Unit,

@@ -512,7 +512,8 @@ data class VolumeMsg (
 }
 
 /**
- * Un stockage du gestionnaire de fichiers. `kind` : `phone`, `sd` ou `disk`.
+ * Un stockage du gestionnaire de fichiers. `kind` : `phone`, `removable`, `disk`, `remote` ou `decrypted` (vue
+ * déchiffrée d'un fichier age, en lecture seule, ouverte par `openDecrypted`).
  *
  * Generated class from Pigeon that represents data sent in messages.
  */
@@ -2335,6 +2336,14 @@ interface FluLuksHostApi {
    * l'ancien est incorrect.
    */
   fun changeFilePassword(srcId: String, path: String, oldPassword: ByteArray, newPassword: ByteArray, callback: (Result<Unit>) -> Unit)
+  /**
+   * Ouvre `path` (fichier age) en vue déchiffrée : une source en lecture seule qui contient le fichier en clair,
+   * lu en mémoire seulement (lecteurs, « Ouvrir avec ») ; quatre au plus, la plus ancienne est fermée. Erreur
+   * `badPassword` si le mot de passe est faux ; un `.zip.age` ne s'ouvre pas (le déchiffrer ou l'extraire).
+   */
+  fun openDecrypted(srcId: String, path: String, password: ByteArray, callback: (Result<SourceMsg>) -> Unit)
+  /** Ferme une vue déchiffrée (clé effacée, liens expirés). */
+  fun closeDecrypted(sourceId: String)
   fun cancelTransfer()
   fun search(sourceId: String, path: String, query: String, showHidden: Boolean, callback: (Result<SearchResultMsg>) -> Unit)
   fun cancelSearch()
@@ -3136,6 +3145,46 @@ interface FluLuksHostApi {
                 reply.reply(FluLuksApiPigeonUtils.wrapResult(null))
               }
             }
+          }
+        } else {
+          channel.setMessageHandler(null)
+        }
+      }
+      run {
+        val channel = BasicMessageChannel<Any?>(binaryMessenger, "dev.flutter.pigeon.fluluks.FluLuksHostApi.openDecrypted$separatedMessageChannelSuffix", codec)
+        if (api != null) {
+          channel.setMessageHandler { message, reply ->
+            val args = message as List<Any?>
+            val srcIdArg = args[0] as String
+            val pathArg = args[1] as String
+            val passwordArg = args[2] as ByteArray
+            api.openDecrypted(srcIdArg, pathArg, passwordArg) { result: Result<SourceMsg> ->
+              val error = result.exceptionOrNull()
+              if (error != null) {
+                reply.reply(FluLuksApiPigeonUtils.wrapError(error))
+              } else {
+                val data = result.getOrNull()
+                reply.reply(FluLuksApiPigeonUtils.wrapResult(data))
+              }
+            }
+          }
+        } else {
+          channel.setMessageHandler(null)
+        }
+      }
+      run {
+        val channel = BasicMessageChannel<Any?>(binaryMessenger, "dev.flutter.pigeon.fluluks.FluLuksHostApi.closeDecrypted$separatedMessageChannelSuffix", codec)
+        if (api != null) {
+          channel.setMessageHandler { message, reply ->
+            val args = message as List<Any?>
+            val sourceIdArg = args[0] as String
+            val wrapped: List<Any?> = try {
+              api.closeDecrypted(sourceIdArg)
+              listOf(null)
+            } catch (exception: Throwable) {
+              FluLuksApiPigeonUtils.wrapError(exception)
+            }
+            reply.reply(wrapped)
           }
         } else {
           channel.setMessageHandler(null)

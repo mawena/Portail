@@ -2,6 +2,7 @@ package com.mawena.fluluks.remote
 
 import android.content.Context
 import androidx.annotation.VisibleForTesting
+import com.mawena.fluluks.crypt.DecryptedSources
 import com.mawena.fluluks.engine.EngineError
 import com.mawena.fluluks.files.FilesException
 import com.mawena.fluluks.provider.StreamTokens
@@ -104,6 +105,7 @@ object Remotes {
         val (src, sec) = open.remove(serverId) ?: return
         runCatching { src.client.close() }
         sec.wipe()
+        DecryptedSources.dropFor(src.id)
         StreamTokens.forget(src.id)
     }
 

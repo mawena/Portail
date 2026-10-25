@@ -110,7 +110,8 @@ class VolumeMsg {
   bool readOnly;
 }
 
-/// Un stockage du gestionnaire de fichiers. `kind` : `phone`, `sd` ou `disk`.
+/// Un stockage du gestionnaire de fichiers. `kind` : `phone`, `removable`, `disk`, `remote` ou `decrypted` (vue
+/// déchiffrée d'un fichier age, en lecture seule, ouverte par `openDecrypted`).
 class SourceMsg {
   SourceMsg({
     required this.id,
@@ -606,6 +607,15 @@ abstract class FluLuksHostApi {
   /// l'ancien est incorrect.
   @async
   void changeFilePassword(String srcId, String path, Uint8List oldPassword, Uint8List newPassword);
+
+  /// Ouvre `path` (fichier age) en vue déchiffrée : une source en lecture seule qui contient le fichier en clair,
+  /// lu en mémoire seulement (lecteurs, « Ouvrir avec ») ; quatre au plus, la plus ancienne est fermée. Erreur
+  /// `badPassword` si le mot de passe est faux ; un `.zip.age` ne s'ouvre pas (le déchiffrer ou l'extraire).
+  @async
+  SourceMsg openDecrypted(String srcId, String path, Uint8List password);
+
+  /// Ferme une vue déchiffrée (clé effacée, liens expirés).
+  void closeDecrypted(String sourceId);
   void cancelTransfer();
   @async
   SearchResultMsg search(String sourceId, String path, String query, bool showHidden);

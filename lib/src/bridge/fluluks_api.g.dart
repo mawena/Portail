@@ -487,7 +487,8 @@ class VolumeMsg {
   }
 }
 
-/// Un stockage du gestionnaire de fichiers. `kind` : `phone`, `sd` ou `disk`.
+/// Un stockage du gestionnaire de fichiers. `kind` : `phone`, `removable`, `disk`, `remote` ou `decrypted` (vue
+/// déchiffrée d'un fichier age, en lecture seule, ouverte par `openDecrypted`).
 class SourceMsg {
   SourceMsg({
     required this.id,
@@ -3043,6 +3044,47 @@ class FluLuksHostApi {
       binaryMessenger: pigeonVar_binaryMessenger,
     );
     final Future<Object?> pigeonVar_sendFuture = pigeonVar_channel.send(<Object?>[srcId, path, oldPassword, newPassword]);
+    final pigeonVar_replyList = await pigeonVar_sendFuture as List<Object?>?;
+
+    _extractReplyValueOrThrow(
+        pigeonVar_replyList,
+        pigeonVar_channelName,
+        isNullValid: true,
+    )
+    ;
+  }
+
+  /// Ouvre `path` (fichier age) en vue déchiffrée : une source en lecture seule qui contient le fichier en clair,
+  /// lu en mémoire seulement (lecteurs, « Ouvrir avec ») ; quatre au plus, la plus ancienne est fermée. Erreur
+  /// `badPassword` si le mot de passe est faux ; un `.zip.age` ne s'ouvre pas (le déchiffrer ou l'extraire).
+  Future<SourceMsg> openDecrypted(String srcId, String path, Uint8List password) async {
+    final pigeonVar_channelName = 'dev.flutter.pigeon.fluluks.FluLuksHostApi.openDecrypted$pigeonVar_messageChannelSuffix';
+    final pigeonVar_channel = BasicMessageChannel<Object?>(
+      pigeonVar_channelName,
+      pigeonChannelCodec,
+      binaryMessenger: pigeonVar_binaryMessenger,
+    );
+    final Future<Object?> pigeonVar_sendFuture = pigeonVar_channel.send(<Object?>[srcId, path, password]);
+    final pigeonVar_replyList = await pigeonVar_sendFuture as List<Object?>?;
+
+    final Object? pigeonVar_replyValue = _extractReplyValueOrThrow(
+        pigeonVar_replyList,
+        pigeonVar_channelName,
+        isNullValid: false,
+    )
+    ;
+    return pigeonVar_replyValue! as SourceMsg;
+  }
+
+  /// Ferme une vue déchiffrée (clé effacée, liens expirés).
+  Future<void> closeDecrypted(String sourceId) async {
+    final pigeonVar_channelName = 'dev.flutter.pigeon.fluluks.FluLuksHostApi.closeDecrypted$pigeonVar_messageChannelSuffix';
+    final pigeonVar_channel = BasicMessageChannel<Object?>(
+      pigeonVar_channelName,
+      pigeonChannelCodec,
+      binaryMessenger: pigeonVar_binaryMessenger,
+    );
+    final Future<Object?> pigeonVar_sendFuture = pigeonVar_channel.send(<Object?>[sourceId]);
     final pigeonVar_replyList = await pigeonVar_sendFuture as List<Object?>?;
 
     _extractReplyValueOrThrow(

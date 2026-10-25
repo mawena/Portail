@@ -341,18 +341,18 @@ JUnit 4, AndroidX Test.
   `agePread` ; `contentUri` par `StreamProvider` ; Pigeon `@async SourceMsg openDecrypted(String srcId, String path, Uint8List password)`,
   `void closeDecrypted(String sourceId)` ; `SourceMsg.kind` = `decrypted`.
 
-- [ ] **Step 1 : tests en échec** : `decryptedViewReadsAtAnyOffset`, `decryptedViewIsReadOnly` (toute écriture refusée
+- [x] **Step 1 : tests en échec** : `decryptedViewReadsAtAnyOffset`, `decryptedViewIsReadOnly` (toute écriture refusée
   avec le message), `decryptedViewNeverWritesToDisk` (aucune écriture sur aucune source ni dans le cache),
   `decryptedViewDroppedWithSource` (source d'origine fermée, verrouillée ou débranchée → source déchiffrée retirée,
   liens du fournisseur expirés), `closeDecryptedWipes` (lecteur natif fermé), `atMostFourDecryptedViews` (la
   cinquième ferme la plus ancienne), `folderAgeNotOpenable` (un `.zip.age` se déchiffre ou s'extrait, il ne s'ouvre
   pas en vue).
-- [ ] **Step 2 : implémentation** ; les lecteurs de Portail (images, texte en lecture seule, musique, vidéo) et
+- [x] **Step 2 : implémentation** ; les lecteurs de Portail (images, texte en lecture seule, musique, vidéo) et
   « Ouvrir avec » reçoivent `sourceId = dec:…` sans autre changement ; « Partager » demande confirmation (« Le
   destinataire recevra le fichier en clair »).
 - [ ] **Step 3 : essais instrumentés** (`CryptInstrumentedTest`) : `decryptedVideoSeeks` (vidéo de 20 Mio chiffrée, lue
   par le fournisseur de flux à 50 % et 90 %), `decryptedImageViewer`.
-- [ ] **Step 4 : commit** `feat(chiffrement): ouvrir un fichier chiffré sans copie en clair`.
+- [x] **Step 4 : commit** `feat(chiffrement): ouvrir un fichier chiffré sans copie en clair`.
 
 ### Task 7 : saisie des mots de passe — force, générateur, copie sensible *(proposition du planificateur)*
 

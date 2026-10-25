@@ -21,6 +21,7 @@ import com.mawena.fluluks.engine.EngineError
 import com.mawena.fluluks.engine.NativeEngine
 import com.mawena.fluluks.engine.ScanResult
 import com.mawena.fluluks.engine.VolumeStat
+import com.mawena.fluluks.crypt.DecryptedSources
 import com.mawena.fluluks.files.Thumbnails
 import com.mawena.fluluks.service.VolumeService
 import com.mawena.fluluks.usb.UsbDisks
@@ -610,6 +611,7 @@ object VolumeManager {
         try {
             for (id in ids) {
                 val m = mounts[id] ?: continue
+                DecryptedSources.dropFor(id) // vues déchiffrées fermées avant le démontage (fichier ouvert)
                 pendingSync.remove(id)?.invoke()
                 val rcSync = engine.sync(m.handle)
                 if (rcSync < 0) {
@@ -657,6 +659,7 @@ object VolumeManager {
         writeGen.remove(volumeId); syncedGen.remove(volumeId)
         activity.remove(volumeId)
         Thumbnails.drop(volumeId) // vignettes du disque oubliées avec lui
+        DecryptedSources.dropFor(volumeId)
     }
 
     /** Débranchement : démontage de force (le disque n'est plus là). */
