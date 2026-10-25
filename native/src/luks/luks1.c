@@ -15,6 +15,7 @@
 #define MAX_PBKDF2_ITER (1u << 27) /* même plafond que LUKS2 : évite un déni de service par en-tête forgé */
 
 typedef struct {
+  int index; /* 0 à 7 */
   uint32_t iterations;
   uint8_t salt[32];
   uint32_t kmo; /* secteurs de 512 */
@@ -71,6 +72,7 @@ int fl_luks1_parse(struct fl_luks *l, const uint8_t *h) {
     if (active == SLOT_INACTIVE) continue;
     if (active != SLOT_ACTIVE) continue; /* valeur inconnue : slot ignoré */
     slot1 sl;
+    sl.index = i;
     sl.unsupported = false;
     sl.iterations = be32(s + 4);
     memcpy(sl.salt, s + 8, 32);
@@ -148,13 +150,15 @@ static int err_rank(int rc) {
   return 1;
 }
 
-static int luks1_unlock(struct fl_luks *l, const void *pass, size_t passlen, fl_bdev **decrypted) {
+static int luks1_unlock(struct fl_luks *l, int slot, const void *pass, size_t passlen, fl_bdev **decrypted) {
   const luks1 *x = l->impl;
   uint8_t *mk = fl_secure_alloc(x->key_bytes);
   if (!mk) return FL_ENOMEM;
   int rc = FL_EBADPASS, best = 0;
-  bool ok = false;
+  bool ok = false, found = slot < 0;
   for (int i = 0; i < x->nslots; i++) {
+    if (slot >= 0 && x->slots[i].index != slot) continue;
+    found = true;
     int r = x->slots[i].unsupported ? FL_ENOTSUP : try_slot(l, x, &x->slots[i], pass, passlen, mk);
     if (r == FL_OK) {
       ok = true;
@@ -164,6 +168,7 @@ static int luks1_unlock(struct fl_luks *l, const void *pass, size_t passlen, fl_
     if (!best || err_rank(r) > err_rank(best)) best = r;
   }
   if (!ok && best) rc = best;
+  if (!found) rc = FL_ENOENT;
   if (ok) {
     rc = fl_crypt_bdev_new(l->dev, x->payload_off, 0, l->cipher, mk, x->key_bytes, 512, false, 0, decrypted);
     if (rc != FL_OK) *decrypted = NULL;
@@ -178,4 +183,11 @@ static void luks1_destroy(struct fl_luks *l) {
   l->impl = NULL;
 }
 
-static const fl_luks_ops luks1_ops = {luks1_unlock, luks1_destroy};
+static uint32_t luks1_slot_mask(const struct fl_luks *l) {
+  const luks1 *x = l->impl;
+  uint32_t m = 0;
+  for (int i = 0; i < x->nslots; i++) m |= 1u << x->slots[i].index;
+  return m;
+}
+
+static const fl_luks_ops luks1_ops = {luks1_unlock, luks1_destroy, luks1_slot_mask};

@@ -1,7 +1,9 @@
 /* NTFS par libntfs-3g 2022.10.3, branchée sur fl_bdev (phase 5).
  *
  * Fils d'exécution : libntfs-3g garde des variables globales (conversion des noms, journal) et n'est pas
- * réentrante. Tout appel passe donc sous le mutex global g_ntfs_lock, qui protège aussi l'état de chaque
+ * réentrante. Tout appel passe donc sous le mutex global g_ntfs_lock (verrou commun, récursif, de
+ * fs_internal.h ; jamais d'appel NTFS imbriqué dans un autre : un coffre n'est jamais en NTFS), qui protège
+ * aussi l'état de chaque
  * volume. Aucun rappel utilisateur n'est appelé sous ce verrou.
  *
  * Inodes : chaque opération ouvre puis referme ses inodes (ntfs_inode_open / ntfs_inode_close), comme le
@@ -53,7 +55,7 @@
 #include "ntfs-3g/unistr.h"
 #include "ntfs-3g/volume.h"
 
-static pthread_mutex_t g_ntfs_lock = PTHREAD_MUTEX_INITIALIZER;
+#define g_ntfs_lock (*fl_fs_glue_lock()) /* verrou commun et récursif des systèmes de fichiers (fs_internal.h) */
 
 /* Fichier ouvert : un noeud par numéro MFT, partagé par toutes ses poignées (pour refuser de supprimer ou
  * de renommer un fichier ouvert). Aucun inode n'est gardé ouvert entre deux opérations. */

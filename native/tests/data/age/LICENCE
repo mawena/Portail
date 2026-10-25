@@ -1,0 +1,4 @@
+Vecteurs de test age du projet C2SP/CCTV (Community Cryptography Test Vectors),
+https://github.com/C2SP/CCTV, dossier age/testdata, commit 4448f2097b2daa812c91a26141f9f36c2096b9ca.
+Licence : 0BSD OR CC0-1.0 OR Unlicense (age/package.json du même dépôt), qui permet la copie sans attribution.
+Fichiers copiés sans modification : armor_scrypt et scrypt*.

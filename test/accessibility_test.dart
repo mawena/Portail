@@ -17,10 +17,13 @@ import 'package:fluluks/src/screens/space_screen.dart';
 import 'package:fluluks/src/screens/ssh_keys_screen.dart';
 import 'package:fluluks/src/screens/text_editor_screen.dart';
 import 'package:fluluks/src/screens/trash_screen.dart';
+import 'package:fluluks/src/screens/encrypt_sheet.dart';
+import 'package:fluluks/src/screens/vault_create_screen.dart';
 import 'package:fluluks/src/screens/welcome_screen.dart';
 import 'package:fluluks/src/terminal/terminal_screen.dart';
 import 'package:fluluks/src/terminal/tunnels_screen.dart';
 import 'package:fluluks/src/widgets/mini_player.dart';
+import 'package:fluluks/src/widgets/decrypt_dialog.dart';
 import 'package:fluluks/src/widgets/unlock_dialog.dart';
 
 import 'screen_harness.dart';
@@ -34,7 +37,8 @@ void main() {
     'settings': SettingsScreen, 'about': AboutScreen, 'help': HelpScreen, 'welcome': WelcomeScreen,
     'unlock': UnlockDialog, 'format': FormatScreen, 'editor': TextEditorScreen, 'serverForm': ServerFormScreen,
     'nowPlaying': NowPlayingScreen, 'terminal': TerminalScreen,
-    'sshKeys': SshKeysScreen, 'tunnels': TunnelsScreen,
+    'sshKeys': SshKeysScreen, 'tunnels': TunnelsScreen, 'encrypt': EncryptSheet, 'decrypt': DecryptDialog,
+    'vaultCreate': VaultCreateScreen, 'homeVaults': HomeScreen,
   };
   testWidgets('harnessShowsEachScreen', (t) async {
     for (final screen in screens) {

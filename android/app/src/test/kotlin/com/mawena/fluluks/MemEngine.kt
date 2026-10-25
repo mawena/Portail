@@ -161,4 +161,116 @@ open class MemEngine : Engine {
         ops++
         return 0
     }
+
+    /*
+     * Faux age (phase 14) : vrai début d'en-tête age (magie, ligne scrypt avec log2 N, reconnus par CryptFormats), puis
+     * « --- » et 8 octets de SHA-256 de la phrase en hexadécimal, puis le clair XOR la phrase. Réversible, phrase fausse
+     * détectée (FL_EBADPASS), écriture abandonnée illisible (en-tête incomplet, FL_ECORRUPT). Sur les fichiers
+     * du moteur seulement (descripteurs : FL_ENOTSUP). Comme le moteur, chaque phrase reçue est mise à zéro et la
+     * poignée de fichier est fermée avec la poignée age, ou tout de suite en cas d'échec.
+     */
+    private class AgeW(val file: Long, val pass: ByteArray, val log2n: Int) { val data = java.io.ByteArrayOutputStream() }
+    private class AgeR(val file: Long, val plain: ByteArray)
+    private val ageWriters = HashMap<Long, AgeW>()
+    private val ageReaders = HashMap<Long, AgeR>()
+    /** Lecteurs age encore ouverts (tests). */
+    val openAgeReaders get() = ageReaders.size
+    /** Phrases reçues (copies faites avant la mise à zéro), pour les tests. */
+    val agePasses = mutableListOf<String>()
+
+    protected fun tag(pass: ByteArray): String =
+        java.security.MessageDigest.getInstance("SHA-256").digest(pass).copyOf(8).joinToString("") { "%02x".format(it) }
+    protected fun xor(d: ByteArray, pass: ByteArray) = ByteArray(d.size) { (d[it].toInt() xor pass[it % pass.size].toInt()).toByte() }
+    protected fun take(pass: ByteArray): ByteArray = pass.copyOf().also { agePasses.add(String(it, Charsets.UTF_8)); pass.fill(0) }
+
+    protected fun ageHead(log2n: Int) = "age-encryption.org/v1\n-> scrypt c2FsdHNhbHRzYWx0c2FsdA $log2n\n".toByteArray(Charsets.US_ASCII)
+
+    protected fun ageEncode(plain: ByteArray, pass: ByteArray, log2n: Int): ByteArray =
+        ageHead(log2n) + "--- ${tag(pass)}\n".toByteArray(Charsets.US_ASCII) + xor(plain, pass)
+
+    /** Clair, ou fl_err. */
+    protected fun ageDecode(d: ByteArray, pass: ByteArray): Any {
+        val head = String(d, 0, minOf(d.size, 200), Charsets.ISO_8859_1)
+        if (!head.startsWith("age-encryption.org/v1\n")) return EngineError.FL_ENOTSUP
+        val at = head.indexOf("\n--- ")
+        // « \n--- » fait 5 caractères ; puis 16 chiffres hexadécimaux et un saut de ligne
+        if (at < 0 || head.length < at + 22 || head[at + 21] != '\n') return EngineError.FL_ECORRUPT
+        if (head.substring(at + 5, at + 21) != tag(pass)) return EngineError.FL_EBADPASS
+        return xor(d.copyOfRange(at + 22, d.size), pass)
+    }
+
+    override fun ageWriterOpenFile(file: Long, pass: ByteArray, log2n: Int): Long {
+        val p = take(pass)
+        if (files[file] == null || p.isEmpty()) {
+            closeFile(file)
+            return EngineError.FL_EINVAL.toLong()
+        }
+        ageWriters[next] = AgeW(file, p, log2n)
+        return next++
+    }
+
+    override fun ageWrite(w: Long, buf: ByteArray, len: Int): Int {
+        val a = ageWriters[w] ?: return EngineError.FL_EINVAL
+        if (failPwriteAt > 0 && --failPwriteAt == 0) return failPwriteCode
+        a.data.write(buf, 0, len)
+        return 0
+    }
+
+    override fun ageWriterClose(w: Long, commit: Boolean): Int {
+        val a = ageWriters.remove(w) ?: return EngineError.FL_EINVAL
+        val out = if (commit) ageEncode(a.data.toByteArray(), a.pass, a.log2n) else ageHead(a.log2n)
+        nodes[files[a.file]!!] = out
+        a.pass.fill(0)
+        return closeFile(a.file)
+    }
+
+    override fun ageReaderOpenFile(file: Long, size: Long, pass: ByteArray): Long {
+        val p = take(pass)
+        val d = files[file]?.let { nodes[it] }
+        val r = if (d == null) EngineError.FL_EINVAL else ageDecode(d, p)
+        p.fill(0)
+        if (r !is ByteArray) {
+            closeFile(file)
+            return (r as Int).toLong()
+        }
+        ageReaders[next] = AgeR(file, r)
+        return next++
+    }
+
+    override fun ageSize(r: Long): Long = ageReaders[r]?.plain?.size?.toLong() ?: EngineError.FL_EINVAL.toLong()
+
+    override fun agePread(r: Long, offset: Long, buf: ByteArray, len: Int): Int {
+        val a = ageReaders[r] ?: return EngineError.FL_EINVAL
+        if (offset >= a.plain.size) return 0
+        val n = minOf(len.toLong(), a.plain.size - offset).toInt()
+        System.arraycopy(a.plain, offset.toInt(), buf, 0, n)
+        return n
+    }
+
+    override fun ageReaderClose(r: Long): Int {
+        val a = ageReaders.remove(r) ?: return EngineError.FL_EINVAL
+        return closeFile(a.file)
+    }
+
+    override fun agePeekFile(file: Long, size: Long): Int {
+        val d = files[file]?.let { nodes[it] } ?: return EngineError.FL_EINVAL
+        return com.mawena.fluluks.crypt.CryptFormats.ageWorkFactor(d) ?: 0
+    }
+
+    override fun ageRewrap(inFd: Int, inFile: Long, inSize: Long, outFd: Int, outFile: Long, old: ByteArray, new: ByteArray,
+                           log2n: Int): Int {
+        val o = take(old)
+        val n = take(new)
+        val d = files[inFile]?.let { nodes[it] }
+        val plain = if (inFd >= 0 || outFd >= 0 || d == null || files[outFile] == null) EngineError.FL_EINVAL else ageDecode(d, o)
+        val rc = if (plain is ByteArray) {
+            nodes[files[outFile]!!] = ageEncode(plain, n, log2n)
+            0
+        } else plain as Int
+        o.fill(0)
+        n.fill(0)
+        if (inFile > 0) closeFile(inFile)
+        if (outFile > 0) closeFile(outFile)
+        return rc
+    }
 }

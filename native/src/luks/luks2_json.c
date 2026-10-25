@@ -192,6 +192,13 @@ static int parse_segment(const cJSON *sg, uint64_t dev_size, luks2 *x) {
  * sérialisée par ce verrou ; le reste de cJSON (lecture de l'arbre) est sans état global. */
 static pthread_mutex_t cjson_parse_lock = PTHREAD_MUTEX_INITIALIZER;
 
+struct cJSON *fl_luks2_cjson_parse(const char *json) {
+  pthread_mutex_lock(&cjson_parse_lock);
+  cJSON *root = cJSON_Parse(json);
+  pthread_mutex_unlock(&cjson_parse_lock);
+  return root;
+}
+
 int fl_luks2_parse_json(const char *json, uint64_t dev_size, luks2 *x) {
   memset(x, 0, sizeof *x);
   pthread_mutex_lock(&cjson_parse_lock);
@@ -235,6 +242,10 @@ int fl_luks2_parse_json(const char *json, uint64_t dev_size, luks2 *x) {
     l2_slot *s = &x->slots[x->nslots];
     s->digest = -1;
     if ((rc = parse_u64(e->string, &ids[x->nslots])) != FL_OK) goto out;
+    if (ids[x->nslots] > UINT32_MAX) {
+      rc = FL_ECORRUPT;
+      goto out;
+    }
     rc = parse_slot(e, dev_size, s);
     if (rc == FL_ENOTSUP) {
       /* slot non pris en charge : ignoré, les autres restent utilisables */
@@ -243,6 +254,7 @@ int fl_luks2_parse_json(const char *json, uint64_t dev_size, luks2 *x) {
     } else if (rc != FL_OK) {
       goto out;
     }
+    s->id = (uint32_t)ids[x->nslots];
     x->nslots++;
   }
 

@@ -98,6 +98,17 @@ int fl_fs_sync(fl_fs *fs);
 /* NULL accepté. FL_EINVAL (rien n'est démonté) tant qu'un fichier reste ouvert. */
 int fl_fs_unmount(fl_fs *fs);
 
+/* Disque d'un coffre posé sur le fichier `f` d'un volume du moteur (phase 14) : `size` premiers octets
+ * de f, en secteurs de 512 octets, lus et écrits par fl_file_pread / fl_file_pwrite ; le vidage synchronise
+ * le volume porteur (fl_fs_sync). Ne possède pas `f`, qui doit rester ouvert (en écriture si !read_only)
+ * jusqu'à fl_bdev_close ; tant qu'il l'est, le volume porteur ne se démonte pas. FL_EINVAL si size n'est
+ * pas un multiple de 512 non nul ou dépasse le fichier, FL_EFBIG au-delà de 4 Gio − 1 octet sur FAT12/16/32,
+ * FL_EROFS en écriture sur un fichier ouvert en lecture seule.
+ *
+ * Fils : le système de fichiers du coffre appelle celui du porteur sous le verrou des systèmes de
+ * fichiers du moteur, qui est récursif et commun à ext4, FAT et NTFS (coffre exFAT dans un exFAT compris). */
+int fl_fsfile_bdev_new(fl_file *f, uint64_t size, bool read_only, fl_bdev **out);
+
 #ifdef __cplusplus
 }
 #endif

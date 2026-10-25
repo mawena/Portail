@@ -256,7 +256,9 @@ void main() {
   testWidgets('newFolderRejectsReservedNames', (tester) async {
     final api = api0();
     await pump(tester, api);
-    await tester.tap(find.byTooltip(Fr.newFolder));
+    await tester.tap(find.byTooltip(Fr.create)); // Nouveau dossier ou Nouveau coffre (phase 14)
+    await tester.pumpAndSettle();
+    await tester.tap(find.text(Fr.newFolder));
     await tester.pumpAndSettle();
     FilledButton ok() => tester.widget<FilledButton>(find.widgetWithText(FilledButton, Fr.ok));
     expect(ok().onPressed, isNull); // vide
@@ -292,6 +294,7 @@ void main() {
     final state = await pump(tester, api);
     await state.startTransfer('v1', ['/film.mkv'], 'phone', '/', move: false);
     TransferMsg t({int done = 50, bool finished = false, String? error}) => TransferMsg(
+        badPassword: false,
         kind: 'copy', move: false, currentName: 'film.mkv', fileIndex: 1, fileCount: 1, doneBytes: done, totalBytes: 200,
         finished: finished, cancelled: false, error: error, elapsedMs: 0);
     state.onTransferChanged(t());
@@ -348,6 +351,8 @@ void main() {
     await pump(tester, api);
     await tester.tap(find.byType(FloatingActionButton));
     await tester.pumpAndSettle();
+    await tester.tap(find.text(Fr.newFolder)); // Nouveau dossier ou Nouveau coffre (phase 14)
+    await tester.pumpAndSettle();
     await tester.enterText(find.byType(TextField), 'Vacances');
     await tester.pump(); // OK s'active une fois le nom validé
     await tester.tap(find.text('OK'));
@@ -356,6 +361,7 @@ void main() {
   });
 
   TransferMsg done({int bytes = 200, int elapsedMs = 0, String? error}) => TransferMsg(
+        badPassword: false,
       kind: 'copy', move: false, currentName: 'film.mkv', fileIndex: 1, fileCount: 1, doneBytes: bytes, totalBytes: bytes,
       finished: true, cancelled: false, error: error, elapsedMs: elapsedMs);
 

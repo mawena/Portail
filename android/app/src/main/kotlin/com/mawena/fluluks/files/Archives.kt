@@ -2,6 +2,8 @@ package com.mawena.fluluks.files
 
 import android.os.ParcelFileDescriptor
 import androidx.annotation.VisibleForTesting
+import com.mawena.fluluks.crypt.Passwords
+import com.mawena.fluluks.engine.ArcMode
 import com.mawena.fluluks.engine.Engine
 import com.mawena.fluluks.engine.EngineError
 import com.mawena.fluluks.engine.FileType
@@ -71,7 +73,7 @@ object Archives {
     @Volatile private var engineForTests: Engine? = null
     @Volatile private var openFdForTests: ((File, Boolean) -> Int)? = null
     @Volatile private var pipeForTests: (() -> Pair<Int, InputStream>)? = null
-    private val engine: Engine get() = engineForTests ?: NativeEngine
+    internal val engine: Engine get() = engineForTests ?: NativeEngine
 
     /** Tests JVM : moteur, ouverture des descripteurs et tubes simulés ; null rend ceux d'Android. */
     @VisibleForTesting
@@ -82,7 +84,7 @@ object Archives {
     }
 
     /** Tube : descripteur d'écriture détaché (il appartient à l'archive), flux de lecture pour [Pump]. */
-    private fun pipe(): Pair<Int, InputStream> {
+    internal fun pipe(): Pair<Int, InputStream> {
         pipeForTests?.let { return it() }
         val (r, w) = ParcelFileDescriptor.createPipe()
         return w.detachFd() to ParcelFileDescriptor.AutoCloseInputStream(r)
@@ -92,7 +94,7 @@ object Archives {
      * Recopie le côté lecture d'un tube vers [sink] (dossier distant), puis ferme [sink]. Une erreur de [sink] est
      * gardée et le tube vidé jusqu'au bout : le moteur n'écrit jamais dans un tube fermé.
      */
-    private class Pump(private val input: InputStream, private val sink: OutputStream) : Thread("portail-zip-tube") {
+    internal class Pump(private val input: InputStream, private val sink: OutputStream) : Thread("portail-zip-tube") {
         @Volatile var error: Throwable? = null
 
         override fun run() {
@@ -124,7 +126,7 @@ object Archives {
     }
 
     /** Descripteur détaché du fichier local [f] : il appartient ensuite à l'archive, qui le ferme. */
-    private fun openFd(f: File, write: Boolean): Int {
+    internal fun openFd(f: File, write: Boolean): Int {
         openFdForTests?.let { return it(f, write) }
         val mode = if (write) ParcelFileDescriptor.MODE_WRITE_ONLY or ParcelFileDescriptor.MODE_TRUNCATE
         else ParcelFileDescriptor.MODE_READ_ONLY
@@ -138,9 +140,32 @@ object Archives {
     fun startCompress(srcId: String, paths: List<String>, dstDir: String, name: String?) =
         Transfers.launch("compress", srcId, srcId) { Compress(it, srcId, paths, dstDir, name).run() }
 
-    /** Extrait [archive] de [srcId] sous [dstDir] de [dstId], dans un nouveau dossier au nom de l'archive si [intoNewFolder]. */
-    fun startExtract(srcId: String, archive: String, dstId: String, dstDir: String, intoNewFolder: Boolean) =
-        Transfers.launch("extract", srcId, dstId) { Extract(it, srcId, archive, dstId, dstDir, intoNewFolder).run() }
+    /**
+     * Extrait [archive] de [srcId] sous [dstDir] de [dstId], dans un nouveau dossier au nom de l'archive si [intoNewFolder].
+     * [password] (phase 14) : ZIP protégé ; le tableau est mis à zéro à la fin, succès comme échec.
+     */
+    fun startExtract(srcId: String, archive: String, dstId: String, dstDir: String, intoNewFolder: Boolean,
+                     password: ByteArray? = null) {
+        try {
+            Transfers.launch("extract", srcId, dstId) {
+                Extract(it, srcId, archive, dstId, dstDir, intoNewFolder, password, ArcMode.PLAIN, null, false).run()
+            }
+        } catch (e: Throwable) {
+            password?.fill(0)
+            throw e
+        }
+    }
+
+    /**
+     * Extraction sur le créneau déjà pris par [c] (déchiffrement d'un dossier, phase 14) : [mode] [ArcMode.AGE] lit le ZIP
+     * dans un fichier age ; [folderName] : nom du nouveau dossier à la place de celui de l'archive ; [smart] : pas de
+     * nouveau dossier si tout est déjà sous un seul dossier de premier niveau (dossier chiffré). [password] est mis à zéro
+     * à la fin.
+     */
+    internal fun extractOnSlot(
+        c: Transfers.JobContext, srcId: String, archive: String, dstId: String, dstDir: String, intoNewFolder: Boolean,
+        password: ByteArray?, mode: Int, folderName: String?, smart: Boolean = false,
+    ) = Extract(c, srcId, archive, dstId, dstDir, intoNewFolder, password, mode, folderName, smart).run()
 
     /** [stream] : unique entrée d'un .gz ou d'un .xz seul, que libarchive nomme « data ». */
     private class ArcEntry(val raw: ByteArray, val type: String, val size: Long, val encrypted: Boolean, val stream: Boolean)
@@ -149,6 +174,7 @@ object Archives {
     private fun readError(code: Int): Exception = when (code) {
         EngineError.FL_ECORRUPT -> FilesException(code, MSG_CORRUPT)
         EngineError.FL_ENOTSUP -> FilesException(code, MSG_ENCRYPTED)
+        EngineError.FL_EBADPASS -> FilesException(code, Passwords.MSG_BAD_PASSWORD)
         else -> EngineError(code)
     }
 
@@ -163,22 +189,32 @@ object Archives {
         )
     }
 
-    /** Ouvre l'archive [path] de [src], passe sa poignée et l'action « activité » de la source à [body], la ferme toujours. */
-    private fun <T> withReader(src: FileSource, path: String, body: (Long, () -> Unit) -> T): T {
+    /**
+     * Ouvre l'archive [path] de [src], passe sa poignée et l'action « activité » de la source à [body], la ferme toujours.
+     * [password] : une copie est donnée au moteur (qui l'efface) ; le tableau de l'appelant reste à lui.
+     */
+    internal fun <T> withReader(src: FileSource, path: String, mode: Int = ArcMode.PLAIN, password: ByteArray? = null,
+                                body: (Long, () -> Unit) -> T): T {
         var activity: () -> Unit = {}
-        val h = when (val n = src.openNative(path)) {
-            is NativeIn.Fd -> engine.arcOpenFd(openFd(n.file, false))
-            is NativeIn.EngineFile -> {
-                activity = n.onActivity
-                engine.arcOpenFile(n.handle, n.size)
+        val pass = password?.copyOf()
+        val h = try {
+            when (val n = src.openNative(path)) {
+                is NativeIn.Fd -> engine.arcOpenFd(openFd(n.file, false), mode, pass)
+                is NativeIn.EngineFile -> {
+                    activity = n.onActivity
+                    engine.arcOpenFile(n.handle, n.size, mode, pass)
+                }
+                is NativeIn.Proxy -> engine.arcOpenFd(n.open(), mode, pass)
             }
-            is NativeIn.Proxy -> engine.arcOpenFd(n.open())
+        } finally {
+            pass?.fill(0) // déjà mis à zéro par le moteur, sauf si l'ouverture de la source a échoué avant
         }
         if (h < 0) {
             val code = h.toInt()
             throw when (code) {
                 EngineError.FL_ENOTSUP -> FilesException(code, MSG_NOT_ARCHIVE)
                 EngineError.FL_ECORRUPT -> FilesException(code, MSG_CORRUPT)
+                EngineError.FL_EBADPASS -> FilesException(code, Passwords.MSG_BAD_PASSWORD)
                 else -> EngineError(code)
             }
         }
@@ -191,7 +227,7 @@ object Archives {
 
     private class Extract(
         val c: Transfers.JobContext, val srcId: String, val archive: String, val dstId: String, val dstDir: String,
-        val intoNewFolder: Boolean,
+        val intoNewFolder: Boolean, val password: ByteArray?, val mode: Int, val folderName: String?, val smart: Boolean,
     ) {
         var skipped = 0
         /** Réserve de la destination, jamais entamée. */
@@ -199,17 +235,22 @@ object Archives {
         var known = true
 
         fun run() {
-            val src = Files.sourceOrNull(srcId)
-            val dst = Files.sourceOrNull(dstId)
-            if (src == null || dst == null) return c.finish(Transfers.MSG_SOURCE_GONE)
             try {
-                execute(src, dst)
-                c.finish(if (skipped > 0) msgSkipped(skipped) else null)
-            } catch (e: Transfers.Cancelled) {
-                c.finish(cancelled = true)
-            } catch (e: Throwable) {
-                val gone = !Transfers.alive(src) || !Transfers.alive(dst)
-                c.finish(if (gone) Transfers.MSG_SOURCE_GONE else Files.toFilesException(e, "copyDocument").message)
+                val src = Files.sourceOrNull(srcId)
+                val dst = Files.sourceOrNull(dstId)
+                if (src == null || dst == null) return c.finish(Transfers.MSG_SOURCE_GONE)
+                try {
+                    execute(src, dst)
+                    c.finish(if (skipped > 0) msgSkipped(skipped) else null)
+                } catch (e: Transfers.Cancelled) {
+                    c.finish(cancelled = true)
+                } catch (e: Throwable) {
+                    val gone = !Transfers.alive(src) || !Transfers.alive(dst)
+                    val bad = (e as? FilesException)?.code == EngineError.FL_EBADPASS
+                    c.finish(if (gone) Transfers.MSG_SOURCE_GONE else Files.toFilesException(e, "copyDocument").message, badPassword = bad)
+                }
+            } finally {
+                password?.fill(0)
             }
         }
 
@@ -220,7 +261,7 @@ object Archives {
             val d = dst.stat(dir) ?: throw FileNotFoundException("Dossier introuvable")
             if (!d.type.isDir()) throw FileNotFoundException("Ce n'est pas un dossier")
             val arcName = WriteOps.nameOf(arc)
-            val zip = arcName.endsWith(".zip", ignoreCase = true)
+            val zip = mode == ArcMode.AGE || arcName.endsWith(".zip", ignoreCase = true) // .zip.age : un ZIP dedans
             fun relOf(e: ArcEntry) = ArchivePaths.safeRelative(ArchivePaths.decodeName(e.raw, zip))
             val (free, total) = dst.space()
             known = free >= 0 // place inconnue (dossier distant) : ni budget ni réserve
@@ -235,6 +276,8 @@ object Archives {
             var announced = 0L
             var need = 0L
             var stream = false
+            val firsts = HashSet<String>() // premiers composants des chemins
+            var rootFile = false            // un fichier directement à la racine de l'archive
             val dirSet = HashSet<String>()
             fun addDirs(rel: String) {
                 var d = rel
@@ -242,14 +285,18 @@ object Archives {
             }
             fun needed() = need + BLOCK * dirSet.size
             fun noSpace() = FilesException(EngineError.FL_ENOSPC, Transfers.msgNoSpace(needed(), maxOf(0L, budget)))
-            withReader(src, arc) { h, activity ->
+            withReader(src, arc, mode, password) { h, activity ->
                 while (true) {
                     c.checkCancel()
                     activity()
                     val e = next(h) ?: break
-                    if (e.encrypted) throw FilesException(EngineError.FL_ENOTSUP, MSG_ENCRYPTED)
+                    if (e.encrypted && password == null) throw FilesException(EngineError.FL_ENOTSUP, MSG_ENCRYPTED)
                     if (e.stream) stream = true
                     val rel = if (e.stream) "" else relOf(e) ?: continue
+                    if (rel.isNotEmpty()) {
+                        firsts.add(rel.substringBefore('/'))
+                        if (e.type != "d" && '/' !in rel) rootFile = true
+                    }
                     when (e.type) {
                         "d" -> addDirs(rel)
                         "f" -> {
@@ -269,7 +316,9 @@ object Archives {
             val restricted = dst.restrictedNames
             fun clean(n: String) = if (restricted) DocNames.sanitize(n) else n
             // un .gz ou un .xz seul : un fichier, à côté de l'archive, sans nouveau dossier
-            val root = if (intoNewFolder && !stream) dst.mkdir(dir, clean(stripExtension(arcName))) else dir
+            // dossier chiffré : tout est déjà sous un seul dossier, qui est extrait tel quel
+            val oneTop = smart && firsts.size == 1 && !rootFile
+            val root = if (intoNewFolder && !stream && !oneTop) dst.mkdir(dir, clean(folderName ?: stripExtension(arcName))) else dir
             // dossiers de l'archive (chemin relatif) → dossiers créés par nous sur la destination
             val dirs = HashMap<String, String>()
             fun dirFor(rel: String): String {
@@ -281,13 +330,13 @@ object Archives {
                 return dst.mkdir(parent, clean(rel.substringAfterLast('/'))).also { dirs[rel] = it }
             }
             var written = 0L
-            withReader(src, arc) { h, activity ->
+            withReader(src, arc, mode, password) { h, activity ->
                 val buf = ByteArray(WriteOps.COPY_CHUNK)
                 while (true) {
                     c.checkCancel()
                     activity()
                     val e = next(h) ?: break
-                    if (e.encrypted) throw FilesException(EngineError.FL_ENOTSUP, MSG_ENCRYPTED)
+                    if (e.encrypted && password == null) throw FilesException(EngineError.FL_ENOTSUP, MSG_ENCRYPTED)
                     if (e.stream) {
                         written += extractFile(h, e, dst, root, clean(stripExtension(arcName)), buf, budget - written, activity)
                         continue

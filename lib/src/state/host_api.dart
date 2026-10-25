@@ -33,8 +33,37 @@ abstract class HostApi {
   Future<void> share(String sourceId, List<String> paths);
   Future<void> startTransfer(String srcId, List<String> paths, String dstId, String dstDir, bool move);
   Future<void> startCompress(String srcId, List<String> paths, String dstDir, String name);
-  Future<void> startExtract(String srcId, String archive, String dstId, String dstDir, bool intoNewFolder);
+  Future<void> startExtract(String srcId, String archive, String dstId, String dstDir, bool intoNewFolder,
+      {Uint8List? password});
   Future<void> cancelTransfer();
+
+  /// Copie protégée d'un mot de passe (effacée après 60 s) ; [text] est mis à zéro par l'appelant.
+  Future<void> copySecret(Uint8List text);
+
+  // chiffrement (phase 14) : les tampons de mots de passe sont mis à zéro par l'appelant après l'appel
+  Future<EncryptedInfoMsg> encryptedInfo(String sourceId, String path);
+  Future<void> startEncrypt(String srcId, List<String> paths, String dstId, String dstDir, String format, bool together,
+      String? name, bool deleteOriginal, Uint8List password);
+  Future<void> startDecrypt(String srcId, String path, String dstId, String dstDir, bool extractFolder, Uint8List password);
+  Future<void> startVerify(String srcId, String path, Uint8List password);
+  Future<void> changeFilePassword(String srcId, String path, Uint8List oldPassword, Uint8List newPassword);
+  Future<SourceMsg> openDecrypted(String srcId, String path, Uint8List password);
+  Future<void> closeDecrypted(String sourceId);
+
+  // coffres (phase 14)
+  Future<List<VaultMsg>> listVaults();
+  Future<VaultMsg> createVault(String srcId, String dir, String name, int sizeBytes, String fs, Uint8List password);
+  Future<VolumeMsg> openVault(String? vaultId, String? srcId, String? path, Uint8List password, bool writable,
+      {bool recovery = false});
+  Future<void> changeVaultPassword(String vaultId, Uint8List oldPassword, Uint8List newPassword);
+  Future<Uint8List> addRecoveryKey(String vaultId, Uint8List password);
+  Future<void> removeRecoveryKey(String vaultId, Uint8List password);
+  Future<String?> biometricUnavailable();
+  Future<void> enableBiometric(String vaultId, Uint8List password);
+  Future<VolumeMsg> openVaultBiometric(String vaultId, bool writable);
+  Future<void> disableBiometric(String vaultId, Uint8List? password);
+  Future<void> closeVault(String vaultId);
+  Future<void> forgetVault(String vaultId);
   Future<SearchResultMsg> search(String sourceId, String path, String query, bool showHidden);
   Future<void> cancelSearch();
   Future<SpaceReportMsg> analyzeSpace(String sourceId, String path);
@@ -172,10 +201,67 @@ class PigeonHostApi implements HostApi {
   Future<void> startCompress(String srcId, List<String> paths, String dstDir, String name) =>
       _api.startCompress(srcId, paths, dstDir, name);
   @override
-  Future<void> startExtract(String srcId, String archive, String dstId, String dstDir, bool intoNewFolder) =>
-      _api.startExtract(srcId, archive, dstId, dstDir, intoNewFolder);
+  Future<void> startExtract(String srcId, String archive, String dstId, String dstDir, bool intoNewFolder,
+          {Uint8List? password}) =>
+      _api.startExtract(srcId, archive, dstId, dstDir, intoNewFolder, password);
   @override
   Future<void> cancelTransfer() => _api.cancelTransfer();
+  @override
+  Future<void> copySecret(Uint8List text) => _api.copySecret(text);
+  @override
+  Future<EncryptedInfoMsg> encryptedInfo(String sourceId, String path) => _api.encryptedInfo(sourceId, path);
+  @override
+  Future<void> startEncrypt(String srcId, List<String> paths, String dstId, String dstDir, String format, bool together,
+          String? name, bool deleteOriginal, Uint8List password) =>
+      _api.startEncrypt(srcId, paths, dstId, dstDir, format, together, name, deleteOriginal, password);
+  @override
+  Future<void> startDecrypt(String srcId, String path, String dstId, String dstDir, bool extractFolder, Uint8List password) =>
+      _api.startDecrypt(srcId, path, dstId, dstDir, extractFolder, password);
+  @override
+  Future<void> startVerify(String srcId, String path, Uint8List password) => _api.startVerify(srcId, path, password);
+  @override
+  Future<void> changeFilePassword(String srcId, String path, Uint8List oldPassword, Uint8List newPassword) =>
+      _api.changeFilePassword(srcId, path, oldPassword, newPassword);
+  @override
+  Future<SourceMsg> openDecrypted(String srcId, String path, Uint8List password) =>
+      _api.openDecrypted(srcId, path, password);
+  @override
+  Future<void> closeDecrypted(String sourceId) => _api.closeDecrypted(sourceId);
+  @override
+  Future<List<VaultMsg>> listVaults() => _api.listVaults();
+  @override
+  Future<VaultMsg> createVault(String srcId, String dir, String name, int sizeBytes, String fs, Uint8List password) =>
+      _api.createVault(srcId, dir, name, sizeBytes, fs, password);
+  @override
+  Future<VolumeMsg> openVault(String? vaultId, String? srcId, String? path, Uint8List password, bool writable,
+          {bool recovery = false}) =>
+      _api.openVault(vaultId, srcId, path, password, writable, recovery);
+
+  @override
+  Future<void> changeVaultPassword(String vaultId, Uint8List oldPassword, Uint8List newPassword) =>
+      _api.changeVaultPassword(vaultId, oldPassword, newPassword);
+
+  @override
+  Future<Uint8List> addRecoveryKey(String vaultId, Uint8List password) => _api.addRecoveryKey(vaultId, password);
+
+  @override
+  Future<void> removeRecoveryKey(String vaultId, Uint8List password) => _api.removeRecoveryKey(vaultId, password);
+
+  @override
+  Future<String?> biometricUnavailable() => _api.biometricUnavailable();
+
+  @override
+  Future<void> enableBiometric(String vaultId, Uint8List password) => _api.enableBiometric(vaultId, password);
+
+  @override
+  Future<VolumeMsg> openVaultBiometric(String vaultId, bool writable) => _api.openVaultBiometric(vaultId, writable);
+
+  @override
+  Future<void> disableBiometric(String vaultId, Uint8List? password) => _api.disableBiometric(vaultId, password);
+  @override
+  Future<void> closeVault(String vaultId) => _api.closeVault(vaultId);
+  @override
+  Future<void> forgetVault(String vaultId) => _api.forgetVault(vaultId);
   @override
   Future<SearchResultMsg> search(String sourceId, String path, String query, bool showHidden) =>
       _api.search(sourceId, path, query, showHidden);

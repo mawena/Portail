@@ -19,6 +19,7 @@ const portailLibraries = <(String, List<String>)>[
   ('Apache Commons Net', ['assets/licenses/commons-net-notice.txt', 'assets/licenses/apache-2.0.txt']),
   ('JSch', ['assets/licenses/jsch.txt']),
   ('Bouncy Castle', ['assets/licenses/bouncycastle.txt']),
+  ('EFF Large Wordlist', ['assets/words/LICENCE-EFF.txt']),
 ];
 
 /// Ajoute les licences des bibliothèques de Portail à celles de Flutter ; elles ne sont lues qu'à l'ouverture de la

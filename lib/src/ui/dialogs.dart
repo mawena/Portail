@@ -31,6 +31,13 @@ Future<bool> confirmAction(
   return ok == true;
 }
 
+/// Partage depuis une vue déchiffrée (phase 14) : le destinataire reçoit le fichier en clair, ce qui est demandé
+/// d'abord. Vrai si le partage peut se faire (toute autre source : sans question).
+Future<bool> confirmPlainShare(BuildContext context, String? sourceKind) async {
+  if (sourceKind != 'decrypted') return true;
+  return confirmAction(context, title: Fr.sharePlainTitle, body: Fr.sharePlainBody, confirmLabel: Fr.share);
+}
+
 /// Raison pour laquelle [name] ne peut pas nommer un fichier ou un dossier, ou null s'il convient : vide, « . »,
 /// « .. », « / », caractère NUL, plus de 255 octets en UTF-8 (limite des systèmes de fichiers).
 String? nameError(String name) {

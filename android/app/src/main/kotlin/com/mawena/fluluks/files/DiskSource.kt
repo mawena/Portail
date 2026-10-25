@@ -12,6 +12,7 @@ import com.mawena.fluluks.engine.VolumeStat
 import com.mawena.fluluks.provider.DocumentIds
 import com.mawena.fluluks.provider.ProviderErrors
 import com.mawena.fluluks.provider.WriteOps
+import com.mawena.fluluks.vaults.Vaults
 import com.mawena.fluluks.volumes.VolumeManager
 import java.io.FileNotFoundException
 import java.io.IOException
@@ -106,16 +107,19 @@ class DiskSource(override val id: String, private val engine: Engine = NativeEng
 
     override fun rename(path: String, newName: String): String {
         val p = PathRules.require(path)
+        Vaults.requireClosed(id, p)
         return write(WriteOps.parentOf(p)) { it.rename(p, newName) }
     }
 
     override fun delete(path: String) {
         val p = PathRules.require(path)
+        Vaults.requireClosed(id, p)
         write(WriteOps.parentOf(p)) { it.delete(p) }
     }
 
     override fun deleteAll(paths: List<String>) {
         val ps = paths.map(PathRules::require)
+        ps.forEach { Vaults.requireClosed(id, it) }
         write(*ps.map(WriteOps::parentOf).distinct().toTypedArray()) { w -> ps.forEach(w::delete) }
     }
 
@@ -123,6 +127,7 @@ class DiskSource(override val id: String, private val engine: Engine = NativeEng
         val p = PathRules.require(path)
         val t = PathRules.require(targetParent)
         if (t == p || DocumentIds.isDescendant(p, t)) throw FileNotFoundException(Files.MSG_INTO_ITSELF)
+        Vaults.requireClosed(id, p)
         return write(WriteOps.parentOf(p), t) { it.move(p, t) }
     }
 
@@ -147,6 +152,7 @@ class DiskSource(override val id: String, private val engine: Engine = NativeEng
 
     override fun openOverwrite(path: String): OutputStream {
         val p = PathRules.require(path)
+        Vaults.requireClosed(id, p)
         val h = handle()
         val parent = WriteOps.parentOf(p)
         val f = write(parent) { EngineError.check(engine.openFile(h, b(p), OpenFlags.RDWR or OpenFlags.TRUNC)) }
@@ -154,6 +160,21 @@ class DiskSource(override val id: String, private val engine: Engine = NativeEng
             VolumeManager.noteWrite(id)
             VolumeManager.notifyChanged(id, parent)
         }
+    }
+
+    /**
+     * Fichier [path] ouvert pour le disque d'un coffre (phase 14) : poignée du moteur, en lecture et écriture si
+     * [writable], et sa taille. La poignée appartient ensuite au disque du coffre, qui la ferme.
+     */
+    internal fun openForVault(path: String, writable: Boolean): Pair<Long, Long> {
+        val p = PathRules.require(path)
+        val h = handle()
+        val st = WriteOps(engine, h).statOrNull(p) ?: throw FileNotFoundException("Document introuvable")
+        if (st.type != FileType.FILE) throw FileNotFoundException("Ce n'est pas un fichier ordinaire")
+        if (writable) requireWritable()
+        // les écritures du coffre passent par ce volume : chaque synchronisation du coffre synchronise aussi le volume
+        val f = EngineError.check(engine.openFile(h, b(p), if (writable) OpenFlags.RDWR else OpenFlags.RDONLY))
+        return f to st.size
     }
 
     override fun details(path: String): Details? {
