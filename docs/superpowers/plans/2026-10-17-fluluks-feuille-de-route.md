@@ -423,18 +423,19 @@ dans le même commit que le travail.
 
 ### Phase 16 — Analyseur de stockage, comme celui d'Ubuntu ([plan](2026-10-25-phase16-analyseur.md))
 - [x] Plan de la phase 16 écrit *(demande du 2026-10-25 ; spec § 26)*
-- [ ] T1 — Moteur : place allouée, inode et liens physiques dans la liste d'un dossier (ext4, FAT, exFAT, NTFS)
-- [ ] T2 — Liste d'un dossier avec sa place réelle : téléphone et cartes SD par lstat, disques et coffres par le moteur, distant en taille apparente
-- [ ] T3 — Arbre compact et parcours itératif borné (liens physiques une fois, fichiers creux, dossiers inaccessibles, exclusions)
-- [ ] T4 — Analyses gardées, vues élaguées pour les graphiques, part « hors analyse », corbeille et exclusions
-- [ ] T5 — Pont Pigeon et contrôleur de l'écran d'analyse (résultats au fur et à mesure)
-- [ ] T6 — Géométrie des anneaux et de la carte proportionnelle, couleurs contrastées
-- [ ] T7 — Graphiques à l'écran : toucher pour entrer, glisser pour lire, appui long pour le menu, TalkBack
-- [ ] T8 — Écran de l'analyse : arbre synchronisé, fil d'Ariane, profondeur, actions (explorateur, chemin, propriétés, corbeille)
-- [ ] T9 — Accueil de l'analyseur, points d'entrée, emplacements exclus ; retrait de l'analyse de la phase 9
-- [ ] T10 — Documentation
-- [ ] T11 — Essais instrumentés sur le Pixel
-- [ ] *(utilisateur)* T12 — Essais sur le Pixel (comparaison avec Baobab sous Ubuntu)
+- [ ] T1 — Barre de navigation entre les modules (Fichiers, Distants, IA ; l'Analyseur y entre en T10), rail sur grand écran *(demande du 2026-10-26 ; spec § 27)*
+- [ ] T2 — Moteur : place allouée, inode et liens physiques dans la liste d'un dossier (ext4, FAT, exFAT, NTFS)
+- [ ] T3 — Liste d'un dossier avec sa place réelle : téléphone et cartes SD par lstat, disques et coffres par le moteur, distant en taille apparente
+- [ ] T4 — Arbre compact et parcours itératif borné (liens physiques une fois, fichiers creux, dossiers inaccessibles, exclusions)
+- [ ] T5 — Analyses gardées, vues élaguées pour les graphiques, part « hors analyse », corbeille et exclusions
+- [ ] T6 — Pont Pigeon et contrôleur de l'écran d'analyse (résultats au fur et à mesure)
+- [ ] T7 — Géométrie des anneaux et de la carte proportionnelle, couleurs contrastées
+- [ ] T8 — Graphiques à l'écran : toucher pour entrer, glisser pour lire, appui long pour le menu, TalkBack
+- [ ] T9 — Écran de l'analyse : arbre synchronisé, fil d'Ariane, profondeur, actions (explorateur, chemin, propriétés, corbeille)
+- [ ] T10 — Accueil de l'analyseur (module de la barre), points d'entrée, emplacements exclus ; retrait de l'analyse de la phase 9
+- [ ] T11 — Documentation
+- [ ] T12 — Essais instrumentés sur le Pixel
+- [ ] *(utilisateur)* T13 — Essais sur le Pixel (comparaison avec Baobab sous Ubuntu)
 - [ ] Relecture finale de toute la branche
 - [ ] Fusion `feature/analyseur` → `develop`
 - [ ] Version `v1.9.0`
