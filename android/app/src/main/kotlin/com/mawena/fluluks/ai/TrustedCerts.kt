@@ -2,7 +2,6 @@ package com.mawena.fluluks.ai
 
 import java.io.File
 import java.net.Socket
-import java.net.URI
 import java.security.KeyStore
 import java.security.MessageDigest
 import java.security.cert.CertificateException
@@ -14,6 +13,7 @@ import javax.net.ssl.SSLSocket
 import javax.net.ssl.TrustManagerFactory
 import javax.net.ssl.X509ExtendedTrustManager
 import javax.net.ssl.X509TrustManager
+import okhttp3.HttpUrl.Companion.toHttpUrl
 import okhttp3.OkHttpClient
 import okhttp3.internal.tls.OkHostnameVerifier
 import org.json.JSONObject
@@ -117,11 +117,13 @@ class TrustedCerts(private val file: File?) {
 
         fun hostPort(host: String, port: Int) = "${host.lowercase()}:$port"
 
-        /** « hôte:port » d'une URL de base (port par défaut du schéma). */
+        /**
+         * « hôte:port » d'une URL de base (port par défaut du schéma), l'hôte écrit comme OkHttp le passe à la connexion
+         * TLS : une adresse IPv6 sans crochets et sous sa forme abrégée.
+         */
         fun hostPort(baseUrl: String): String {
-            val u = URI(baseUrl)
-            val port = if (u.port != -1) u.port else if (u.scheme.equals("https", true)) 443 else 80
-            return hostPort(u.host, port)
+            val u = baseUrl.toHttpUrl()
+            return hostPort(u.host, u.port)
         }
 
         fun systemTrustManager(): X509TrustManager {

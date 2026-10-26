@@ -57,6 +57,17 @@ void main() {
     expect(find.byType(AiServerForm), findsOneWidget);
   });
 
+  testWidgets('pastedKeyIsTrimmed', (t) async {
+    final api = FakeHostApi();
+    await pumpPage(t, api, (s) => AiServerForm(state: s));
+    await t.enterText(find.widgetWithText(TextFormField, Fr.aiServerName), 'Atelier');
+    await t.enterText(find.widgetWithText(TextFormField, Fr.aiServerUrl), 'https://atelier.mawena.cloud');
+    await t.enterText(find.widgetWithText(TextFormField, Fr.aiApiKey), '  cle-secrete \n');
+    await t.tap(find.text(Fr.save));
+    await t.pumpAndSettle();
+    expect(api.aiKeyCopy, 'cle-secrete');
+  });
+
   testWidgets('addServerSavesAndZeroesKey', (t) async {
     final api = FakeHostApi();
     await pumpPage(t, api, (s) => AiServerForm(state: s));

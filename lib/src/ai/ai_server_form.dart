@@ -94,7 +94,8 @@ class _AiServerFormState extends State<AiServerForm> {
       hasKey: false,
       isDefault: false,
     );
-    final key = _key.text.isEmpty ? null : Uint8List.fromList(utf8.encode(_key.text));
+    final typed = _key.text.trim(); // une clé collée emporte souvent une espace ou un saut de ligne
+    final key = typed.isEmpty ? null : Uint8List.fromList(utf8.encode(typed));
     try {
       await _state.ai.save(msg, key);
       if (mounted) Navigator.of(context).pop();

@@ -5644,8 +5644,8 @@ interface AiHostApi {
   fun saveAiServer(server: AiServerMsg, key: ByteArray?): AiServerMsg
   /** « Retirer la clé » : le fichier scellé est supprimé. */
   fun removeAiServerKey(serverId: String)
-  /** Supprime le serveur et sa clé ; ses conversations restent lisibles. */
-  fun deleteAiServer(serverId: String)
+  /** Supprime le serveur et sa clé ; ses conversations restent lisibles, ses automatisations sont désactivées. */
+  fun deleteAiServer(serverId: String, callback: (Result<Unit>) -> Unit)
   fun setDefaultAiServer(serverId: String)
   fun testAiServer(serverId: String, callback: (Result<AiTestResultMsg>) -> Unit)
   fun aiModels(serverId: String, callback: (Result<List<String>>) -> Unit)
@@ -5768,13 +5768,14 @@ interface AiHostApi {
           channel.setMessageHandler { message, reply ->
             val args = message as List<Any?>
             val serverIdArg = args[0] as String
-            val wrapped: List<Any?> = try {
-              api.deleteAiServer(serverIdArg)
-              listOf(null)
-            } catch (exception: Throwable) {
-              FluLuksApiPigeonUtils.wrapError(exception)
+            api.deleteAiServer(serverIdArg) { result: Result<Unit> ->
+              val error = result.exceptionOrNull()
+              if (error != null) {
+                reply.reply(FluLuksApiPigeonUtils.wrapError(error))
+              } else {
+                reply.reply(FluLuksApiPigeonUtils.wrapResult(null))
+              }
             }
-            reply.reply(wrapped)
           }
         } else {
           channel.setMessageHandler(null)

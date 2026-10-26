@@ -63,14 +63,14 @@ class AiHostApiImpl(private val context: Context) : AiHostApi {
             override fun state(r: AutomationRun) {
                 scope.launch { events.onAutomationState(runMsg(r)) { /* réponse ignorée */ } }
             }
-        }.also { Autos.get().sink = it }
+        }.also { Autos.live().sink = it }
     }
 
     fun detach(messenger: BinaryMessenger) {
         AiHostApi.setUp(messenger, null)
         if (Chats.sessions().sink === sink) Chats.sessions().sink = null
         sink = null
-        if (Autos.get().sink === autoSink) Autos.get().sink = null
+        if (Autos.live().sink === autoSink) Autos.live().sink = null
         autoSink = null
         scope.cancel()
     }
@@ -92,7 +92,7 @@ class AiHostApiImpl(private val context: Context) : AiHostApi {
     override fun removeAiServerKey(serverId: String) = sync { Ai.servers().removeKey(serverId) }
 
     /** Ses automatisations sont désactivées et leur planification annulée ; son certificat approuvé est oublié. */
-    override fun deleteAiServer(serverId: String) = sync {
+    override fun deleteAiServer(serverId: String, callback: (Result<Unit>) -> Unit) = io(callback) {
         val hostPort = Ai.servers().get(serverId)?.let { TrustedCerts.hostPort(it.baseUrl) }
         Ai.servers().delete(serverId)
         Autos.get().serverDeleted(serverId)
@@ -148,7 +148,7 @@ class AiHostApiImpl(private val context: Context) : AiHostApi {
     override fun renameConversation(id: Long, title: String, callback: (Result<Unit>) -> Unit) =
         io(callback) { Chats.store().rename(id, title) }
 
-    override fun deleteConversation(id: Long, callback: (Result<Unit>) -> Unit) = io(callback) { Chats.store().delete(id) }
+    override fun deleteConversation(id: Long, callback: (Result<Unit>) -> Unit) = io(callback) { Chats.sessions().delete(id) }
 
     override fun setConversationModel(id: Long, serverId: String?, model: String?, callback: (Result<Unit>) -> Unit) =
         io(callback) { Chats.store().setModel(id, serverId, model) }
@@ -204,9 +204,9 @@ class AiHostApiImpl(private val context: Context) : AiHostApi {
     override fun runAutomation(id: Long, values: Map<String, String>, callback: (Result<AutomationRunMsg>) -> Unit) =
         io(callback) { runMsg(Autos.get().start(id, values)) }
 
-    override fun stopAutomationRun(runId: Long) = sync { Autos.get().stop(runId) }
+    override fun stopAutomationRun(runId: Long) = sync { Autos.live().stop(runId) }
 
-    override fun runningAutomationRuns(): List<Long> = sync { Autos.get().running().toList() }
+    override fun runningAutomationRuns(): List<Long> = sync { Autos.live().running().toList() }
 
     override fun automationRuns(automationId: Long, callback: (Result<List<AutomationRunMsg>>) -> Unit) =
         io(callback) { Autos.get().runs(automationId).map(::runMsg) }

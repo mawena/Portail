@@ -218,6 +218,32 @@ void main() {
     expect(pos().pixels, lessThan(pos().maxScrollExtent));
   });
 
+  testWidgets('slowDragUpDuringAnswerIsNotUndone', (t) async {
+    final api = withServer();
+    final state = await pumpPage(t, api, (s) => ChatScreen(state: s));
+    await send(t, 'Longue réponse');
+    final id = replyId(api, 1);
+    final list = find.byKey(const ValueKey('chat-messages'));
+    ScrollPosition pos() =>
+        t.state<ScrollableState>(find.descendant(of: list, matching: find.byType(Scrollable)).first).position;
+    for (var i = 0; i < 40; i++) {
+      state.chats.onChatDelta(1, id, 'Ligne $i\n\n');
+      await settle(t);
+    }
+    expect(pos().pixels, pos().maxScrollExtent);
+
+    // le doigt remonte lentement pendant que la réponse continue d'arriver
+    final g = await t.startGesture(t.getCenter(list));
+    for (var i = 40; i < 60; i++) {
+      await g.moveBy(const Offset(0, 10));
+      state.chats.onChatDelta(1, id, 'Ligne $i\n\n');
+      await settle(t);
+    }
+    await g.up();
+    await settle(t);
+    expect(pos().maxScrollExtent - pos().pixels, greaterThan(100), reason: "le geste de l'utilisateur n'est pas annulé");
+  });
+
   testWidgets('renameAndDeleteFromListLongPress', (t) async {
     final api = await withConversation();
     await pumpPage(t, api, (s) => ChatListScreen(state: s));

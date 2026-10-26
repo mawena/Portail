@@ -174,6 +174,20 @@ class ChatSessionsTest {
         assertTrue(s.job(c.id) == null)
     }
 
+    /** Supprimer la conversation arrête sa réponse : le serveur cesse de générer et la place est libérée. */
+    @Test fun deleteDuringReplyStopsItAndFreesItsPlace() {
+        val c = store.create()
+        server.enqueue(sse(*(1..400).map { delta("mot$it ") }.toTypedArray()).throttleBody(64, 20, TimeUnit.MILLISECONDS))
+        val rec = Rec()
+        val s = sessions(rec, batchMs = 5)
+        s.send(c.id, "Raconte")
+        waitFor("un premier lot") { rec.events.any { it.startsWith("d:") } }
+        runBlocking { s.delete(c.id) }
+        assertTrue("réponse arrêtée", s.running().isEmpty())
+        assertTrue(dao.conversations().none { it.id == c.id })
+        assertTrue(dao.messages(c.id).isEmpty())
+    }
+
     @Test fun stopWhileConnecting() {
         val c = store.create()
         server.enqueue(sse(delta("tard")).setHeadersDelay(5, TimeUnit.SECONDS))

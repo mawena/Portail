@@ -5709,7 +5709,7 @@ class AiHostApi {
     ;
   }
 
-  /// Supprime le serveur et sa clé ; ses conversations restent lisibles.
+  /// Supprime le serveur et sa clé ; ses conversations restent lisibles, ses automatisations sont désactivées.
   Future<void> deleteAiServer(String serverId) async {
     final pigeonVar_channelName = 'dev.flutter.pigeon.fluluks.AiHostApi.deleteAiServer$pigeonVar_messageChannelSuffix';
     final pigeonVar_channel = BasicMessageChannel<Object?>(

@@ -124,8 +124,12 @@ class _ChatScreenState extends State<ChatScreen> with HideChats {
     if (p.pixels != p.maxScrollExtent) _scroll.jumpTo(p.maxScrollExtent);
   }
 
+  /// Un doigt posé sur la liste arrête le suivi (sauter en bas annulerait son geste) ; à la fin du défilement, le
+  /// suivi reprend si la liste est restée en bas.
   bool _onScroll(ScrollNotification n) {
-    if ((n is ScrollUpdateNotification && n.dragDetails != null) || n is ScrollEndNotification) {
+    if (n is ScrollStartNotification && n.dragDetails != null) {
+      _follow = false;
+    } else if (n is ScrollEndNotification) {
       final p = n.metrics;
       _follow = p.maxScrollExtent - p.pixels < Layout.minTouch;
     }

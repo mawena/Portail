@@ -8,8 +8,12 @@ import androidx.work.WorkInfo
 import androidx.work.WorkManager
 import androidx.work.testing.SynchronousExecutor
 import androidx.work.testing.WorkManagerTestInitHelper
+import com.mawena.fluluks.ai.Ai
+import com.mawena.fluluks.ai.AiHttp
 import com.mawena.fluluks.ai.AiServerConfig
+import com.mawena.fluluks.ai.AiServers
 import com.mawena.fluluks.ai.OpenAiCompatibleProvider
+import com.mawena.fluluks.ai.TrustedCerts
 import com.mawena.fluluks.ai.auto.Automation
 import com.mawena.fluluks.ai.auto.AutomationDatabase
 import com.mawena.fluluks.ai.auto.AutomationRun
@@ -18,9 +22,17 @@ import com.mawena.fluluks.ai.auto.AutomationWorker
 import com.mawena.fluluks.ai.auto.Automations
 import com.mawena.fluluks.ai.auto.Autos
 import com.mawena.fluluks.ai.auto.WorkManagerScheduler
+import com.mawena.fluluks.bridge.AiHostApiImpl
+import com.mawena.fluluks.remote.KeystoreSecretBox
+import io.flutter.plugin.common.BinaryMessenger
+import java.io.File
+import java.nio.ByteBuffer
+import java.util.concurrent.LinkedBlockingQueue
+import java.util.concurrent.TimeUnit
 import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
+import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Assert.fail
 import org.junit.Before
@@ -65,9 +77,9 @@ class AutomationWorkerInstrumentedTest {
         db.close()
     }
 
-    private fun periodic() = autos.save(
+    private fun periodic(serverId: String = "s1") = autos.save(
         Automation(
-            name = "Essai planifié", template = "Dis bonjour à {{nom}} le {{date}}", variables = "", serverId = "s1",
+            name = "Essai planifié", template = "Dis bonjour à {{nom}} le {{date}}", variables = "", serverId = serverId,
             model = "essai-court", systemPrompt = null, trigger = Automation.PERIODIC, intervalMinutes = 15, enabled = true,
             createdAt = 0, updatedAt = 0,
         ),
@@ -119,5 +131,65 @@ class AutomationWorkerInstrumentedTest {
         val b = periodic()
         autos.delete(b.id)
         assertEquals(WorkInfo.State.CANCELLED, work(b.id).state)
+    }
+
+    /** Suppression par le pont, appelé sur le fil principal comme par Pigeon ; rend l'erreur éventuelle. */
+    private fun deleteThroughBridge(serverId: String): Throwable? {
+        val done = LinkedBlockingQueue<Result<Unit>>()
+        InstrumentationRegistry.getInstrumentation().runOnMainSync {
+            AiHostApiImpl(context).deleteAiServer(serverId) { done.put(it) }
+        }
+        return done.poll(10, TimeUnit.SECONDS)!!.exceptionOrNull()
+    }
+
+    /** Supprimer un serveur depuis l'écran : lui, ses automatisations (désactivées, plus planifiées) et son certificat. */
+    @Test fun serverDeletedThroughTheBridge() {
+        val dir = File(context.cacheDir, "ia-suppression-${System.nanoTime()}").apply { mkdirs() }
+        val store = AiServers(dir, KeystoreSecretBox())
+        val certs = AiHttp.trusted
+        AiHttp.trusted = TrustedCerts(null)
+        Ai.resetForTests(store)
+        try {
+            val s = store.save(AiServerConfig("", "PC", "https://10.0.0.2:8443"), null)
+            Ai.certs().trust(TrustedCerts.hostPort(s.baseUrl), "AA:BB")
+            val a = periodic(s.id)
+            assertEquals(WorkInfo.State.ENQUEUED, work(a.id).state)
+
+            assertNull(deleteThroughBridge(s.id))
+            assertNull(store.get(s.id))
+            assertFalse(autos.get(a.id).enabled)
+            assertEquals(WorkInfo.State.CANCELLED, work(a.id).state)
+            assertNull(Ai.certs().get(TrustedCerts.hostPort(s.baseUrl)))
+        } finally {
+            Ai.resetForTests(null)
+            AiHttp.trusted = certs
+            dir.deleteRecursively()
+        }
+    }
+
+    /**
+     * Au démarrage de l'application, le pont s'attache sur le fil principal : rien n'y touche à la base (Room le
+     * refuse), pas même la reprise des exécutions interrompues ; l'arrêt et la liste des exécutions en cours non plus.
+     */
+    @Test fun bridgeAttachesOnTheMainThreadWithoutTouchingTheDatabase() {
+        Autos.resetForTests(autos, recovered = false)
+        val messenger = object : BinaryMessenger {
+            override fun send(channel: String, message: ByteBuffer?) = Unit
+            override fun send(channel: String, message: ByteBuffer?, callback: BinaryMessenger.BinaryReply?) = Unit
+            override fun setMessageHandler(channel: String, handler: BinaryMessenger.BinaryMessageHandler?) = Unit
+        }
+        var error: Throwable? = null
+        InstrumentationRegistry.getInstrumentation().runOnMainSync {
+            try {
+                val api = AiHostApiImpl(context)
+                api.attach(messenger)
+                api.runningAutomationRuns()
+                api.stopAutomationRun(1)
+                api.detach(messenger)
+            } catch (e: Throwable) {
+                error = e
+            }
+        }
+        assertNull(error?.stackTraceToString(), error)
     }
 }

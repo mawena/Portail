@@ -4,6 +4,7 @@ import com.mawena.fluluks.ai.AiException
 import com.mawena.fluluks.ai.OpenAiCompatibleProvider
 import com.mawena.fluluks.ai.TrustedCerts
 import java.io.File
+import java.net.InetAddress
 import java.nio.file.Files
 import java.security.KeyStore
 import javax.net.ssl.TrustManagerFactory
@@ -46,11 +47,14 @@ class TrustedCertsTest {
     private val models = "{\"object\":\"list\",\"data\":[{\"id\":\"essai-court\",\"object\":\"model\"}]}"
 
     /** Serveur HTTPS au certificat [cert] (auto-signé par défaut, au nom « localhost »). */
-    private fun https(cert: HeldCertificate = HeldCertificate.Builder().addSubjectAlternativeName("localhost").build()): MockWebServer {
+    private fun https(
+        cert: HeldCertificate = HeldCertificate.Builder().addSubjectAlternativeName("localhost").build(),
+        address: InetAddress? = null,
+    ): MockWebServer {
         val s = MockWebServer()
         s.useHttps(HandshakeCertificates.Builder().heldCertificate(cert).build().sslSocketFactory(), false)
         repeat(3) { s.enqueue(MockResponse().setHeader("Content-Type", "application/json").setBody(models)) }
-        s.start()
+        if (address != null) s.start(address, 0) else s.start()
         servers += s
         return s
     }
@@ -106,6 +110,17 @@ class TrustedCertsTest {
         val e = refused { runBlocking { provider("https://127.0.0.1:${s.port}", http).models() } }
         store.trust("127.0.0.1:${s.port}", e.certificate!!.fingerprint)
         assertEquals(listOf("essai-court"), runBlocking { provider("https://127.0.0.1:${s.port}", http).models() }.map { it.id })
+    }
+
+    /** « Faire confiance » enregistre l'empreinte sous l'hôte de l'adresse saisie : entre crochets pour une IPv6. */
+    @Test fun trustedFingerprintAcceptedForAnIpv6Address() {
+        val cert = HeldCertificate.Builder().addSubjectAlternativeName("localhost").build()
+        val s = https(cert, InetAddress.getByName("::1"))
+        val url = "https://[::1]:${s.port}"
+        val http = client()
+        val e = refused { runBlocking { provider(url, http).models() } }
+        store.trust(TrustedCerts.hostPort(url), e.certificate!!.fingerprint)
+        assertEquals(listOf("essai-court"), runBlocking { provider(url, http).models() }.map { it.id })
     }
 
     @Test fun changedFingerprintRefusedAndExplained() {

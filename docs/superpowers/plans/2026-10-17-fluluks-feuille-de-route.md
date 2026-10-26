@@ -417,7 +417,7 @@ dans le même commit que le travail.
 - [x] T11 — Documentation *(README : intégration IA, limites, sécurité, serveur d'essai, licences d'OkHttp, Room, WorkManager et markdown ; aide : trois questions ; [fiche d'essai](../research/2026-10-25-essais-phase15/essais.md))*
 - [x] T12 — Essais instrumentés sur le Pixel *(12/12 : test de connexion, 2 000 morceaux sans perte ni doublon, arrêt, erreur au milieu du flux, 401 non relancé, délai, base Room, WorkManager planifié puis annulé ; ni clé ni contenu dans logcat ; [journal](../research/2026-10-25-essais-phase15/instrumentes-20261025-2024.txt))*
 - [ ] *(utilisateur)* T13 — Essais sur le Pixel
-- [ ] Relecture finale de toute la branche
+- [x] Relecture finale de toute la branche *(1 point critique et 1 important corrigés, 3 mineurs remontés à important et corrigés, plus le plantage au démarrage signalé pendant les essais ; chacun avec son test ; 784 tests Flutter, 606 JVM, 14 instrumentés)*
 - [ ] Fusion `feature/ia` → `develop`
 - [ ] Version `v1.8.0`
 

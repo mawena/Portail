@@ -16,6 +16,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.cancelAndJoin
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
@@ -77,6 +78,12 @@ class ChatSessions(
     /** Arrête la réponse en cours de la conversation (sans effet s'il n'y en a pas). */
     fun stop(conversationId: Long) {
         job(conversationId)?.cancel()
+    }
+
+    /** Supprime la conversation et ses messages, après avoir arrêté sa réponse en cours (le serveur cesse de générer). */
+    suspend fun delete(conversationId: Long) {
+        job(conversationId)?.cancelAndJoin()
+        store().delete(conversationId)
     }
 
     private fun start(conversationId: Long, prepare: () -> Message): Message {

@@ -1080,7 +1080,8 @@ abstract class AiHostApi {
   /// « Retirer la clé » : le fichier scellé est supprimé.
   void removeAiServerKey(String serverId);
 
-  /// Supprime le serveur et sa clé ; ses conversations restent lisibles.
+  /// Supprime le serveur et sa clé ; ses conversations restent lisibles, ses automatisations sont désactivées.
+  @async
   void deleteAiServer(String serverId);
   void setDefaultAiServer(String serverId);
   @async

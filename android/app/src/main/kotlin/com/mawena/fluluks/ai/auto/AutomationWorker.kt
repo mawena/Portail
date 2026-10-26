@@ -141,8 +141,15 @@ object Autos {
         )
     }
 
+    /**
+     * Sans reprise ni accès à la base, pour le fil principal (Room y refuse toute requête) : destinataire des
+     * exécutions, arrêt, exécutions en cours.
+     */
+    fun live(): Automations = autos ?: throw FilesException(EngineError.FL_ENODEV, "Automatisations indisponibles")
+
+    /** Hors du fil principal : le premier accès reprend les exécutions interrompues. */
     fun get(): Automations {
-        val a = autos ?: throw FilesException(EngineError.FL_ENODEV, "Automatisations indisponibles")
+        val a = live()
         if (!recovered) {
             synchronized(this) {
                 if (!recovered) {
@@ -155,8 +162,8 @@ object Autos {
     }
 
     @VisibleForTesting
-    fun resetForTests(a: Automations?) {
+    fun resetForTests(a: Automations?, recovered: Boolean = true) {
         autos = a
-        recovered = true
+        this.recovered = recovered
     }
 }
