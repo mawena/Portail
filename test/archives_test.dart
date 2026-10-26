@@ -37,14 +37,14 @@ Future<AppState> pump(WidgetTester tester, FakeHostApi api, {String source = 'ph
   final state = AppState(api);
   await state.refresh();
   await tester.pumpWidget(FluLuksApp(state: state));
-  tester.state<NavigatorState>(find.byType(Navigator)).push(
+  tester.state<NavigatorState>(find.byType(Navigator).first).push(
       MaterialPageRoute<void>(builder: (_) => ExplorerScreen(state: state, sourceId: source)));
   await tester.pumpAndSettle();
   return state;
 }
 
 Future<void> openExplorerOn(WidgetTester tester, AppState state, String source) async {
-  tester.state<NavigatorState>(find.byType(Navigator)).push(
+  tester.state<NavigatorState>(find.byType(Navigator).first).push(
       MaterialPageRoute<void>(builder: (_) => ExplorerScreen(state: state, sourceId: source)));
   await tester.pumpAndSettle();
 }

@@ -28,10 +28,14 @@ void main() {
     'automations_dark': ('automations', Brightness.dark),
     'automation_form_light': ('automationForm', Brightness.light),
     'automation_run_dark': ('automationRun', Brightness.dark),
+    // barre des modules (phase 16) : Distants en clair, IA en sombre, rail en paysage
+    'shell_light': ('remoteHome', Brightness.light),
+    'shell_dark': ('aiHome', Brightness.dark),
+    'shell_rail': ('home', Brightness.light),
   };
   for (final MapEntry(key: name, value: (screen, b)) in cases.entries) {
     testWidgets(name, (t) async {
-      await pumpScreen(t, screen, brightness: b);
+      await pumpScreen(t, screen, brightness: b, size: name == 'shell_rail' ? const Size(869, 412) : const Size(412, 869));
       await waitForImages(t);
       await expectLater(find.byType(MaterialApp), matchesGoldenFile('goldens/$name.png'));
     });

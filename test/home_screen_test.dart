@@ -147,7 +147,7 @@ void main() {
     addTearDown(tester.view.reset);
     await pump(tester, FakeHostApi()..sources = [src('phone', 'phone', 'Téléphone')]);
     expect(tester.getTopLeft(find.text(Fr.usbDisks)).dx, greaterThan(640));
-    expect(tester.getTopLeft(find.text(Fr.remoteFolders)).dx, greaterThan(640));
+    expect(tester.getTopLeft(find.text(Fr.vaults)).dx, greaterThan(640));
     expect(tester.getTopLeft(find.text(Fr.storage)).dx, lessThan(640));
     expect(tester.getTopLeft(find.text(Fr.shortcuts)).dx, lessThan(640));
   });

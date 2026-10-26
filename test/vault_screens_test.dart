@@ -52,7 +52,7 @@ Future<AppState> pump(WidgetTester tester, FakeHostApi api, {Widget Function(App
   await state.refresh();
   await tester.pumpWidget(FluLuksApp(state: state));
   if (page != null) {
-    tester.state<NavigatorState>(find.byType(Navigator)).push(MaterialPageRoute<void>(builder: (_) => page(state)));
+    tester.state<NavigatorState>(find.byType(Navigator).first).push(MaterialPageRoute<void>(builder: (_) => page(state)));
   }
   await tester.pumpAndSettle();
   return state;

@@ -74,7 +74,8 @@ class _ChatListScreenState extends State<ChatListScreen> with HideChats {
       });
       return;
     }
-    Navigator.of(context)
+    // plein écran, au-dessus de la barre des modules
+    Navigator.of(context, rootNavigator: true)
         .push(MaterialPageRoute<void>(builder: (_) => ChatScreen(state: widget.state, conversationId: id)));
   }
 

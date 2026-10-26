@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:fluluks/src/ai/ai_home_screen.dart';
 import 'package:fluluks/src/ai/ai_server_form.dart';
 import 'package:fluluks/src/ai/ai_servers_screen.dart';
 import 'package:fluluks/src/ai/automation_form.dart';
@@ -17,6 +18,7 @@ import 'package:fluluks/src/screens/global_search_screen.dart';
 import 'package:fluluks/src/screens/help_screen.dart';
 import 'package:fluluks/src/screens/home_screen.dart';
 import 'package:fluluks/src/screens/now_playing_screen.dart';
+import 'package:fluluks/src/screens/remote_home_screen.dart';
 import 'package:fluluks/src/screens/search_screen.dart';
 import 'package:fluluks/src/screens/server_form_screen.dart';
 import 'package:fluluks/src/screens/settings_screen.dart';
@@ -48,7 +50,7 @@ void main() {
     'vaultCreate': VaultCreateScreen, 'homeVaults': HomeScreen,
     'aiServers': AiServersScreen, 'aiServerForm': AiServerForm, 'chatList': ChatListScreen, 'chat': ChatScreen,
     'automations': AutomationsScreen, 'automationForm': AutomationForm, 'automationRuns': AutomationRunsScreen,
-    'automationRun': AutomationRunScreen,
+    'automationRun': AutomationRunScreen, 'remoteHome': RemoteHomeScreen, 'aiHome': AiHomeScreen,
   };
   testWidgets('harnessShowsEachScreen', (t) async {
     for (final screen in screens) {

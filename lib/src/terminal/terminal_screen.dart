@@ -23,7 +23,7 @@ enum _Menu { paste, snippets, tunnels, fontSize, close }
 Future<void> openTerminal(BuildContext context, AppState state, RemoteServerMsg s, {String? startDir}) async {
   // contexte du Navigator : la session, annoncée pendant la connexion, ajoute la carte des sessions à l'accueil et la
   // tuile qui a lancé l'ouverture est reconstruite ; dialogues (mot de passe, empreinte) et écran partent d'ici
-  context = Navigator.of(context).context;
+  context = Navigator.of(context, rootNavigator: true).context;
   final e = await withServerAuth(
     context,
     state,
@@ -34,9 +34,9 @@ Future<void> openTerminal(BuildContext context, AppState state, RemoteServerMsg 
   await showTerminal(context, state, e.info.id);
 }
 
-/// Écran de la session [sessionId], déjà ouverte.
-Future<void> showTerminal(BuildContext context, AppState state, String sessionId) => Navigator.of(context)
-    .push(MaterialPageRoute<void>(builder: (_) => TerminalScreen(state: state, sessionId: sessionId)));
+/// Écran de la session [sessionId], déjà ouverte : plein écran, au-dessus de la barre des modules.
+Future<void> showTerminal(BuildContext context, AppState state, String sessionId) =>
+    Navigator.of(context, rootNavigator: true).push(MaterialPageRoute<void>(builder: (_) => TerminalScreen(state: state, sessionId: sessionId)));
 
 /// Écran d'un terminal SSH (phase 13) : affichage xterm de la session [sessionId] tenue par `AppState.terminals`.
 /// Pincer change la taille du texte (8 à 32, mémorisée) ; appui long : sélection, puis « Copier » ; menu ⋮ : Coller,

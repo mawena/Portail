@@ -1007,4 +1007,18 @@ class Fr {
   static const automationShareResult = 'Partager le résultat';
   static const automationStopped = 'Exécution arrêtée';
   static const automationInterrupted = "Interrompue\u00A0: Portail a été fermé pendant l'exécution";
+
+  // --- barre de navigation entre les modules (phase 16, T1)
+  static const moduleFiles = 'Fichiers';
+  static const moduleRemote = 'Distants';
+  static const moduleAi = 'IA';
+  static String moduleBusy(String module) => '$module, activité en cours';
+  static const remoteNoServers = 'Aucun serveur';
+  static const sectionSsh = 'SSH';
+  static const remoteNoServersBody =
+      'Ajoutez un serveur SFTP ou FTP pour parcourir ses dossiers\u202F; un serveur SFTP ouvre aussi un terminal SSH.';
+  static const tunnelsHelp = 'Ports du téléphone reliés à un service du serveur';
+  static const tunnelsNeedSftp = 'Ajoutez un serveur SFTP pour préparer des tunnels';
+  static const tunnelsChooseServer = 'Tunnels de quel serveur\u202F?';
+  static String aiServersCount(int n) => n == 0 ? aiServersHelp : count(n, 'serveur', 'serveurs');
 }

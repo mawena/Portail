@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:fluluks/src/app.dart';
 import 'package:fluluks/src/screens/explorer_screen.dart';
+import 'package:fluluks/src/screens/settings_screen.dart';
 import 'package:fluluks/src/bridge/fluluks_api.g.dart';
 import 'package:fluluks/src/state/app_state.dart';
 import 'package:fluluks/src/strings_fr.dart';
@@ -25,7 +26,7 @@ Set<bool> selected(WidgetTester tester) =>
 
 void main() {
   testWidgets('settingsGroupedSections', (tester) async {
-    tester.view.physicalSize = const Size(412, 2400); // toute la liste construite
+    tester.view.physicalSize = const Size(412, 2800); // toute la liste construite, barre des modules comprise
     tester.view.devicePixelRatio = 1;
     addTearDown(tester.view.reset);
     await pumpSettings(tester, FakeHostApi());
@@ -42,7 +43,10 @@ void main() {
       Fr.sectionComfort, Fr.haptics, //
       Fr.title, Fr.help, Fr.about,
     ];
-    final ys = [for (final t in order) tester.getTopLeft(find.text(t)).dy];
+    // dans les Réglages seulement : « Fichiers » est aussi le nom d'un module de la barre
+    final ys = [
+      for (final t in order) tester.getTopLeft(find.descendant(of: find.byType(SettingsScreen), matching: find.text(t))).dy,
+    ];
     expect(ys, [...ys]..sort(), reason: '$ys');
   });
 
@@ -181,13 +185,13 @@ void main() {
     }
 
     Future<void> browse(AppState state, String id) async {
-      tester.state<NavigatorState>(find.byType(Navigator)).push(
+      tester.state<NavigatorState>(find.byType(Navigator).first).push(
           MaterialPageRoute<void>(builder: (_) => ExplorerScreen(state: state, sourceId: id)));
       await tester.pumpAndSettle();
     }
 
     Future<void> back() async {
-      tester.state<NavigatorState>(find.byType(Navigator)).pop();
+      tester.state<NavigatorState>(find.byType(Navigator).first).pop();
       await tester.pumpAndSettle();
     }
 

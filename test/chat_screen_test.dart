@@ -76,9 +76,11 @@ void main() {
 
   int replyId(FakeHostApi api, int conv) => api.chatMessages[conv]!.last.id;
 
-  testWidgets('homeOpensChatList', (t) async {
+  testWidgets('aiModuleOpensChatList', (t) async {
     await pumpPage(t, withServer(), null);
-    await t.scrollUntilVisible(find.text(Fr.chatTitle), 300, scrollable: find.byType(Scrollable).first);
+    // 800 dp de large : le rail des modules
+    await t.tap(find.descendant(of: find.byType(NavigationRail), matching: find.text(Fr.moduleAi)));
+    await settle(t);
     await t.tap(find.text(Fr.chatTitle));
     await settle(t);
     expect(find.byType(ChatListScreen), findsOneWidget);

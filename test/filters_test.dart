@@ -69,7 +69,7 @@ void main() {
   testWidgets('filterScreenOpensFile', (tester) async {
     final api = api0();
     final state = await pumpHome(tester, api);
-    tester.state<NavigatorState>(find.byType(Navigator)).push(MaterialPageRoute<void>(
+    tester.state<NavigatorState>(find.byType(Navigator).first).push(MaterialPageRoute<void>(
         builder: (_) => FilterScreen(state: state, filter: 'documents', title: 'Documents')));
     await tester.pumpAndSettle();
     await tester.tap(find.text('rapport.pdf'));
@@ -87,7 +87,7 @@ void main() {
   testWidgets('emptyFilterMessage', (tester) async {
     final api = api0();
     final state = await pumpHome(tester, api);
-    tester.state<NavigatorState>(find.byType(Navigator)).push(MaterialPageRoute<void>(
+    tester.state<NavigatorState>(find.byType(Navigator).first).push(MaterialPageRoute<void>(
         builder: (_) => FilterScreen(state: state, filter: 'music', title: 'Musique')));
     await tester.pumpAndSettle();
     expect(find.text('Aucun fichier'), findsOneWidget);
@@ -99,7 +99,8 @@ void main() {
       (const Size(412, 869), 1.0, 3),
       (const Size(412, 869), 2.0, 2),
       (const Size(869, 412), 1.0, 3), // accueil en deux colonnes : les raccourcis n'ont que la moitié
-      (const Size(1280, 800), 1.0, 6),
+      (const Size(1280, 800), 1.0, 3), // le rail des modules (phase 16) prend sa part de la largeur
+      (const Size(1600, 900), 1.0, 6),
     ]) {
       tester.view.physicalSize = size;
       tester.view.devicePixelRatio = 1;
@@ -124,7 +125,7 @@ void main() {
 
   Future<AppState> pushFilter(WidgetTester tester, FakeHostApi api, String filter) async {
     final state = await pumpHome(tester, api);
-    tester.state<NavigatorState>(find.byType(Navigator)).push(MaterialPageRoute<void>(
+    tester.state<NavigatorState>(find.byType(Navigator).first).push(MaterialPageRoute<void>(
         builder: (_) => FilterScreen(state: state, filter: filter, title: filter)));
     await tester.pumpAndSettle();
     return state;

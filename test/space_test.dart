@@ -55,7 +55,7 @@ Future<AppState> pumpHome(WidgetTester tester, FakeHostApi api) async {
 }
 
 Future<void> push(WidgetTester tester, Widget screen) async {
-  tester.state<NavigatorState>(find.byType(Navigator)).push(MaterialPageRoute<void>(builder: (_) => screen));
+  tester.state<NavigatorState>(find.byType(Navigator).first).push(MaterialPageRoute<void>(builder: (_) => screen));
   await tester.pumpAndSettle();
 }
 
@@ -104,7 +104,7 @@ void main() {
     final pending = Completer<SpaceReportMsg>();
     api.spaceFuture = pending.future;
     final state = await pumpHome(tester, api);
-    tester.state<NavigatorState>(find.byType(Navigator))
+    tester.state<NavigatorState>(find.byType(Navigator).first)
         .push(MaterialPageRoute<void>(builder: (_) => SpaceScreen(state: state, sourceId: 'phone')));
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 200)); // indicateur affiché après 200 ms (DelayedProgress)

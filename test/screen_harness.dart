@@ -19,6 +19,7 @@ import 'package:fluluks/src/screens/filter_screen.dart';
 import 'package:fluluks/src/screens/format_screen.dart';
 import 'package:fluluks/src/screens/global_search_screen.dart';
 import 'package:fluluks/src/screens/help_screen.dart';
+import 'package:fluluks/src/screens/module_shell.dart';
 import 'package:fluluks/src/screens/search_screen.dart';
 import 'package:fluluks/src/screens/server_form_screen.dart';
 import 'package:fluluks/src/screens/settings_screen.dart';
@@ -46,6 +47,7 @@ const screens = [
   'encrypt', 'decrypt', 'vaultCreate', 'homeVaults',
   'aiServers', 'aiServerForm', 'chatList', 'chat', //
   'automations', 'automationForm', 'automationRuns', 'automationRun', //
+  'remoteHome', 'aiHome', // racines des modules Distants et IA (phase 16)
 ];
 
 /// Pont et état du dernier [pumpScreen] (pour les tests qui agissent ensuite sur l'écran).
@@ -199,7 +201,7 @@ Future<void> pumpScreen(
     'automationRun' => AutomationRunScreen(state: state, runId: 1),
     'encrypt' => EncryptSheet(state: state, sourceId: 'phone', paths: const ['/notes-1.txt', '/Documents'], dir: '/'),
     'vaultCreate' => VaultCreateScreen(state: state, sourceId: 'phone', dir: '/Documents'),
-    'unlock' || 'nowPlaying' || 'decrypt' => null,
+    'unlock' || 'nowPlaying' || 'decrypt' || 'remoteHome' || 'aiHome' => null,
     _ => throw ArgumentError.value(screen, 'screen'),
   };
   final nav = t.state<NavigatorState>(find.byType(Navigator).first);
@@ -219,6 +221,9 @@ Future<void> pumpScreen(
         folder: false,
       ),
     );
+  } else if (screen == 'remoteHome' || screen == 'aiHome') {
+    t.state<ModuleShellState>(find.byType(ModuleShell))
+        .select(screen == 'remoteHome' ? PortailModule.remote : PortailModule.ai);
   } else if (screen == 'homeVaults') {
     // la section « Coffres » en haut de l'écran
     await t.scrollUntilVisible(find.byKey(const ValueKey('a1')), 300, scrollable: find.byType(Scrollable).first);

@@ -36,6 +36,9 @@ class AutomationHub extends ChangeNotifier {
   /// Le lancement [runId] est en cours.
   bool isRunning(int runId) => _running.contains(runId);
 
+  /// Un lancement au moins est en cours (point d'activité du module IA).
+  bool get busy => _running.isNotEmpty;
+
   /// Texte reçu du lancement [runId] tant qu'il est en cours.
   String? liveText(int runId) => _live[runId]?.toString();
 

@@ -138,7 +138,7 @@ l'application », placé en T1 ; spec § 27.)*
   racine de chaque module) ; `Fr.moduleFiles` « Fichiers », `Fr.moduleRemote` « Distants », `Fr.moduleAi` « IA »,
   `Fr.moduleBusy(String module)` « IA, activité en cours ».
 
-- [ ] **Step 1 : tests en échec** (`test/module_shell_test.dart`) :
+- [x] **Step 1 : tests en échec** (`test/module_shell_test.dart`) :
   - `barListsModulesFilesFirst` (barre en bas : **Fichiers**, **Distants**, **IA**, icône et libellé toujours
     visibles ; Fichiers choisi au démarrage ; TalkBack lit « Fichiers, onglet 1 sur 3 ») ;
   - `eachModuleKeepsItsStack` (Fichiers → Téléphone → `/DCIM`, puis IA → Chat, puis Fichiers : `/DCIM` toujours
@@ -167,12 +167,12 @@ l'application », placé en T1 ; spec § 27.)*
 
   Run : `flutter test test/module_shell_test.dart`
   Expected : FAIL (coquille absente).
-- [ ] **Step 2 : implémentation.** `NavigationBar` de Material 3 (`NavigationDestinationLabelBehavior.alwaysShow`) ou
+- [x] **Step 2 : implémentation.** `NavigationBar` de Material 3 (`NavigationDestinationLabelBehavior.alwaysShow`) ou
   `NavigationRail` selon la largeur ; un `Navigator` par module dans un `IndexedStack`, construit au premier passage ;
   `PopScope` pour Retour ; passage d'un module à l'autre en fondu de `Motion.short`, coupé quand Android coupe les
   animations ; les tests existants qui ouvraient Chat, Automatisations ou un serveur depuis l'accueil passent par leur
   module. Écrans au banc d'accessibilité ; images de référence claire, sombre et rail.
-- [ ] **Step 3 :** Run : `flutter analyze && flutter test && flutter test --update-goldens test/goldens_test.dart`
+- [x] **Step 3 :** Run : `flutter analyze && flutter test && flutter test --update-goldens test/goldens_test.dart`
   — Expected : tout vert ; les trois nouvelles images regardées une à une avant d'être gardées.
 - [ ] **Step 4 : démarrage sur le Pixel.** `flutter build apk --debug`, `adb install -r` (téléphone inactif, APK de
   l'utilisateur sauvegardée), `adb logcat -c -b crash`, `adb shell am start -W -n com.mawena.fluluks/.MainActivity` ;
