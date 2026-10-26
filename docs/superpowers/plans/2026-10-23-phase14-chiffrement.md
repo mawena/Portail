@@ -573,7 +573,7 @@ Pigeon `@async void enableBiometric(String vaultId, Uint8List password)`, `@asyn
 ### Fin de phase
 
 - [x] Relecture finale de toute la branche.
-- [ ] Fusion `feature/chiffrement` → `develop`, puis `release/1.7.0` (pubspec `1.7.0+15`), `main`, étiquette signée
+- [x] Fusion `feature/chiffrement` → `develop`, puis `release/1.7.0` (pubspec `1.7.0+15`), `main`, étiquette signée
   `v1.7.0`. Pas de push sans l'accord de l'utilisateur.
 
 ---
