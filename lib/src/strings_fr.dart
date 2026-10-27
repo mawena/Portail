@@ -1013,9 +1013,6 @@ class Fr {
   static const moduleRemote = 'Distants';
   static const moduleAi = 'IA';
 
-  // --- analyseur de stockage (phase 16)
-  /// Même texte que `Analyzer.MSG_GONE` côté Kotlin.
-  static const analysisGone = "Cette analyse n'est plus disponible";
   static String moduleBusy(String module) => '$module, activité en cours';
   static const remoteNoServers = 'Aucun serveur';
   static const sectionSsh = 'SSH';
@@ -1025,4 +1022,26 @@ class Fr {
   static const tunnelsNeedSftp = 'Ajoutez un serveur SFTP pour préparer des tunnels';
   static const tunnelsChooseServer = 'Tunnels de quel serveur\u202F?';
   static String aiServersCount(int n) => n == 0 ? aiServersHelp : count(n, 'serveur', 'serveurs');
+
+  // --- analyseur de stockage (phase 16)
+  /// Même texte que `Analyzer.MSG_GONE` côté Kotlin.
+  static const analysisGone = "Cette analyse n'est plus disponible";
+  static const analysisOthers = 'Autres';
+  static const chartRings = 'Graphique en anneaux';
+  static const chartTreemap = 'Carte proportionnelle';
+
+  /// Résumé lu par TalkBack : « Graphique en anneaux de Téléphone : Photos, 12,3 Go, 45 % ; … » (cinq plus gros).
+  static String chartSummary(String kind, String root, List<(String, int, int)> top) {
+    final what = kind == 'treemap' ? chartTreemap : chartRings;
+    final parts = [for (final (name, bytes, pct) in top) '$name, ${humanSize(bytes)}, ${percent(pct)}'];
+    return parts.isEmpty ? '$what de $root' : '$what de $root\u00A0: ${parts.join('\u202F; ')}';
+  }
+
+  static String ofParent(int pct, String parent) => '${percent(pct)} de $parent';
+
+  /// Place occupée et taille des données quand elles diffèrent (fichier creux, petits fichiers, compression).
+  static String onDiskOfData(int alloc, int apparent) =>
+      '${humanSize(alloc)} sur le disque (${humanSize(apparent)} de données)';
+
+  static String analysisItems(int n) => count(n, 'élément', 'éléments');
 }

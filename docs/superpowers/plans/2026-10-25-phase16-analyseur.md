@@ -528,7 +528,7 @@ tant que pile non vide et non annulé :
   `Fr.chartSummary(String kind, String root, List<(String name, int bytes, int pct)> top)`, `Fr.ofParent(int pct, String parent)`,
   `Fr.onDiskOfData(int alloc, int apparent)`, `Fr.analysisItems(int n)`.
 
-- [ ] **Step 1 : tests en échec** : `tapDirZooms` (toucher un segment de dossier → `onZoom(id)`), `tapFileSelectsOnly`
+- [x] **Step 1 : tests en échec** : `tapDirZooms` (toucher un segment de dossier → `onZoom(id)`), `tapFileSelectsOnly`
   (fichier, `others`, `unscanned` → `onSelect`, jamais `onZoom`), `tapCenterGoesUp` (anneaux), `dragUpdatesInfoStrip`
   (glisser le doigt : la bande montre « Photos — 12,3 Go — 45 % de Téléphone — 1 234 éléments »),
   `apparentShownWhenDifferent` (« 4 Ko sur le disque (1 octet de données) »), `longPressOpensMenu` (`onMenu(id)`),
@@ -539,12 +539,15 @@ tant que pile non vide et non annulé :
 
   Run : `flutter test test/analysis_chart_test.dart`
   Expected : FAIL (widgets absents).
-- [ ] **Step 2 : implémentation.** `CustomPainter` (segments séparés par un trait de 1 dp couleur `surface` ; noms
+- [x] **Step 2 : implémentation.** `CustomPainter` (segments séparés par un trait de 1 dp couleur `surface` ; noms
   dessinés dans les segments et cellules assez grands, en `onSurface` ou `surface` selon le contraste) ; gestes par un
   seul `GestureDetector` (`onTapUp`, `onLongPressStart`, `onPanStart/Update/End`) ; passage d'un zoom à l'autre en
   fondu de `Motion.medium`, coupé quand Android coupe les animations.
-- [ ] **Step 3 :** Run : `flutter test test/analysis_chart_test.dart` — Expected : PASS.
-- [ ] **Step 4 : commit** `feat(analyseur): anneaux et carte proportionnelle, au doigt et lus par TalkBack`.
+- [x] **Step 3 :** Run : `flutter test test/analysis_chart_test.dart` — Expected : PASS.
+  *(Fait : la bande d'information est sous le dessin, dans `AnalysisChart`, avec le survol au doigt ou l'élément
+  choisi ; sans animations, pas d'`AnimatedSwitcher` du tout ; un dossier vide se choisit au lieu d'y entrer ;
+  analysis_chart_test 11 ; 853 tests Flutter.)*
+- [x] **Step 4 : commit** `feat(analyseur): anneaux et carte proportionnelle, au doigt et lus par TalkBack`.
 
 ### Task 9 : écran de l'analyse (graphique, arbre, actions)
 
