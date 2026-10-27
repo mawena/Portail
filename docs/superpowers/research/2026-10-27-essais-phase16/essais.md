@@ -31,9 +31,11 @@ précédente jusqu'à la v1.9.0. Cochez chaque ligne faite et notez ce qui ne va
       *Essai du 2026-10-27 : lecteur réduit (morceau-1-Aube.mp3, Pause, Arrêter) puis copie de 2 Go (« Copie de gros-essai.bin — 1 sur 1 · 9 % », Annuler, barre de progression) au-dessus de la barre ; copie terminée à 68 Mo/s*
 - [x] Paysage : la barre devient un rail à gauche ; tous les modules restent accessibles.
       *Essai du 2026-10-27 : rail à gauche, les cinq modules s'ouvrent. Défaut trouvé : en paysage, le rail n'était pas dans l'arbre d'accessibilité (TalkBack ne pouvait pas l'atteindre) : la barrière des pages du module le masquait ; corrigé (1c636cc, test railDestinationsReadByTalkBack), vérifié sur le Pixel : « Fichiers, onglet 1 sur 5 »…*
-- [ ] Texte à 200 % (Paramètres → Affichage → Taille de la police) : les cinq libellés de la barre restent lisibles,
+- [x] Texte à 200 % (Paramètres → Affichage → Taille de la police) : les cinq libellés de la barre restent lisibles,
       sans chevauchement.
+      *Essai du 2026-10-27 : police d'Android à 200 % : Fichiers, Coffres, Analyseur, Distants, IA lisibles en entier, sans chevauchement (taille des libellés plafonnée par la barre)*
 - [ ] TalkBack sur la barre : « Fichiers, onglet 1 sur 5 », etc. ; le module choisi est annoncé comme sélectionné.
+      *Essai du 2026-10-27 : arbre d'accessibilité lu par uiautomator : « Fichiers, onglet 1 sur 5 »… « IA, onglet 5 sur 5 », le module choisi marqué sélectionné ; écoute réelle avec TalkBack à faire par l'utilisateur*
 
 ## 2. Accueil de l'analyseur
 
