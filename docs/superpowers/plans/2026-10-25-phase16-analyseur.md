@@ -718,7 +718,7 @@ tant que pile non vide et non annulé :
 
 - [ ] Relecture finale de toute la branche.
 - [ ] Fusion `feature/analyseur` → `develop`, puis `release/1.9.0` (pubspec `1.9.0+17`), `main`, étiquette signée
-  `v1.9.0`. Pas de push sans l'accord de l'utilisateur.
+  `v1.9.0`. Pas de push sans l'accord de l'utilisateur. *(fusion dans `develop` faite le 2026-10-27 à la demande de l'utilisateur, branche supprimée ; version après les essais)*
 
 ---
 

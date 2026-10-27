@@ -418,7 +418,7 @@ dans le même commit que le travail.
 - [x] T12 — Essais instrumentés sur le Pixel *(12/12 : test de connexion, 2 000 morceaux sans perte ni doublon, arrêt, erreur au milieu du flux, 401 non relancé, délai, base Room, WorkManager planifié puis annulé ; ni clé ni contenu dans logcat ; [journal](../research/2026-10-25-essais-phase15/instrumentes-20261025-2024.txt))*
 - [ ] *(utilisateur)* T13 — Essais sur le Pixel
 - [x] Relecture finale de toute la branche *(1 point critique et 1 important corrigés, 3 mineurs remontés à important et corrigés, plus le plantage au démarrage signalé pendant les essais ; chacun avec son test ; 784 tests Flutter, 606 JVM, 14 instrumentés)*
-- [ ] Fusion `feature/ia` → `develop`
+- [x] Fusion `feature/ia` → `develop` *(2026-10-27, à la demande de l'utilisateur, avant ses essais sur le Pixel ; branche supprimée ; version à publier après les essais)*
 - [ ] Version `v1.8.0`
 
 ### Phase 16 — Analyseur de stockage, comme celui d'Ubuntu ([plan](2026-10-25-phase16-analyseur.md))
@@ -438,7 +438,7 @@ dans le même commit que le travail.
 - [ ] T12 — Essais instrumentés sur le Pixel
 - [ ] *(utilisateur)* T13 — Essais sur le Pixel (comparaison avec Baobab sous Ubuntu)
 - [ ] Relecture finale de toute la branche
-- [ ] Fusion `feature/analyseur` → `develop`
+- [x] Fusion `feature/analyseur` → `develop` *(2026-10-27, à la demande de l'utilisateur, avant ses essais sur le Pixel ; branche supprimée ; version à publier après les essais)*
 - [ ] Version `v1.9.0`
 
 ### Phase 17 — Gestion des partitions, comme GParted
