@@ -102,7 +102,7 @@ class AutomationWorkerInstrumentedTest {
         val w = work(a.id)
         assertEquals(WorkInfo.State.ENQUEUED, w.state)
         assertTrue(w.tags.contains(AutomationWorker.TAG))
-        assertEquals(androidx.work.NetworkType.CONNECTED, w.constraints.requiredNetworkType)
+        assertTrue(w.constraints.requiredNetworkRequest?.hasCapability(android.net.NetworkCapabilities.NET_CAPABILITY_INTERNET) == true)
         assertEquals(15 * 60_000L, w.periodicityInfo!!.repeatIntervalMillis)
 
         // réenregistrée : la même planification est mise à jour, pas doublée
@@ -118,6 +118,18 @@ class AutomationWorkerInstrumentedTest {
         assertTrue(run.scheduled)
         assertTrue(run.input.startsWith("Dis bonjour à Portail le "))
         assertFalse(run.output.isNullOrEmpty())
+    }
+
+    /**
+     * Un serveur de la maison sur un Wi-Fi sans Internet (essai du 2026-10-27 : aucune exécution en cinq heures sur un
+     * Wi-Fi sans accès à Internet) : le réseau exigé n'a pas à être validé par Android.
+     */
+    @Test fun scheduledRunsOnLocalNetworkWithoutInternet() {
+        val a = periodic()
+        val req = work(a.id).constraints.requiredNetworkRequest
+        assertTrue("requête réseau attendue", req != null)
+        assertTrue(req!!.hasCapability(android.net.NetworkCapabilities.NET_CAPABILITY_INTERNET))
+        assertFalse(req.hasCapability(android.net.NetworkCapabilities.NET_CAPABILITY_VALIDATED))
     }
 
     @Test fun disabledDeletedOrServerDeletedCancelsWork() {

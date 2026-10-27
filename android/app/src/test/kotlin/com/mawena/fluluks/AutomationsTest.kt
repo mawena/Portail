@@ -379,6 +379,16 @@ class AutomationsTest {
         assertTrue(autos.runs(a.id).isEmpty())
     }
 
+    /** Au premier accès d'un processus, les automatisations planifiées sont replanifiées (contrainte réseau à jour). */
+    @Test fun replanAllReschedulesEnabledPeriodicOnly() {
+        val p = autos.save(auto(name = "P", trigger = Automation.PERIODIC, interval = 30), ville)
+        autos.save(auto(name = "Off", trigger = Automation.PERIODIC, interval = 60, enabled = false), ville)
+        autos.save(auto(name = "Main"), ville)
+        scheduler.events.clear()
+        autos.replanAll()
+        assertEquals(listOf("schedule ${p.id} 30"), scheduler.events.toList())
+    }
+
     @Test fun interruptedRunsRecovered() {
         val a = autos.save(auto(), ville)
         dao.insertRun(AutomationRun(automationId = a.id, startedAt = 1, endedAt = null, state = AutomationRun.RUNNING, scheduled = false, input = "x", output = null, error = null, errorDetail = null))
