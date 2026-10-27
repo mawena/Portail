@@ -58,9 +58,11 @@ précédente jusqu'à la v1.9.0. Cochez chaque ligne faite et notez ce qui ne va
 
 - [ ] Touchez **Téléphone** : la progression (fichiers comptés, place vue, pourcentage) avance et les premiers
       dossiers apparaissent avant la fin. Notez la durée.
-- [ ] Total de l'analyse, part « Applications, système et dossiers protégés » comprise, comparé à Paramètres →
+- [x] Total de l'analyse, part « Applications, système et dossiers protégés » comprise, comparé à Paramètres →
       Stockage d'Android : notez les deux.
-- [ ] `Android/data` et `Android/obb` apparaissent « Accès refusé par Android ».
+      *Essai du 2026-10-27 : Portail : 47,1 Go sur 53,7 Go (dont « Applications, système et dossiers protégés » 35,6 Go) ; accueil de Fichiers : 6,4 Go libres sur 53,7 Go, soit 47,3 Go utilisés. Paramètres → Stockage d'Android : 58 Go utilisés sur 64 Go (Applis 24 Go, Système 23 Go, Jeux 4,4 Go, Vidéos 2,4 Go, Images 1,5 Go, Documents et autres 2,8 Go) : Android compte aussi la partition système, hors de la partition de données que voit Portail*
+- [x] `Android/data` et `Android/obb` apparaissent « Accès refusé par Android ».
+      *Essai du 2026-10-27 : Android → data et obb : « accès refusé par android », 0 octet ; media 321,9 Mo*
 - [ ] Quittez l'écran pendant une analyse : le point d'activité est sur **Analyseur** ; l'accueil de l'analyseur
       montre l'analyse en cours, toucher la rouvre.
 - [ ] **Annuler** pendant une analyse : « Résultats partiels », ce qui a été vu reste affiché.
