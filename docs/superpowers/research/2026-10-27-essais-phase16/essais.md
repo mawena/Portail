@@ -119,6 +119,9 @@ précédente jusqu'à la v1.9.0. Cochez chaque ligne faite et notez ce qui ne va
 
 - [ ] TalkBack sur l'arbre : chaque ligne lit son nom, son type, sa taille, sa part du parent, son contenu et sa date.
 - [ ] TalkBack sur le graphique : une description est lue.
-- [ ] Thème sombre : couleurs des graphiques lisibles, contrastées.
-- [ ] Paysage : graphique et arbre côte à côte.
-- [ ] Texte à 200 % : l'écran de l'analyse et l'accueil de l'analyseur ne débordent pas.
+- [x] Thème sombre : couleurs des graphiques lisibles, contrastées.
+      *Essai du 2026-10-27 : thème Sombre de Portail : anneaux et carte proportionnelle contrastés sur fond sombre, libellés lisibles (« Autres » en sombre sur brun clair), arbre et barres lisibles ; thème remis sur Clair*
+- [x] Paysage : graphique et arbre côte à côte.
+      *Essai du 2026-10-27 : graphique à gauche, onglets Contenu / Plus gros fichiers et arbre à droite, rail des modules à gauche*
+- [x] Texte à 200 % : l'écran de l'analyse et l'accueil de l'analyseur ne débordent pas.
+      *Essai du 2026-10-27 : accueil de l'analyseur et écran d'analyse sans débordement. Défaut trouvé : l'onglet « Plus gros fichiers » était coupé au bord (portrait et paysage) ; corrigé (1102dd3, test tabLabelsFitAt200Percent, libellé réduit s'il ne tient pas), vérifié sur le Pixel en portrait : libellé entier*
