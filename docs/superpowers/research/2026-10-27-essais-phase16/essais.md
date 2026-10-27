@@ -13,10 +13,12 @@ précédente jusqu'à la v1.9.0. Cochez chaque ligne faite et notez ce qui ne va
 
 ## 1. Barre de navigation
 
-- [ ] Au démarrage, la barre en bas montre **Fichiers**, **Coffres**, **Analyseur**, **Distants** et **IA** ;
+- [x] Au démarrage, la barre en bas montre **Fichiers**, **Coffres**, **Analyseur**, **Distants** et **IA** ;
       Fichiers est choisi et montre l'accueil habituel, sans section Coffres.
-- [ ] Passez d'un module à l'autre : chacun montre sa page (Coffres : les coffres et **Créer un coffre** ; Analyseur :
+      *Essai du 2026-10-27 : démarrage à froid : Fichiers, Coffres, Analyseur, Distants, IA ; Fichiers choisi, accueil habituel (Raccourcis, Stockage, Disques USB), sans section Coffres*
+- [x] Passez d'un module à l'autre : chacun montre sa page (Coffres : les coffres et **Créer un coffre** ; Analyseur :
       les emplacements ; Distants : dossiers distants, SSH, tunnels, clés ; IA : chat, automatisations, serveurs).
+      *Essai du 2026-10-27 : Coffres : coffres et Créer un coffre ; Analyseur : Emplacements (Téléphone) et Analyser un dossier… ; Distants : dossiers distants, SSH, Tunnels, Clés SSH ; IA : Chat IA, Automatisations, Serveurs IA*
 - [ ] Dans Fichiers, entrez dans `Download/` ; passez à IA puis revenez : vous êtes toujours dans `Download/`.
       Touchez **Fichiers** de nouveau : retour à l'accueil.
 - [ ] Retour : dépile le module, puis ramène à Fichiers, puis quitte Portail.
