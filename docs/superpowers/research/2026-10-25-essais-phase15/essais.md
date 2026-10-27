@@ -92,6 +92,7 @@ précédente jusqu'à la v1.8.0. Cochez chaque ligne faite et notez ce qui ne va
       variable : l'interrupteur est activé dans la liste. Après 15 à 30 minutes (écran éteint, réseau actif), une
       notification « Automatisation « … » terminée » sans le résultat ; l'historique montre une exécution
       « Planifiée ».
+      *Essai du 2026-10-27 : aucune exécution de 9 h 54 à 15 h : WorkManager exigeait un réseau validé (Internet), absent du Wi-Fi du travail ; corrigé (46ade42), « Planif » s'est exécutée à 15 h 11, notée « Planifiée », notification « Automatisation « Planif » terminée » sans le résultat ; exécution écran éteint en cours d'observation*
 - [ ] Coupez le serveur d'essai, attendez une exécution planifiée : elle est notée en échec avec la raison, sans
       exécutions en rafale ensuite.
 - [ ] Désactivez l'interrupteur : plus aucune exécution. Supprimez le serveur « PC » : ses automatisations se
