@@ -94,8 +94,9 @@ précédente jusqu'à la v1.8.0. Cochez chaque ligne faite et notez ce qui ne va
       « Planifiée ».
       *Essai du 2026-10-27 : aucune exécution de 9 h 54 à 15 h : WorkManager exigeait un réseau validé (Internet), absent du Wi-Fi du travail ; corrigé (46ade42), « Planif » s'est exécutée à 15 h 11, notée « Planifiée », notification « Automatisation « Planif » terminée » sans le résultat ; exécution écran éteint en cours d'observation*
       *Essai du 2026-10-27 : après correction, exécutions planifiées à 15 h 27 et 15 h 43 écran éteint (journal du serveur d'essai, environ toutes les 16 min) ; notification « Automatisation « Planif » terminée » à 15 h 43, sans le résultat*
-- [ ] Coupez le serveur d'essai, attendez une exécution planifiée : elle est notée en échec avec la raison, sans
+- [x] Coupez le serveur d'essai, attendez une exécution planifiée : elle est notée en échec avec la raison, sans
       exécutions en rafale ensuite.
+      *Essai du 2026-10-27 : serveur coupé après 15 h 43, exécutions planifiées en échec à 15 h 58, 16 h 13 et 16 h 34 (une par période, pas de rafale), raison notée dans l'historique : « Le serveur a fermé la connexion : réessayez », notification « Automatisation « Planif » en échec ».*
 - [ ] Désactivez l'interrupteur : plus aucune exécution. Supprimez le serveur « PC » : ses automatisations se
       désactivent.
 
