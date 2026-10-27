@@ -17,9 +17,10 @@ précédente jusqu'à la v1.8.0. Cochez chaque ligne faite et notez ce qui ne va
 - [x] Réglages → **Serveurs IA** : écran vide qui explique quoi faire ; **Ajouter un serveur IA** : nom « Atelier »,
       adresse `https://atelier.mawena.cloud`, la clé API → **Enregistrer**. Le serveur apparaît, avec son état.
       *Essai du 2026-10-27 : faite avec « PC » (Atelier était déjà enregistré, écran vide non revu) ; le serveur apparaît avec son état (En ligne)*
-- [ ] Fiche du serveur → **Tester la connexion** : « Connexion réussie (version …, N modèles) » ; **Détails** montre
+- [x] Fiche du serveur → **Tester la connexion** : « Connexion réussie (version …, N modèles) » ; **Détails** montre
       le journal du test, sans la clé.
       *Essai du 2026-10-27 : sur « PC » : « Connexion réussie (version essai-0.1.0, 4 modèles) », Détails montre le journal (GET /health, /v1/models) sans la clé. Atelier : « Serveur introuvable », le téléphone n'a pas Internet sur le Wi-Fi du travail ; à refaire avec Internet*
+      *Essai du 2026-10-27 : sur Atelier, Wi-Fi avec Internet : « Connexion réussie (version 0.1.0, 5 modèles) » ; Détails : GET /health → 200 puis GET /v1/models → 200, sans la clé. Le message disparaît après quelques secondes (barre en bas).*
 - [x] Touchez un modèle : il devient le modèle par défaut du serveur (coché).
       *Essai du 2026-10-27 : essai-lent puis essai-court cochés comme modèle par défaut de « PC »*
 - [x] Modifiez la clé en une fausse clé, **Tester la connexion** : « Clé API refusée… » avec le message du serveur
