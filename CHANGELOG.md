@@ -6,11 +6,32 @@ porte une étiquette `vX.Y.Z` sur `main`. Le détail de chaque phase est dans la
 
 ## À venir
 
-- **1.7.0** : chiffrement de fichiers et de dossiers (age, ZIP AES-256), coffres de fichiers, chacun avec son mot
-  de passe.
-- **1.8.0** : intégration IA avec des serveurs auto-hébergés compatibles OpenAI.
-- **1.9.0** : gestion des partitions (créer, supprimer, redimensionner).
-- **1.10.0** : vérification et réparation des disques.
+- **1.9.0** : analyseur de stockage, comme celui d'Ubuntu (anneaux, carte proportionnelle, tailles réelles), et
+  barre de navigation entre les modules.
+- **1.10.0** : gestion des partitions (créer, supprimer, redimensionner).
+- **1.11.0** : vérification et réparation des disques.
+
+## 1.8.0 — 2026-10-27
+
+### Ajouté
+
+- Serveurs IA auto-hébergés compatibles OpenAI : clé API scellée, serveur par défaut, Tester la connexion.
+- Chat en flux : Markdown, blocs de code, arrêter, régénérer, serveur, modèle et prompt système par conversation.
+- Automatisations : modèles de prompt à variables, lancement à la demande ou planifié, historique des exécutions.
+- Certificats auto-signés de confiance, conversations masquées dans les captures.
+
+### Corrigé
+
+- Les automatisations planifiées s'exécutent aussi sur un Wi-Fi sans accès à Internet, pour un serveur de la maison.
+
+## 1.7.0 — 2026-10-25
+
+### Ajouté
+
+- Chiffrement de fichiers et de dossiers au format age, et archives ZIP protégées en AES-256.
+- Coffres de fichiers LUKS2, ouverts comme un stockage.
+- Mot de passe et clé de secours d'un coffre, déverrouillage biométrique.
+- Coffres fermés à l'écran éteint et masqués dans les captures, sur réglage.
 
 ## 1.6.1 — 2026-10-25
 
