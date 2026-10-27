@@ -287,6 +287,19 @@ void main() {
     expect(bar, findsOneWidget);
   });
 
+  /// Essai du 2026-10-27 sur le Pixel : en paysage, aucune destination du rail n'était dans l'arbre d'accessibilité.
+  testWidgets('railDestinationsReadByTalkBack', (t) async {
+    final h = t.ensureSemantics();
+    await pump(t, demoApi(), size: const Size(869, 412));
+    for (final m in [Fr.moduleFiles, Fr.moduleVaults, Fr.moduleAnalyzer, Fr.moduleRemote, Fr.moduleAi]) {
+      final node = t.getSemantics(find.descendant(of: rail, matching: find.text(m)));
+      expect(node.getSemanticsData().label, contains(m));
+      expect(node.rect.isEmpty, isFalse);
+      expect(node.isInvisible, isFalse, reason: m);
+    }
+    h.dispose();
+  });
+
   testWidgets('railScrollsOnlyWhenTooTall', (t) async {
     // paysage, texte normal : rail simple
     await pump(t, demoApi(), size: const Size(869, 412));
