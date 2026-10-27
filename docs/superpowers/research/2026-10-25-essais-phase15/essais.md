@@ -31,7 +31,8 @@ précédente jusqu'à la v1.8.0. Cochez chaque ligne faite et notez ce qui ne va
 - [x] Tapez une adresse `http://` publique (par exemple `http://203.0.113.5:8000`) sans enregistrer :
       l'avertissement « La clé et les conversations passent en clair sur Internet » s'affiche.
       *Essai du 2026-10-27 : l'avertissement s'affiche pour http://203.0.113.5:8000*
-- [ ] Faites de « PC » le serveur par défaut, puis de nouveau « Atelier ».
+- [x] Faites de « PC » le serveur par défaut, puis de nouveau « Atelier ».
+      *Essai du 2026-10-27 : « PC » puis « Atelier » par défaut depuis leur fiche (Serveur par défaut → Enregistrer) : la liste ne montre « Par défaut » que sur un serveur à la fois.*
 
 ## 2. Chat
 
