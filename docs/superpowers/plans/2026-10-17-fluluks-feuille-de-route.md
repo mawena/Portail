@@ -432,7 +432,7 @@ dans le même commit que le travail.
 - [x] T7 — Géométrie des anneaux et de la carte proportionnelle, couleurs contrastées *(chart_layout_test 11 ; luminosité de chaque teinte cherchée pour garder 3,2:1 ; 842 tests Flutter)*
 - [x] T8 — Graphiques à l'écran : toucher pour entrer, glisser pour lire, appui long pour le menu, TalkBack *(analysis_chart_test 11 ; 853 tests Flutter)*
 - [x] T9 — Écran de l'analyse : arbre synchronisé, fil d'Ariane, profondeur, actions (explorateur, chemin, propriétés, corbeille) *(analyzer_screen_test 17 ; dialogue de suppression partagé avec l'explorateur ; images de référence analyzer_light et analyzer_dark ; 892 tests Flutter)*
-- [ ] T10 — Accueil de l'analyseur (module de la barre), points d'entrée, emplacements exclus ; retrait de l'analyse de la phase 9
+- [x] T10 — Accueil de l'analyseur (module de la barre), points d'entrée, emplacements exclus ; retrait de l'analyse de la phase 9 *(analyzer_home_test 10 ; module Analyseur troisième de la barre, après Coffres ; Réglages → Analyseur de stockage → Emplacements exclus ; analyse de l'espace de la phase 9 retirée (Pigeon, Kotlin, Dart) ; 902 tests Flutter, 664 JVM)*
 - [ ] T11 — Documentation
 - [ ] Essais Pixel reportés (téléphone non joignable le 2026-10-27) : démarrage de T1, tests natifs de T2
 - [ ] T12 — Essais instrumentés sur le Pixel

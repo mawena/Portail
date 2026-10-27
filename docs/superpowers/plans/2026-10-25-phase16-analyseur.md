@@ -647,7 +647,7 @@ tant que pile non vide et non annulé :
   `pickFolder`, `state.sources`.
 - Produces : `Future<void> openAnalyzerHome(BuildContext context, AppState state)`.
 
-- [ ] **Step 1 : tests en échec** : `listsLocationsWithUsage` (téléphone, cartes SD, volumes ouverts, coffres ouverts,
+- [x] **Step 1 : tests en échec** : `listsLocationsWithUsage` (téléphone, cartes SD, volumes ouverts, coffres ouverts,
   avec leur jauge ; ni dossier distant ni fichier déchiffré), `analyzeFolderUsesPicker` (**Analyser un dossier…** →
   `pickFolder` ; dossier distant → avertissement « L'analyse lit chaque dossier par le réseau : elle peut être longue.
   Les tailles sont celles annoncées par le serveur. »), `keptAnalysesListed` (date, taille, **Ouvrir**,
@@ -661,11 +661,12 @@ tant que pile non vide et non annulé :
 
   Run : `flutter test test/analyzer_home_test.dart`
   Expected : FAIL (écran absent).
-- [ ] **Step 2 : implémentation** ; écran ajouté au banc d'accessibilité ; libellés : « Analyser le stockage » (tuiles,
+- [x] **Step 2 : implémentation** ; écran ajouté au banc d'accessibilité ; libellés : « Analyser le stockage » (tuiles,
   racine de l'explorateur), « Analyser ce dossier » (sous-dossier).
-- [ ] **Step 3 :** Run : `dart run pigeon --input pigeons/fluluks_api.dart && flutter analyze && flutter test && (cd android && ./gradlew -q --offline :app:testDebugUnitTest)`
+- [x] **Step 3 :** Run : `dart run pigeon --input pigeons/fluluks_api.dart && flutter analyze && flutter test && (cd android && ./gradlew -q --offline :app:testDebugUnitTest)`
   — Expected : tout vert, aucune référence à `space_screen.dart` ni à `SpaceAnalysis`.
-- [ ] **Step 4 : commit** `feat(analyseur): accueil de l'analyseur, points d'entrée et emplacements exclus`.
+*(Fait : en plus du plan, `remoteFolderWarnsFromExplorer` ; le sélecteur de dossier propose aussi les stockages en lecture seule pour une analyse (`writableOnly: false`) ; avec cinq modules, la taille des libellés de la barre est bornée pour que chacun tienne dans sa case (TalkBack les lit en entier) ; emplacements exclus dans une section « Analyseur de stockage » des Réglages, comme le dit la spec § 26.)*
+- [x] **Step 4 : commit** `feat(analyseur): accueil de l'analyseur, points d'entrée et emplacements exclus`.
 
 ### Task 11 : documentation
 
