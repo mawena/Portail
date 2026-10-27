@@ -441,14 +441,22 @@ dans le même commit que le travail.
 - [x] Fusion `feature/analyseur` → `develop` *(2026-10-27, à la demande de l'utilisateur, avant ses essais sur le Pixel ; branche supprimée ; version à publier après les essais)*
 - [ ] Version `v1.9.0`
 
-### Phase 17 — Gestion des partitions, comme GParted
-- [ ] Plan de la phase 17 écrit *(demande du 2026-10-22 ; spec § 17, § 24, § 25 et § 26 ; phase 12, puis 13, 14, 15, 16, 17 et 15, jusqu'au 2026-10-25, puis 16, puis 17 depuis le 2026-10-25)*
-- [ ] Vue du disque : partitions et espace libre à l'échelle, système de fichiers, étiquette, taille, place occupée
-- [ ] Taille choisie au formatage ; créer une partition dans un espace libre, en supprimer une, formater une seule partition
-- [ ] Changer l'étiquette d'une partition ; nouvelle table MBR ou GPT
-- [ ] Redimensionner (agrandir, réduire) : ext4 par resize2fs, NTFS par ntfsresize, système de fichiers dans LUKS2 ; FAT32 et exFAT à étudier
-- [ ] Déplacer une partition, si le plan sait le rendre sûr
-- [ ] Opérations préparées, résumées, puis appliquées après confirmation
+### Phase 17 — Gestion des partitions, comme GParted ([plan](2026-10-27-phase17-partitions.md))
+- [x] Plan de la phase 17 écrit *(demande du 2026-10-22 ; spec § 17, § 24, § 25 et § 26 ; phase 12, puis 13, 14, 15, 16, 17 et 15, jusqu'au 2026-10-25, puis 16, puis 17 depuis le 2026-10-25 ; plan du 2026-10-27, décisions du planificateur à valider : pas de déplacement, FAT32 et exFAT non redimensionnés, MBR étendu en étiquette seulement)*
+- [ ] T1 — Moteur : table de partitions modifiable (GPT et MBR gardés tels quels hors changement, nouvelle table, espaces libres)
+- [ ] T2 — Moteur : créer, supprimer, formater une partition ; taille au formatage ; place occupée
+- [ ] T3 — e2fsprogs dans le moteur : vérification en lecture seule (`e2fsck -fn`) et redimensionnement d'ext4 (`resize2fs`)
+- [ ] T4 — `ntfsresize` et `ntfsfix -n` dans le moteur
+- [ ] T5 — Étiquette d'une partition (FAT32, exFAT, ext4, NTFS, dans LUKS)
+- [ ] T6 — Agrandir et réduire une partition et son système de fichiers (ext4, NTFS, dans LUKS1 et LUKS2)
+- [ ] T7 — JNI, gestionnaire des partitions en Kotlin et pont Pigeon
+- [ ] T8 — Opérations en attente et aperçu du disque (Dart)
+- [ ] T9 — Écran du disque comme GParted : barre à l'échelle, actions, résumé, application ; taille dans l'écran de formatage
+- [ ] T10 — Documentation
+- [ ] T11 — Essais instrumentés sur le Pixel
+- [ ] *(utilisateur)* T12 — Essais sur le Pixel avec une clé USB sacrifiée
+- [ ] Relecture finale de toute la branche
+- [ ] Fusion `feature/partitions` → `develop`
 - [ ] Version `v1.10.0`
 
 ### Phase 18 — Vérification et réparation des disques
