@@ -8,7 +8,7 @@ affichés au fur et à mesure, place réellement occupée (blocs alloués, liens
 par taille, **anneaux concentriques** et **carte proportionnelle** synchronisés avec l'arbre, zoom au doigt, profondeur
 réglable, menu d'un élément (explorateur, chemin, propriétés, corbeille), emplacements exclus. Il remplace l'analyse
 de l'espace de la phase 9. Elle commence par une **barre de navigation** en bas de l'écran entre les modules de
-Portail (Fichiers, Analyseur, Distants, IA), demandée le 2026-10-26. Fin de phase : version **v1.9.0**.
+Portail (Fichiers, Coffres, Analyseur, Distants, IA), demandée le 2026-10-26 (Coffres le 2026-10-27). Fin de phase : version **v1.9.0**.
 
 **Architecture :**
 - **Navigation (T1)** : `ModuleShell` remplace l'accueil unique ; une barre de Material 3 en bas (un rail à gauche sur
@@ -130,7 +130,7 @@ l'application », placé en T1 ; spec § 27.)*
 - Consumes : `HomeScreen`, `ServerTile`, `SshSessionsCard`, `TunnelsScreen`, `SshKeysScreen`, `ChatListScreen`,
   `AutomationsScreen`, `AiServersScreen`, `PlayerFrame` et `DockHost` (`mini_player.dart`), `BottomDock`,
   `openHelp`, `openAbout`, `EmptyState`.
-- Produces : `enum PortailModule { files, remote, ai }` (T10 ajoute `analyzer`, en deuxième) ;
+- Produces : `enum PortailModule { files, remote, ai }` (T10 ajoute `analyzer`, en deuxième ; Coffres s'y glisse avant lui le 2026-10-27, voir la fin de la tâche) ;
   `ModuleShell({required AppState state})` ; `ModuleShell.of(BuildContext context)` → `ModuleShellState` avec
   `PortailModule get current`, `void select(PortailModule m)` et
   `Future<T?> push<T>(PortailModule m, Route<T> route)` (choisit le module, puis empile sur sa pile) ;
@@ -180,6 +180,25 @@ l'application », placé en T1 ; spec § 27.)*
   Expected : `Status: ok`, processus vivant 5 s après, journal `-b crash` vide, barre lue par `uiautomator dump`
   (« Fichiers », « Distants », « IA »).
 - [x] **Step 5 : commit** `feat(navigation): barre de navigation entre les modules`.
+
+*(Ajout du 2026-10-27, demande de l'utilisateur aux essais de la phase 15 : « un menu pour les coffres aussi ».)*
+Module **Coffres**, deuxième de la barre : `enum PortailModule { files, vaults, remote, ai }` (T10 ajoute `analyzer`
+après `vaults`) ; `lib/src/screens/vaults_home_screen.dart` (`VaultsHomeScreen` : les coffres et **Créer un coffre** ;
+aucun coffre : écran vide qui explique et propose de créer) ; la section « Coffres » quitte l'accueil de Fichiers ;
+**Ouvrir** et **Parcourir** un coffre montrent son contenu dans le module Coffres (`openExplorer(…, module:)`),
+**Afficher l'emplacement** dans Fichiers ; un explorateur dont le stockage disparaît ne ferme les pages plein écran
+que si son module est à l'écran ; `Fr.moduleVaults`, `Fr.vaultsNoneTitle`.
+- [x] **Step 6 : tests en échec** (`test/module_shell_test.dart`) : `barListsModulesFilesFirst` (quatre modules,
+  « onglet 1 sur 4 »), `filesHomeWithoutRemoteAndAi` (plus de section « Coffres »), `vaultsHomeListsVaults` (les
+  coffres et **Créer un coffre** ; **Parcourir** un coffre ouvert : explorateur dans Coffres),
+  `vaultsHomeEmptyInvitesToCreate`, `moduleRootsShareSettingsHelpAbout` et `labelsFitAt200Percent` sur quatre
+  modules ; les tests des coffres (`vault_screens_test`, `vault_keys_test`, `vault_biometric_test`) passent par le
+  module Coffres ; banc : `homeVaults` devient la racine du module Coffres.
+- [x] **Step 7 : implémentation**, puis `flutter analyze && flutter test` ; image de référence `shell_rail` refaite et
+  regardée. *(Fait : six images refaites et regardées (barre à quatre onglets, accueil sans coffres) ; en paysage avec
+  le texte à 200 %, le rail à quatre modules ne tenait plus (7 px) : il défile alors, et seulement alors
+  (`railScrollsOnlyWhenTooTall`) ; 895 tests Flutter.)*
+- [x] **Step 8 : commit** `feat(navigation): module Coffres dans la barre`.
 
 ### Task 2 : place allouée, inode et liens dans le moteur
 
@@ -608,7 +627,7 @@ tant que pile non vide et non annulé :
 
 **Files :**
 - Create : `lib/src/analyzer/analyzer_home_screen.dart`
-- Modify : `lib/src/screens/module_shell.dart` (module **Analyseur**, deuxième de la barre : `PortailModule.analyzer`,
+- Modify : `lib/src/screens/module_shell.dart` (module **Analyseur**, troisième de la barre, après Coffres : `PortailModule.analyzer`,
   accueil de l'analyseur à sa racine),
   `lib/src/widgets/source_tile.dart`, `lib/src/widgets/partition_tile.dart`, `lib/src/widgets/vault_tile.dart` (menu
   **Analyser**), `lib/src/screens/explorer_screen.dart` (**Analyser ce dossier** dans tout dossier ; avertissement pour
@@ -655,7 +674,7 @@ tant que pile non vide et non annulé :
   `Android/data`, dossiers distants) ; phrase d'introduction et « Liste ou grille partout » mises à jour ; limites (taille
   des applications non comptée, pas de cache sur le stockage, dossiers d'un cluster sur FAT) ; commande du jeu
   `ext4-du.img` dans « Tests ».
-- [ ] README : la barre de navigation (Fichiers, Analyseur, Distants, IA ; rail sur grand écran) dans la présentation
+- [ ] README : la barre de navigation (Fichiers, Coffres, Analyseur, Distants, IA ; rail sur grand écran) dans la présentation
   de l'interface.
 - [ ] Aide : « Qu'est-ce qui remplit mon téléphone ? » et « Pourquoi l'analyse ne compte pas tout ? » (applications et
   système, `Android/data`, corbeille) ; strings testées.
