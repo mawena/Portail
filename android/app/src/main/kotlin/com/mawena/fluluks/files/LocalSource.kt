@@ -112,9 +112,12 @@ class LocalSource(
         val d = listable(path)
         val names = d.list() ?: throw ProtectedDirException()
         val dev = rootDev
+        val p = PathRules.require(path)
         return names.mapNotNull { n ->
             lstat.of(File(d, n).path)?.let {
-                DuEntry(n, it.type, it.size, it.blocks * 512, it.mtime, it.dev, it.ino, it.nlink, otherDevice = dev != null && it.dev != dev)
+                // Android/data et Android/obb, montés à part sur certains téléphones : protégés, pas un autre système
+                val mounted = dev != null && it.dev != dev && !isAndroidPrivate(DocumentIds.child(p, n))
+                DuEntry(n, it.type, it.size, it.blocks * 512, it.mtime, it.dev, it.ino, it.nlink, otherDevice = mounted)
             }
         }
     }

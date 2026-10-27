@@ -118,6 +118,26 @@ class DuListTest {
         assertFalse(m["dossier"]!!.otherDevice)
     }
 
+    /**
+     * Sur le Pixel (essai du 2026-10-27), `Android/data` et `Android/obb` sont des points de montage à part : ils restent
+     * « protégés par Android » (listés puis refusés), pas « autre système de fichiers ».
+     */
+    @Test fun localAndroidPrivateMountNotOtherDevice() {
+        File(root, "Android/data").mkdirs()
+        File(root, "Android/obb").mkdirs()
+        File(root, "Android/media").mkdirs()
+        val l = FakeLstat(root).apply {
+            stats[root.path] = RawStat(RawStat.S_IFDIR or 0x1ED, 4096, 8, 0, 1, 2, 4)
+            put("Android/data", RawStat.S_IFDIR or 0x1ED, 4096, 8, dev = 9)
+            put("Android/obb", RawStat.S_IFDIR or 0x1ED, 4096, 8, dev = 9)
+            put("Android/media", RawStat.S_IFDIR or 0x1ED, 4096, 8, dev = 9)
+        }
+        val m = local(l).duList("/Android").associateBy { it.name }
+        assertFalse(m["data"]!!.otherDevice)
+        assertFalse(m["obb"]!!.otherDevice)
+        assertTrue(m["media"]!!.otherDevice)
+    }
+
     @Test fun localVanishedEntrySkipped() {
         File(root, "reste.txt").writeText("r")
         File(root, "parti.txt").writeText("p")
