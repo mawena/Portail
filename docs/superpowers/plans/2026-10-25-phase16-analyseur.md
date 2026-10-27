@@ -303,10 +303,10 @@ l'application », placé en T1 ; spec § 27.)*
     l'exception sort) ; `data class ScanCounters(val files: Long, val dirs: Long, val alloc: Long, val current: String, val inaccessible: Int)` ;
     `val biggest: List<Entry>` (500 plus gros fichiers, par place occupée).
 
-- [ ] **Step 1 : tests en échec** (`DuTreeTest`) : `childrenSortedBySizeThenName`, `pathRebuiltFromParents`,
+- [x] **Step 1 : tests en échec** (`DuTreeTest`) : `childrenSortedBySizeThenName`, `pathRebuiltFromParents`,
   `findByPath`, `removePropagatesToAncestors`, `addToPropagates`, `namesUtf8Pool` (« été ☀ », nom de 255 octets),
   `bytesEstimateUnder64BytesPerNode` (100 000 nœuds aux noms de 12 octets : `bytesEstimate()` < 6,4 Mo).
-- [ ] **Step 2 : tests en échec** (`ScannerTest`) :
+- [x] **Step 2 : tests en échec** (`ScannerTest`) :
   - `sizesSumAllocAndApparent` (`a.bin` 100 o / 4 096 alloués, `D/b.bin`, `D/E/c.bin`, `.cache/x` caché compté,
     dossier vide : `alloc` et `apparent` de la racine = sommes ; `items` = 7) ;
   - `hardLinksCountedOnce` (deux entrées de même `dev`/`ino`, `nlink` 2, dans deux dossiers : comptées une fois, la
@@ -327,10 +327,10 @@ l'application », placé en T1 ; spec § 27.)*
 
   Run : `cd android && ./gradlew -q --offline :app:testDebugUnitTest --tests 'com.mawena.fluluks.DuTreeTest' --tests 'com.mawena.fluluks.ScannerTest'`
   Expected : FAIL (classes absentes).
-- [ ] **Step 3 : implémentation de `DuTree`** : tableaux primitifs qui grandissent par doublement (`IntArray` parent,
+- [x] **Step 3 : implémentation de `DuTree`** : tableaux primitifs qui grandissent par doublement (`IntArray` parent,
   premier enfant, frère suivant, début du nom ; `LongArray` alloc, apparent, items, mtime, autres ; `ByteArray` des
   noms en UTF-8 ; `ByteArray` des drapeaux) ; enfants triés à la fin de chaque dossier.
-- [ ] **Step 4 : implémentation de `Scanner`** — parcours en profondeur **itératif** :
+- [x] **Step 4 : implémentation de `Scanner`** — parcours en profondeur **itératif** :
 
 ```text
 pile ← [cadre(racine, sous-dossiers à visiter)]
@@ -346,8 +346,12 @@ tant que pile non vide et non annulé :
 ```
 
   `onProgress` à chaque dossier ; `cancelled()` relu entre deux entrées.
-- [ ] **Step 5 :** Run : `cd android && ./gradlew -q --offline :app:testDebugUnitTest` — Expected : PASS.
-- [ ] **Step 6 : commit** `feat(analyseur): arbre compact et parcours itératif borné`.
+- [x] **Step 5 :** Run : `cd android && ./gradlew -q --offline :app:testDebugUnitTest` — Expected : PASS.
+  *(Fait : `items` compte les éléments strictement dessous, soit 8 et non 7 dans `sizesSumAllocAndApparent` ;
+  ajouts `addFile`, `addOthers`, `touch`, `setComplete`, `hasChildren`, `full` ; une `EngineError` sur un
+  sous-dossier le montre inaccessible, comme la phase 9 (`engineErrorOnSubdirShownInaccessible`) ; DuTreeTest 8,
+  ScannerTest 18.)*
+- [x] **Step 6 : commit** `feat(analyseur): arbre compact et parcours itératif borné`.
 
 ### Task 5 : analyses gardées, vues, actions et exclusions (Kotlin)
 
