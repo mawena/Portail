@@ -1,6 +1,7 @@
 import 'package:fluluks/src/app.dart';
 import 'package:fluluks/src/bridge/fluluks_api.g.dart';
 import 'package:fluluks/src/screens/explorer_screen.dart';
+import 'package:fluluks/src/screens/module_shell.dart';
 import 'package:fluluks/src/state/app_state.dart';
 import 'package:fluluks/src/strings_fr.dart';
 import 'package:fluluks/src/widgets/vault_tile.dart';
@@ -35,6 +36,8 @@ Future<AppState> pump(WidgetTester tester, FakeHostApi api) async {
   final state = AppState(api);
   await state.refresh();
   await tester.pumpWidget(FluLuksApp(state: state));
+  await tester.pump();
+  tester.state<ModuleShellState>(find.byType(ModuleShell)).select(PortailModule.vaults); // les coffres ont leur module
   await tester.pumpAndSettle();
   return state;
 }

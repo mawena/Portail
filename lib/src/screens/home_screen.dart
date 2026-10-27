@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../analyzer/analyzer_home_screen.dart';
 import '../state/app_state.dart';
 import '../strings_fr.dart';
 import '../ui/states.dart';
@@ -8,22 +9,17 @@ import '../ui/widgets.dart';
 import '../widgets/bottom_dock.dart';
 import '../widgets/brand_mark.dart';
 import '../widgets/disk_card.dart';
-import '../widgets/server_tile.dart';
 import '../widgets/shortcut_grid.dart';
 import '../widgets/source_tile.dart';
-import '../widgets/ssh_sessions_card.dart';
-import '../widgets/vaults_card.dart';
 import 'explorer_screen.dart';
 import 'filter_screen.dart';
 import 'global_search_screen.dart';
-import 'server_form_screen.dart';
-import 'settings_screen.dart';
-import 'space_screen.dart';
+import 'module_shell.dart';
 import 'trash_screen.dart';
 
-/// Accueil : en-tête au logo, puis accès aux fichiers, Raccourcis, Stockage, Disques USB, Coffres, Dossiers
-/// distants et Favoris. En largeur étendue, deux colonnes : à gauche ce qui est sur le téléphone, à droite les disques USB et
-/// les dossiers distants.
+/// Accueil, racine du module « Fichiers » : en-tête au logo, puis accès aux fichiers, Raccourcis, Stockage, Disques
+/// USB et Favoris (coffres, dossiers distants et IA ont leur module, phase 16). En largeur étendue, deux colonnes : à
+/// gauche ce qui est sur le téléphone, à droite les disques USB.
 class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key, required this.state});
 
@@ -40,36 +36,15 @@ class HomeScreen extends StatelessWidget {
           const SizedBox(width: Space.m),
           Flexible(child: Text(Fr.title, style: theme.textTheme.headlineSmall)),
         ]),
-        actions: [
-          IconButton(
-            tooltip: Fr.settings,
-            icon: const Icon(Icons.settings_rounded),
-            onPressed: () => Navigator.of(context)
-                .push(MaterialPageRoute<void>(builder: (_) => SettingsScreen(state: state))),
-          ),
-          PopupMenuButton<void Function()>(
-            tooltip: Fr.moreOptions,
-            icon: const Icon(Icons.more_vert_rounded),
-            onSelected: (open) => open(),
-            itemBuilder: (context) => [
-              PopupMenuItem(value: () => openHelp(context), child: const Text(Fr.help)),
-              PopupMenuItem(value: () => openAbout(context, state), child: const Text(Fr.about)),
-            ],
-          ),
-        ],
+        actions: moduleActions(context, state),
       ),
       bottomNavigationBar: BottomDock(state: state), // copie en cours ou interrompue, même hors de l'explorateur
       body: ListenableBuilder(
-        listenable: Listenable.merge([state, state.terminals]),
+        listenable: state,
         builder: (context, _) {
           final top = _top(context);
           final phone = [..._shortcuts(context), ..._storage(context)];
-          final away = [
-            ..._disks(context),
-            VaultsSection(state: state), // ouverts par le moteur, comme les disques
-            if (state.terminals.sessions.isNotEmpty) SshSessionsCard(state: state),
-            ..._remote(context),
-          ];
+          final away = _disks(context);
           final favorites = _favorites(context);
           if (windowClassOf(context) == WindowClass.expanded) {
             return ListView(padding: const EdgeInsets.all(Space.l), children: [
@@ -134,8 +109,8 @@ class HomeScreen extends StatelessWidget {
     ];
   }
 
-  /// Stockages du téléphone : mémoire interne, cartes SD (les disques USB, dossiers distants et coffres ont leur
-  /// section ; un fichier déchiffré en mémoire n'est pas un stockage de l'accueil).
+  /// Stockages du téléphone : mémoire interne, cartes SD (les disques USB ont leur section, les coffres et les
+  /// dossiers distants leur module ; un fichier déchiffré en mémoire n'est pas un stockage de l'accueil).
   bool _isLocal(String kind) => !const {'disk', 'remote', 'vault', 'decrypted'}.contains(kind);
 
   bool get _hasLocal => state.sources.any((s) => _isLocal(s.kind));
@@ -149,7 +124,7 @@ class HomeScreen extends StatelessWidget {
           source: s,
           onTap: access ? () => openExplorer(context, state, s.id) : null,
           onTrash: access ? () => openTrash(context, state, s.id) : null,
-          onSpace: access ? () => openSpace(context, state, s.id) : null,
+          onAnalyze: access ? () => analyzeLocation(context, state, s.id, '/') : null,
         )),
     ];
   }
@@ -178,20 +153,6 @@ class HomeScreen extends StatelessWidget {
         for (final d in state.disks) _gap(DiskCard(state: state, disk: d)),
     ];
   }
-
-  List<Widget> _remote(BuildContext context) => [
-        const SectionHeader(Fr.remoteFolders),
-        for (final s in state.servers) _gap(ServerTile(state: state, server: s)),
-        Align(
-          alignment: AlignmentDirectional.centerStart,
-          child: TextButton.icon(
-            icon: const Icon(Icons.add_rounded),
-            label: const Text(Fr.addServer),
-            onPressed: () => Navigator.of(context)
-                .push(MaterialPageRoute<void>(builder: (_) => ServerFormScreen(state: state))),
-          ),
-        ),
-      ];
 
   List<Widget> _favorites(BuildContext context) {
     if (state.favorites.isEmpty) return const [];

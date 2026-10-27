@@ -85,7 +85,8 @@ class MiniPlayer extends StatelessWidget {
 /// Cadre de l'application : l'écran courant, puis le dock du bas commun à tous les écrans (lecteur réduit quand de
 /// la musique est en cours, caché pendant « Lecture en cours » ; opération en cours), et le message d'un arrêt subi.
 /// Le dock s'efface quand le clavier est ouvert : il serait dessous, et l'écran perdrait sa hauteur en plus de
-/// celle du clavier.
+/// celle du clavier. Tant que la coquille des modules est à l'écran, c'est elle qui pose le dock, au-dessus de sa
+/// barre de navigation ([DockSlot]).
 class PlayerFrame extends StatefulWidget {
   const PlayerFrame({super.key, required this.state, required this.navigatorKey, required this.child});
 
@@ -100,6 +101,8 @@ class PlayerFrame extends StatefulWidget {
 class _PlayerFrameState extends State<PlayerFrame> {
   bool _fullOpen = false;
 
+  late final _slot = DockSlot(_bars)..addListener(_slotChanged);
+
   /// Tout le cadre dans une entrée d'Overlay : la barre, posée hors du navigateur, a aussi le sien (infobulles).
   late final _entry = OverlayEntry(builder: (_) => _content(), maintainState: true);
 
@@ -112,6 +115,7 @@ class _PlayerFrameState extends State<PlayerFrame> {
   @override
   void dispose() {
     widget.state.removeListener(_changed);
+    _slot.dispose();
     super.dispose();
   }
 
@@ -121,6 +125,10 @@ class _PlayerFrameState extends State<PlayerFrame> {
     if (m != null && mounted) showMessage(context, m);
     final p = widget.state.takeSshPrompt();
     if (p != null) _askSshPrompt(p);
+    if (mounted) _slot.changed();
+  }
+
+  void _slotChanged() {
     if (mounted) _entry.markNeedsBuild();
   }
 
@@ -141,32 +149,35 @@ class _PlayerFrameState extends State<PlayerFrame> {
     final nav = widget.navigatorKey.currentState;
     if (nav == null) return;
     _fullOpen = true;
-    _entry.markNeedsBuild();
+    _slot.changed();
     await nav.push(MaterialPageRoute<void>(builder: (_) => NowPlayingScreen(state: widget.state)));
     _fullOpen = false;
-    if (mounted) _entry.markNeedsBuild();
+    if (mounted) _slot.changed();
   }
 
   @override
   Widget build(BuildContext context) => Overlay(initialEntries: [_entry]);
 
-  Widget _content() {
+  /// Barres du dock, de haut en bas.
+  List<Widget> _bars() {
     final s = widget.state;
     final p = s.player;
+    return [
+      if (p != null && !_fullOpen) MiniPlayer(key: const ValueKey('player'), state: s, player: p, onOpen: _open),
+      if (s.transfer != null) TransferBar(key: const ValueKey('transfer'), state: s),
+    ];
+  }
+
+  Widget _content() {
     final keyboard = MediaQuery.viewInsetsOf(context).bottom > 0;
-    final dock = keyboard
-        ? const <Widget>[]
-        : [
-            if (p != null && !_fullOpen) MiniPlayer(key: const ValueKey('player'), state: s, player: p, onOpen: _open),
-            if (s.transfer != null) TransferBar(key: const ValueKey('transfer'), state: s),
-          ];
+    final dock = keyboard || _slot.embedded ? const <Widget>[] : _bars();
     // structure constante : le navigateur sous Expanded n'est jamais recréé
     return Column(children: [
       Expanded(
         child: MediaQuery.removePadding(
           context: context,
           removeBottom: dock.isNotEmpty,
-          child: DockHost(child: widget.child),
+          child: DockHost(slot: _slot, child: widget.child),
         ),
       ),
       DockSurface(children: dock),

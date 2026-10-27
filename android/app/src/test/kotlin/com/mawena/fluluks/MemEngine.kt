@@ -29,11 +29,20 @@ open class MemEngine : Engine {
     private fun parent(p: String) = p.substring(0, p.lastIndexOf('/')).ifEmpty { "/" }
     private fun children(p: String) = nodes.keys.filter { it != "/" && it != p && parent(it) == p }
     private fun err(c: Int) = """{"err":$c}""".toByteArray()
-    private fun entry(p: String) = JSONObject()
-        .put("name", p.substring(p.lastIndexOf('/') + 1))
-        .put("type", if (nodes[p] == null) "d" else "f")
-        .put("size", nodes[p]?.size ?: 0).put("mtime", 0)
-        .also { o -> owner?.let { (mode, uid, gid) -> o.put("mode", mode).put("uid", uid).put("gid", gid) } }
+    private fun entry(p: String): JSONObject {
+        val size = nodes[p]?.size ?: 0
+        return JSONObject()
+            .put("name", p.substring(p.lastIndexOf('/') + 1))
+            .put("type", if (nodes[p] == null) "d" else "f")
+            .put("size", size).put("mtime", 0)
+            .also { o -> owner?.let { (mode, uid, gid) -> o.put("mode", mode).put("uid", uid).put("gid", gid) } }
+            // comme ext4 en blocs de 4 Kio : un bloc par dossier
+            .put("alloc", if (nodes[p] == null) 4096 else (size + 4095L) / 4096 * 4096)
+            .put("ino", inos.getOrPut(p) { inos.size + 2L }).put("nlink", 1)
+    }
+
+    /** Inode de chaque chemin, croissant dans l'ordre de première apparition (2 : la première). */
+    val inos = HashMap<String, Long>()
 
     /** (mode, uid, gid) rendus par stat et list ; null : clés absentes. */
     var owner: Triple<Int, Long, Long>? = null

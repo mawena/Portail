@@ -9,6 +9,7 @@ Usage :
                                           chkdsk retrouve après une coupure ; chemins « /?<n>/… » si un
                                           parent est illisible)
   ntfsjuge.py free <img>                  octets libres selon $Bitmap (clusters libres × taille de cluster)
+  ntfsjuge.py alloc <img>                 place allouée de chaque entrée, sur la sortie standard (phase 16)
   ntfsjuge.py flags <img>                 drapeaux de $Volume ($VOLUME_INFORMATION), en hexadécimal
   ntfsjuge.py set-flags <img> <hex>       les remplace (dans $MFT et $MFTMirr)
   ntfsjuge.py set-logfile-sale <img>      $LogFile laissé « ouvert » par Windows (coupure)
@@ -26,6 +27,11 @@ Manifeste : une ligne par entrée, triée par chemin (octets UTF-8), séparée p
 sauf pour f), uid (0), gid (0), mode octal (100644, 100444 avec l'attribut lecture seule, 40755, 120777,
 100000), chemin. Condensat = sha256 de la suite des sha256 de chaque tranche de 1 Mio du contenu. Les
 enregistrements MFT < 16, les noms DOS et les flux nommés n'apparaissent pas.
+
+Place allouée (alloc) : une ligne par entrée, racine comprise, triée par chemin, séparée par des tabulations :
+chemin, octets alloués (fichier : $DATA non résident, taille compressée s'il est compressé ou creux, sinon
+taille allouée, 0 s'il est résident ; dossier : $INDEX_ALLOCATION:$I30, 0 sans ; 0 pour un point d'analyse),
+numéro d'enregistrement MFT, liens (link_count de l'en-tête de l'enregistrement).
 
 Structure illisible (enregistrement sans « FILE », correction de fin de secteur fausse, runlist hors du
 disque, boucle) : message sur la sortie d'erreur, code 3, quelle que soit la commande.
@@ -167,6 +173,8 @@ class Attr:
             mp = u16(raw, off + 32)
             self.cunit = u8(raw, off + 34)
             self.alloc, self.size, self.init = u64(raw, off + 40), u64(raw, off + 48), u64(raw, off + 56)
+            # taille compressée : seulement dans l'en-tête d'un flux compressé ou creux
+            self.comp = u64(raw, off + 64) if self.flags & 0x8001 and self.lvcn == 0 else None
             self.runs = decode_runs(raw[off + mp:off + self.length], self.lvcn)
             self.value = None
         else:
@@ -496,6 +504,30 @@ class Ntfs:
         return ("f", 0o100444 if attr & FA_READONLY else 0o100644)
 
     def tree(self):
+        out = []
+        for t, _, _, mode, p, n in self.tree_entries():
+            if t == "f":
+                s = self.stream(n, AT_DATA)
+                out.append(("f", s["size"] if s else 0, digest_chunks(self.content(n)), mode, p, n))
+            else:
+                out.append((t, 0, "-", mode, p, n))
+        return out
+
+    def alloc_of(self, n, t):
+        if t not in ("d", "f"):
+            return 0
+        typ, name = (AT_IALLOC, "$I30") if t == "d" else (AT_DATA, "")
+        first = [a for a in self.attrs(n, typ, name) if not a.nonres or a.lvcn == 0]
+        if not first or not first[0].nonres:
+            return 0
+        a = first[0]
+        return a.comp if a.comp is not None else a.alloc
+
+    def alloc_tree(self):
+        return [(p, self.alloc_of(n, t), n, self.records[n]["links"]) for t, _, _, _, p, n in self.tree_entries()]
+
+    def tree_entries(self):
+        """Comme tree, sans lire les contenus : (type, 0, « - », mode, chemin, enregistrement)."""
         out = [("d", 0, "-", 0o40755, "/", 5)]
         seen = {5}
 
@@ -503,21 +535,14 @@ class Ntfs:
             for mref, seq, ns, name16, parent in self.index_entries(n):
                 if ns == NS_DOS or mref < FILE_FIRST_USER:
                     continue
-                name = name16.decode("utf-16-le", "surrogatepass")
-                p = path.rstrip("/") + "/" + name
+                p = path.rstrip("/") + "/" + name16.decode("utf-16-le", "surrogatepass")
                 t, mode = self.kind(mref)
+                out.append((t, 0, "-", mode, p, mref))
                 if t == "d":
                     if mref in seen:
                         raise Bad("dossier en boucle : %s" % p)
                     seen.add(mref)
-                    out.append(("d", 0, "-", mode, p, mref))
                     walk(mref, p)
-                elif t == "f":
-                    s = self.stream(mref, AT_DATA)
-                    size = s["size"] if s else 0
-                    out.append(("f", size, digest_chunks(self.content(mref)), mode, p, mref))
-                else:
-                    out.append((t, 0, "-", mode, p, mref))
 
         walk(5, "/")
         return out
@@ -949,6 +974,9 @@ def main(argv):
                     f.write("%s\t%d\t%s\t0\t0\t%o\t%s\n" % (t, size, dig, mode, p))
         elif cmd == "free":
             print(fs.free_bytes())
+        elif cmd == "alloc":
+            for p, n, ino, links in sorted(fs.alloc_tree(), key=lambda e: e[0].encode("utf-8", "surrogatepass")):
+                print("%s\t%d\t%d\t%d" % (p, n, ino, links))
         elif cmd == "flags":
             print("%#06x" % fs.volume_flags())
         elif cmd == "set-flags":

@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Sécurité réseau (phase 15, T10). http:// est permis : serveurs IA locaux (Ollama, LocalAI) et serveur d'essai ;
+     l'enregistrement d'un serveur en clair hors du réseau local avertit l'utilisateur. Confiance : autorités du système
+     seulement (pas celles ajoutées par l'utilisateur) ; un certificat auto-signé n'est accepté que par son empreinte
+     SHA-256, approuvée sur « Faire confiance » (TrustedCerts). -->
+<network-security-config>
+    <base-config cleartextTrafficPermitted="true">
+        <trust-anchors>
+            <certificates src="system" />
+        </trust-anchors>
+    </base-config>
+</network-security-config>

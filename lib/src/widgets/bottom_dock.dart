@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/scheduler.dart';
 
 import '../state/app_state.dart';
 import 'transfer_bar.dart';
@@ -61,12 +62,54 @@ class DockSurface extends StatelessWidget {
 }
 
 /// Posé par le cadre de l'application, qui montre lui-même le lecteur réduit et l'opération en cours sous tous les
-/// écrans.
+/// écrans ; [slot] prête ces barres à la coquille des modules.
 class DockHost extends InheritedWidget {
-  const DockHost({super.key, required super.child});
+  const DockHost({super.key, this.slot, required super.child});
+
+  final DockSlot? slot;
 
   static DockHost? maybeOf(BuildContext context) => context.getInheritedWidgetOfExactType<DockHost>();
 
   @override
   bool updateShouldNotify(DockHost oldWidget) => false;
+}
+
+/// Barres communes du cadre (lecteur réduit, opération en cours), prêtées à la coquille des modules (phase 16) : tant
+/// qu'elle est à l'écran sans page par-dessus ([embedded]), elle les pose au-dessus de sa barre de navigation et le
+/// cadre n'en montre aucune sous elle. Prévient ses auditeurs quand les barres ou leur place changent.
+class DockSlot extends ChangeNotifier {
+  DockSlot(this._bars);
+
+  final List<Widget> Function() _bars;
+  bool _embedded = false;
+  bool _disposed = false;
+
+  /// Barres à montrer, de haut en bas ; vide quand rien n'a lieu d'être.
+  List<Widget> get bars => _bars();
+
+  /// Vrai quand la coquille pose les barres elle-même.
+  bool get embedded => _embedded;
+
+  set embedded(bool v) {
+    if (v == _embedded) return;
+    _embedded = v;
+    changed();
+  }
+
+  /// Les barres ont changé ; jamais pendant la construction d'une image (la notification attend sa fin).
+  void changed() {
+    if (SchedulerBinding.instance.schedulerPhase == SchedulerPhase.persistentCallbacks) {
+      SchedulerBinding.instance.addPostFrameCallback((_) {
+        if (!_disposed) notifyListeners();
+      });
+    } else {
+      notifyListeners();
+    }
+  }
+
+  @override
+  void dispose() {
+    _disposed = true;
+    super.dispose();
+  }
 }

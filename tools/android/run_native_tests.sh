@@ -44,7 +44,7 @@ fi
 # Une entrée peut porter un argument après le nom du binaire (comme dans CTest : test_crc32c_debit).
 TESTS=(test_error test_crypto test_luks1 test_luks2 test_crc32c "test_crc32c debit" test_ext4 test_fat test_fat_hostile test_ntfs test_ntfs_dev test_ntfs_hostile test_usb
        test_cache test_banc test_luks2_lent test_scrypt "test_scrypt debit" test_age test_archive_crypt
-       test_luks2_slots test_vault)
+       test_luks2_slots test_vault test_fs_alloc)
 # Binaires à pousser, sans doublon.
 BINS=()
 for t in "${TESTS[@]}"; do
@@ -65,7 +65,7 @@ FIXTURES=(ext4-plain.img ext4-rw-1k.img gpt-luks2.img whole-luks2-4k.img whole-l
           ntfs-hostile-runlist-hors.img ntfs-hostile-runlist-mft.img ntfs-hostile-base-soi.img
           ntfs-hostile-attr-longueur.img ntfs-hostile-lznt1.img ntfs-hostile-index-zero.img
           ntfs-hostile-index-boucle.img ntfs-hostile-utf16.img ntfs-hostile-attrlist-zero.img
-          ntfs-hostile-attrlist-boucle.img ntfs-rapide.img ntfs-tronque.img)
+          ntfs-hostile-attrlist-boucle.img ntfs-rapide.img ntfs-tronque.img ext4-du.img ext4-du.alloc)
 # Archives chiffrées lues par test_archive_crypt (phase 14 ; ctest -R generate_archive_fixtures les produit).
 ARC_FIXTURES=(chiffre.zip test_read_format_7zip_encryption.7z test_read_format_rar_encryption_data.rar)
 # Arborescences entières (modèles des tests FAT et NTFS : tm_from_dir).

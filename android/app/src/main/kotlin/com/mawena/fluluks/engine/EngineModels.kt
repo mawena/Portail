@@ -98,15 +98,28 @@ enum class FileType {
     }
 }
 
-/** Entrée de dossier. `mtime` en secondes Unix. Un nom non UTF-8 sur le disque arrive avec U+FFFD. */
-data class DirEntry(val name: String, val type: FileType, val size: Long, val mtime: Long) {
+/**
+ * Entrée de dossier. `mtime` en secondes Unix. Un nom non UTF-8 sur le disque arrive avec U+FFFD. [alloc] : octets
+ * occupés sur le support ; [ino] et [nlink] : inode (0 en FAT et exFAT) et liens physiques (phase 16).
+ */
+data class DirEntry(
+    val name: String, val type: FileType, val size: Long, val mtime: Long,
+    val alloc: Long = size, val ino: Long = 0, val nlink: Int = 1,
+) {
     companion object {
-        fun from(o: JSONObject) = DirEntry(
-            name = o.getString("name"),
-            type = FileType.from(o.getString("type")),
-            size = o.getLong("size"),
-            mtime = o.getLong("mtime"),
-        )
+        /** Clés `alloc`, `ino` et `nlink` absentes (moteur ancien) : la taille, 0 et 1. */
+        fun from(o: JSONObject): DirEntry {
+            val size = o.getLong("size")
+            return DirEntry(
+                name = o.getString("name"),
+                type = FileType.from(o.getString("type")),
+                size = size,
+                mtime = o.getLong("mtime"),
+                alloc = o.optLong("alloc", size),
+                ino = o.optLong("ino", 0),
+                nlink = o.optInt("nlink", 1),
+            )
+        }
 
         /** Réponse de [NativeEngine.list] : tableau trié par nom (octets UTF-8). */
         fun parseList(json: ByteArray): List<DirEntry> {

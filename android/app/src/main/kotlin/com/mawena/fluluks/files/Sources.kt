@@ -64,7 +64,7 @@ object Sources {
         val ctx = app
         if (ctx != null) {
             @Suppress("DEPRECATION")
-            out += LocalSource(PHONE, PHONE, "Téléphone", Environment.getExternalStorageDirectory(), ::hasAllFilesAccess)
+            out += LocalSource(PHONE, PHONE, "Téléphone", Environment.getExternalStorageDirectory(), hasAccess = ::hasAllFilesAccess)
             if (Build.VERSION.SDK_INT >= 30) {
                 val sm = ctx.getSystemService(StorageManager::class.java)
                 for (sv in sm.storageVolumes) {
@@ -72,7 +72,7 @@ object Sources {
                     val uuid = sv.uuid ?: continue
                     if (!sv.isRemovable || sv.state != Environment.MEDIA_MOUNTED) continue
                     val label = sv.getDescription(ctx)?.takeIf { it.isNotBlank() } ?: "Stockage amovible"
-                    out += LocalSource("sd:$uuid", "sd:$uuid", label, dir, ::hasAllFilesAccess)
+                    out += LocalSource("sd:$uuid", "sd:$uuid", label, dir, hasAccess = ::hasAllFilesAccess)
                 }
             }
         }

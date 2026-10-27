@@ -86,19 +86,59 @@ FakeHostApi demoApi() {
     ]
     ..texts['/notes-1.txt'] = TextFileMsg(text: 'Liste des courses\r\n- pain\r\n- café\r\n', bom: true, crlf: true, mtime: _t, size: 40)
     ..searchResult = ((q) => SearchResultMsg(entries: demoFolder('/DCIM').where((e) => e.type == 'file').take(8).toList(), truncated: false));
-  api.space['/'] = SpaceReportMsg(
-    path: '/',
-    totalBytes: 87000000000,
-    fileCount: 12000,
-    children: [
-      SpaceItemMsg(path: '/DCIM', name: 'DCIM', size: 52000000000, isDir: true, fileCount: 8000),
-      SpaceItemMsg(path: '/Movies', name: 'Movies', size: 21000000000, isDir: true, fileCount: 40),
-      SpaceItemMsg(path: '/Download', name: 'Download', size: 9000000000, isDir: true, fileCount: 300),
-    ],
-    biggest: [_file('/Movies', 'Vacances 4.mp4', 720000000)],
-    truncated: false,
-    otherCount: 0,
-    otherBytes: 0,
-  );
   return api;
+}
+
+/// Analyse de démonstration du téléphone (phase 16) : arbre à plat, racine 0, place des dossiers = somme de leur
+/// contenu, part hors analyse (-1) et contenu résumé (-2 pour la racine).
+List<AnalysisNodeMsg> demoAnalysisTree() {
+  const mib = 1 << 20;
+  final specs = <(int, int, String, String, int)>[
+    // (id, parent, nom, nature, place propre)
+    (1, 0, 'DCIM', 'dir', 4096),
+    (2, 1, 'Camera', 'dir', 4096),
+    (3, 2, 'VID_20251009.mp4', 'file', 2400 * mib),
+    (4, 2, 'IMG_0001.jpg', 'file', 6 * mib),
+    (5, 2, 'IMG_0002.jpg', 'file', 5 * mib),
+    (6, 0, 'Movies', 'dir', 4096),
+    (7, 6, 'Vacances.mkv', 'file', 1800 * mib),
+    (8, 0, 'Download', 'dir', 4096),
+    (9, 8, 'Ubuntu.iso', 'file', 900 * mib),
+    (10, 8, 'facture.pdf', 'file', 300 * 1024),
+    (11, 0, 'Music', 'dir', 4096),
+    (12, 11, 'Album', 'dir', 4096),
+    (13, 12, 'piste-01.flac', 'file', 40 * mib),
+    (14, 0, 'Android', 'dir', 4096),
+    (15, 14, 'data', 'inaccessible', 0),
+    (-2, 0, '', 'others', 3 * mib),
+    (-1, 0, 'Applications, système et dossiers protégés', 'unscanned', 9000 * mib),
+  ];
+  final nodes = <int, AnalysisNodeMsg>{
+    0: AnalysisNodeMsg(
+        id: 0, parent: -1, name: '', path: '/', kind: 'dir', alloc: 0, apparent: 0, items: 0, mtime: _t,
+        hasChildren: true, complete: true, depth: 0),
+  };
+  String pathOf(int parent, String name) => parent == 0 ? '/$name' : '${nodes[parent]!.path}/$name';
+  for (final (id, parent, name, kind, size) in specs) {
+    nodes[id] = AnalysisNodeMsg(
+        id: id,
+        parent: parent,
+        name: name,
+        path: id < 0 ? '/' : pathOf(parent, name),
+        kind: kind,
+        alloc: size,
+        apparent: size,
+        items: kind == 'others' ? 12 : 0,
+        mtime: _t - id * 3600,
+        hasChildren: specs.any((s) => s.$2 == id),
+        complete: true,
+        depth: 0);
+    for (var p = parent; p >= 0; p = p == 0 ? -1 : nodes[p]!.parent) {
+      nodes[p]!
+        ..alloc += size
+        ..apparent += size
+        ..items += 1 + nodes[id]!.items;
+    }
+  }
+  return nodes.values.toList();
 }

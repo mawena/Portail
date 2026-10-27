@@ -188,6 +188,7 @@ void main() {
     await openFormat(tester);
     final error = portailScheme(Brightness.light).error;
     final button = find.widgetWithText(FilledButton, Fr.formatButton);
+    await scrollTo(tester, button);
     expect(tester.widget<FilledButton>(button).style!.backgroundColor!.resolve({}), error); // bouton rouge
     expect(find.text(Fr.formatDanger('Disque USB', Fr.humanSize(4000000000))), findsOneWidget);
     final banner = find.ancestor(

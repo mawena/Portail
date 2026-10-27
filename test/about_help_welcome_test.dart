@@ -31,7 +31,7 @@ Future<void> homeMenu(WidgetTester tester, String item) async {
 FakeHostApi firstLaunch() =>
     FakeHostApi()..uiPrefs = UiPrefsMsg(theme: 'system', haptics: true, welcomeSeen: false);
 
-/// Les 12 bibliothèques dont la licence est montrée dans « Licences des bibliothèques ».
+/// Les bibliothèques dont la licence est montrée dans « Licences des bibliothèques ».
 const libraries = [
   'lwext4',
   'ntfs-3g',
@@ -46,6 +46,9 @@ const libraries = [
   'JSch',
   'Bouncy Castle',
   'EFF Large Wordlist',
+  'OkHttp',
+  'AndroidX Room',
+  'AndroidX WorkManager',
 ];
 
 void main() {
@@ -79,6 +82,7 @@ void main() {
     expect(texts['JSch'], contains('JCraft'));
     expect(texts['Bouncy Castle'], contains('Legion of the Bouncy Castle'));
     expect(texts['EFF Large Wordlist'], contains('CC BY 3.0 US'));
+    expect(texts['OkHttp'], contains('Apache License'));
     expect(texts['FatFs'], isNot(contains('\r')));
     for (final name in libraries) {
       expect(texts[name]!.length, greaterThan(300), reason: name);
@@ -98,12 +102,12 @@ void main() {
   });
 
   testWidgets('helpEntriesExpand', (tester) async {
-    tester.view.physicalSize = const Size(412, 2400); // toutes les questions construites
+    tester.view.physicalSize = const Size(412, 3000); // toutes les questions construites
     tester.view.devicePixelRatio = 1;
     addTearDown(tester.view.reset);
     await pumpApp(tester, FakeHostApi());
     await homeMenu(tester, Fr.help);
-    expect(find.byType(ExpansionTile), findsNWidgets(13));
+    expect(find.byType(ExpansionTile), findsNWidgets(18));
     final titles = [
       'Ouvrir un disque chiffré',
       'Pourquoi mon disque s\'ouvre en lecture seule ?',
@@ -118,6 +122,11 @@ void main() {
       'Chiffrer un fichier ou un dossier',
       'Créer et ouvrir un coffre',
       "J'ai oublié le mot de passe",
+      'Connecter un serveur IA',
+      'Discuter avec un modèle',
+      'Créer une automatisation',
+      "Qu'est-ce qui remplit mon téléphone ?",
+      "Pourquoi l'analyse ne compte pas tout ?",
     ];
     expect(Fr.helpEntries.map((e) => e.$1).toList(), titles);
     for (final (title, answer) in Fr.helpEntries) {

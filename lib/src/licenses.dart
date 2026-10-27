@@ -20,6 +20,9 @@ const portailLibraries = <(String, List<String>)>[
   ('JSch', ['assets/licenses/jsch.txt']),
   ('Bouncy Castle', ['assets/licenses/bouncycastle.txt']),
   ('EFF Large Wordlist', ['assets/words/LICENCE-EFF.txt']),
+  ('OkHttp', ['assets/licenses/apache-2.0.txt']),
+  ('AndroidX Room', ['assets/licenses/apache-2.0.txt']),
+  ('AndroidX WorkManager', ['assets/licenses/apache-2.0.txt']),
 ];
 
 /// Ajoute les licences des bibliothèques de Portail à celles de Flutter ; elles ne sont lues qu'à l'ouverture de la
@@ -125,6 +128,8 @@ class FrMaterialLocalizations extends DefaultMaterialLocalizations {
   String get bottomSheetLabel => 'Feuille du bas';
   @override
   String get scrimLabel => 'Fond';
+  @override
+  String tabLabel({required int tabIndex, required int tabCount}) => 'onglet $tabIndex sur $tabCount';
   @override
   String scrimOnTapHint(String modalRouteContentName) => 'Fermer $modalRouteContentName';
   @override

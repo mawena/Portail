@@ -32,6 +32,8 @@ dependencies:
     sdk: flutter
   # Terminal SSH (phase 13) : émulation xterm et affichage ; version exacte, MIT.
   xterm: 4.0.0
+  # Chat IA (phase 15) : analyse du Markdown des réponses (rendu par Portail) ; version exacte, BSD-3.
+  markdown: 7.3.1
 
 dev_dependencies:
   flutter_test:

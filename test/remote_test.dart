@@ -8,6 +8,7 @@ import 'package:fluluks/src/bridge/fluluks_api.g.dart';
 import 'package:fluluks/src/screens/explorer_screen.dart';
 import 'package:fluluks/src/screens/server_form_screen.dart';
 import 'package:fluluks/src/state/app_state.dart';
+import 'package:fluluks/src/strings_fr.dart';
 import 'package:fluluks/src/widgets/source_tile.dart';
 
 import 'fake_host_api.dart';
@@ -52,10 +53,13 @@ Future<AppState> pump(WidgetTester tester, FakeHostApi api) async {
   await state.refresh();
   await tester.pumpWidget(FluLuksApp(state: state));
   await tester.pumpAndSettle();
+  // serveurs, sessions SSH et tunnels : module Distants (phase 16)
+  await tester.tap(find.descendant(of: find.byType(NavigationBar), matching: find.text(Fr.moduleRemote)));
+  await tester.pumpAndSettle();
   return state;
 }
 
-/// Liste défilante du formulaire de serveur (l'accueil reste dessous).
+/// Liste défilante du formulaire de serveur (l'accueil du module reste dessous).
 final formScroll = find.descendant(of: find.byType(ServerFormScreen), matching: find.byType(Scrollable)).first;
 
 Future<void> showServer(WidgetTester tester) async {
@@ -89,6 +93,8 @@ void main() {
     await tester.enterText(find.widgetWithText(TextField, 'Adresse'), 'ftp.exemple.fr');
     await tester.enterText(find.widgetWithText(TextField, 'Mot de passe'), 'secret');
     await tester.scrollUntilVisible(find.text('Enregistrer'), 200, scrollable: formScroll);
+    await tester.ensureVisible(find.text('Enregistrer'));
+    await tester.pumpAndSettle();
     await tester.tap(find.text('Enregistrer'));
     await tester.pumpAndSettle();
     final (msg, pw) = api.savedServers.single;
@@ -170,6 +176,7 @@ void main() {
     await showServer(tester);
     await tester.tap(find.byTooltip('Modifier'));
     await tester.pumpAndSettle();
+    await tester.scrollUntilVisible(find.text('ssh-ed25519 SHA256:abc'), 200, scrollable: formScroll);
     expect(find.text('ssh-ed25519 SHA256:abc'), findsOneWidget);
     await tester.scrollUntilVisible(find.text("Oublier l'empreinte"), 200, scrollable: formScroll);
     await tester.ensureVisible(find.text("Oublier l'empreinte")); // la liste s'arrête dès qu'il est construit, parfois sous le bord
@@ -223,6 +230,8 @@ void main() {
     await tester.tap(find.byTooltip('Modifier'));
     await tester.pumpAndSettle();
     await tester.scrollUntilVisible(find.text('Importer une clé'), 200, scrollable: formScroll);
+    await tester.ensureVisible(find.text('Importer une clé'));
+    await tester.pumpAndSettle();
     expect(find.text('Aucune\u00A0: connexion par mot de passe'), findsOneWidget);
     await tester.tap(find.text('Importer une clé'));
     await tester.pumpAndSettle();
@@ -248,6 +257,8 @@ void main() {
     await tester.tap(find.text('SFTP'));
     await tester.pumpAndSettle();
     await tester.scrollUntilVisible(find.text('Importer une clé'), 200, scrollable: formScroll);
+    await tester.ensureVisible(find.text('Importer une clé'));
+    await tester.pumpAndSettle();
     expect(find.text('Importer une clé'), findsOneWidget);
   });
 }

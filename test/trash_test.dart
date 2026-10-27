@@ -46,7 +46,7 @@ Future<AppState> pumpHome(WidgetTester tester, FakeHostApi api) async {
 }
 
 Future<void> push(WidgetTester tester, Widget screen) async {
-  tester.state<NavigatorState>(find.byType(Navigator)).push(MaterialPageRoute<void>(builder: (_) => screen));
+  tester.state<NavigatorState>(find.byType(Navigator).first).push(MaterialPageRoute<void>(builder: (_) => screen));
   await tester.pumpAndSettle();
 }
 

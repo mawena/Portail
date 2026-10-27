@@ -1,6 +1,16 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:fluluks/src/ai/ai_home_screen.dart';
+import 'package:fluluks/src/ai/ai_server_form.dart';
+import 'package:fluluks/src/ai/ai_servers_screen.dart';
+import 'package:fluluks/src/ai/automation_form.dart';
+import 'package:fluluks/src/ai/automation_runs_screen.dart';
+import 'package:fluluks/src/ai/automations_screen.dart';
+import 'package:fluluks/src/ai/chat_list_screen.dart';
+import 'package:fluluks/src/ai/chat_screen.dart';
+import 'package:fluluks/src/analyzer/analyzer_home_screen.dart';
+import 'package:fluluks/src/analyzer/analyzer_screen.dart';
 import 'package:fluluks/src/licenses.dart';
 import 'package:fluluks/src/screens/about_screen.dart';
 import 'package:fluluks/src/screens/explorer_screen.dart';
@@ -10,15 +20,16 @@ import 'package:fluluks/src/screens/global_search_screen.dart';
 import 'package:fluluks/src/screens/help_screen.dart';
 import 'package:fluluks/src/screens/home_screen.dart';
 import 'package:fluluks/src/screens/now_playing_screen.dart';
+import 'package:fluluks/src/screens/remote_home_screen.dart';
 import 'package:fluluks/src/screens/search_screen.dart';
 import 'package:fluluks/src/screens/server_form_screen.dart';
 import 'package:fluluks/src/screens/settings_screen.dart';
-import 'package:fluluks/src/screens/space_screen.dart';
 import 'package:fluluks/src/screens/ssh_keys_screen.dart';
 import 'package:fluluks/src/screens/text_editor_screen.dart';
 import 'package:fluluks/src/screens/trash_screen.dart';
 import 'package:fluluks/src/screens/encrypt_sheet.dart';
 import 'package:fluluks/src/screens/vault_create_screen.dart';
+import 'package:fluluks/src/screens/vaults_home_screen.dart';
 import 'package:fluluks/src/screens/welcome_screen.dart';
 import 'package:fluluks/src/terminal/terminal_screen.dart';
 import 'package:fluluks/src/terminal/tunnels_screen.dart';
@@ -33,12 +44,16 @@ import 'screen_harness.dart';
 void main() {
   const shown = {
     'home': HomeScreen, 'explorerList': ExplorerScreen, 'explorerGrid': ExplorerScreen, 'filterGrid': FilterScreen, //
-    'search': SearchScreen, 'globalSearch': GlobalSearchScreen, 'trash': TrashScreen, 'space': SpaceScreen,
+    'search': SearchScreen, 'globalSearch': GlobalSearchScreen, 'trash': TrashScreen, 'analyzerHome': AnalyzerHomeScreen,
     'settings': SettingsScreen, 'about': AboutScreen, 'help': HelpScreen, 'welcome': WelcomeScreen,
     'unlock': UnlockDialog, 'format': FormatScreen, 'editor': TextEditorScreen, 'serverForm': ServerFormScreen,
     'nowPlaying': NowPlayingScreen, 'terminal': TerminalScreen,
     'sshKeys': SshKeysScreen, 'tunnels': TunnelsScreen, 'encrypt': EncryptSheet, 'decrypt': DecryptDialog,
-    'vaultCreate': VaultCreateScreen, 'homeVaults': HomeScreen,
+    'vaultCreate': VaultCreateScreen, 'homeVaults': VaultsHomeScreen,
+    'aiServers': AiServersScreen, 'aiServerForm': AiServerForm, 'chatList': ChatListScreen, 'chat': ChatScreen,
+    'automations': AutomationsScreen, 'automationForm': AutomationForm, 'automationRuns': AutomationRunsScreen,
+    'automationRun': AutomationRunScreen, 'remoteHome': RemoteHomeScreen, 'aiHome': AiHomeScreen,
+    'analyzer': AnalyzerScreen, 'analyzerTreemap': AnalyzerScreen,
   };
   testWidgets('harnessShowsEachScreen', (t) async {
     for (final screen in screens) {

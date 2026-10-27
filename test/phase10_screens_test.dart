@@ -75,7 +75,7 @@ Future<AppState> open(WidgetTester tester, FakeHostApi api, Widget Function(AppS
   final state = AppState(api);
   await state.refresh();
   await tester.pumpWidget(FluLuksApp(state: state));
-  tester.state<NavigatorState>(find.byType(Navigator)).push(MaterialPageRoute<void>(builder: (_) => screen(state)));
+  tester.state<NavigatorState>(find.byType(Navigator).first).push(MaterialPageRoute<void>(builder: (_) => screen(state)));
   await tester.pumpAndSettle();
   return state;
 }
@@ -144,7 +144,7 @@ void main() {
     expect(find.text('UTF-8 avec BOM · CRLF · 3 lignes'), findsOneWidget); // suit la saisie
     final mono = tester.widget<TextField>(find.byType(TextField)).style!;
     expect(mono.fontFamily, 'monospace');
-    tester.state<NavigatorState>(find.byType(Navigator)).push(
+    tester.state<NavigatorState>(find.byType(Navigator).first).push(
         MaterialPageRoute<void>(builder: (_) => editor(state, '/README')));
     await tester.pumpAndSettle();
     expect(find.text('UTF-8 · LF · 1 ligne'), findsOneWidget);
@@ -203,7 +203,7 @@ void main() {
     await state.refresh();
     state.onPlayerChanged(playing(), null);
     await tester.pumpWidget(FluLuksApp(state: state));
-    tester.state<NavigatorState>(find.byType(Navigator)).push(
+    tester.state<NavigatorState>(find.byType(Navigator).first).push(
         MaterialPageRoute<void>(builder: (_) => NowPlayingScreen(state: state)));
     await tester.pumpAndSettle();
     expect(Fr.positionOf(61000, 185000), 'Position 1:01 sur 3:05');

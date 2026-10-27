@@ -7,17 +7,22 @@ import '../strings_fr.dart';
 import '../ui/tokens.dart';
 import '../ui/widgets.dart';
 
-/// Choix d'un dossier de destination dans n'importe quel stockage, dossier distant compris ; les stockages en
-/// lecture seule et les vues déchiffrées ne sont pas proposés ; [accept] écarte d'autres stockages (dossiers
-/// distants et coffres pour un nouveau coffre). Rend (stockage, chemin), ou null si annulé.
-Future<(String, String)?> pickFolder(BuildContext context, AppState state, {bool Function(SourceMsg)? accept}) =>
-    showDialog<(String, String)>(context: context, builder: (_) => FolderPickerDialog(state: state, accept: accept));
+/// Choix d'un dossier de destination dans n'importe quel stockage, dossier distant compris ; les vues déchiffrées ne
+/// sont pas proposées, ni les stockages en lecture seule si [writableOnly] (une destination ; pas pour une analyse) ;
+/// [accept] écarte d'autres stockages (dossiers distants et coffres pour un nouveau coffre). Rend (stockage, chemin),
+/// ou null si annulé.
+Future<(String, String)?> pickFolder(BuildContext context, AppState state,
+        {bool Function(SourceMsg)? accept, bool writableOnly = true}) =>
+    showDialog<(String, String)>(
+        context: context,
+        builder: (_) => FolderPickerDialog(state: state, accept: accept, writableOnly: writableOnly));
 
 class FolderPickerDialog extends StatefulWidget {
-  const FolderPickerDialog({super.key, required this.state, this.accept});
+  const FolderPickerDialog({super.key, required this.state, this.accept, this.writableOnly = true});
 
   final AppState state;
   final bool Function(SourceMsg)? accept;
+  final bool writableOnly;
 
   @override
   State<FolderPickerDialog> createState() => _FolderPickerDialogState();
@@ -81,7 +86,7 @@ class _FolderPickerDialogState extends State<FolderPickerDialog> {
     final s = _source;
     final accept = widget.accept;
     final storages = widget.state.sources
-        .where((x) => x.kind != 'decrypted' && !x.readOnly && (accept == null || accept(x)))
+        .where((x) => x.kind != 'decrypted' && !(widget.writableOnly && x.readOnly) && (accept == null || accept(x)))
         .toList();
     return AlertDialog(
       title: const Text(Fr.pickFolderTitle),

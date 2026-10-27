@@ -12,6 +12,7 @@ import '../ui/tokens.dart';
 Future<void> showProperties(BuildContext context, AppState state, String sourceId, String path) =>
     showModalBottomSheet<void>(
       context: context,
+      useRootNavigator: true, // au-dessus de la barre des modules
       isScrollControlled: true,
       builder: (_) => PropertiesSheet(state: state, sourceId: sourceId, path: path),
     );
