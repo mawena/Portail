@@ -688,18 +688,21 @@ tant que pile non vide et non annulé :
 **Files :** Create `android/app/src/androidTest/kotlin/com/mawena/fluluks/AnalyzerInstrumentedTest.kt` ; Modify
 `Fixtures.kt`
 
-- [ ] **Step 1 : essais** (dossier privé de l'application et `/data/local/tmp/fluluks/`) : `phoneLstatAllocated` (1 o
+- [x] **Step 1 : essais** (dossier privé de l'application et `/data/local/tmp/fluluks/`) : `phoneLstatAllocated` (1 o
   → au moins 4 096 alloués ; fichier creux de 64 Mio par `RandomAccessFile.setLength` → moins de 1 Mio ; lien
   physique par `Os.link` compté une fois), `sharedStorageScanTimed` (stockage partagé entier : durée, fichiers, nœuds,
   mémoire Java et native notées ; `Android/data` « inaccessible » ; part « hors analyse » présente),
   `diskImageAllocMatchesJudge` (`ext4-du.img` ouverte par le moteur comme dans `EngineTest` : totaux et nœuds égaux
   au manifeste `ext4-du.alloc`), `fiftyThousandFilesBounded` (50 000 fichiers dans 500 dossiers : durée, mémoire Java
   gagnée < 64 Mio), `trashFromAnalysisMovesSize` (source locale sur le dossier privé).
-- [ ] **Step 2 :** `adb install -r -t` des deux APK puis
+- [x] **Step 2 :** `adb install -r -t` des deux APK puis
   `adb shell am instrument -w -r -e class com.mawena.fluluks.AnalyzerInstrumentedTest com.mawena.fluluks.test/androidx.test.runner.AndroidJUnitRunner`
   (jamais `connectedAndroidTest`) ; journal `docs/superpowers/research/<date>-essais-phase16/instrumentes-<horodatage>.txt` ;
   Expected : `OK (5 tests)`, durées et mémoire notées dans la feuille de route.
-- [ ] **Step 3 : commit** `test(analyseur): essais instrumentés sur le Pixel`.
+- [x] **Step 3 : commit** `test(analyseur): essais instrumentés sur le Pixel`. *(2026-10-27 : OK (5 tests) ; lien physique
+  refusé par Android dans le dossier privé (EACCES), jugé par `ext4-du.img` et les tests JVM ; défaut trouvé et corrigé :
+  `Android/data` et `Android/obb`, montés à part sur le Pixel, étaient « autre système de fichiers » au lieu de
+  « accès refusé par Android » ; journal [instrumentes-20261027-1520.txt](../research/2026-10-27-essais-phase16/instrumentes-20261027-1520.txt))*
 
 ### Task 13 *(utilisateur)* : essais sur le Pixel
 
