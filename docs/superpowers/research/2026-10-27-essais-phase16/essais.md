@@ -91,8 +91,9 @@ précédente jusqu'à la v1.9.0. Cochez chaque ligne faite et notez ce qui ne va
 - [ ] Volume ouvert du disque USB LUKS analysé : notez la durée et les cinq plus gros dossiers.
 - [ ] Le même disque sous Ubuntu, analysé par Baobab : les totaux des cinq plus gros dossiers sont égaux à 1 % près.
 - [ ] Éjectez le disque pendant une analyse : l'analyse s'arrête proprement, sans plantage.
-- [ ] Coffre ouvert : analysé depuis le module Coffres (menu du coffre → **Analyser le stockage**) ou l'accueil de
+- [x] Coffre ouvert : analysé depuis le module Coffres (menu du coffre → **Analyser le stockage**) ou l'accueil de
       l'analyseur.
+      *Essai du 2026-10-27 : coffre d'essai Analyse16 (256 Mio, exFAT, dossier Music copié dedans) : menu du coffre → Analyser le stockage → 36,6 Mo, 13 éléments, module Analyseur sélectionné ; le coffre figure aussi dans les emplacements de l'accueil de l'analyseur*
 - [ ] Dossier distant SFTP : menu ⋮ de l'explorateur → **Analyser ce dossier** : avertissement d'abord, puis
       « Dossier distant : tailles annoncées par le serveur ».
 
