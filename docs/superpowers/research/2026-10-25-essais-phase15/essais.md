@@ -56,9 +56,10 @@ précédente jusqu'à la v1.8.0. Cochez chaque ligne faite et notez ce qui ne va
       *Essai du 2026-10-27 : pas faisable avec le serveur d'essai (aucun lien dans ses réponses) ; à faire avec Atelier*
       *Essai du 2026-10-27 : en attente : Atelier ne génère plus rien (aucun octet en 150 s avec « default », 100 s avec « llama3.2:3b », même depuis le PC), serveur trop faible pour le moment ; Portail affiche bien « Le serveur ne répond plus » et Réessayer au bout de 60 s. À refaire quand Atelier tiendra la charge*
       *Essai du 2026-10-27 : fait par l'utilisateur, concluant*
-- [ ] Menu ⋮ → **Prompt système** : « Réponds en une phrase. » → la réponse suivante tient en une phrase.
+- [x] Menu ⋮ → **Prompt système** : « Réponds en une phrase. » → la réponse suivante tient en une phrase.
       *Essai du 2026-10-27 : le dialogue s'ouvre et enregistre « Reponds en une phrase. » ; l'effet sur la réponse demande un vrai modèle (Atelier injoignable)*
       *Essai du 2026-10-27 : en attente : Atelier ne génère plus rien (aucun octet en 150 s avec « default », 100 s avec « llama3.2:3b », même depuis le PC), serveur trop faible pour le moment ; Portail affiche bien « Le serveur ne répond plus » et Réessayer au bout de 60 s. À refaire quand Atelier tiendra la charge*
+      *Essai du 2026-10-27 : fait par l'utilisateur, concluant*
 - [x] Touchez « Atelier · <modèle> » sous le titre : choisissez « PC » → `essai-long` ; la réponse suivante vient
       du serveur d'essai : les 2 000 morceaux, de « 0001 » à « 2000 », sans trou ni doublon.
       *Essai du 2026-10-27 : les 2 000 morceaux de 0001 à 2000, dans l'ordre, sans trou ni doublon (texte relu par uiautomator)*
@@ -114,10 +115,11 @@ précédente jusqu'à la v1.8.0. Cochez chaque ligne faite et notez ce qui ne va
       conversation est refusée (ou noire), la vignette des applications récentes est masquée. Désactivez-le :
       les captures redeviennent possibles.
       *Essai du 2026-10-27 : option activée : capture d'écran refusée (fichier vide), vignette noire dans les récentes ; désactivée : la capture de la conversation revient*
-- [ ] *(facultatif, si un serveur à certificat auto-signé est disponible)* **Tester la connexion** : « Certificat non
+- [x] *(facultatif, si un serveur à certificat auto-signé est disponible)* **Tester la connexion** : « Certificat non
       reconnu » et son empreinte SHA-256 ; **Annuler** n'enregistre rien ; comparez l'empreinte à celle du serveur
       (`openssl x509 -in cert.pem -noout -fingerprint -sha256`), puis **Faire confiance** : la connexion réussit.
       *Essai du 2026-10-27 : non fait : aucun serveur à certificat auto-signé sous la main*
+      *Essai du 2026-10-27 : fait par l'utilisateur, concluant*
 
 ## 5. Accessibilité et grand texte
 
