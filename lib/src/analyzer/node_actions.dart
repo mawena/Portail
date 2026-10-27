@@ -70,7 +70,7 @@ Future<void> showNodeActions(
       await Clipboard.setData(ClipboardData(text: n.path));
       if (context.mounted) showMessage(context, Fr.pathCopied);
     case _Act.properties:
-      await showProperties(context, state, sourceId, n.path);
+      await showProperties(context, state, sourceId, n.path, onDisk: remote ? null : n.alloc);
     case _Act.exclude:
       await c.exclude(n.id);
       if (context.mounted) showMessage(context, Fr.excludedFromAnalyses);

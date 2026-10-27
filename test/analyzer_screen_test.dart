@@ -11,6 +11,7 @@ import 'package:fluluks/src/screens/explorer_screen.dart';
 import 'package:fluluks/src/state/app_state.dart';
 import 'package:fluluks/src/strings_fr.dart';
 import 'package:fluluks/src/ui/theme.dart';
+import 'package:fluluks/src/widgets/properties_sheet.dart';
 
 import 'demo_data.dart';
 import 'fake_host_api.dart';
@@ -226,6 +227,10 @@ void main() {
     await t.tap(find.text(Fr.properties));
     await t.pumpAndSettle();
     expect(api.calls, contains('details phone /DCIM/Camera'));
+    // place sur le disque, connue de l'analyse, en plus de la taille des données
+    final sheet = find.byType(PropertiesSheet);
+    expect(find.descendant(of: sheet, matching: find.text(Fr.onDiskLabel)), findsOneWidget);
+    expect(find.descendant(of: sheet, matching: find.text(Fr.humanSize((2411 << 20) + 4096))), findsOneWidget);
     await t.tapAt(const Offset(10, 10)); // ferme la feuille
     await t.pumpAndSettle();
     await holdRow(t, 2);
