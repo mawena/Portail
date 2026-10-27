@@ -424,7 +424,7 @@ dans le même commit que le travail.
 ### Phase 16 — Analyseur de stockage, comme celui d'Ubuntu ([plan](2026-10-25-phase16-analyseur.md))
 - [x] Plan de la phase 16 écrit *(demande du 2026-10-25 ; spec § 26)*
 - [ ] T1 — Barre de navigation entre les modules (Fichiers, Distants, IA ; l'Analyseur y entre en T10), rail sur grand écran *(demande du 2026-10-26 ; spec § 27)*
-- [ ] T2 — Moteur : place allouée, inode et liens physiques dans la liste d'un dossier (ext4, FAT, exFAT, NTFS)
+- [x] T2 — Moteur : place allouée, inode et liens physiques dans la liste d'un dossier (ext4, FAT, exFAT, NTFS) *(test_fs_alloc 8 cas jugés par debugfs, fatjuge.py et ntfsjuge.py ; 50/50 tests natifs sur PC ; passage sur le Pixel en attente)*
 - [ ] T3 — Liste d'un dossier avec sa place réelle : téléphone et cartes SD par lstat, disques et coffres par le moteur, distant en taille apparente
 - [ ] T4 — Arbre compact et parcours itératif borné (liens physiques une fois, fichiers creux, dossiers inaccessibles, exclusions)
 - [ ] T5 — Analyses gardées, vues élaguées pour les graphiques, part « hors analyse », corbeille et exclusions
@@ -434,6 +434,7 @@ dans le même commit que le travail.
 - [ ] T9 — Écran de l'analyse : arbre synchronisé, fil d'Ariane, profondeur, actions (explorateur, chemin, propriétés, corbeille)
 - [ ] T10 — Accueil de l'analyseur (module de la barre), points d'entrée, emplacements exclus ; retrait de l'analyse de la phase 9
 - [ ] T11 — Documentation
+- [ ] Essais Pixel reportés (téléphone non joignable le 2026-10-27) : démarrage de T1, tests natifs de T2
 - [ ] T12 — Essais instrumentés sur le Pixel
 - [ ] *(utilisateur)* T13 — Essais sur le Pixel (comparaison avec Baobab sous Ubuntu)
 - [ ] Relecture finale de toute la branche
