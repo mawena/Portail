@@ -437,7 +437,7 @@ dans le même commit que le travail.
 - [x] Essais Pixel reportés (téléphone non joignable le 2026-10-27) : démarrage de T1, tests natifs de T2 *(faits le 2026-10-27 l'après-midi : démarrage et cinq modules ; 23 suites natives OK sur le Pixel)*
 - [x] T12 — Essais instrumentés sur le Pixel *(AnalyzerInstrumentedTest 5/5 : stockage partagé entier en 0,5 s (4 105 fichiers, 7,1 Go vus sur 42,8 Go occupés), 50 000 fichiers en 1,2 s pour +20 Mio Java, image ext4 égale au manifeste ; Android/data monté à part corrigé ; 666 tests JVM)*
 - [x] *(utilisateur)* T13 — Essais sur le Pixel (comparaison avec Baobab sous Ubuntu) *(fiche : 41 lignes réussies, le 2026-10-27, disque USB, Baobab et TalkBack faits par l'utilisateur ; quatre défauts trouvés et corrigés, chacun avec son test : rail invisible pour TalkBack en paysage, Réanalyser qui doublait l'analyse, propriétés sans la place sur le disque, onglet coupé à 200 %)*
-- [ ] Relecture finale de toute la branche
+- [x] Relecture finale de toute la branche *(relue par l'auteur, sans relecteur neuf, en visant suppression et corbeille depuis l'analyse, verrou de l'arbre pendant le parcours, liste des dossiers par lstat et code natif ; aucun point critique ni important ; mineurs reportés : un écran resté ouvert sur une analyse oubliée montre « Cette analyse n'est plus disponible » sans Réanalyser, bouton ⋮ de l'explorateur lu « Trier par », chevron de l'arbre sans nœud d'accessibilité à lui, taille vue dans la liste des analyses quand l'en-tête donne le total)*
 - [x] Fusion `feature/analyseur` → `develop` *(2026-10-27, à la demande de l'utilisateur, avant ses essais sur le Pixel ; branche supprimée ; version à publier après les essais)*
 - [ ] Version `v1.9.0`
 
