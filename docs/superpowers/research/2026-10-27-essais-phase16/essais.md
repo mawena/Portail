@@ -46,8 +46,9 @@ précédente jusqu'à la v1.9.0. Cochez chaque ligne faite et notez ce qui ne va
       *Essai du 2026-10-27 : Options de Téléphone → Analyser le stockage : l'analyse de Téléphone s'ouvre, module Analyseur sélectionné dans la barre*
 - [x] Explorateur, dans `DCIM/` → menu ⋮ → **Analyser ce dossier** : l'analyse porte sur `DCIM` seul.
       *Essai du 2026-10-27 : analyse de DCIM seul : 3,7 Go, 641 éléments (Camera 3,4 Go, Snapchat 314,7 Mo, .Immich 24,8 Mo), comme DCIM dans l'analyse du téléphone. Remarque : le bouton ⋮ de l'explorateur a pour libellé d'accessibilité « Trier par » alors qu'il contient aussi « Afficher les fichiers cachés » et « Analyser ce dossier »*
-- [ ] **Analyser un dossier…** : le sélecteur montre aussi les dossiers en lecture seule ; l'analyse du dossier
+- [x] **Analyser un dossier…** : le sélecteur montre aussi les dossiers en lecture seule ; l'analyse du dossier
       choisi démarre.
+      *Essai du 2026-10-27 : le sélecteur montre Téléphone et ses dossiers, dont Android/data et Android/obb (protégés) ; Music choisi → analyse de Music (36,6 Mo, 12 éléments). Aucun volume en lecture seule disponible (ni disque USB ni coffre ouvert) : à revoir avec le disque*
 - [ ] Après plusieurs analyses : elles sont listées sous **Analyses de la session** (taille, nombre de fichiers,
       date) ; toucher en rouvre une sans tout relire ; menu → **Réanalyser**, puis **Oublier**.
 
