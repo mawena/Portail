@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../bridge/fluluks_api.g.dart';
 import '../screens/explorer_screen.dart';
+import '../screens/module_shell.dart';
 import '../state/app_state.dart';
 import '../state/prefs.dart';
 import '../strings_fr.dart';
@@ -14,11 +15,15 @@ import 'analyzer_controller.dart';
 import 'chart_info_strip.dart';
 import 'node_actions.dart';
 
-/// Ouvre l'écran d'une analyse : avec [sourceId], lance l'analyse de [path] ; avec [scanId], rouvre une analyse gardée.
-Future<void> openAnalysis(BuildContext context, AppState state, {String? scanId, String? sourceId, String path = '/'}) =>
-    Navigator.of(context).push(MaterialPageRoute<void>(
-      builder: (_) => AnalyzerScreen(state: state, scanId: scanId, sourceId: sourceId, path: path),
-    ));
+/// Ouvre l'écran d'une analyse, dans le module Analyseur d'où qu'on vienne : avec [sourceId], lance l'analyse de
+/// [path] ; avec [scanId], rouvre une analyse gardée.
+Future<void> openAnalysis(BuildContext context, AppState state, {String? scanId, String? sourceId, String path = '/'}) {
+  final route = MaterialPageRoute<void>(
+    builder: (_) => AnalyzerScreen(state: state, scanId: scanId, sourceId: sourceId, path: path),
+  );
+  final shell = ModuleShell.maybeOf(context);
+  return shell == null ? Navigator.of(context).push(route) : shell.push(PortailModule.analyzer, route);
+}
 
 /// Clé du menu de la barre de titre (tri, profondeur), pour les tests.
 const analyzerMenuKey = Key('analyseur-menu');

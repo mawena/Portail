@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
+import '../analyzer/analyzer_home_screen.dart';
 import '../bridge/fluluks_api.g.dart';
 import '../state/app_state.dart';
 import '../state/prefs.dart';
@@ -28,7 +29,6 @@ import 'batch_rename_screen.dart';
 import 'encrypt_sheet.dart';
 import 'module_shell.dart';
 import 'search_screen.dart';
-import 'space_screen.dart';
 import 'trash_screen.dart';
 import 'vault_create_screen.dart';
 
@@ -424,6 +424,7 @@ class _ExplorerScreenState extends State<ExplorerScreen> {
 
   /// Dossier distant : pas de corbeille, suppression toujours définitive.
   bool get _remote => _source?.kind == 'remote';
+  bool get _decrypted => _source?.kind == 'decrypted';
 
   /// Serveur SFTP de ce dossier distant (« Ouvrir un terminal ici », phase 13), sinon null.
   RemoteServerMsg? get _sshServer {
@@ -663,7 +664,7 @@ class _ExplorerScreenState extends State<ExplorerScreen> {
             'asc' => _setPrefs(ascending: true),
             'desc' => _setPrefs(ascending: false),
             'trash' => openTrash(context, state, widget.sourceId),
-            'space' => openSpace(context, state, widget.sourceId),
+            'analyze' => analyzeLocation(context, state, widget.sourceId, _path),
             'terminal' => openTerminal(context, state, _sshServer!, startDir: _path),
             _ => _setPrefs(showHidden: !v.showHidden),
           },
@@ -676,11 +677,14 @@ class _ExplorerScreenState extends State<ExplorerScreen> {
             CheckedPopupMenuItem(value: 'desc', checked: !v.ascending, child: const Text(Fr.descending)),
             const PopupMenuDivider(),
             CheckedPopupMenuItem(value: 'hidden', checked: v.showHidden, child: const Text(Fr.showHidden)),
-            if (_path == '/') ...[
-              const PopupMenuDivider(),
-              if (!_remote) const PopupMenuItem(value: 'trash', child: Text(Fr.trash)),
-              const PopupMenuItem(value: 'space', child: Text(Fr.spaceAnalysis)),
-            ],
+            if (_path == '/' && !_remote || !_decrypted) const PopupMenuDivider(),
+            if (_path == '/' && !_remote) const PopupMenuItem(value: 'trash', child: Text(Fr.trash)),
+            // tout dossier, distant compris (avertissement d'abord) ; jamais une vue déchiffrée
+            if (!_decrypted)
+              PopupMenuItem(
+                value: 'analyze',
+                child: Text(_path == '/' && !_remote ? Fr.analyzeStorage : Fr.analyzeThisFolder),
+              ),
             if (_sshServer != null) ...[
               const PopupMenuDivider(),
               const PopupMenuItem(value: 'terminal', child: Text(Fr.openTerminalHere)),

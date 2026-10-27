@@ -86,20 +86,6 @@ FakeHostApi demoApi() {
     ]
     ..texts['/notes-1.txt'] = TextFileMsg(text: 'Liste des courses\r\n- pain\r\n- café\r\n', bom: true, crlf: true, mtime: _t, size: 40)
     ..searchResult = ((q) => SearchResultMsg(entries: demoFolder('/DCIM').where((e) => e.type == 'file').take(8).toList(), truncated: false));
-  api.space['/'] = SpaceReportMsg(
-    path: '/',
-    totalBytes: 87000000000,
-    fileCount: 12000,
-    children: [
-      SpaceItemMsg(path: '/DCIM', name: 'DCIM', size: 52000000000, isDir: true, fileCount: 8000),
-      SpaceItemMsg(path: '/Movies', name: 'Movies', size: 21000000000, isDir: true, fileCount: 40),
-      SpaceItemMsg(path: '/Download', name: 'Download', size: 9000000000, isDir: true, fileCount: 300),
-    ],
-    biggest: [_file('/Movies', 'Vacances 4.mp4', 720000000)],
-    truncated: false,
-    otherCount: 0,
-    otherBytes: 0,
-  );
   return api;
 }
 

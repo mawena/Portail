@@ -1535,154 +1535,6 @@ class FolderSizeMsg {
   }
 }
 
-/// Élément d'un dossier analysé (taille totale pour un dossier).
-class SpaceItemMsg {
-  SpaceItemMsg({
-    required this.name,
-    required this.path,
-    required this.isDir,
-    required this.size,
-    required this.fileCount,
-  });
-
-  String name;
-
-  String path;
-
-  bool isDir;
-
-  int size;
-
-  int fileCount;
-
-  List<Object?> _toList() {
-    return <Object?>[
-      name,
-      path,
-      isDir,
-      size,
-      fileCount,
-    ];
-  }
-
-  Object encode() {
-    return _toList();  }
-
-  static SpaceItemMsg decode(Object result) {
-    result as List<Object?>;
-    return SpaceItemMsg(
-      name: result[0]! as String,
-      path: result[1]! as String,
-      isDir: result[2]! as bool,
-      size: result[3]! as int,
-      fileCount: result[4]! as int,
-    );
-  }
-
-  @override
-  // ignore: avoid_equals_and_hash_code_on_mutable_classes
-  bool operator ==(Object other) {
-    if (other is! SpaceItemMsg || other.runtimeType != runtimeType) {
-      return false;
-    }
-    if (identical(this, other)) {
-      return true;
-    }
-    return _deepEquals(name, other.name) && _deepEquals(path, other.path) && _deepEquals(isDir, other.isDir) && _deepEquals(size, other.size) && _deepEquals(fileCount, other.fileCount);
-  }
-
-  @override
-  // ignore: avoid_equals_and_hash_code_on_mutable_classes
-  int get hashCode => _deepHash(<Object?>[runtimeType, ..._toList()]);
-
-  @override
-  String toString() {
-    return 'SpaceItemMsg(name: $name, path: $path, isDir: $isDir, size: $size, fileCount: $fileCount)';
-  }
-}
-
-/// Occupation d'un dossier : enfants du plus gros au plus petit (200 au plus, le reste résumé par `otherCount` et
-/// `otherBytes`), plus gros fichiers sous lui ; `truncated` si l'analyse s'est arrêtée avant la fin.
-class SpaceReportMsg {
-  SpaceReportMsg({
-    required this.path,
-    required this.totalBytes,
-    required this.fileCount,
-    required this.children,
-    required this.biggest,
-    required this.truncated,
-    required this.otherCount,
-    required this.otherBytes,
-  });
-
-  String path;
-
-  int totalBytes;
-
-  int fileCount;
-
-  List<SpaceItemMsg> children;
-
-  List<EntryMsg> biggest;
-
-  bool truncated;
-
-  int otherCount;
-
-  int otherBytes;
-
-  List<Object?> _toList() {
-    return <Object?>[
-      path,
-      totalBytes,
-      fileCount,
-      children,
-      biggest,
-      truncated,
-      otherCount,
-      otherBytes,
-    ];
-  }
-
-  Object encode() {
-    return _toList();  }
-
-  static SpaceReportMsg decode(Object result) {
-    result as List<Object?>;
-    return SpaceReportMsg(
-      path: result[0]! as String,
-      totalBytes: result[1]! as int,
-      fileCount: result[2]! as int,
-      children: (result[3]! as List<Object?>).cast<SpaceItemMsg>(),
-      biggest: (result[4]! as List<Object?>).cast<EntryMsg>(),
-      truncated: result[5]! as bool,
-      otherCount: result[6]! as int,
-      otherBytes: result[7]! as int,
-    );
-  }
-
-  @override
-  // ignore: avoid_equals_and_hash_code_on_mutable_classes
-  bool operator ==(Object other) {
-    if (other is! SpaceReportMsg || other.runtimeType != runtimeType) {
-      return false;
-    }
-    if (identical(this, other)) {
-      return true;
-    }
-    return _deepEquals(path, other.path) && _deepEquals(totalBytes, other.totalBytes) && _deepEquals(fileCount, other.fileCount) && _deepEquals(children, other.children) && _deepEquals(biggest, other.biggest) && _deepEquals(truncated, other.truncated) && _deepEquals(otherCount, other.otherCount) && _deepEquals(otherBytes, other.otherBytes);
-  }
-
-  @override
-  // ignore: avoid_equals_and_hash_code_on_mutable_classes
-  int get hashCode => _deepHash(<Object?>[runtimeType, ..._toList()]);
-
-  @override
-  String toString() {
-    return 'SpaceReportMsg(path: $path, totalBytes: $totalBytes, fileCount: $fileCount, children: $children, biggest: $biggest, truncated: $truncated, otherCount: $otherCount, otherBytes: $otherBytes)';
-  }
-}
-
 /// Nœud d'une vue de l'analyseur (phase 16). `kind` : `dir`, `file`, `others` (contenu trop petit ou résumé, nom
 /// vide), `inaccessible`, `excluded`, `otherFs`, `unscanned` (part hors analyse), `trash` ; `others` et `unscanned`
 /// ont un identifiant négatif. `alloc` : place occupée (ou taille apparente, selon `sizeKind` de la vue) ; `items` :
@@ -3539,80 +3391,74 @@ class _PigeonCodec extends StandardMessageCodec {
     }    else if (value is FolderSizeMsg) {
       buffer.putUint8(147);
       writeValue(buffer, value.encode());
-    }    else if (value is SpaceItemMsg) {
+    }    else if (value is AnalysisNodeMsg) {
       buffer.putUint8(148);
       writeValue(buffer, value.encode());
-    }    else if (value is SpaceReportMsg) {
+    }    else if (value is AnalysisViewMsg) {
       buffer.putUint8(149);
       writeValue(buffer, value.encode());
-    }    else if (value is AnalysisNodeMsg) {
+    }    else if (value is AnalysisProgressMsg) {
       buffer.putUint8(150);
       writeValue(buffer, value.encode());
-    }    else if (value is AnalysisViewMsg) {
+    }    else if (value is AnalysisSummaryMsg) {
       buffer.putUint8(151);
       writeValue(buffer, value.encode());
-    }    else if (value is AnalysisProgressMsg) {
+    }    else if (value is AnalysisExclusionMsg) {
       buffer.putUint8(152);
       writeValue(buffer, value.encode());
-    }    else if (value is AnalysisSummaryMsg) {
+    }    else if (value is SearchResultMsg) {
       buffer.putUint8(153);
       writeValue(buffer, value.encode());
-    }    else if (value is AnalysisExclusionMsg) {
+    }    else if (value is RemoteServerMsg) {
       buffer.putUint8(154);
       writeValue(buffer, value.encode());
-    }    else if (value is SearchResultMsg) {
+    }    else if (value is SnippetMsg) {
       buffer.putUint8(155);
       writeValue(buffer, value.encode());
-    }    else if (value is RemoteServerMsg) {
+    }    else if (value is TunnelMsg) {
       buffer.putUint8(156);
       writeValue(buffer, value.encode());
-    }    else if (value is SnippetMsg) {
+    }    else if (value is SshKeyMsg) {
       buffer.putUint8(157);
       writeValue(buffer, value.encode());
-    }    else if (value is TunnelMsg) {
+    }    else if (value is ViewPrefsMsg) {
       buffer.putUint8(158);
       writeValue(buffer, value.encode());
-    }    else if (value is SshKeyMsg) {
+    }    else if (value is UiPrefsMsg) {
       buffer.putUint8(159);
       writeValue(buffer, value.encode());
-    }    else if (value is ViewPrefsMsg) {
+    }    else if (value is AppInfoMsg) {
       buffer.putUint8(160);
       writeValue(buffer, value.encode());
-    }    else if (value is UiPrefsMsg) {
+    }    else if (value is FavoriteMsg) {
       buffer.putUint8(161);
       writeValue(buffer, value.encode());
-    }    else if (value is AppInfoMsg) {
+    }    else if (value is AiServerMsg) {
       buffer.putUint8(162);
       writeValue(buffer, value.encode());
-    }    else if (value is FavoriteMsg) {
+    }    else if (value is AiTestResultMsg) {
       buffer.putUint8(163);
       writeValue(buffer, value.encode());
-    }    else if (value is AiServerMsg) {
+    }    else if (value is AiHealthMsg) {
       buffer.putUint8(164);
       writeValue(buffer, value.encode());
-    }    else if (value is AiTestResultMsg) {
+    }    else if (value is ConversationMsg) {
       buffer.putUint8(165);
       writeValue(buffer, value.encode());
-    }    else if (value is AiHealthMsg) {
+    }    else if (value is ChatMessageMsg) {
       buffer.putUint8(166);
       writeValue(buffer, value.encode());
-    }    else if (value is ConversationMsg) {
+    }    else if (value is ConversationDetailMsg) {
       buffer.putUint8(167);
       writeValue(buffer, value.encode());
-    }    else if (value is ChatMessageMsg) {
+    }    else if (value is AutomationVarMsg) {
       buffer.putUint8(168);
       writeValue(buffer, value.encode());
-    }    else if (value is ConversationDetailMsg) {
+    }    else if (value is AutomationMsg) {
       buffer.putUint8(169);
       writeValue(buffer, value.encode());
-    }    else if (value is AutomationVarMsg) {
-      buffer.putUint8(170);
-      writeValue(buffer, value.encode());
-    }    else if (value is AutomationMsg) {
-      buffer.putUint8(171);
-      writeValue(buffer, value.encode());
     }    else if (value is AutomationRunMsg) {
-      buffer.putUint8(172);
+      buffer.putUint8(170);
       writeValue(buffer, value.encode());
     } else {
       super.writeValue(buffer, value);
@@ -3661,54 +3507,50 @@ class _PigeonCodec extends StandardMessageCodec {
       case 147:
         return FolderSizeMsg.decode(readValue(buffer)!);
       case 148:
-        return SpaceItemMsg.decode(readValue(buffer)!);
-      case 149:
-        return SpaceReportMsg.decode(readValue(buffer)!);
-      case 150:
         return AnalysisNodeMsg.decode(readValue(buffer)!);
-      case 151:
+      case 149:
         return AnalysisViewMsg.decode(readValue(buffer)!);
-      case 152:
+      case 150:
         return AnalysisProgressMsg.decode(readValue(buffer)!);
-      case 153:
+      case 151:
         return AnalysisSummaryMsg.decode(readValue(buffer)!);
-      case 154:
+      case 152:
         return AnalysisExclusionMsg.decode(readValue(buffer)!);
-      case 155:
+      case 153:
         return SearchResultMsg.decode(readValue(buffer)!);
-      case 156:
+      case 154:
         return RemoteServerMsg.decode(readValue(buffer)!);
-      case 157:
+      case 155:
         return SnippetMsg.decode(readValue(buffer)!);
-      case 158:
+      case 156:
         return TunnelMsg.decode(readValue(buffer)!);
-      case 159:
+      case 157:
         return SshKeyMsg.decode(readValue(buffer)!);
-      case 160:
+      case 158:
         return ViewPrefsMsg.decode(readValue(buffer)!);
-      case 161:
+      case 159:
         return UiPrefsMsg.decode(readValue(buffer)!);
-      case 162:
+      case 160:
         return AppInfoMsg.decode(readValue(buffer)!);
-      case 163:
+      case 161:
         return FavoriteMsg.decode(readValue(buffer)!);
-      case 164:
+      case 162:
         return AiServerMsg.decode(readValue(buffer)!);
-      case 165:
+      case 163:
         return AiTestResultMsg.decode(readValue(buffer)!);
-      case 166:
+      case 164:
         return AiHealthMsg.decode(readValue(buffer)!);
-      case 167:
+      case 165:
         return ConversationMsg.decode(readValue(buffer)!);
-      case 168:
+      case 166:
         return ChatMessageMsg.decode(readValue(buffer)!);
-      case 169:
+      case 167:
         return ConversationDetailMsg.decode(readValue(buffer)!);
-      case 170:
+      case 168:
         return AutomationVarMsg.decode(readValue(buffer)!);
-      case 171:
+      case 169:
         return AutomationMsg.decode(readValue(buffer)!);
-      case 172:
+      case 170:
         return AutomationRunMsg.decode(readValue(buffer)!);
       default:
         return super.readValueOfType(type, buffer);
@@ -4742,46 +4584,7 @@ class FluLuksHostApi {
     ;
   }
 
-  /// Analyse de l'espace sous `path` (une à la fois) ; `spaceChildren` relit un dossier de la dernière analyse.
-  Future<SpaceReportMsg> analyzeSpace(String sourceId, String path) async {
-    final pigeonVar_channelName = 'dev.flutter.pigeon.fluluks.FluLuksHostApi.analyzeSpace$pigeonVar_messageChannelSuffix';
-    final pigeonVar_channel = BasicMessageChannel<Object?>(
-      pigeonVar_channelName,
-      pigeonChannelCodec,
-      binaryMessenger: pigeonVar_binaryMessenger,
-    );
-    final Future<Object?> pigeonVar_sendFuture = pigeonVar_channel.send(<Object?>[sourceId, path]);
-    final pigeonVar_replyList = await pigeonVar_sendFuture as List<Object?>?;
-
-    final Object? pigeonVar_replyValue = _extractReplyValueOrThrow(
-        pigeonVar_replyList,
-        pigeonVar_channelName,
-        isNullValid: false,
-    )
-    ;
-    return pigeonVar_replyValue! as SpaceReportMsg;
-  }
-
-  Future<SpaceReportMsg> spaceChildren(String sourceId, String path) async {
-    final pigeonVar_channelName = 'dev.flutter.pigeon.fluluks.FluLuksHostApi.spaceChildren$pigeonVar_messageChannelSuffix';
-    final pigeonVar_channel = BasicMessageChannel<Object?>(
-      pigeonVar_channelName,
-      pigeonChannelCodec,
-      binaryMessenger: pigeonVar_binaryMessenger,
-    );
-    final Future<Object?> pigeonVar_sendFuture = pigeonVar_channel.send(<Object?>[sourceId, path]);
-    final pigeonVar_replyList = await pigeonVar_sendFuture as List<Object?>?;
-
-    final Object? pigeonVar_replyValue = _extractReplyValueOrThrow(
-        pigeonVar_replyList,
-        pigeonVar_channelName,
-        isNullValid: false,
-    )
-    ;
-    return pigeonVar_replyValue! as SpaceReportMsg;
-  }
-
-  /// Arrête l'analyse en cours (`analyzeSpace` et analyseur de la phase 16).
+  /// Arrête l'analyse en cours de l'analyseur.
   Future<void> cancelAnalysis() async {
     final pigeonVar_channelName = 'dev.flutter.pigeon.fluluks.FluLuksHostApi.cancelAnalysis$pigeonVar_messageChannelSuffix';
     final pigeonVar_channel = BasicMessageChannel<Object?>(

@@ -104,7 +104,7 @@ void main() {
     expect(Fr.clipboard(3, false), '3 éléments à copier');
     expect(Fr.clipboard(1, true), '1 élément à déplacer');
     expect(Fr.trashSummary(2, 3000000), '2 éléments, 3,0 Mo');
-    expect(Fr.spaceTotal(100000000, 3), '100,0 Mo — 3 fichiers');
+    expect(Fr.analysisSummary(100000000, 3, 'cancelled', null), '100,0 Mo · 3 fichiers · partielle');
     expect(Fr.transferLine('copy', 'photo.jpg', 2, 5, 34), 'Copie de photo.jpg — 2 sur 5 · 34$fine%');
     expect(Fr.selected(3), '3 sélectionnés');
     expect(Fr.selected(1), '1 sélectionné');

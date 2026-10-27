@@ -1,10 +1,8 @@
-import 'dart:async';
-
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:fluluks/src/analyzer/analyzer_screen.dart';
 import 'package:fluluks/src/app.dart';
 import 'package:fluluks/src/bridge/fluluks_api.g.dart';
-import 'package:fluluks/src/screens/space_screen.dart';
 import 'package:fluluks/src/screens/trash_screen.dart';
 import 'package:fluluks/src/state/app_state.dart';
 import 'package:fluluks/src/strings_fr.dart';
@@ -120,10 +118,8 @@ void main() {
     expect(tester.widget<StatusChip>(find.widgetWithText(StatusChip, Fr.chipDirty)).tone, ChipTone.danger);
   });
 
-  testWidgets('sourceMenuOpensTrashAndSpace', (tester) async {
-    final api = FakeHostApi()
-      ..sources = [src('phone', 'phone', 'Téléphone')]
-      ..spaceFuture = Completer<SpaceReportMsg>().future; // analyse en cours
+  testWidgets('sourceMenuOpensTrashAndAnalysis', (tester) async {
+    final api = FakeHostApi()..sources = [src('phone', 'phone', 'Téléphone')];
     await pump(tester, api);
     await menu(tester, Fr.sourceMenu('Téléphone'), Fr.trash);
     expect(find.byType(TrashScreen), findsOneWidget);
@@ -132,13 +128,10 @@ void main() {
     await tester.pumpAndSettle();
     await tester.tap(find.byTooltip(Fr.sourceMenu('Téléphone')));
     await tester.pumpAndSettle();
-    await tester.tap(find.text(Fr.spaceAnalysis));
-    // analyse en cours : l'indicateur tourne sans fin, pas de pumpAndSettle
-    for (var i = 0; i < 10; i++) {
-      await tester.pump(const Duration(milliseconds: 200));
-    }
-    expect(find.byType(SpaceScreen), findsOneWidget);
-    expect(api.calls, contains('analyzeSpace phone /'));
+    await tester.tap(find.text(Fr.analyzeStorage));
+    await tester.pumpAndSettle();
+    expect(find.byType(AnalyzerScreen), findsOneWidget);
+    expect(api.calls, contains('startAnalysis phone /'));
   });
 
   testWidgets('twoColumnsWhenExpanded', (tester) async {

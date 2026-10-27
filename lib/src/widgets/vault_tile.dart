@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
+import '../analyzer/analyzer_home_screen.dart';
 import '../bridge/fluluks_api.g.dart';
 import '../screens/explorer_screen.dart';
 import '../screens/module_shell.dart';
@@ -22,7 +23,7 @@ String vaultFsName(String fs) => switch (fs.toLowerCase()) {
 
 /// Un coffre du module Coffres (phase 14 ; module depuis la phase 16) : nom, taille, système de fichiers et emplacement ; état (fermé, ouvert,
 /// indisponible si son stockage n'est pas là) ; Ouvrir, ou Parcourir et Fermer ; menu ⋮ : Ouvrir ou Fermer,
-/// Parcourir, Ouvrir dans Fichiers, Changer le mot de passe, Clé de secours, déverrouillage biométrique (rien de cela
+/// Parcourir, Ouvrir dans Fichiers, Analyser le stockage, Changer le mot de passe, Clé de secours, déverrouillage biométrique (rien de cela
 /// pour un coffre LUKS1), Afficher l'emplacement, Retirer de la liste (le fichier reste). Biométrie activée : Ouvrir
 /// passe d'abord par le visage ou l'empreinte, puis par le mot de passe si l'invite est annulée.
 class VaultTile extends StatelessWidget {
@@ -132,6 +133,8 @@ class VaultTile extends StatelessWidget {
         if (vol != null) openExplorer(context, state, vol, module: PortailModule.vaults);
       case 'files':
         if (vol != null) state.openInFiles(vol);
+      case 'analyze':
+        if (vol != null) analyzeLocation(context, state, vol, '/');
       case 'location':
         final h = _host;
         if (h != null) openExplorer(context, state, h.id, path: parentOf(vault.path));
@@ -183,6 +186,7 @@ class VaultTile extends StatelessWidget {
                 if (open) ...[
                   item('browse', Icons.folder_open_rounded, Fr.browse),
                   item('files', Icons.folder_shared_rounded, Fr.openInFiles),
+                  item('analyze', Icons.pie_chart_outline_rounded, Fr.analyzeStorage),
                   item('close', Icons.lock_rounded, Fr.vaultClose),
                 ] else if (!_unavailable)
                   item('open', Icons.lock_open_rounded, Fr.open),

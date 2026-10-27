@@ -84,7 +84,7 @@ void main() {
     await pump(t, demoApi());
     expect(bar, findsOneWidget);
     final labels = t.widgetList<NavigationDestination>(find.byType(NavigationDestination)).map((d) => d.label);
-    expect(labels, [Fr.moduleFiles, Fr.moduleVaults, Fr.moduleRemote, Fr.moduleAi]);
+    expect(labels, [Fr.moduleFiles, Fr.moduleVaults, Fr.moduleAnalyzer, Fr.moduleRemote, Fr.moduleAi]);
     expect(t.widget<NavigationBar>(bar).labelBehavior, NavigationDestinationLabelBehavior.alwaysShow);
     expect(t.widget<NavigationBar>(bar).selectedIndex, 0);
     expect(shell(t).current, PortailModule.files);
@@ -96,7 +96,7 @@ void main() {
       if (n.getSemanticsData().label.contains('onglet')) label = n.getSemanticsData().label;
     }
     expect(label, contains(Fr.moduleFiles));
-    expect(label, contains('onglet 1 sur 4'));
+    expect(label, contains('onglet 1 sur 5'));
     h.dispose();
   });
 
@@ -331,7 +331,7 @@ void main() {
 
   testWidgets('moduleRootsShareSettingsHelpAbout', (t) async {
     await pump(t, withAi(demoApi()));
-    for (final m in [Fr.moduleFiles, Fr.moduleVaults, Fr.moduleRemote, Fr.moduleAi]) {
+    for (final m in [Fr.moduleFiles, Fr.moduleVaults, Fr.moduleAnalyzer, Fr.moduleRemote, Fr.moduleAi]) {
       await tapModule(t, m);
       await t.tap(find.byTooltip(Fr.settings).hitTestable());
       await t.pumpAndSettle();
@@ -486,7 +486,7 @@ void main() {
   testWidgets('labelsFitAt200Percent', (t) async {
     await pump(t, withAi(demoApi()), size: const Size(320, 640), textScale: 2);
     expect(t.takeException(), isNull);
-    for (final m in [Fr.moduleFiles, Fr.moduleVaults, Fr.moduleRemote, Fr.moduleAi]) {
+    for (final m in [Fr.moduleFiles, Fr.moduleVaults, Fr.moduleAnalyzer, Fr.moduleRemote, Fr.moduleAi]) {
       final r = t.getRect(find.descendant(of: bar, matching: find.text(m)));
       expect(r.left >= 0 && r.right <= 320 && r.bottom <= 640, isTrue, reason: m);
     }

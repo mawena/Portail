@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../analyzer/analyzer_home_screen.dart';
 import '../state/app_state.dart';
 import '../strings_fr.dart';
 import '../ui/states.dart';
@@ -14,7 +15,6 @@ import 'explorer_screen.dart';
 import 'filter_screen.dart';
 import 'global_search_screen.dart';
 import 'module_shell.dart';
-import 'space_screen.dart';
 import 'trash_screen.dart';
 
 /// Accueil, racine du module « Fichiers » : en-tête au logo, puis accès aux fichiers, Raccourcis, Stockage, Disques
@@ -124,7 +124,7 @@ class HomeScreen extends StatelessWidget {
           source: s,
           onTap: access ? () => openExplorer(context, state, s.id) : null,
           onTrash: access ? () => openTrash(context, state, s.id) : null,
-          onSpace: access ? () => openSpace(context, state, s.id) : null,
+          onAnalyze: access ? () => analyzeLocation(context, state, s.id, '/') : null,
         )),
     ];
   }

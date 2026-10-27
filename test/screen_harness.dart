@@ -24,7 +24,6 @@ import 'package:fluluks/src/screens/module_shell.dart';
 import 'package:fluluks/src/screens/search_screen.dart';
 import 'package:fluluks/src/screens/server_form_screen.dart';
 import 'package:fluluks/src/screens/settings_screen.dart';
-import 'package:fluluks/src/screens/space_screen.dart';
 import 'package:fluluks/src/screens/ssh_keys_screen.dart';
 import 'package:fluluks/src/screens/text_editor_screen.dart';
 import 'package:fluluks/src/screens/trash_screen.dart';
@@ -43,7 +42,7 @@ import 'fake_host_api.dart';
 
 /// Écrans que [pumpScreen] sait afficher, sur les données de [demoApi].
 const screens = [
-  'home', 'explorerList', 'explorerGrid', 'filterGrid', 'search', 'globalSearch', 'trash', 'space', 'settings', //
+  'home', 'explorerList', 'explorerGrid', 'filterGrid', 'search', 'globalSearch', 'trash', 'analyzerHome', 'settings', //
   'about', 'help', 'welcome', 'unlock', 'format', 'editor', 'serverForm', 'nowPlaying', 'terminal', 'sshKeys', 'tunnels',
   'encrypt', 'decrypt', 'vaultCreate', 'homeVaults',
   'aiServers', 'aiServerForm', 'chatList', 'chat', //
@@ -131,6 +130,7 @@ Future<void> pumpScreen(
     await api.runAutomation(2, const {'texte': 'Portail lit les disques chiffrés…'});
     api.finishFakeRun(3, '1. Lecture\n2. Écriture\n3. Chiffrement');
   }
+  if (screen == 'analyzerHome') api.analysisTrees['a1'] = demoAnalysisTree(); // une analyse gardée
   if (screen == 'homeVaults') {
     // un coffre fermé, un ouvert, un indisponible (carte SD absente)
     VaultMsg v(String id, String name, String state, {String? volumeId, String label = 'Téléphone'}) => VaultMsg(
@@ -186,7 +186,6 @@ Future<void> pumpScreen(
     'search' => SearchScreen(state: state, sourceId: 'phone', path: '/'),
     'globalSearch' => GlobalSearchScreen(state: state, initialQuery: 'IMG'),
     'trash' => TrashScreen(state: state, sourceId: 'phone'),
-    'space' => SpaceScreen(state: state, sourceId: 'phone'),
     'analyzer' || 'analyzerTreemap' => AnalyzerScreen(state: state, sourceId: 'phone'),
     'settings' => SettingsScreen(state: state),
     'about' => AboutScreen(state: state),
@@ -207,7 +206,7 @@ Future<void> pumpScreen(
     'automationRun' => AutomationRunScreen(state: state, runId: 1),
     'encrypt' => EncryptSheet(state: state, sourceId: 'phone', paths: const ['/notes-1.txt', '/Documents'], dir: '/'),
     'vaultCreate' => VaultCreateScreen(state: state, sourceId: 'phone', dir: '/Documents'),
-    'unlock' || 'nowPlaying' || 'decrypt' || 'remoteHome' || 'aiHome' => null,
+    'unlock' || 'nowPlaying' || 'decrypt' || 'remoteHome' || 'aiHome' || 'analyzerHome' => null,
     _ => throw ArgumentError.value(screen, 'screen'),
   };
   final nav = t.state<NavigatorState>(find.byType(Navigator).first);
@@ -227,9 +226,12 @@ Future<void> pumpScreen(
         folder: false,
       ),
     );
-  } else if (screen == 'remoteHome' || screen == 'aiHome') {
-    t.state<ModuleShellState>(find.byType(ModuleShell))
-        .select(screen == 'remoteHome' ? PortailModule.remote : PortailModule.ai);
+  } else if (screen == 'remoteHome' || screen == 'aiHome' || screen == 'analyzerHome') {
+    t.state<ModuleShellState>(find.byType(ModuleShell)).select(switch (screen) {
+      'remoteHome' => PortailModule.remote,
+      'aiHome' => PortailModule.ai,
+      _ => PortailModule.analyzer,
+    });
   } else if (screen == 'homeVaults') {
     // racine du module Coffres (phase 16)
     t.state<ModuleShellState>(find.byType(ModuleShell)).select(PortailModule.vaults);

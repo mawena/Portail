@@ -5,6 +5,7 @@ import 'package:flutter/rendering.dart';
 import 'package:flutter/services.dart';
 
 import '../ai/ai_home_screen.dart';
+import '../analyzer/analyzer_home_screen.dart';
 import '../state/app_state.dart';
 import '../strings_fr.dart';
 import '../ui/tokens.dart';
@@ -15,7 +16,7 @@ import 'settings_screen.dart';
 import 'vaults_home_screen.dart';
 
 /// Modules de Portail, dans l'ordre de la barre de navigation (spec § 27).
-enum PortailModule { files, vaults, remote, ai }
+enum PortailModule { files, vaults, analyzer, remote, ai }
 
 /// Réglages, Aide et À propos : barre de titre de la racine de chaque module.
 List<Widget> moduleActions(BuildContext context, AppState state) => [
@@ -178,6 +179,7 @@ class ModuleShellState extends State<ModuleShell> with SingleTickerProviderState
   Widget _root(PortailModule m) => switch (m) {
         PortailModule.files => HomeScreen(state: _state),
         PortailModule.vaults => VaultsHomeScreen(state: _state),
+        PortailModule.analyzer => AnalyzerHomeScreen(state: _state),
         PortailModule.remote => RemoteHomeScreen(state: _state),
         PortailModule.ai => AiHomeScreen(state: _state),
       };
@@ -205,9 +207,11 @@ class ModuleShellState extends State<ModuleShell> with SingleTickerProviderState
     );
   }
 
-  /// Une session SSH (et ses tunnels) pour Distants, une réponse ou une automatisation pour l'IA.
+  /// Une analyse pour l'Analyseur, une session SSH (et ses tunnels) pour Distants, une réponse ou une automatisation
+  /// pour l'IA.
   bool _busy(PortailModule m) => switch (m) {
         PortailModule.files || PortailModule.vaults => false,
+        PortailModule.analyzer => _state.analysisProgress?.running ?? false,
         PortailModule.remote => _state.terminals.sessions.any((e) => !e.isClosed),
         PortailModule.ai => _state.chats.busy || _state.automations.busy,
       };
@@ -215,6 +219,7 @@ class ModuleShellState extends State<ModuleShell> with SingleTickerProviderState
   static String _label(PortailModule m) => switch (m) {
         PortailModule.files => Fr.moduleFiles,
         PortailModule.vaults => Fr.moduleVaults,
+        PortailModule.analyzer => Fr.moduleAnalyzer,
         PortailModule.remote => Fr.moduleRemote,
         PortailModule.ai => Fr.moduleAi,
       };
@@ -222,9 +227,30 @@ class ModuleShellState extends State<ModuleShell> with SingleTickerProviderState
   static (IconData, IconData) _icons(PortailModule m) => switch (m) {
         PortailModule.files => (Icons.folder_outlined, Icons.folder_rounded),
         PortailModule.vaults => (Icons.lock_outline_rounded, Icons.lock_rounded),
+        PortailModule.analyzer => (Icons.pie_chart_outline_rounded, Icons.pie_chart_rounded),
         PortailModule.remote => (Icons.cloud_outlined, Icons.cloud_rounded),
         PortailModule.ai => (Icons.smart_toy_outlined, Icons.smart_toy_rounded),
       };
+
+  /// Plus grande taille de texte (1 au moins) à laquelle chaque libellé de la barre tient dans sa case : au-delà, avec
+  /// cinq modules sur un téléphone étroit, les libellés se chevaucheraient. TalkBack les lit en entier.
+  double _barTextScale(BuildContext context) {
+    final theme = Theme.of(context);
+    final states = NavigationBarTheme.of(context).labelTextStyle;
+    final styles = [
+      for (final s in [<WidgetState>{}, {WidgetState.selected}]) states?.resolve(s) ?? theme.textTheme.labelMedium,
+    ];
+    var widest = 0.0;
+    for (final m in PortailModule.values) {
+      for (final style in styles) {
+        final tp = TextPainter(text: TextSpan(text: _label(m), style: style), textDirection: TextDirection.ltr)..layout();
+        widest = math.max(widest, tp.width);
+        tp.dispose();
+      }
+    }
+    final slot = MediaQuery.sizeOf(context).width / PortailModule.values.length - Space.s;
+    return widest <= 0 ? 1 : math.max(1, slot / widest);
+  }
 
   /// Icône d'un module, avec un point quand une activité y est en cours (lu par TalkBack).
   Widget _icon(PortailModule m, {required bool selected}) {
@@ -291,18 +317,21 @@ class ModuleShellState extends State<ModuleShell> with SingleTickerProviderState
           MediaQuery.removePadding(context: context, removeBottom: true, child: DockSurface(children: dock)),
           ListenableBuilder(
             listenable: activity,
-            builder: (context, _) => NavigationBar(
-              selectedIndex: _current.index,
-              onDestinationSelected: _tap,
-              labelBehavior: NavigationDestinationLabelBehavior.alwaysShow,
-              destinations: [
-                for (final m in PortailModule.values)
-                  NavigationDestination(
-                    icon: _icon(m, selected: false),
-                    selectedIcon: _icon(m, selected: true),
-                    label: _label(m),
-                  ),
-              ],
+            builder: (context, _) => MediaQuery.withClampedTextScaling(
+              maxScaleFactor: _barTextScale(context),
+              child: NavigationBar(
+                selectedIndex: _current.index,
+                onDestinationSelected: _tap,
+                labelBehavior: NavigationDestinationLabelBehavior.alwaysShow,
+                destinations: [
+                  for (final m in PortailModule.values)
+                    NavigationDestination(
+                      icon: _icon(m, selected: false),
+                      selectedIcon: _icon(m, selected: true),
+                      label: _label(m),
+                    ),
+                ],
+              ),
             ),
           ),
         ],

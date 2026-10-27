@@ -9,6 +9,7 @@ import 'package:fluluks/src/ai/automation_runs_screen.dart';
 import 'package:fluluks/src/ai/automations_screen.dart';
 import 'package:fluluks/src/ai/chat_list_screen.dart';
 import 'package:fluluks/src/ai/chat_screen.dart';
+import 'package:fluluks/src/analyzer/analyzer_home_screen.dart';
 import 'package:fluluks/src/analyzer/analyzer_screen.dart';
 import 'package:fluluks/src/licenses.dart';
 import 'package:fluluks/src/screens/about_screen.dart';
@@ -23,7 +24,6 @@ import 'package:fluluks/src/screens/remote_home_screen.dart';
 import 'package:fluluks/src/screens/search_screen.dart';
 import 'package:fluluks/src/screens/server_form_screen.dart';
 import 'package:fluluks/src/screens/settings_screen.dart';
-import 'package:fluluks/src/screens/space_screen.dart';
 import 'package:fluluks/src/screens/ssh_keys_screen.dart';
 import 'package:fluluks/src/screens/text_editor_screen.dart';
 import 'package:fluluks/src/screens/trash_screen.dart';
@@ -44,7 +44,7 @@ import 'screen_harness.dart';
 void main() {
   const shown = {
     'home': HomeScreen, 'explorerList': ExplorerScreen, 'explorerGrid': ExplorerScreen, 'filterGrid': FilterScreen, //
-    'search': SearchScreen, 'globalSearch': GlobalSearchScreen, 'trash': TrashScreen, 'space': SpaceScreen,
+    'search': SearchScreen, 'globalSearch': GlobalSearchScreen, 'trash': TrashScreen, 'analyzerHome': AnalyzerHomeScreen,
     'settings': SettingsScreen, 'about': AboutScreen, 'help': HelpScreen, 'welcome': WelcomeScreen,
     'unlock': UnlockDialog, 'format': FormatScreen, 'editor': TextEditorScreen, 'serverForm': ServerFormScreen,
     'nowPlaying': NowPlayingScreen, 'terminal': TerminalScreen,

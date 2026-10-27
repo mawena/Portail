@@ -269,11 +269,8 @@ class Fr {
   static const deletePermanently = 'Supprimer définitivement';
   static const deleteToTrashBody = 'Les éléments restent 30 jours dans la corbeille de ce stockage.';
   static const trashNote = 'Les éléments supprimés depuis plus de 30 jours sont effacés.';
-  static const spaceAnalysis = "Analyse de l'espace";
-  static const spaceFolders = 'Dossiers';
   static const biggestFiles = 'Plus gros fichiers';
   static const analyzing = 'Analyse en cours…';
-  static const spaceTruncated = "Analyse incomplète\u00A0: arrêtée, ou trop d'éléments";
   static const properties = 'Propriétés';
   static const moreActions = "Plus d'actions";
   static const location = 'Emplacement';
@@ -740,8 +737,6 @@ class Fr {
   static String emptyTrashBody(int n) =>
       n < 2 ? "L'élément sera supprimé définitivement." : 'Les $n éléments seront supprimés définitivement.';
   static String actionsOf(String name) => 'Actions de $name';
-  static String spaceTotal(int bytes, int files) => '${humanSize(bytes)} — ${count(files, 'fichier', 'fichiers')}';
-  static String spaceOthers(int n) => '… et ${count(n, 'autre élément', 'autres éléments')}';
   static String percent(int p) => '$p\u202F%';
   static String folderSize(int bytes, int files, int dirs, {bool truncated = false}) =>
       '${truncated ? 'Au moins ' : ''}${humanSize(bytes)} — ${count(files, 'fichier', 'fichiers')}, '
@@ -1011,6 +1006,7 @@ class Fr {
   // --- barre de navigation entre les modules (phase 16, T1)
   static const moduleFiles = 'Fichiers';
   static const moduleVaults = 'Coffres';
+  static const moduleAnalyzer = 'Analyseur';
   static const moduleRemote = 'Distants';
   static const moduleAi = 'IA';
 
@@ -1102,4 +1098,37 @@ class Fr {
         if (items != null) analysisItems(items),
         if (mtime != null && mtime > 0) 'modifié ${friendlyDate(mtime).toLowerCase()}',
       ].join(', ');
+
+  // accueil de l'analyseur, points d'entrée, emplacements exclus (phase 16, T10)
+  static const analyzerLocations = 'Emplacements';
+  static const analyzeFolder = 'Analyser un dossier…';
+  static const analyzerKept = 'Analyses de la session';
+  static const analyze = 'Analyser';
+  static const analyzeStorage = 'Analyser le stockage';
+  static const analyzeThisFolder = 'Analyser ce dossier';
+  static const forgetAnalysis = 'Oublier';
+  static const analysisRunning = 'Analyse en cours';
+  static const analysisRemoteWarningTitle = 'Analyser un dossier distant ?';
+  static const analysisRemoteWarning =
+      "L'analyse lit chaque dossier par le réseau : elle peut être longue. Les tailles sont celles annoncées par le serveur.";
+  static String stopAnalysisTitle(String label) => "Arrêter l'analyse de $label ?";
+  static const stopAnalysisBody = 'Ses résultats partiels restent dans les analyses de la session.';
+  static String analysisMenu(String label) => "Options de l'analyse de $label";
+
+  /// « 12,3 Go · 4 567 fichiers · partielle · aujourd'hui, 10:42 ».
+  static String analysisSummary(int bytes, int files, String state, int? finishedSeconds) => [
+        humanSize(bytes),
+        count(files, 'fichier', 'fichiers'),
+        if (state == 'cancelled') 'partielle',
+        if (state == 'failed') 'interrompue',
+        if (finishedSeconds != null) friendlyDate(finishedSeconds).toLowerCase(),
+      ].join(' · ');
+
+  static const sectionAnalyzer = 'Analyseur de stockage';
+  static const analysisExclusions = "Emplacements exclus de l'analyse";
+  static const analysisExclusionsHelp = 'Dossiers ignorés par les analyses, stockage par stockage';
+  static const noAnalysisExclusions = 'Aucun emplacement exclu';
+  static const noAnalysisExclusionsBody =
+      'Dans une analyse, touchez longuement un dossier, puis « Exclure des analyses ».';
+  static const removeExclusion = 'Ne plus exclure';
 }

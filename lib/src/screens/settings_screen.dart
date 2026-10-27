@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../ai/ai_servers_screen.dart';
+import '../analyzer/analysis_exclusions_screen.dart';
 import '../state/app_state.dart';
 import '../state/prefs.dart';
 import '../strings_fr.dart';
@@ -105,6 +106,15 @@ class SettingsScreen extends StatelessWidget {
               trailing: const Icon(Icons.chevron_right_rounded),
               onTap: () => Navigator.of(context)
                   .push(MaterialPageRoute<void>(builder: (_) => AiServersScreen(state: state))),
+            ),
+            const SectionHeader(Fr.sectionAnalyzer),
+            ListTile(
+              leading: const Icon(Icons.visibility_off_rounded),
+              title: const Text(Fr.analysisExclusions),
+              subtitle: const Text(Fr.analysisExclusionsHelp),
+              trailing: const Icon(Icons.chevron_right_rounded),
+              onTap: () => Navigator.of(context)
+                  .push(MaterialPageRoute<void>(builder: (_) => AnalysisExclusionsScreen(state: state))),
             ),
             const SectionHeader(Fr.sectionDisks),
             SwitchListTile(

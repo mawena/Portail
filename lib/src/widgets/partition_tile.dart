@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 
+import '../analyzer/analyzer_home_screen.dart';
 import '../bridge/fluluks_api.g.dart';
 import '../state/app_state.dart';
 import '../screens/explorer_screen.dart';
-import '../screens/space_screen.dart';
 import '../screens/trash_screen.dart';
 import '../strings_fr.dart';
 import '../ui/tokens.dart';
@@ -12,7 +12,7 @@ import 'unlock_dialog.dart';
 
 /// Une partition d'un disque : cadenas fermé ou ouvert, puces d'état (système de fichiers, Chiffré, Verrouillé,
 /// Ouvert, Lecture seule, non démonté proprement), puis l'action principale : Déverrouiller, Ouvrir, ou Parcourir
-/// et Éjecter. Ouverte, son menu propose Ouvrir dans Fichiers, Corbeille et Analyse de l'espace.
+/// et Éjecter. Ouverte, son menu propose Ouvrir dans Fichiers, Corbeille et Analyser le stockage.
 class PartitionTile extends StatelessWidget {
   const PartitionTile({super.key, required this.state, required this.disk, required this.partition});
 
@@ -119,7 +119,7 @@ class PartitionTile extends StatelessWidget {
     );
   }
 
-  /// Menu d'une partition ouverte : Ouvrir dans Fichiers, Corbeille, Analyse de l'espace.
+  /// Menu d'une partition ouverte : Ouvrir dans Fichiers, Corbeille, Analyser le stockage.
   Widget _menu(BuildContext context, String volumeId) => PopupMenuButton<String>(
         tooltip: Fr.sourceMenu(_name),
         icon: const Icon(Icons.more_vert_rounded),
@@ -127,7 +127,7 @@ class PartitionTile extends StatelessWidget {
         onSelected: (v) => switch (v) {
           'files' => state.openInFiles(volumeId),
           'trash' => openTrash(context, state, volumeId),
-          _ => openSpace(context, state, volumeId),
+          _ => analyzeLocation(context, state, volumeId, '/'),
         },
         itemBuilder: (_) => const [
           PopupMenuItem(
@@ -139,8 +139,8 @@ class PartitionTile extends StatelessWidget {
             child: ListTile(leading: Icon(Icons.delete_outline_rounded), title: Text(Fr.trash)),
           ),
           PopupMenuItem(
-            value: 'space',
-            child: ListTile(leading: Icon(Icons.pie_chart_outline_rounded), title: Text(Fr.spaceAnalysis)),
+            value: 'analyze',
+            child: ListTile(leading: Icon(Icons.pie_chart_outline_rounded), title: Text(Fr.analyzeStorage)),
           ),
         ],
       );

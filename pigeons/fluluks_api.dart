@@ -374,39 +374,6 @@ class FolderSizeMsg {
   bool truncated;
 }
 
-/// Élément d'un dossier analysé (taille totale pour un dossier).
-class SpaceItemMsg {
-  SpaceItemMsg({required this.name, required this.path, required this.isDir, required this.size, required this.fileCount});
-  String name;
-  String path;
-  bool isDir;
-  int size;
-  int fileCount;
-}
-
-/// Occupation d'un dossier : enfants du plus gros au plus petit (200 au plus, le reste résumé par `otherCount` et
-/// `otherBytes`), plus gros fichiers sous lui ; `truncated` si l'analyse s'est arrêtée avant la fin.
-class SpaceReportMsg {
-  SpaceReportMsg({
-    required this.path,
-    required this.totalBytes,
-    required this.fileCount,
-    required this.children,
-    required this.biggest,
-    required this.truncated,
-    required this.otherCount,
-    required this.otherBytes,
-  });
-  String path;
-  int totalBytes;
-  int fileCount;
-  List<SpaceItemMsg> children;
-  List<EntryMsg> biggest;
-  bool truncated;
-  int otherCount;
-  int otherBytes;
-}
-
 /// Nœud d'une vue de l'analyseur (phase 16). `kind` : `dir`, `file`, `others` (contenu trop petit ou résumé, nom
 /// vide), `inaccessible`, `excluded`, `otherFs`, `unscanned` (part hors analyse), `trash` ; `others` et `unscanned`
 /// ont un identifiant négatif. `alloc` : place occupée (ou taille apparente, selon `sizeKind` de la vue) ; `items` :
@@ -849,12 +816,7 @@ abstract class FluLuksHostApi {
   SearchResultMsg search(String sourceId, String path, String query, bool showHidden);
   void cancelSearch();
 
-  /// Analyse de l'espace sous `path` (une à la fois) ; `spaceChildren` relit un dossier de la dernière analyse.
-  @async
-  SpaceReportMsg analyzeSpace(String sourceId, String path);
-  @async
-  SpaceReportMsg spaceChildren(String sourceId, String path);
-  /// Arrête l'analyse en cours (`analyzeSpace` et analyseur de la phase 16).
+  /// Arrête l'analyse en cours de l'analyseur.
   void cancelAnalysis();
 
   // --- analyseur de stockage (phase 16) : avancement par `onAnalysisProgress`

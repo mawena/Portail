@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:fluluks/src/analyzer/analyzer_screen.dart';
 import 'package:fluluks/src/app.dart';
 import 'package:fluluks/src/bridge/fluluks_api.g.dart';
 import 'package:fluluks/src/screens/explorer_screen.dart';
 import 'package:fluluks/src/screens/filter_screen.dart';
 import 'package:fluluks/src/screens/image_viewer_screen.dart';
-import 'package:fluluks/src/screens/space_screen.dart';
 import 'package:fluluks/src/screens/trash_screen.dart';
 import 'package:fluluks/src/state/app_state.dart';
 import 'package:fluluks/src/strings_fr.dart';
@@ -200,15 +200,13 @@ void main() {
     expect(api.calls, contains('listDir sd:1 /Docs false'));
   });
 
-  testWidgets('trashAndSpaceStayLists', (tester) async {
-    // décision du plan : la corbeille (emplacement d'origine, date) et l'analyse (barres) restent en liste
+  testWidgets('trashAndAnalysisStayLists', (tester) async {
+    // décision du plan : la corbeille (emplacement d'origine, date) et l'arbre de l'analyse restent en liste
     final api = api0()
       ..viewPrefs = gridPrefs
       ..trash['phone'] = [
         TrashItemMsg(id: 't', name: 'a.jpg', originalPath: '/DCIM/a.jpg', deletedAt: 0, size: 10, isDir: false),
       ];
-    api.space['/'] = SpaceReportMsg(
-        path: '/', totalBytes: 10, fileCount: 1, children: [], biggest: [], truncated: false, otherCount: 0, otherBytes: 0);
     final state = await pumpHome(tester, api);
     final ctx = tester.element(find.byType(Scaffold).first);
     openTrash(ctx, state, 'phone');
@@ -216,9 +214,9 @@ void main() {
     expect(find.byType(TrashScreen), findsOneWidget);
     expect(find.byType(SliverGrid), findsNothing);
     expect(find.byType(GridView), findsNothing);
-    openSpace(ctx, state, 'phone');
+    openAnalysis(ctx, state, sourceId: 'phone');
     await tester.pumpAndSettle();
-    expect(find.byType(SpaceScreen), findsOneWidget);
+    expect(find.byType(AnalyzerScreen), findsOneWidget);
     expect(find.byType(SliverGrid), findsNothing);
     expect(find.byType(GridView), findsNothing);
   });

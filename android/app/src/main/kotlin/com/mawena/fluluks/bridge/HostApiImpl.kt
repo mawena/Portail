@@ -31,8 +31,6 @@ import com.mawena.fluluks.files.UiPrefs
 import com.mawena.fluluks.files.UiSettings
 import com.mawena.fluluks.files.Sources
 import com.mawena.fluluks.analyzer.Analyzer
-import com.mawena.fluluks.files.SpaceAnalysis
-import com.mawena.fluluks.files.SpaceReport
 import com.mawena.fluluks.files.Thumbnails
 import com.mawena.fluluks.files.TransferState
 import com.mawena.fluluks.files.Trash
@@ -824,16 +822,7 @@ class HostApiImpl(
             SearchResultMsg(r.entries.map(::entryMsg), r.truncated)
         }
 
-    override fun analyzeSpace(sourceId: String, path: String, callback: (Result<SpaceReportMsg>) -> Unit) =
-        io(callback) { spaceMsg(SpaceAnalysis.run(sourceId, path)) }
-
-    override fun spaceChildren(sourceId: String, path: String, callback: (Result<SpaceReportMsg>) -> Unit) =
-        io(callback) { spaceMsg(SpaceAnalysis.children(sourceId, path)) }
-
-    override fun cancelAnalysis() {
-        SpaceAnalysis.cancel()
-        Analyzer.cancel()
-    }
+    override fun cancelAnalysis() = Analyzer.cancel()
 
     // --- analyseur de stockage (phase 16)
 
@@ -1099,13 +1088,6 @@ class HostApiImpl(
         private fun detailsMsg(d: Details) = DetailsMsg(
             name = d.name, path = d.path, type = typeName(d.type), size = d.size, mtime = d.mtime, mode = d.mode?.toLong(),
             uid = d.uid, gid = d.gid, permissions = d.permissions, fs = d.fs,
-        )
-
-        private fun spaceMsg(r: SpaceReport) = SpaceReportMsg(
-            path = r.path, totalBytes = r.totalBytes, fileCount = r.fileCount.toLong(),
-            children = r.children.map { SpaceItemMsg(it.name, it.path, it.isDir, it.size, it.fileCount.toLong()) },
-            biggest = r.biggest.map(::entryMsg), truncated = r.truncated, otherCount = r.otherCount.toLong(),
-            otherBytes = r.otherBytes,
         )
 
         internal fun transferMsg(t: TransferState) = TransferMsg(
