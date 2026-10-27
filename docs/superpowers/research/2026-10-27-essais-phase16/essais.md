@@ -44,7 +44,8 @@ précédente jusqu'à la v1.9.0. Cochez chaque ligne faite et notez ce qui ne va
 - [x] Menu ⋮ du téléphone sur l'accueil de Fichiers → **Analyser le stockage** : l'analyse s'ouvre dans le module
       Analyseur.
       *Essai du 2026-10-27 : Options de Téléphone → Analyser le stockage : l'analyse de Téléphone s'ouvre, module Analyseur sélectionné dans la barre*
-- [ ] Explorateur, dans `DCIM/` → menu ⋮ → **Analyser ce dossier** : l'analyse porte sur `DCIM` seul.
+- [x] Explorateur, dans `DCIM/` → menu ⋮ → **Analyser ce dossier** : l'analyse porte sur `DCIM` seul.
+      *Essai du 2026-10-27 : analyse de DCIM seul : 3,7 Go, 641 éléments (Camera 3,4 Go, Snapchat 314,7 Mo, .Immich 24,8 Mo), comme DCIM dans l'analyse du téléphone. Remarque : le bouton ⋮ de l'explorateur a pour libellé d'accessibilité « Trier par » alors qu'il contient aussi « Afficher les fichiers cachés » et « Analyser ce dossier »*
 - [ ] **Analyser un dossier…** : le sélecteur montre aussi les dossiers en lecture seule ; l'analyse du dossier
       choisi démarre.
 - [ ] Après plusieurs analyses : elles sont listées sous **Analyses de la session** (taille, nombre de fichiers,
