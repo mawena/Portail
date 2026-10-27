@@ -118,7 +118,9 @@ précédente jusqu'à la v1.9.0. Cochez chaque ligne faite et notez ce qui ne va
 ## 7. Accessibilité et apparence
 
 - [ ] TalkBack sur l'arbre : chaque ligne lit son nom, son type, sa taille, sa part du parent, son contenu et sa date.
+      *Essai du 2026-10-27 : arbre d'accessibilité lu par uiautomator : « DCIM, dossier, 3,7 Go, 8 % de Téléphone, 641 éléments, modifié 25 octobre, 14:24 » ; « Autres, contenu résumé… » ; « data, accès refusé par android… ». Écoute réelle avec TalkBack à faire par l'utilisateur*
 - [ ] TalkBack sur le graphique : une description est lue.
+      *Essai du 2026-10-27 : description présente : « Graphique en anneaux de Téléphone : Applications, système et dossiers protégés, 35,6 Go, 76 % ; Download… » (et « Carte proportionnelle de … »). Écoute réelle à faire par l'utilisateur*
 - [x] Thème sombre : couleurs des graphiques lisibles, contrastées.
       *Essai du 2026-10-27 : thème Sombre de Portail : anneaux et carte proportionnelle contrastés sur fond sombre, libellés lisibles (« Autres » en sombre sur brun clair), arbre et barres lisibles ; thème remis sur Clair*
 - [x] Paysage : graphique et arbre côte à côte.
