@@ -168,7 +168,11 @@ class _AnalyzerScreenState extends State<AnalyzerScreen> {
   Widget _lower() => DefaultTabController(
         length: 2,
         child: Column(children: [
-          const TabBar(tabs: [Tab(text: Fr.analysisContent), Tab(text: Fr.biggestFiles)]),
+          // libellés réduits plutôt que coupés quand ils ne tiennent pas (texte à 200 %)
+          const TabBar(tabs: [
+            Tab(child: FittedBox(fit: BoxFit.scaleDown, child: Text(Fr.analysisContent))),
+            Tab(child: FittedBox(fit: BoxFit.scaleDown, child: Text(Fr.biggestFiles))),
+          ]),
           Expanded(
             child: TabBarView(children: [
               AnalysisTree(controller: c, sort: _sort, onMenu: _menu),

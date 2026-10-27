@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/semantics.dart';
+import 'package:flutter/rendering.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:fluluks/src/analyzer/analysis_chart.dart';
@@ -199,6 +199,23 @@ void main() {
     expect(find.byType(AnalysisChart), findsNothing);
     expect(find.byType(AnalysisTree), findsOneWidget);
     expect(api.uiPrefs.analyzerChart, 'none');
+  });
+
+  /// Essai du 2026-10-27 sur le Pixel : à 200 %, « Plus gros fichiers » était coupé au bord de l'écran.
+  testWidgets('tabLabelsFitAt200Percent', (t) async {
+    t.platformDispatcher.textScaleFactorTestValue = 2;
+    addTearDown(t.platformDispatcher.clearTextScaleFactorTestValue);
+    for (final size in [const Size(411, 869), const Size(869, 411)]) {
+      await show(t, size: size);
+      for (final label in [Fr.analysisContent, Fr.biggestFiles]) {
+        final r = t.getRect(find.text(label));
+        expect(r.left >= 0 && r.right <= size.width, isTrue, reason: '$label à $size : $r');
+        // le texte a toute sa largeur (réduit au besoin), pas celle de l'onglet qui le couperait
+        final p = t.renderObject<RenderParagraph>(find.text(label));
+        expect(p.size.width, greaterThanOrEqualTo(p.getMaxIntrinsicWidth(double.infinity) - 0.5),
+            reason: '$label coupé à $size');
+      }
+    }
   });
 
   testWidgets('menuActions', (t) async {
