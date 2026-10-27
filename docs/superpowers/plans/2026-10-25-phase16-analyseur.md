@@ -495,7 +495,7 @@ tant que pile non vide et non annulé :
     profondeur ; `file` en ton neutre de la même teinte, `others`, `unscanned`, `inaccessible` en gris
     (`surfaceContainerHighest`, `outline`).
 
-- [ ] **Step 1 : tests en échec** : `ringsAnglesProportional` (balayages ∝ place ; chaque enfant dans la plage de son
+- [x] **Step 1 : tests en échec** : `ringsAnglesProportional` (balayages ∝ place ; chaque enfant dans la plage de son
   parent ; somme ≤ 2π), `ringsDepthRadii`, `ringsTinySegmentsDropped` (moins de 0,01 rad : non dessiné),
   `ringsHitTest` (angle et rayon → segment ; centre → `center` vrai ; dehors → null),
   `treemapAreasProportional` (aires ∝ place à 1 % près, à chaque niveau, bandes de titre déduites),
@@ -506,10 +506,13 @@ tant que pile non vide et non annulé :
 
   Run : `flutter test test/chart_layout_test.dart`
   Expected : FAIL (fonctions absentes).
-- [ ] **Step 2 : implémentation** (fonctions pures, sans widget). Squarified : lignes remplies tant que le pire
+- [x] **Step 2 : implémentation** (fonctions pures, sans widget). Squarified : lignes remplies tant que le pire
   rapport ne se dégrade pas, côté court d'abord.
-- [ ] **Step 3 :** Run : `flutter test test/chart_layout_test.dart` — Expected : PASS.
-- [ ] **Step 4 : commit** `feat(analyseur): géométrie des anneaux et de la carte proportionnelle`.
+- [x] **Step 3 :** Run : `flutter test test/chart_layout_test.dart` — Expected : PASS.
+  *(Fait : la luminosité HSL n'étant pas perceptuelle, la limite de chaque teinte est cherchée pour garder 3,2:1
+  contre `surface`, les profondeurs s'étageant à partir d'elle ; `squarify` exposé pour le test de l'article ;
+  chart_layout_test 11 ; 842 tests Flutter.)*
+- [x] **Step 4 : commit** `feat(analyseur): géométrie des anneaux et de la carte proportionnelle`.
 
 ### Task 8 : graphiques à l'écran et gestes
 
