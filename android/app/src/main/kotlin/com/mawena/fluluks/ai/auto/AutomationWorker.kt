@@ -8,6 +8,8 @@ import android.app.PendingIntent
 import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
+import android.net.NetworkCapabilities
+import android.net.NetworkRequest
 import android.os.Build
 import androidx.annotation.VisibleForTesting
 import androidx.room.Room
@@ -52,12 +54,16 @@ class AutomationWorker(context: Context, params: WorkerParameters) : CoroutineWo
     }
 }
 
-/** Planification par WorkManager : travail périodique unique par automatisation, réseau requis. */
+/**
+ * Planification par WorkManager : travail périodique unique par automatisation, réseau requis. Le réseau n'a pas à être
+ * validé par Android (accès à Internet) : le serveur peut être sur le réseau de la maison, joint par un Wi-Fi sans
+ * Internet.
+ */
 class WorkManagerScheduler(private val context: Context) : AutomationScheduler {
     override fun schedule(a: Automation) {
         val every = (a.intervalMinutes ?: Automations.MIN_INTERVAL).toLong()
         val req = PeriodicWorkRequestBuilder<AutomationWorker>(every, TimeUnit.MINUTES)
-            .setConstraints(Constraints.Builder().setRequiredNetworkType(NetworkType.CONNECTED).build())
+            .setConstraints(networkConstraints())
             .setBackoffCriteria(BackoffPolicy.LINEAR, RETRY_MINUTES, TimeUnit.MINUTES)
             .setInputData(workDataOf(AutomationWorker.KEY_ID to a.id))
             .addTag(AutomationWorker.TAG)
@@ -73,6 +79,21 @@ class WorkManagerScheduler(private val context: Context) : AutomationScheduler {
     companion object {
         /** Délai avant la reprise unique d'un délai dépassé ou d'une erreur 5xx. */
         const val RETRY_MINUTES = 5L
+
+        /** Un réseau IP, validé ou non (avant Android 9 : tout réseau connecté). */
+        fun networkConstraints(): Constraints {
+            val b = Constraints.Builder()
+            if (Build.VERSION.SDK_INT >= 28) {
+                val net = NetworkRequest.Builder()
+                    .addCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET)
+                    .removeCapability(NetworkCapabilities.NET_CAPABILITY_VALIDATED)
+                    .build()
+                b.setRequiredNetworkRequest(net, NetworkType.CONNECTED)
+            } else {
+                b.setRequiredNetworkType(NetworkType.CONNECTED)
+            }
+            return b.build()
+        }
     }
 }
 
@@ -154,6 +175,7 @@ object Autos {
             synchronized(this) {
                 if (!recovered) {
                     a.recoverInterrupted()
+                    a.replanAll()
                     recovered = true
                 }
             }

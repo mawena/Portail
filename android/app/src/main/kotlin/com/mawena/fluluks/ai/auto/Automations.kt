@@ -165,6 +165,14 @@ class Automations(
     /** Au démarrage : une exécution restée « en cours » a été coupée par l'arrêt de Portail. */
     fun recoverInterrupted(): Int = dao.markInterrupted(MSG_INTERRUPTED, now())
 
+    /**
+     * Replanifie les automatisations planifiées et activées (premier accès d'un processus) : une planification faite par
+     * une version précédente prend la contrainte réseau actuelle, la période en cours est gardée.
+     */
+    fun replanAll() {
+        for (a in dao.automations()) if (a.enabled && a.trigger == Automation.PERIODIC) scheduler.schedule(a)
+    }
+
     /** Exécutions manuelles en cours. */
     fun running(): Set<Long> = synchronized(jobs) { jobs.keys.toSet() }
 
