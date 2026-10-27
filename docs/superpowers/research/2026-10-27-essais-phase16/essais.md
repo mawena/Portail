@@ -39,8 +39,9 @@ précédente jusqu'à la v1.9.0. Cochez chaque ligne faite et notez ce qui ne va
 
 ## 2. Accueil de l'analyseur
 
-- [ ] Module **Analyseur** : le téléphone, la carte SD s'il y en a une, les volumes ouverts du disque USB et les
+- [x] Module **Analyseur** : le téléphone, la carte SD s'il y en a une, les volumes ouverts du disque USB et les
       coffres ouverts, avec leur jauge d'occupation ; **Analyser un dossier…** en dessous.
+      *Essai du 2026-10-27 : Emplacements : Téléphone (6,4 Go libres sur 53,7 Go, 88 %) et le coffre ouvert Analyse16 (214,0 Mo libres sur 250,6 Mo, 15 %), chacun avec sa jauge ; Analyser un dossier… dessous. Pas de carte SD dans le Pixel ; disque USB à voir avec lui*
 - [x] Menu ⋮ du téléphone sur l'accueil de Fichiers → **Analyser le stockage** : l'analyse s'ouvre dans le module
       Analyseur.
       *Essai du 2026-10-27 : Options de Téléphone → Analyser le stockage : l'analyse de Téléphone s'ouvre, module Analyseur sélectionné dans la barre*
