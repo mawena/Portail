@@ -419,7 +419,7 @@ dans le même commit que le travail.
 - [x] *(utilisateur)* T13 — Essais sur le Pixel *(fiche : 33 lignes réussies, le 2026-10-27 ; défaut trouvé et corrigé : automatisations planifiées bloquées sur un Wi-Fi sans Internet (46ade42) ; lignes du chat avec Atelier faites par l'utilisateur)*
 - [x] Relecture finale de toute la branche *(1 point critique et 1 important corrigés, 3 mineurs remontés à important et corrigés, plus le plantage au démarrage signalé pendant les essais ; chacun avec son test ; 784 tests Flutter, 606 JVM, 14 instrumentés)*
 - [x] Fusion `feature/ia` → `develop` *(2026-10-27, à la demande de l'utilisateur, avant ses essais sur le Pixel ; branche supprimée ; version à publier après les essais)*
-- [ ] Version `v1.8.0`
+- [x] Version `v1.8.0` *(2026-10-27 ; branche `release/1.8.0` partie de develop avant la fusion de l'analyseur, correctif 46ade42 reporté)*
 
 ### Phase 16 — Analyseur de stockage, comme celui d'Ubuntu ([plan](2026-10-25-phase16-analyseur.md))
 - [x] Plan de la phase 16 écrit *(demande du 2026-10-25 ; spec § 26)*
