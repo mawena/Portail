@@ -416,7 +416,7 @@ dans le même commit que le travail.
 - [x] T10 — Certificats auto-signés de confiance, conversations masquées dans les captures *(TrustedCertsTest 8 ; http:// permis par la configuration de sécurité réseau, absente jusque-là ; règle de source noLogsInAiCode ; 782 tests Flutter, 604 Kotlin)*
 - [x] T11 — Documentation *(README : intégration IA, limites, sécurité, serveur d'essai, licences d'OkHttp, Room, WorkManager et markdown ; aide : trois questions ; [fiche d'essai](../research/2026-10-25-essais-phase15/essais.md))*
 - [x] T12 — Essais instrumentés sur le Pixel *(12/12 : test de connexion, 2 000 morceaux sans perte ni doublon, arrêt, erreur au milieu du flux, 401 non relancé, délai, base Room, WorkManager planifié puis annulé ; ni clé ni contenu dans logcat ; [journal](../research/2026-10-25-essais-phase15/instrumentes-20261025-2024.txt))*
-- [ ] *(utilisateur)* T13 — Essais sur le Pixel
+- [x] *(utilisateur)* T13 — Essais sur le Pixel *(fiche : 33 lignes réussies, le 2026-10-27 ; défaut trouvé et corrigé : automatisations planifiées bloquées sur un Wi-Fi sans Internet (46ade42) ; lignes du chat avec Atelier faites par l'utilisateur)*
 - [x] Relecture finale de toute la branche *(1 point critique et 1 important corrigés, 3 mineurs remontés à important et corrigés, plus le plantage au démarrage signalé pendant les essais ; chacun avec son test ; 784 tests Flutter, 606 JVM, 14 instrumentés)*
 - [x] Fusion `feature/ia` → `develop` *(2026-10-27, à la demande de l'utilisateur, avant ses essais sur le Pixel ; branche supprimée ; version à publier après les essais)*
 - [ ] Version `v1.8.0`
@@ -436,7 +436,7 @@ dans le même commit que le travail.
 - [x] T11 — Documentation *(README : analyseur de stockage, barre de navigation, renvois aux modules, limites, commandes de `test_fs_alloc` et des juges ; aide : deux questions ; [fiche d'essai](../research/2026-10-27-essais-phase16/essais.md) ; 902 tests Flutter)*
 - [x] Essais Pixel reportés (téléphone non joignable le 2026-10-27) : démarrage de T1, tests natifs de T2 *(faits le 2026-10-27 l'après-midi : démarrage et cinq modules ; 23 suites natives OK sur le Pixel)*
 - [x] T12 — Essais instrumentés sur le Pixel *(AnalyzerInstrumentedTest 5/5 : stockage partagé entier en 0,5 s (4 105 fichiers, 7,1 Go vus sur 42,8 Go occupés), 50 000 fichiers en 1,2 s pour +20 Mio Java, image ext4 égale au manifeste ; Android/data monté à part corrigé ; 666 tests JVM)*
-- [ ] *(utilisateur)* T13 — Essais sur le Pixel (comparaison avec Baobab sous Ubuntu)
+- [x] *(utilisateur)* T13 — Essais sur le Pixel (comparaison avec Baobab sous Ubuntu) *(fiche : 41 lignes réussies, le 2026-10-27, disque USB, Baobab et TalkBack faits par l'utilisateur ; quatre défauts trouvés et corrigés, chacun avec son test : rail invisible pour TalkBack en paysage, Réanalyser qui doublait l'analyse, propriétés sans la place sur le disque, onglet coupé à 200 %)*
 - [ ] Relecture finale de toute la branche
 - [x] Fusion `feature/analyseur` → `develop` *(2026-10-27, à la demande de l'utilisateur, avant ses essais sur le Pixel ; branche supprimée ; version à publier après les essais)*
 - [ ] Version `v1.9.0`
