@@ -146,6 +146,8 @@ object Analyzer {
             VolumeManager.volume(sourceId) != null, DuTree(),
         )
         synchronized(this) {
+            // Réanalyser remplace l'analyse du même emplacement, sans chasser les autres
+            scans.values.removeAll { it.sourceId == sourceId && it.path == p }
             scans[scan.id] = scan
             trim()
         }

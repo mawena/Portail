@@ -173,7 +173,7 @@ class AnalyzerTest {
         val first = Analyzer.start("phone", "/")
         assertTrue(entered.await(5, TimeUnit.SECONDS))
         src.onList = { _, _ -> }
-        val second = Analyzer.start("phone", "/") // arrête la première
+        val second = Analyzer.start("phone", "/d2") // arrête la première
         release.countDown()
         pool.submit {}.get(5, TimeUnit.SECONDS) // la première se termine, puis la seconde
         pool.submit {}.get(5, TimeUnit.SECONDS)
@@ -185,8 +185,8 @@ class AnalyzerTest {
     }
 
     @Test fun threeAnalysesKept() {
-        file("a.bin", 1)
-        val ids = (1..4).map { analyse() }
+        for (i in 1..4) file("d$i/a.bin", 1)
+        val ids = (1..4).map { analyse("/d$it") }
         assertEquals(ids.drop(1).reversed(), Analyzer.list().map { it.scanId })
         try {
             Analyzer.view(ids[0], 0, 2, 1500)
@@ -201,15 +201,24 @@ class AnalyzerTest {
     @Test fun nodeBudgetForgetsOldest() {
         // 3 analyses de 400 000 nœuds dépassent 1 000 000 : la plus ancienne est oubliée
         val big = object : FileSource by src {
-            override fun duList(path: String): List<DuEntry> = if (path == "/") {
+            override fun duList(path: String): List<DuEntry> = if (path in setOf("/", "/x", "/y")) {
                 List(20_000) { DuEntry("d$it", com.mawena.fluluks.engine.FileType.DIR, 4096, 4096, 0, 1, 0, 1) }
             } else {
                 List(19) { DuEntry("f$it", com.mawena.fluluks.engine.FileType.FILE, 1, 4096, 0, 1, 0, 1) }
             }
         }
         Files.setResolverForTests { if (it == "phone") big else null }
-        val ids = (1..3).map { analyse() }
+        val ids = listOf("/", "/x", "/y").map { analyse(it) }
         assertEquals(listOf(ids[2], ids[1]), Analyzer.list().map { it.scanId })
+    }
+
+    /** Essai du 2026-10-27 sur le Pixel : Réanalyser gardait l'ancienne analyse et chassait celle du téléphone. */
+    @Test fun rescanReplacesSameLocation() {
+        file("d/a.bin", 1)
+        val whole = analyse()
+        analyse("/d")
+        val again = analyse("/d")
+        assertEquals(listOf(again, whole), Analyzer.list().map { it.scanId })
     }
 
     @Test fun progressThrottled250ms() {
