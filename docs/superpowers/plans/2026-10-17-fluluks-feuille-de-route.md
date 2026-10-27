@@ -429,7 +429,7 @@ dans le même commit que le travail.
 - [x] T4 — Arbre compact et parcours itératif borné (liens physiques une fois, fichiers creux, dossiers inaccessibles, exclusions) *(DuTreeTest 8, ScannerTest 18 ; sous-dossier illisible sur un disque montré inaccessible, comme en phase 9 ; 668 tests JVM)*
 - [x] T5 — Analyses gardées, vues élaguées pour les graphiques, part « hors analyse », corbeille et exclusions *(AnalyzerTest 15, AnalysisViewsTest 8, AnalyzerPrefsTest 2 ; volume fermé relu entre deux entrées plutôt qu'observé ; 668 tests JVM)*
 - [x] T6 — Pont Pigeon et contrôleur de l'écran d'analyse (résultats au fur et à mesure) *(analyzer_controller_test 8, AnalyzerMsgTest ; 831 tests Flutter, 670 JVM)*
-- [ ] T7 — Géométrie des anneaux et de la carte proportionnelle, couleurs contrastées
+- [x] T7 — Géométrie des anneaux et de la carte proportionnelle, couleurs contrastées *(chart_layout_test 11 ; luminosité de chaque teinte cherchée pour garder 3,2:1 ; 842 tests Flutter)*
 - [ ] T8 — Graphiques à l'écran : toucher pour entrer, glisser pour lire, appui long pour le menu, TalkBack
 - [ ] T9 — Écran de l'analyse : arbre synchronisé, fil d'Ariane, profondeur, actions (explorateur, chemin, propriétés, corbeille)
 - [ ] T10 — Accueil de l'analyseur (module de la barre), points d'entrée, emplacements exclus ; retrait de l'analyse de la phase 9
