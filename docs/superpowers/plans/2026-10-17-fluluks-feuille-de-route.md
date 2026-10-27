@@ -435,7 +435,7 @@ dans le même commit que le travail.
 - [x] T10 — Accueil de l'analyseur (module de la barre), points d'entrée, emplacements exclus ; retrait de l'analyse de la phase 9 *(analyzer_home_test 10 ; module Analyseur troisième de la barre, après Coffres ; Réglages → Analyseur de stockage → Emplacements exclus ; analyse de l'espace de la phase 9 retirée (Pigeon, Kotlin, Dart) ; 902 tests Flutter, 664 JVM)*
 - [x] T11 — Documentation *(README : analyseur de stockage, barre de navigation, renvois aux modules, limites, commandes de `test_fs_alloc` et des juges ; aide : deux questions ; [fiche d'essai](../research/2026-10-27-essais-phase16/essais.md) ; 902 tests Flutter)*
 - [x] Essais Pixel reportés (téléphone non joignable le 2026-10-27) : démarrage de T1, tests natifs de T2 *(faits le 2026-10-27 l'après-midi : démarrage et cinq modules ; 23 suites natives OK sur le Pixel)*
-- [ ] T12 — Essais instrumentés sur le Pixel
+- [x] T12 — Essais instrumentés sur le Pixel *(AnalyzerInstrumentedTest 5/5 : stockage partagé entier en 0,5 s (4 105 fichiers, 7,1 Go vus sur 42,8 Go occupés), 50 000 fichiers en 1,2 s pour +20 Mio Java, image ext4 égale au manifeste ; Android/data monté à part corrigé ; 666 tests JVM)*
 - [ ] *(utilisateur)* T13 — Essais sur le Pixel (comparaison avec Baobab sous Ubuntu)
 - [ ] Relecture finale de toute la branche
 - [x] Fusion `feature/analyseur` → `develop` *(2026-10-27, à la demande de l'utilisateur, avant ses essais sur le Pixel ; branche supprimée ; version à publier après les essais)*
