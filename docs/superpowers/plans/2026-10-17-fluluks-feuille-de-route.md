@@ -423,7 +423,7 @@ dans le même commit que le travail.
 
 ### Phase 16 — Analyseur de stockage, comme celui d'Ubuntu ([plan](2026-10-25-phase16-analyseur.md))
 - [x] Plan de la phase 16 écrit *(demande du 2026-10-25 ; spec § 26)*
-- [ ] T1 — Barre de navigation entre les modules (Fichiers, Coffres, Distants, IA ; l'Analyseur y entre en T10), rail sur grand écran *(demande du 2026-10-26, Coffres demandé le 2026-10-27 ; spec § 27 ; code commité, reste le démarrage sur le Pixel)*
+- [x] T1 — Barre de navigation entre les modules (Fichiers, Coffres, Distants, IA ; l'Analyseur y entre en T10), rail sur grand écran *(demande du 2026-10-26, Coffres demandé le 2026-10-27 ; spec § 27 ; démarrage sur le Pixel le 2026-10-27 : cinq modules affichés, sans plantage)*
 - [x] T2 — Moteur : place allouée, inode et liens physiques dans la liste d'un dossier (ext4, FAT, exFAT, NTFS) *(test_fs_alloc 8 cas jugés par debugfs, fatjuge.py et ntfsjuge.py ; 50/50 tests natifs sur PC ; passage sur le Pixel en attente)*
 - [x] T3 — Liste d'un dossier avec sa place réelle : téléphone et cartes SD par lstat, disques et coffres par le moteur, distant en taille apparente *(DuListTest 11 ; lstat avant hasAccess, qui reste la lambda finale ; 668 tests JVM, 823 Flutter)*
 - [x] T4 — Arbre compact et parcours itératif borné (liens physiques une fois, fichiers creux, dossiers inaccessibles, exclusions) *(DuTreeTest 8, ScannerTest 18 ; sous-dossier illisible sur un disque montré inaccessible, comme en phase 9 ; 668 tests JVM)*

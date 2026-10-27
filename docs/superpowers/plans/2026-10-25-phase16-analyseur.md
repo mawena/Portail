@@ -174,11 +174,11 @@ l'application », placé en T1 ; spec § 27.)*
   module. Écrans au banc d'accessibilité ; images de référence claire, sombre et rail.
 - [x] **Step 3 :** Run : `flutter analyze && flutter test && flutter test --update-goldens test/goldens_test.dart`
   — Expected : tout vert ; les trois nouvelles images regardées une à une avant d'être gardées.
-- [ ] **Step 4 : démarrage sur le Pixel.** *(à faire : téléphone non joignable par adb le 2026-10-27, regroupé avec
+- [x] **Step 4 : démarrage sur le Pixel.** *(à faire : téléphone non joignable par adb le 2026-10-27, regroupé avec
   les étapes Pixel de T2 et T3)* `flutter build apk --debug`, `adb install -r` (téléphone inactif, APK de
   l'utilisateur sauvegardée), `adb logcat -c -b crash`, `adb shell am start -W -n com.mawena.fluluks/.MainActivity` ;
   Expected : `Status: ok`, processus vivant 5 s après, journal `-b crash` vide, barre lue par `uiautomator dump`
-  (« Fichiers », « Distants », « IA »).
+  (« Fichiers », « Distants », « IA »). *(fait le 2026-10-27 l'après-midi : APK de `develop` installée par `adb install -r`, démarrage sans plantage, accueil de Fichiers, barre à cinq modules lue par uiautomator « onglet n sur 5 », chaque module affiché ; coffres, serveurs et conversations de l'utilisateur gardés)*
 - [x] **Step 5 : commit** `feat(navigation): barre de navigation entre les modules`.
 
 *(Ajout du 2026-10-27, demande de l'utilisateur aux essais de la phase 15 : « un menu pour les coffres aussi ».)*
