@@ -24,8 +24,9 @@ précédente jusqu'à la v1.9.0. Cochez chaque ligne faite et notez ce qui ne va
       *Essai du 2026-10-27 : Téléphone › Download gardé après un passage par IA ; toucher Fichiers de nouveau ramène à l'accueil*
 - [x] Retour : dépile le module, puis ramène à Fichiers, puis quitte Portail.
       *Essai du 2026-10-27 : depuis IA › Chat IA : Retour → IA, → Fichiers (Download), → Téléphone, → accueil de Fichiers, → Portail quitté*
-- [ ] Réglages, Aide et À propos sont dans la barre de titre de chaque module ; l'Aide a les deux nouvelles questions
+- [x] Réglages, Aide et À propos sont dans la barre de titre de chaque module ; l'Aide a les deux nouvelles questions
       sur l'analyseur.
+      *Essai du 2026-10-27 : dans les cinq modules : Réglages et ⋮ (Aide, À propos) dans la barre de titre ; l'Aide a « Qu'est-ce qui remplit mon téléphone ? » et « Pourquoi l'analyse ne compte pas tout ? », qui s'ouvrent*
 - [ ] Le lecteur de musique réduit et une copie en cours s'affichent au-dessus de la barre, pas dessous.
 - [ ] Paysage : la barre devient un rail à gauche ; tous les modules restent accessibles.
 - [ ] Texte à 200 % (Paramètres → Affichage → Taille de la police) : les cinq libellés de la barre restent lisibles,
