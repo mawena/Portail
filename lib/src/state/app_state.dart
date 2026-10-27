@@ -3,6 +3,9 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/painting.dart';
 import 'package:flutter/services.dart';
 
+import '../ai/ai_hub.dart';
+import '../ai/automation_hub.dart';
+import '../ai/chat_hub.dart';
 import '../bridge/fluluks_api.g.dart';
 import '../strings_fr.dart';
 import '../terminal/terminal_hub.dart';
@@ -17,6 +20,15 @@ class AppState extends ChangeNotifier implements FluLuksEventsApi {
 
   /// Terminaux SSH ouverts (phase 13), gardés hors des écrans.
   late final terminals = TerminalHub(api, onBell: _bell);
+
+  /// Serveurs IA (phase 15), gardés hors des écrans.
+  late final ai = AiHub(api);
+
+  /// Conversations avec les modèles (phase 15), gardées hors des écrans.
+  late final chats = ChatHub(api);
+
+  /// Lancements manuels des automatisations (phase 15), suivis hors des écrans.
+  late final automations = AutomationHub(api);
 
   void _bell() {
     if (uiPrefs.haptics) HapticFeedback.vibrate();
@@ -206,6 +218,12 @@ class AppState extends ChangeNotifier implements FluLuksEventsApi {
       _biometricUnavailable = await api.biometricUnavailable();
       notifyListeners();
       await terminals.restore(); // sessions gardées par le service pendant que l'application était fermée
+      try {
+        await chats.load(); // nombre de conversations sur l'accueil, réponses encore en cours
+        await automations.load();
+      } on PlatformException {
+        // historique illisible : l'écran du chat le dira à son ouverture
+      }
     } on PlatformException catch (e) {
       _fail(e);
     }
@@ -592,6 +610,9 @@ class AppState extends ChangeNotifier implements FluLuksEventsApi {
 
   /// Réglage « Masquer les coffres et les fichiers déchiffrés » (phase 14).
   bool get hideVaults => uiPrefs.hideVaults ?? false;
+
+  /// Conversations et résultats d'automatisations masqués dans les captures (phase 15, désactivé par défaut).
+  bool get hideChats => uiPrefs.hideChats ?? false;
 
   /// Masque l'application dans les captures et les applications récentes tant que [releaseSecure] n'a pas été
   /// appelé autant de fois (terminal masqué, coffre parcouru) ; une vue déchiffrée ouverte masque aussi, si

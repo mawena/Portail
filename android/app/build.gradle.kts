@@ -1,6 +1,7 @@
 plugins {
     id("com.android.application")
     id("kotlin-android")
+    id("com.google.devtools.ksp") // Room (phase 15)
     // The Flutter Gradle Plugin must be applied after the Android and Kotlin Gradle plugins.
     id("dev.flutter.flutter-gradle-plugin")
 }
@@ -53,6 +54,11 @@ android {
         }
     }
 
+    // Phase 15 : schémas de Room exportés (versionnés), lus par les essais de migration.
+    sourceSets {
+        getByName("androidTest").assets.srcDir("$projectDir/schemas")
+    }
+
     // Manifestes OSGi en double (JSch, Bouncy Castle, jspecify) : inutiles sur Android.
     packaging {
         resources {
@@ -71,20 +77,35 @@ dependencies {
     // SFTP : JSch (fork mwiede) ; Bouncy Castle pour Ed25519 et Curve25519 sur Android.
     implementation("com.github.mwiede:jsch:2.28.8")
     implementation("org.bouncycastle:bcprov-jdk18on:1.86")
+    // Phase 15 : serveurs IA compatibles OpenAI (HTTP, flux SSE lu par Portail).
+    implementation("com.squareup.okhttp3:okhttp:4.12.0")
+    // Phase 15 : historique des conversations et automatisations (Room).
+    implementation("androidx.room:room-runtime:2.7.2")
+    ksp("androidx.room:room-compiler:2.7.2")
+    // Phase 15 : automatisations planifiées (survivent aux redémarrages, respectent la batterie).
+    implementation("androidx.work:work-runtime-ktx:2.10.1")
     testImplementation("junit:junit:4.13.2")
     testImplementation("org.apache.sshd:sshd-core:2.20.0")
     testImplementation("org.apache.sshd:sshd-sftp:2.20.0")
     testImplementation("org.jetbrains.kotlinx:kotlinx-coroutines-test:1.10.2")
     testImplementation("org.json:json:20240303")
     testImplementation("org.apache.ftpserver:ftpserver-core:1.2.1")
+    testImplementation("com.squareup.okhttp3:mockwebserver:4.12.0")
+    testImplementation("com.squareup.okhttp3:okhttp-tls:4.12.0") // certificats d'essai (HTTPS de MockWebServer)
     androidTestImplementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.10.2")
     androidTestImplementation("androidx.test:runner:1.6.2")
     androidTestImplementation("androidx.test.ext:junit:1.2.1")
     androidTestImplementation("androidx.test:rules:1.6.1")
+    androidTestImplementation("androidx.room:room-testing:2.7.2")
+    androidTestImplementation("androidx.work:work-testing:2.10.1")
 }
 
 flutter {
     source = "../.."
+}
+
+ksp {
+    arg("room.schemaLocation", "$projectDir/schemas")
 }
 
 // integration_test (Flutter, en dépendance de développement) tire androidx.test 1.2.x dans le classpath de debug ; la

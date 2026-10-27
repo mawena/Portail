@@ -721,3 +721,21 @@ phase 16.)*
   dans un fichier ; analyse planifiée ou en arrière-plan quand Portail est fermé ; écriture d'aucune sorte en dehors
   des actions demandées par l'utilisateur (corbeille, suppression). La taille des applications est prévue pour une
   phase suivante (accord de l'utilisateur du 2026-10-25).
+
+## 27. Évolution du 2026-10-26 : barre de navigation entre les modules (phase 16)
+
+Demande de l'utilisateur : « un menu en bas pour naviguer entre les différents modules de l'application », en
+**première tâche de la phase 16**. Portail a grandi (fichiers, dossiers distants et SSH, IA, bientôt l'analyseur) et son
+accueil unique devient une longue page. Une **barre de navigation** en bas de l'écran mène aux modules ; l'analyseur
+de stockage (§ 26) y prend sa place au lieu d'un bouton de l'accueil.
+*(Modules, ordre et comportements : décisions du planificateur, à valider aux essais ; voir le plan de la phase 16.)*
+- **Modules** : **Fichiers** (raccourcis, stockage, disques USB, coffres, favoris), **Analyseur** (§ 26), **Distants**
+  (dossiers distants, sessions SSH, tunnels, clés SSH) et **IA** (chat, automatisations, serveurs IA). Réglages,
+  Aide et À propos restent accessibles depuis chaque module.
+- **Comportement** : chaque module garde sa page quand on passe à un autre ; toucher le module déjà choisi ramène à sa
+  racine ; Retour remonte dans le module, puis ramène à Fichiers, puis quitte. Les pages plein écran (visionneuses,
+  lecteur vidéo, éditeur, terminal, conversation) passent au-dessus de la barre. Le lecteur réduit et la copie en
+  cours restent au-dessus de la barre. Un point signale une activité en cours (session SSH ou tunnel, réponse ou
+  automatisation de l'IA).
+- **Grand écran et accessibilité** : rail à gauche sur une tablette ou un téléphone en paysage ; libellés toujours
+  écrits, lus par TalkBack, texte jusqu'à 200 % ; écrans ajoutés au banc d'accessibilité.

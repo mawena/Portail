@@ -409,32 +409,34 @@ dans le même commit que le travail.
 - [x] T3 — Serveurs IA : stockage, clé API scellée, serveur par défaut, Tester la connexion
 - [x] T4 — Écrans des serveurs IA : modèles, modèle par défaut, état en ligne ou hors ligne
 - [x] T5 — Historique local des conversations (Room) *(Room 2.7.2 et KSP, schéma exporté, réponses interrompues retrouvées au démarrage)*
-- [ ] T6 — Réponses en flux vers l'écran, arrêter, régénérer
-- [ ] T7 — Écran de chat : Markdown, blocs de code, serveur, modèle et prompt système par conversation
-- [ ] T8 — Automatisations : modèles de prompt à variables, lancement manuel ou planifié (WorkManager), historique
-- [ ] T9 — Écrans des automatisations
-- [ ] T10 — Certificats auto-signés de confiance, conversations masquées dans les captures
-- [ ] T11 — Documentation
-- [ ] T12 — Essais instrumentés sur le Pixel
-- [ ] *(utilisateur)* T13 — Essais sur le Pixel
-- [ ] Relecture finale de toute la branche
-- [ ] Fusion `feature/ia` → `develop`
-- [ ] Version `v1.8.0`
+- [x] T6 — Réponses en flux vers l'écran, arrêter, régénérer *(lots de 50 ms ou 16 Kio, 4 en route au plus, réponse écrite une fois à la fin ; 3 générations en parallèle)*
+- [x] T7 — Écran de chat : Markdown, blocs de code, serveur, modèle et prompt système par conversation *(chat_screen_test 16, markdown_view_test 8 ; écrans chatList et chat au banc, deux volets sur grand écran ; 723 tests Flutter, 562 Kotlin)*
+- [x] T8 — Automatisations : modèles de prompt à variables, lancement manuel ou planifié (WorkManager), historique *(TemplateTest 9, AutomationsTest 24 ; WorkManager 2.10.1 ; AutomationWorkerInstrumentedTest écrit, passage sur le Pixel en T12 ; 723 tests Flutter, 595 Kotlin)*
+- [x] T9 — Écrans des automatisations *(automations_test 11 ; liste, fiche et historique, formulaire à variables détectées, exécution suivie en direct ; entrée « Automatisations » sur l'accueil ; 778 tests Flutter, 595 Kotlin)*
+- [x] T10 — Certificats auto-signés de confiance, conversations masquées dans les captures *(TrustedCertsTest 8 ; http:// permis par la configuration de sécurité réseau, absente jusque-là ; règle de source noLogsInAiCode ; 782 tests Flutter, 604 Kotlin)*
+- [x] T11 — Documentation *(README : intégration IA, limites, sécurité, serveur d'essai, licences d'OkHttp, Room, WorkManager et markdown ; aide : trois questions ; [fiche d'essai](../research/2026-10-25-essais-phase15/essais.md))*
+- [x] T12 — Essais instrumentés sur le Pixel *(12/12 : test de connexion, 2 000 morceaux sans perte ni doublon, arrêt, erreur au milieu du flux, 401 non relancé, délai, base Room, WorkManager planifié puis annulé ; ni clé ni contenu dans logcat ; [journal](../research/2026-10-25-essais-phase15/instrumentes-20261025-2024.txt))*
+- [x] *(utilisateur)* T13 — Essais sur le Pixel *(fiche : 33 lignes réussies, le 2026-10-27 ; défaut trouvé et corrigé : automatisations planifiées bloquées sur un Wi-Fi sans Internet (46ade42) ; lignes du chat avec Atelier faites par l'utilisateur)*
+- [x] Relecture finale de toute la branche *(1 point critique et 1 important corrigés, 3 mineurs remontés à important et corrigés, plus le plantage au démarrage signalé pendant les essais ; chacun avec son test ; 784 tests Flutter, 606 JVM, 14 instrumentés)*
+- [x] Fusion `feature/ia` → `develop` *(2026-10-27, à la demande de l'utilisateur, avant ses essais sur le Pixel ; branche supprimée ; version à publier après les essais)*
+- [x] Version `v1.8.0` *(2026-10-27 ; branche `release/1.8.0` partie de develop avant la fusion de l'analyseur, correctif 46ade42 reporté)*
 
 ### Phase 16 — Analyseur de stockage, comme celui d'Ubuntu ([plan](2026-10-25-phase16-analyseur.md))
 - [x] Plan de la phase 16 écrit *(demande du 2026-10-25 ; spec § 26)*
-- [ ] T1 — Moteur : place allouée, inode et liens physiques dans la liste d'un dossier (ext4, FAT, exFAT, NTFS)
-- [ ] T2 — Liste d'un dossier avec sa place réelle : téléphone et cartes SD par lstat, disques et coffres par le moteur, distant en taille apparente
-- [ ] T3 — Arbre compact et parcours itératif borné (liens physiques une fois, fichiers creux, dossiers inaccessibles, exclusions)
-- [ ] T4 — Analyses gardées, vues élaguées pour les graphiques, part « hors analyse », corbeille et exclusions
-- [ ] T5 — Pont Pigeon et contrôleur de l'écran d'analyse (résultats au fur et à mesure)
-- [ ] T6 — Géométrie des anneaux et de la carte proportionnelle, couleurs contrastées
-- [ ] T7 — Graphiques à l'écran : toucher pour entrer, glisser pour lire, appui long pour le menu, TalkBack
-- [ ] T8 — Écran de l'analyse : arbre synchronisé, fil d'Ariane, profondeur, actions (explorateur, chemin, propriétés, corbeille)
-- [ ] T9 — Accueil de l'analyseur, points d'entrée, emplacements exclus ; retrait de l'analyse de la phase 9
-- [ ] T10 — Documentation
-- [ ] T11 — Essais instrumentés sur le Pixel
-- [ ] *(utilisateur)* T12 — Essais sur le Pixel (comparaison avec Baobab sous Ubuntu)
+- [ ] T1 — Barre de navigation entre les modules (Fichiers, Coffres, Distants, IA ; l'Analyseur y entre en T10), rail sur grand écran *(demande du 2026-10-26, Coffres demandé le 2026-10-27 ; spec § 27 ; code commité, reste le démarrage sur le Pixel)*
+- [x] T2 — Moteur : place allouée, inode et liens physiques dans la liste d'un dossier (ext4, FAT, exFAT, NTFS) *(test_fs_alloc 8 cas jugés par debugfs, fatjuge.py et ntfsjuge.py ; 50/50 tests natifs sur PC ; passage sur le Pixel en attente)*
+- [x] T3 — Liste d'un dossier avec sa place réelle : téléphone et cartes SD par lstat, disques et coffres par le moteur, distant en taille apparente *(DuListTest 11 ; lstat avant hasAccess, qui reste la lambda finale ; 668 tests JVM, 823 Flutter)*
+- [x] T4 — Arbre compact et parcours itératif borné (liens physiques une fois, fichiers creux, dossiers inaccessibles, exclusions) *(DuTreeTest 8, ScannerTest 18 ; sous-dossier illisible sur un disque montré inaccessible, comme en phase 9 ; 668 tests JVM)*
+- [x] T5 — Analyses gardées, vues élaguées pour les graphiques, part « hors analyse », corbeille et exclusions *(AnalyzerTest 15, AnalysisViewsTest 8, AnalyzerPrefsTest 2 ; volume fermé relu entre deux entrées plutôt qu'observé ; 668 tests JVM)*
+- [x] T6 — Pont Pigeon et contrôleur de l'écran d'analyse (résultats au fur et à mesure) *(analyzer_controller_test 8, AnalyzerMsgTest ; 831 tests Flutter, 670 JVM)*
+- [x] T7 — Géométrie des anneaux et de la carte proportionnelle, couleurs contrastées *(chart_layout_test 11 ; luminosité de chaque teinte cherchée pour garder 3,2:1 ; 842 tests Flutter)*
+- [x] T8 — Graphiques à l'écran : toucher pour entrer, glisser pour lire, appui long pour le menu, TalkBack *(analysis_chart_test 11 ; 853 tests Flutter)*
+- [x] T9 — Écran de l'analyse : arbre synchronisé, fil d'Ariane, profondeur, actions (explorateur, chemin, propriétés, corbeille) *(analyzer_screen_test 17 ; dialogue de suppression partagé avec l'explorateur ; images de référence analyzer_light et analyzer_dark ; 892 tests Flutter)*
+- [x] T10 — Accueil de l'analyseur (module de la barre), points d'entrée, emplacements exclus ; retrait de l'analyse de la phase 9 *(analyzer_home_test 10 ; module Analyseur troisième de la barre, après Coffres ; Réglages → Analyseur de stockage → Emplacements exclus ; analyse de l'espace de la phase 9 retirée (Pigeon, Kotlin, Dart) ; 902 tests Flutter, 664 JVM)*
+- [x] T11 — Documentation *(README : analyseur de stockage, barre de navigation, renvois aux modules, limites, commandes de `test_fs_alloc` et des juges ; aide : deux questions ; [fiche d'essai](../research/2026-10-27-essais-phase16/essais.md) ; 902 tests Flutter)*
+- [ ] Essais Pixel reportés (téléphone non joignable le 2026-10-27) : démarrage de T1, tests natifs de T2
+- [ ] T12 — Essais instrumentés sur le Pixel
+- [ ] *(utilisateur)* T13 — Essais sur le Pixel (comparaison avec Baobab sous Ubuntu)
 - [ ] Relecture finale de toute la branche
 - [ ] Fusion `feature/analyseur` → `develop`
 - [ ] Version `v1.9.0`

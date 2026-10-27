@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../ai/automations_screen.dart';
+import '../ai/chat_list_screen.dart';
 import '../state/app_state.dart';
 import '../strings_fr.dart';
 import '../ui/states.dart';
@@ -69,6 +71,7 @@ class HomeScreen extends StatelessWidget {
             VaultsSection(state: state), // ouverts par le moteur, comme les disques
             if (state.terminals.sessions.isNotEmpty) SshSessionsCard(state: state),
             ..._remote(context),
+            ..._ai(context),
           ];
           final favorites = _favorites(context);
           if (windowClassOf(context) == WindowClass.expanded) {
@@ -191,6 +194,40 @@ class HomeScreen extends StatelessWidget {
                 .push(MaterialPageRoute<void>(builder: (_) => ServerFormScreen(state: state))),
           ),
         ),
+      ];
+
+  /// Chat avec les modèles des serveurs IA et automatisations (phase 15) ; les nombres suivent les hubs, sans
+  /// reconstruire l'accueil à chaque morceau de réponse.
+  List<Widget> _ai(BuildContext context) => [
+        const SectionHeader(Fr.sectionAiHome),
+        _gap(Card(
+          clipBehavior: Clip.antiAlias,
+          child: ListenableBuilder(
+            listenable: state.chats,
+            builder: (context, _) => ListTile(
+              leading: const TonalIcon(Icons.forum_rounded),
+              title: const Text(Fr.chatTitle),
+              subtitle: Text(Fr.chatCount(state.chats.conversations.length)),
+              trailing: const Icon(Icons.chevron_right_rounded),
+              onTap: () => Navigator.of(context)
+                  .push(MaterialPageRoute<void>(builder: (_) => ChatListScreen(state: state))),
+            ),
+          ),
+        )),
+        _gap(Card(
+          clipBehavior: Clip.antiAlias,
+          child: ListenableBuilder(
+            listenable: state.automations,
+            builder: (context, _) => ListTile(
+              leading: const TonalIcon(Icons.bolt_rounded),
+              title: const Text(Fr.automations),
+              subtitle: Text(Fr.automationsCount(state.automations.automations.length)),
+              trailing: const Icon(Icons.chevron_right_rounded),
+              onTap: () => Navigator.of(context)
+                  .push(MaterialPageRoute<void>(builder: (_) => AutomationsScreen(state: state))),
+            ),
+          ),
+        )),
       ];
 
   List<Widget> _favorites(BuildContext context) {

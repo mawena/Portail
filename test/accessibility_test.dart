@@ -1,6 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:fluluks/src/ai/ai_server_form.dart';
+import 'package:fluluks/src/ai/ai_servers_screen.dart';
+import 'package:fluluks/src/ai/automation_form.dart';
+import 'package:fluluks/src/ai/automation_runs_screen.dart';
+import 'package:fluluks/src/ai/automations_screen.dart';
+import 'package:fluluks/src/ai/chat_list_screen.dart';
+import 'package:fluluks/src/ai/chat_screen.dart';
 import 'package:fluluks/src/licenses.dart';
 import 'package:fluluks/src/screens/about_screen.dart';
 import 'package:fluluks/src/screens/explorer_screen.dart';
@@ -39,6 +46,9 @@ void main() {
     'nowPlaying': NowPlayingScreen, 'terminal': TerminalScreen,
     'sshKeys': SshKeysScreen, 'tunnels': TunnelsScreen, 'encrypt': EncryptSheet, 'decrypt': DecryptDialog,
     'vaultCreate': VaultCreateScreen, 'homeVaults': HomeScreen,
+    'aiServers': AiServersScreen, 'aiServerForm': AiServerForm, 'chatList': ChatListScreen, 'chat': ChatScreen,
+    'automations': AutomationsScreen, 'automationForm': AutomationForm, 'automationRuns': AutomationRunsScreen,
+    'automationRun': AutomationRunScreen,
   };
   testWidgets('harnessShowsEachScreen', (t) async {
     for (final screen in screens) {

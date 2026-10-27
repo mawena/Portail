@@ -16,7 +16,7 @@ publish_to: 'none' # Remove this line if you wish to publish to pub.dev
 # https://developer.apple.com/library/archive/documentation/General/Reference/InfoPlistKeyReference/Articles/CoreFoundationKeys.html
 # In Windows, build-name is used as the major, minor, and patch parts
 # of the product and file versions while build-number is used as the build suffix.
-version: 1.7.0+15
+version: 1.8.0+16
 
 environment:
   sdk: ^3.11.1
@@ -32,6 +32,8 @@ dependencies:
     sdk: flutter
   # Terminal SSH (phase 13) : émulation xterm et affichage ; version exacte, MIT.
   xterm: 4.0.0
+  # Chat IA (phase 15) : analyse du Markdown des réponses (rendu par Portail) ; version exacte, BSD-3.
+  markdown: 7.3.1
 
 dev_dependencies:
   flutter_test:

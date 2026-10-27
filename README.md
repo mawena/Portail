@@ -12,18 +12,55 @@ photo dans les applications habituelles.
 Elle est née d'un besoin simple : utiliser sur un téléphone non rooté (un Pixel 4 XL) le disque
 LUKS2/ext4 qu'on utilise sous Ubuntu. Aucune application existante ne le permettait.
 
-> **État actuel : version 1.7.0 ; gestionnaire de fichiers (interface claire ou sombre et accessible, recherche dans
+> **État actuel : version 1.8.0 ; gestionnaire de fichiers (interface claire ou sombre et accessible, recherche dans
 > tous les stockages, lecteurs intégrés de photos, musique, vidéos et textes, dossiers distants FTP et SFTP, terminal
 > SSH avec clés et tunnels, archives ZIP, 7z, RAR et TAR, corbeille, analyse de l'espace, renommage par lot), fichiers
-> et dossiers chiffrés, coffres de fichiers, lecture et écriture sur ext4, FAT, exFAT et NTFS, formatage des disques
-> USB, en clair ou chiffrés.** L'écriture a été vérifiée sur PC (batteries de
+> et dossiers chiffrés, coffres de fichiers, intégration IA avec vos serveurs auto-hébergés (chat, automatisations),
+> lecture et écriture sur ext4, FAT, exFAT et NTFS, formatage des disques USB, en clair ou chiffrés.** L'écriture a
+> été vérifiée sur PC (batteries de
 > non-corruption jugées par des outils indépendants et le noyau Linux, coupures simulées), sur le téléphone avec des
 > images, puis essayée sur une vraie clé et un vrai disque pour chaque système de fichiers (ext4 compris : `e2fsck`
 > propre ensuite sous Ubuntu).
 > Une sauvegarde reste recommandée avant d'écrire sur un disque qui compte. Voir les
 > [limites](#limites-actuelles).
 
-## Ce que fait la version 1.7.0
+## Ce que fait la version 1.8.0
+
+### Intégration IA (nouveau en 1.8.0)
+
+Portail se relie à vos propres serveurs d'IA (un VPS, une machine de la maison) pour discuter avec un modèle et
+lancer des prompts réutilisables. Rien ne passe par un service tiers : les requêtes vont seulement au serveur choisi.
+
+- **Serveurs IA** (Réglages → **Serveurs IA**) : tout serveur **compatible OpenAI** (le serveur maison du
+  [contrat d'API](docs/ia/contrat-api.md), Ollama, vLLM, LocalAI) : nom, adresse (`http://` ou `https://`, avec son
+  port), clé API facultative (scellée par le Keystore d'Android, jamais montrée ni rendue à l'interface), serveur par
+  défaut. **Tester la connexion** vérifie `GET /health` puis liste les modèles (`GET /v1/models`) ; touchez un modèle
+  pour en faire celui du serveur. L'état **En ligne**, **Hors ligne** ou **Clé refusée** est vérifié à l'ouverture des
+  écrans IA puis toutes les 60 s tant qu'ils sont affichés, jamais en arrière-plan. Un serveur en clair hors du réseau
+  local est signalé : la clé et les conversations y passent en clair.
+- **Certificat auto-signé** (fréquent sur un VPS sans nom de domaine) : refusé d'abord ; **Tester la connexion**
+  montre son empreinte SHA-256, à comparer à celle du serveur (`openssl x509 -in cert.pem -noout -fingerprint -sha256`)
+  avant de toucher **Faire confiance**. L'empreinte est ensuite vérifiée à chaque connexion ; un certificat changé est
+  refusé avec une explication, comme une clé d'hôte SSH changée.
+- **Chat IA** (section **IA** de l'accueil) : conversations comme dans les applications de chat courantes, réponses
+  **en flux** (le texte s'affiche au fur et à mesure), **Arrêter**, **Régénérer**, **Copier** ; rendu Markdown
+  (titres, listes, tableaux, citations, liens ouverts après confirmation de l'adresse, **blocs de code** copiables en
+  police à chasse fixe), le HTML n'étant jamais interprété. Serveur et modèle choisis par conversation sous le titre,
+  **prompt système** dans le menu ⋮, renommer et supprimer (appui long dans la liste). Une réponse continue quand
+  l'écran se ferme ; Portail fermé pendant une réponse, elle est marquée **Interrompue**. Sur une tablette, la liste
+  et la conversation s'affichent côte à côte.
+- **Automatisations** (section **IA** de l'accueil) : un prompt réutilisable où `{{nom}}` devient une valeur à saisir
+  au lancement (`{{date}}` et `{{heure}}` sont remplies par Portail), avec son serveur, son modèle et son prompt
+  système. **Lancer** à la main : le résultat s'affiche en flux, en Markdown, à copier ou partager. **Planifiée** :
+  toutes les 15 min, 30 min, 1 h… jusqu'à une fois par jour, par WorkManager, quand le réseau est disponible et avec
+  les valeurs par défaut ; une notification discrète en signale la fin, sans montrer le résultat. Historique des 50
+  dernières exécutions (état, durée, prompt envoyé, résultat ou erreur). Un échec est noté avec sa raison ; seuls un
+  délai dépassé ou une erreur 5xx sont réessayés, une fois.
+- **Erreurs expliquées en français** (clé refusée, modèle introuvable, serveur surchargé, délai, serveur injoignable,
+  certificat), avec le message du serveur dessous et le journal du dernier test dans **Détails**.
+- **Confidentialité** : conversations et résultats dans une base privée de l'application, jamais dans un journal ni
+  un rapport d'erreur ; réglage Confidentialité → **Masquer les conversations avec les modèles** (désactivé par défaut)
+  pour les cacher des captures et des applications récentes.
 
 ### Chiffrement et coffres (nouveau en 1.7.0)
 
@@ -365,6 +402,14 @@ Mesures sur le même téléphone, sur une image (test `PerfInstrumentedTest`, sa
   - **Supprimer l'original** après chiffrement : sur une mémoire flash (téléphone, carte SD, clé USB), une
     suppression ne garantit pas que les anciennes données soient irrécupérables ;
   - le lecteur vidéo n'est pas masqué dans les captures d'écran, même avec le réglage de confidentialité.
+- **Intégration IA** :
+  - pas de fichiers joints ni d'images dans le chat, pas d'embeddings à l'écran (prévus dans le contrat, pour une
+    recherche plus tard) ;
+  - 3 réponses en même temps au plus, une par conversation ; les 200 derniers messages d'une conversation sont
+    envoyés avec chaque question ;
+  - 20 automatisations au plus, planifiées toutes les 15 minutes au plus souvent (limite d'Android) ; Android peut
+    retarder une exécution planifiée pour économiser la batterie ;
+  - `temperature` et `max_tokens` ne se règlent pas : le serveur garde ses valeurs.
 - **Connexions SSH** :
   - tunnels locaux seulement (`ssh -L`) : pas de redirection distante (`-R`) ni dynamique (`-D`, SOCKS) ;
   - pas d'agent SSH, pas de saut par un hôte intermédiaire (`ProxyJump`), pas de transfert X11 ;
@@ -453,6 +498,9 @@ Mesures sur le même téléphone, sur une image (test `PerfInstrumentedTest`, sa
   flux, de la source à la destination choisie : un fichier ouvert est déchiffré en mémoire, sans copie en clair, et
   seul un nom temporaire `.nom.portail-partiel` existe pendant l'écriture, supprimé en cas d'échec. Les clés de
   secours ne sont gardées nulle part ; le secret biométrique d'un coffre n'existe que scellé par le Keystore.
+- **Ni clé API ni conversation ne quittent l'application ailleurs que vers le serveur choisi** (1.8.0). Les clés
+  API sont scellées par le Keystore et ne reviennent jamais à l'interface ; aucun prompt, réponse ou résultat
+  d'automatisation n'est écrit dans un journal (une règle des tests le vérifie dans le code de l'IA).
 - **Rien d'un disque chiffré n'est écrit sur le téléphone à votre insu.** Les vignettes sont gardées en
   mémoire seulement (32 Mio au plus), et vidées à l'éjection ; les résultats de recherche ne sont pas
   enregistrés. Seule une action explicite (copier, partager, ouvrir avec) sort un fichier du disque.
@@ -563,6 +611,11 @@ python3 tools/fixtures/zipaesjuge.py read archive.zip "mot de passe"
 FL_KEEP=1 ctest --test-dir build/native -R '^test_vault$'           # garde deux coffres créés par le moteur…
 sudo tools/fixtures/verify_vault_with_kernel.sh build/native/tmp     # …ouverts et vérifiés par cryptsetup et le noyau
 
+# intégration IA (phase 15) : serveur d'essai compatible OpenAI (http://127.0.0.1:8765, clé essai-portail) et contrat
+python3 tools/ia/serveur-essai.py
+ADB_SERIAL=<numéro-adb> python3 tools/ia/serveur-essai.py --reverse   # joignable depuis le téléphone (adb reverse)
+python3 tools/ia/contrat_test.py http://127.0.0.1:8765 essai-portail  # un serveur respecte-t-il le contrat ?
+
 # moteur natif sur le téléphone (écrit seulement dans /data/local/tmp/fluluks/)
 tools/android/run_native_tests.sh <numéro-adb>
 
@@ -623,7 +676,7 @@ Le dépôt suit git flow :
 | 12 | Lecteur vidéo : portrait par défaut, rotation et verrou, pistes audio et sous-titres, gestes comme VLC | **v1.5.0** |
 | 13 | Connexions SSH : terminal, sessions en arrière-plan, clés, commandes enregistrées, tunnels | **v1.6.0** (correctif **v1.6.1** : permission Internet de la version de publication) |
 | 14 | Chiffrement de fichiers et de dossiers, coffres de fichiers, chacun avec son mot de passe | **v1.7.0** |
-| 15 | Intégration IA : serveurs auto-hébergés compatibles OpenAI, chat en flux, automatisations | v1.8.0 |
+| 15 | Intégration IA : serveurs auto-hébergés compatibles OpenAI, chat en flux, automatisations | **v1.8.0** |
 | 16 | Analyseur de stockage comme celui d'Ubuntu (Baobab) : place réelle, anneaux et carte proportionnelle, arbre, corbeille | v1.9.0 |
 | 17 | Gestion des partitions comme GParted : taille au formatage, créer, supprimer, redimensionner | v1.10.0 |
 | 18 | Vérification et réparation des disques : e2fsck, ntfsfix, fsck.fat, fsck.exfat, en-têtes LUKS | v1.11.0 |
@@ -648,7 +701,9 @@ ne servent qu'aux tests. Les icônes du lecteur vidéo (phase 12) viennent d'AOS
 terminal SSH (phase 13) s'affiche par xterm 4.0.0 (licence MIT), avec ses dépendances equatable et zmodem (MIT)
 et quiver (Apache-2.0). Le chiffrement (phase 14) ajoute scrypt 1.3.2 de Tarsnap (fichier de référence, BSD à deux
 clauses, dans `native/third_party/scrypt/`) et la liste de mots de l'EFF des phrases de passe générées (EFF Large
-Wordlist, CC BY 3.0 US, `assets/words/`). Les
+Wordlist, CC BY 3.0 US, `assets/words/`). L'intégration IA (phase 15) ajoute OkHttp 4.12.0, AndroidX Room 2.7.2 et
+AndroidX WorkManager 2.10.1 (Apache-2.0), et le paquet Dart markdown 7.3.1 (BSD à trois clauses) ; MockWebServer
+(Apache-2.0) ne sert qu'aux tests. Les
 licences des bibliothèques natives sont dans
 `native/third_party/` (`ntfs-3g/COPYING`, `fatfs/LICENSE.txt`, `libarchive/COPYING`, `xz/COPYING`…) ; leurs correctifs sont décrits dans
 [native/third_party/PATCHES.md](native/third_party/PATCHES.md). Depuis la phase 11, toutes ces licences se lisent aussi

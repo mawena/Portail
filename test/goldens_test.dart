@@ -17,6 +17,17 @@ void main() {
     'unlock_light': ('unlock', Brightness.light),
     'settings_light': ('settings', Brightness.light),
     'welcome_light': ('welcome', Brightness.light),
+    'ai_servers_light': ('aiServers', Brightness.light),
+    'ai_servers_dark': ('aiServers', Brightness.dark),
+    'ai_server_form_light': ('aiServerForm', Brightness.light),
+    'ai_server_form_dark': ('aiServerForm', Brightness.dark),
+    'chat_list_light': ('chatList', Brightness.light),
+    'chat_light': ('chat', Brightness.light),
+    'chat_dark': ('chat', Brightness.dark),
+    'automations_light': ('automations', Brightness.light),
+    'automations_dark': ('automations', Brightness.dark),
+    'automation_form_light': ('automationForm', Brightness.light),
+    'automation_run_dark': ('automationRun', Brightness.dark),
   };
   for (final MapEntry(key: name, value: (screen, b)) in cases.entries) {
     testWidgets(name, (t) async {
