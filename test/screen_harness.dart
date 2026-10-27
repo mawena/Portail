@@ -231,8 +231,8 @@ Future<void> pumpScreen(
     t.state<ModuleShellState>(find.byType(ModuleShell))
         .select(screen == 'remoteHome' ? PortailModule.remote : PortailModule.ai);
   } else if (screen == 'homeVaults') {
-    // la section « Coffres » en haut de l'écran
-    await t.scrollUntilVisible(find.byKey(const ValueKey('a1')), 300, scrollable: find.byType(Scrollable).first);
+    // racine du module Coffres (phase 16)
+    t.state<ModuleShellState>(find.byType(ModuleShell)).select(PortailModule.vaults);
   } else if (screen == 'unlock') {
     showDialog<void>(
       context: nav.context,

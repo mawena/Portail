@@ -1,4 +1,7 @@
+import 'dart:math' as math;
+
 import 'package:flutter/material.dart';
+import 'package:flutter/rendering.dart';
 import 'package:flutter/services.dart';
 
 import '../ai/ai_home_screen.dart';
@@ -9,9 +12,10 @@ import '../widgets/bottom_dock.dart';
 import 'home_screen.dart';
 import 'remote_home_screen.dart';
 import 'settings_screen.dart';
+import 'vaults_home_screen.dart';
 
 /// Modules de Portail, dans l'ordre de la barre de navigation (spec § 27).
-enum PortailModule { files, remote, ai }
+enum PortailModule { files, vaults, remote, ai }
 
 /// Réglages, Aide et À propos : barre de titre de la racine de chaque module.
 List<Widget> moduleActions(BuildContext context, AppState state) => [
@@ -32,11 +36,12 @@ List<Widget> moduleActions(BuildContext context, AppState state) => [
       ),
     ];
 
-/// Coquille des modules (phase 16, T1) : une barre de navigation en bas (un rail à gauche dès 600 dp de large) et une
-/// pile de navigation par module, gardée quand on passe à un autre. Toucher le module déjà choisi ramène à sa racine ;
-/// Retour dépile le module, puis ramène à Fichiers, puis laisse Android fermer Portail. Les pages plein écran
-/// (visionneuses, éditeur, terminal, conversation, lecture en cours) s'ouvrent sur le navigateur de l'application,
-/// au-dessus de la barre. Le dock du cadre (lecteur réduit, opération en cours) se pose au-dessus de la barre.
+/// Coquille des modules (phase 16, T1 ; Coffres depuis le 2026-10-27) : une barre de navigation en bas (un rail à
+/// gauche dès 600 dp de large, défilant s'il ne tient pas en hauteur) et une pile de navigation par module, gardée
+/// quand on passe à un autre. Toucher le module déjà choisi ramène à sa racine ; Retour dépile le module, puis ramène
+/// à Fichiers, puis laisse Android fermer Portail. Les pages plein écran (visionneuses, éditeur, terminal,
+/// conversation, lecture en cours) s'ouvrent sur le navigateur de l'application, au-dessus de la barre. Le dock du
+/// cadre (lecteur réduit, opération en cours) se pose au-dessus de la barre.
 class ModuleShell extends StatefulWidget {
   const ModuleShell({super.key, required this.state});
 
@@ -71,6 +76,15 @@ class ModuleShellState extends State<ModuleShell> with SingleTickerProviderState
   late Set<String> _disks = {for (final d in _state.disks) d.id};
 
   PortailModule get current => _current;
+
+  /// Module dont la pile contient [context] ; null pour une page plein écran (navigateur de l'application).
+  PortailModule? moduleOf(BuildContext context) {
+    final nav = Navigator.maybeOf(context);
+    for (final m in PortailModule.values) {
+      if (_navigators[m]!.currentState == nav) return m;
+    }
+    return null;
+  }
 
   @override
   void initState() {
@@ -163,6 +177,7 @@ class ModuleShellState extends State<ModuleShell> with SingleTickerProviderState
 
   Widget _root(PortailModule m) => switch (m) {
         PortailModule.files => HomeScreen(state: _state),
+        PortailModule.vaults => VaultsHomeScreen(state: _state),
         PortailModule.remote => RemoteHomeScreen(state: _state),
         PortailModule.ai => AiHomeScreen(state: _state),
       };
@@ -192,19 +207,21 @@ class ModuleShellState extends State<ModuleShell> with SingleTickerProviderState
 
   /// Une session SSH (et ses tunnels) pour Distants, une réponse ou une automatisation pour l'IA.
   bool _busy(PortailModule m) => switch (m) {
-        PortailModule.files => false,
+        PortailModule.files || PortailModule.vaults => false,
         PortailModule.remote => _state.terminals.sessions.any((e) => !e.isClosed),
         PortailModule.ai => _state.chats.busy || _state.automations.busy,
       };
 
   static String _label(PortailModule m) => switch (m) {
         PortailModule.files => Fr.moduleFiles,
+        PortailModule.vaults => Fr.moduleVaults,
         PortailModule.remote => Fr.moduleRemote,
         PortailModule.ai => Fr.moduleAi,
       };
 
   static (IconData, IconData) _icons(PortailModule m) => switch (m) {
         PortailModule.files => (Icons.folder_outlined, Icons.folder_rounded),
+        PortailModule.vaults => (Icons.lock_outline_rounded, Icons.lock_rounded),
         PortailModule.remote => (Icons.cloud_outlined, Icons.cloud_rounded),
         PortailModule.ai => (Icons.smart_toy_outlined, Icons.smart_toy_rounded),
       };
@@ -234,18 +251,20 @@ class ModuleShellState extends State<ModuleShell> with SingleTickerProviderState
           listenable: activity,
           builder: (context, _) => SafeArea(
             right: false,
-            child: NavigationRail(
-              selectedIndex: _current.index,
-              onDestinationSelected: _tap,
-              labelType: NavigationRailLabelType.all,
-              destinations: [
-                for (final m in PortailModule.values)
-                  NavigationRailDestination(
-                    icon: _icon(m, selected: false),
-                    selectedIcon: _icon(m, selected: true),
-                    label: Text(_label(m), maxLines: 1, overflow: TextOverflow.ellipsis),
-                  ),
-              ],
+            child: _RailFit(
+              child: NavigationRail(
+                selectedIndex: _current.index,
+                onDestinationSelected: _tap,
+                labelType: NavigationRailLabelType.all,
+                destinations: [
+                  for (final m in PortailModule.values)
+                    NavigationRailDestination(
+                      icon: _icon(m, selected: false),
+                      selectedIcon: _icon(m, selected: true),
+                      label: Text(_label(m), maxLines: 1, overflow: TextOverflow.ellipsis),
+                    ),
+                ],
+              ),
             ),
           ),
         ),
@@ -296,5 +315,96 @@ class ModuleShellState extends State<ModuleShell> with SingleTickerProviderState
       },
       child: Material(color: Theme.of(context).colorScheme.surface, child: body),
     );
+  }
+}
+
+/// Rail entier s'il tient en hauteur ; sinon (paysage et grand texte), défilant. Sa hauteur naturelle est mesurée à
+/// chaque mise en page : le cas courant reste un rail simple, sans zone de défilement de plus pour TalkBack.
+class _RailFit extends StatefulWidget {
+  const _RailFit({required this.child});
+
+  final Widget child;
+
+  @override
+  State<_RailFit> createState() => _RailFitState();
+}
+
+class _RailFitState extends State<_RailFit> {
+  bool _scroll = false;
+
+  void _measured(bool tooTall) {
+    if (tooTall == _scroll) return;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) setState(() => _scroll = tooTall);
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return LayoutBuilder(builder: (context, c) {
+      final rail = _HeightProbe(available: c.maxHeight, onMeasured: _measured, child: widget.child);
+      if (!_scroll) return rail;
+      return SingleChildScrollView(
+        child: ConstrainedBox(constraints: BoxConstraints(minHeight: c.maxHeight), child: IntrinsicHeight(child: rail)),
+      );
+    });
+  }
+}
+
+/// Signale, à la mise en page, si la hauteur naturelle de son enfant dépasse [available] (la hauteur de l'écran pour
+/// le rail, qu'il défile déjà ou non). L'enfant reçoit toujours au moins sa hauteur naturelle, coupée à la peinture :
+/// rien ne déborde pendant l'image qui précède le passage au défilement.
+class _HeightProbe extends SingleChildRenderObjectWidget {
+  const _HeightProbe({required this.available, required this.onMeasured, required super.child});
+
+  final double available;
+  final ValueChanged<bool> onMeasured;
+
+  @override
+  RenderObject createRenderObject(BuildContext context) => _RenderHeightProbe(available, onMeasured);
+
+  @override
+  void updateRenderObject(BuildContext context, _RenderHeightProbe renderObject) => renderObject
+    ..available = available
+    ..onMeasured = onMeasured;
+}
+
+class _RenderHeightProbe extends RenderProxyBox {
+  _RenderHeightProbe(this._available, this.onMeasured);
+
+  double _available;
+  set available(double v) {
+    if (v == _available) return;
+    _available = v;
+    markNeedsLayout();
+  }
+
+  ValueChanged<bool> onMeasured;
+
+  @override
+  void performLayout() {
+    final c = child;
+    if (c == null) {
+      size = constraints.smallest;
+      return;
+    }
+    final natural = c.getMaxIntrinsicHeight(constraints.maxWidth);
+    final h = math.max(natural, constraints.hasBoundedHeight ? constraints.maxHeight : constraints.minHeight);
+    c.layout(constraints.copyWith(minHeight: h, maxHeight: h), parentUsesSize: true);
+    size = constraints.constrain(c.size);
+    if (_available.isFinite) onMeasured(natural > _available + 0.5);
+  }
+
+  @override
+  void paint(PaintingContext context, Offset offset) {
+    final c = child;
+    if (c == null) return;
+    if (c.size.height <= size.height + 0.5) {
+      layer = null;
+      context.paintChild(c, offset);
+    } else {
+      layer = context.pushClipRect(needsCompositing, offset, Offset.zero & size, super.paint,
+          oldLayer: layer as ClipRectLayer?);
+    }
   }
 }

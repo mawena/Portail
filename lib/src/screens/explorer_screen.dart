@@ -32,11 +32,13 @@ import 'space_screen.dart';
 import 'trash_screen.dart';
 import 'vault_create_screen.dart';
 
-/// Ouvre l'explorateur sur [sourceId] (à la racine, ou sur [path]), dans le module Fichiers d'où qu'on vienne.
-Future<void> openExplorer(BuildContext context, AppState state, String sourceId, {String path = '/'}) {
+/// Ouvre l'explorateur sur [sourceId] (à la racine, ou sur [path]), dans le module [module] d'où qu'on vienne :
+/// Fichiers, sauf le contenu d'un coffre ouvert depuis le module Coffres.
+Future<void> openExplorer(BuildContext context, AppState state, String sourceId,
+    {String path = '/', PortailModule module = PortailModule.files}) {
   final route = MaterialPageRoute<void>(builder: (_) => ExplorerScreen(state: state, sourceId: sourceId, path: path));
   final shell = ModuleShell.maybeOf(context);
-  return shell == null ? Navigator.of(context).push(route) : shell.push(PortailModule.files, route);
+  return shell == null ? Navigator.of(context).push(route) : shell.push(module, route);
 }
 
 String parentOf(String path) {
@@ -136,8 +138,9 @@ class _ExplorerScreenState extends State<ExplorerScreen> {
       if (!state.takeClosedNotice(widget.sourceId)) return; // un autre explorateur s'en est chargé
       // message sur le ScaffoldMessenger de l'application : il reste affiché sur l'accueil
       showMessage(context, Fr.volumeClosed);
-      // pages plein écran ouvertes d'ici (visionneuse) comprises, si le module Fichiers est à l'écran
-      if ((ModuleShell.maybeOf(context)?.current ?? PortailModule.files) == PortailModule.files) {
+      // pages plein écran ouvertes d'ici (visionneuse) comprises, si le module de cet explorateur est à l'écran
+      final shell = ModuleShell.maybeOf(context);
+      if (shell == null || shell.current == shell.moduleOf(context)) {
         Navigator.of(context, rootNavigator: true).popUntil((r) => r.isFirst);
       }
       Navigator.of(context).popUntil((r) => r.isFirst);

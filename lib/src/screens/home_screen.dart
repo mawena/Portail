@@ -10,7 +10,6 @@ import '../widgets/brand_mark.dart';
 import '../widgets/disk_card.dart';
 import '../widgets/shortcut_grid.dart';
 import '../widgets/source_tile.dart';
-import '../widgets/vaults_card.dart';
 import 'explorer_screen.dart';
 import 'filter_screen.dart';
 import 'global_search_screen.dart';
@@ -19,8 +18,8 @@ import 'space_screen.dart';
 import 'trash_screen.dart';
 
 /// Accueil, racine du module « Fichiers » : en-tête au logo, puis accès aux fichiers, Raccourcis, Stockage, Disques
-/// USB, Coffres et Favoris (dossiers distants et IA ont leur module, phase 16). En largeur étendue, deux colonnes : à
-/// gauche ce qui est sur le téléphone, à droite les disques USB et les coffres.
+/// USB et Favoris (coffres, dossiers distants et IA ont leur module, phase 16). En largeur étendue, deux colonnes : à
+/// gauche ce qui est sur le téléphone, à droite les disques USB.
 class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key, required this.state});
 
@@ -45,10 +44,7 @@ class HomeScreen extends StatelessWidget {
         builder: (context, _) {
           final top = _top(context);
           final phone = [..._shortcuts(context), ..._storage(context)];
-          final away = [
-            ..._disks(context),
-            VaultsSection(state: state), // ouverts par le moteur, comme les disques
-          ];
+          final away = _disks(context);
           final favorites = _favorites(context);
           if (windowClassOf(context) == WindowClass.expanded) {
             return ListView(padding: const EdgeInsets.all(Space.l), children: [
@@ -113,7 +109,7 @@ class HomeScreen extends StatelessWidget {
     ];
   }
 
-  /// Stockages du téléphone : mémoire interne, cartes SD (les disques USB et les coffres ont leur section, les
+  /// Stockages du téléphone : mémoire interne, cartes SD (les disques USB ont leur section, les coffres et les
   /// dossiers distants leur module ; un fichier déchiffré en mémoire n'est pas un stockage de l'accueil).
   bool _isLocal(String kind) => !const {'disk', 'remote', 'vault', 'decrypted'}.contains(kind);
 

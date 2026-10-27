@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:fluluks/src/app.dart';
 import 'package:fluluks/src/bridge/fluluks_api.g.dart';
 import 'package:fluluks/src/screens/explorer_screen.dart';
+import 'package:fluluks/src/screens/module_shell.dart';
 import 'package:fluluks/src/screens/vault_create_screen.dart';
 import 'package:fluluks/src/state/app_state.dart';
 import 'package:fluluks/src/strings_fr.dart';
@@ -43,7 +44,7 @@ FakeHostApi api0() => FakeHostApi()
   ..encryptedInfos['/disque.img'] = EncryptedInfoMsg(format: 'luks', folder: false)
   ..filePassword = goodPass;
 
-/// Application sur un écran haut (moins de défilement), et [page] par-dessus l'accueil si donnée.
+/// Application sur un écran haut (moins de défilement), sur le module Coffres, ou [page] par-dessus l'accueil si donnée.
 Future<AppState> pump(WidgetTester tester, FakeHostApi api, {Widget Function(AppState)? page}) async {
   tester.view.physicalSize = const Size(600, 2400);
   tester.view.devicePixelRatio = 1.0;
@@ -53,6 +54,9 @@ Future<AppState> pump(WidgetTester tester, FakeHostApi api, {Widget Function(App
   await tester.pumpWidget(FluLuksApp(state: state));
   if (page != null) {
     tester.state<NavigatorState>(find.byType(Navigator).first).push(MaterialPageRoute<void>(builder: (_) => page(state)));
+  } else {
+    await tester.pump();
+    tester.state<ModuleShellState>(find.byType(ModuleShell)).select(PortailModule.vaults); // les coffres ont leur module
   }
   await tester.pumpAndSettle();
   return state;
@@ -230,7 +234,6 @@ void main() {
         vault('a3', 'Ancien', state: 'unavailable', sourceKey: 'sd:x', sourceLabel: 'Carte SD'),
       ];
     await pump(tester, api);
-    await seek(tester, find.text(Fr.vaults));
     for (final n in ['Papiers', 'Photos', 'Ancien']) {
       expect(find.descendant(of: find.byType(VaultTile), matching: find.text(n)), findsOneWidget);
     }
@@ -238,7 +241,8 @@ void main() {
     expect(tileButton('Photos', Fr.vaultOpen), findsOneWidget);
     expect(tileButton('Ancien', Fr.vaultUnavailable('Carte SD')), findsOneWidget);
     expect(tileButton('Ancien', Fr.open), findsNothing);
-    expect(find.text('Coffre Photos'), findsNothing); // pas dans « Stockage » : sa tuile est dans « Coffres »
+    // pas dans « Stockage » de l'accueil de Fichiers : sa tuile est dans le module Coffres
+    expect(find.text('Coffre Photos', skipOffstage: false), findsNothing);
   });
 
   testWidgets('homeCreateOpensForm', (tester) async {

@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 
 import '../bridge/fluluks_api.g.dart';
 import '../screens/explorer_screen.dart';
+import '../screens/module_shell.dart';
 import '../screens/vault_keys_screen.dart';
 import '../state/app_state.dart';
 import '../strings_fr.dart';
@@ -19,7 +20,7 @@ String vaultFsName(String fs) => switch (fs.toLowerCase()) {
       _ => fs,
     };
 
-/// Un coffre de l'accueil (phase 14) : nom, taille, système de fichiers et emplacement ; état (fermé, ouvert,
+/// Un coffre du module Coffres (phase 14 ; module depuis la phase 16) : nom, taille, système de fichiers et emplacement ; état (fermé, ouvert,
 /// indisponible si son stockage n'est pas là) ; Ouvrir, ou Parcourir et Fermer ; menu ⋮ : Ouvrir ou Fermer,
 /// Parcourir, Ouvrir dans Fichiers, Changer le mot de passe, Clé de secours, déverrouillage biométrique (rien de cela
 /// pour un coffre LUKS1), Afficher l'emplacement, Retirer de la liste (le fichier reste). Biométrie activée : Ouvrir
@@ -45,7 +46,7 @@ class VaultTile extends StatelessWidget {
     if (vault.biometric) {
       try {
         final vol = await state.openVaultBiometric(vault.id, writable: !state.readOnlyPreference);
-        if (context.mounted) await openExplorer(context, state, vol.id);
+        if (context.mounted) await openExplorer(context, state, vol.id, module: PortailModule.vaults);
         return;
       } on PlatformException catch (e) {
         // annulée : le mot de passe, sans message ; sinon la raison, puis le mot de passe
@@ -57,7 +58,7 @@ class VaultTile extends StatelessWidget {
     }
     final vol =
         await openVaultDialog(context, state, name: vault.name, vaultId: vault.id, offerRecovery: vault.hasRecovery);
-    if (vol != null && context.mounted) await openExplorer(context, state, vol.id);
+    if (vol != null && context.mounted) await openExplorer(context, state, vol.id, module: PortailModule.vaults);
   }
 
   Future<void> _forget(BuildContext context) async {
@@ -128,7 +129,7 @@ class VaultTile extends StatelessWidget {
       case 'close':
         state.closeVault(vault.id);
       case 'browse':
-        if (vol != null) openExplorer(context, state, vol);
+        if (vol != null) openExplorer(context, state, vol, module: PortailModule.vaults);
       case 'files':
         if (vol != null) state.openInFiles(vol);
       case 'location':

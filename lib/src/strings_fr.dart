@@ -1010,11 +1010,13 @@ class Fr {
 
   // --- barre de navigation entre les modules (phase 16, T1)
   static const moduleFiles = 'Fichiers';
+  static const moduleVaults = 'Coffres';
   static const moduleRemote = 'Distants';
   static const moduleAi = 'IA';
 
   static String moduleBusy(String module) => '$module, activité en cours';
   static const remoteNoServers = 'Aucun serveur';
+  static const vaultsNoneTitle = 'Aucun coffre';
   static const sectionSsh = 'SSH';
   static const remoteNoServersBody =
       'Ajoutez un serveur SFTP ou FTP pour parcourir ses dossiers\u202F; un serveur SFTP ouvre aussi un terminal SSH.';

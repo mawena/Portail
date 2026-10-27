@@ -21,6 +21,8 @@ import 'package:fluluks/src/screens/server_form_screen.dart';
 import 'package:fluluks/src/screens/settings_screen.dart';
 import 'package:fluluks/src/screens/ssh_keys_screen.dart';
 import 'package:fluluks/src/screens/text_editor_screen.dart';
+import 'package:fluluks/src/screens/vault_create_screen.dart';
+import 'package:fluluks/src/screens/vaults_home_screen.dart';
 import 'package:fluluks/src/state/app_state.dart';
 import 'package:fluluks/src/strings_fr.dart';
 import 'package:fluluks/src/terminal/terminal_screen.dart';
@@ -29,6 +31,7 @@ import 'package:fluluks/src/ui/root.dart';
 import 'package:fluluks/src/ui/states.dart';
 import 'package:fluluks/src/widgets/mini_player.dart';
 import 'package:fluluks/src/widgets/transfer_bar.dart';
+import 'package:fluluks/src/widgets/vault_tile.dart';
 
 import 'demo_data.dart';
 import 'fake_ai_api.dart';
@@ -81,7 +84,7 @@ void main() {
     await pump(t, demoApi());
     expect(bar, findsOneWidget);
     final labels = t.widgetList<NavigationDestination>(find.byType(NavigationDestination)).map((d) => d.label);
-    expect(labels, [Fr.moduleFiles, Fr.moduleRemote, Fr.moduleAi]);
+    expect(labels, [Fr.moduleFiles, Fr.moduleVaults, Fr.moduleRemote, Fr.moduleAi]);
     expect(t.widget<NavigationBar>(bar).labelBehavior, NavigationDestinationLabelBehavior.alwaysShow);
     expect(t.widget<NavigationBar>(bar).selectedIndex, 0);
     expect(shell(t).current, PortailModule.files);
@@ -93,7 +96,7 @@ void main() {
       if (n.getSemanticsData().label.contains('onglet')) label = n.getSemanticsData().label;
     }
     expect(label, contains(Fr.moduleFiles));
-    expect(label, contains('onglet 1 sur 3'));
+    expect(label, contains('onglet 1 sur 4'));
     h.dispose();
   });
 
@@ -284,6 +287,22 @@ void main() {
     expect(bar, findsOneWidget);
   });
 
+  testWidgets('railScrollsOnlyWhenTooTall', (t) async {
+    // paysage, texte normal : rail simple
+    await pump(t, demoApi(), size: const Size(869, 412));
+    expect(find.descendant(of: find.byType(ModuleShell), matching: find.byType(SingleChildScrollView)), findsNothing);
+    // paysage bas, texte à 200 % : les modules ne tiennent plus, le rail défile jusqu'au dernier, sans débordement
+    await pump(t, demoApi(), size: const Size(869, 300), textScale: 2);
+    expect(t.takeException(), isNull);
+    final scroll = find.ancestor(of: rail, matching: find.byType(SingleChildScrollView));
+    expect(scroll, findsOneWidget);
+    final ai = find.descendant(of: rail, matching: find.text(Fr.moduleAi));
+    await t.scrollUntilVisible(ai, 100, scrollable: find.descendant(of: scroll, matching: find.byType(Scrollable)));
+    await t.tap(ai);
+    await t.pumpAndSettle();
+    expect(shell(t).current, PortailModule.ai);
+  });
+
   testWidgets('activityBadges', (t) async {
     final h = t.ensureSemantics();
     final api = withAi(demoApi());
@@ -312,7 +331,7 @@ void main() {
 
   testWidgets('moduleRootsShareSettingsHelpAbout', (t) async {
     await pump(t, withAi(demoApi()));
-    for (final m in [Fr.moduleFiles, Fr.moduleRemote, Fr.moduleAi]) {
+    for (final m in [Fr.moduleFiles, Fr.moduleVaults, Fr.moduleRemote, Fr.moduleAi]) {
       await tapModule(t, m);
       await t.tap(find.byTooltip(Fr.settings).hitTestable());
       await t.pumpAndSettle();
@@ -341,7 +360,11 @@ void main() {
     for (final s in [Fr.shortcuts, Fr.storage, Fr.usbDisks, Fr.favorites]) {
       expect(find.descendant(of: home, matching: find.text(s)), findsOneWidget, reason: s);
     }
-    for (final s in [Fr.remoteFolders, Fr.sectionAiHome, Fr.chatTitle, Fr.automations, Fr.addServer, Fr.sshSessions]) {
+    // dossiers distants, IA et coffres ont leur module
+    for (final s in [
+      Fr.remoteFolders, Fr.sectionAiHome, Fr.chatTitle, Fr.automations, Fr.addServer, Fr.sshSessions, Fr.vaults,
+      Fr.createVault,
+    ]) {
       expect(find.descendant(of: home, matching: find.text(s)), findsNothing, reason: s);
     }
   });
@@ -414,10 +437,56 @@ void main() {
     expect(shown(AiServersScreen), findsOneWidget);
   });
 
+  testWidgets('vaultsHomeListsVaults', (t) async {
+    VaultMsg v(String id, String name, String state, {String? volumeId}) => VaultMsg(
+        id: id, name: name, sourceKey: 'phone', sourceLabel: 'Téléphone', path: '/Coffres/$name.luks',
+        sizeBytes: 1 << 30, fs: 'exfat', state: state, volumeId: volumeId, hasRecovery: false, biometric: false,
+        luksVersion: 2);
+    final api = demoApi()
+      ..vaults = [v('a1', 'Papiers', 'closed'), v('a2', 'Photos', 'open', volumeId: 'vv1')];
+    api.sources = [
+      ...api.sources,
+      SourceMsg(id: 'vv1', stableKey: 'vault:a2', kind: 'vault', label: 'Coffre Photos', totalBytes: 1 << 30,
+          freeBytes: 1 << 29, readOnly: false, roReason: '', encrypted: true),
+    ];
+    api.dirs['vv1'] = {'/': []};
+    await pump(t, api);
+    await tapModule(t, Fr.moduleVaults);
+    expect(shell(t).current, PortailModule.vaults);
+    final home = find.byType(VaultsHomeScreen);
+    for (final n in ['Papiers', 'Photos']) {
+      expect(find.descendant(of: home, matching: find.descendant(of: find.byType(VaultTile), matching: find.text(n))),
+          findsOneWidget, reason: n);
+    }
+    // Parcourir un coffre ouvert : son contenu dans le module Coffres
+    await t.tap(find.descendant(of: home, matching: find.text(Fr.browse)));
+    await t.pumpAndSettle();
+    expect(shell(t).current, PortailModule.vaults);
+    expect(t.widget<ExplorerScreen>(shown(ExplorerScreen)).sourceId, 'vv1');
+    expect(bar.hitTestable(), findsOneWidget);
+    await back(t);
+    await t.tap(find.descendant(of: home, matching: find.text(Fr.createVault)));
+    await t.pumpAndSettle();
+    expect(shown(VaultCreateScreen), findsOneWidget);
+    expect(shell(t).current, PortailModule.vaults);
+  });
+
+  testWidgets('vaultsHomeEmptyInvitesToCreate', (t) async {
+    await pump(t, demoApi()..vaults = []);
+    await tapModule(t, Fr.moduleVaults);
+    final empty = find.descendant(of: find.byType(VaultsHomeScreen), matching: find.byType(EmptyState));
+    expect(empty, findsOneWidget);
+    expect(find.descendant(of: empty, matching: find.text(Fr.vaultsNoneTitle)), findsOneWidget);
+    expect(find.descendant(of: empty, matching: find.text(Fr.vaultsEmpty)), findsOneWidget);
+    await t.tap(find.descendant(of: empty, matching: find.text(Fr.createVault)));
+    await t.pumpAndSettle();
+    expect(shown(VaultCreateScreen), findsOneWidget);
+  });
+
   testWidgets('labelsFitAt200Percent', (t) async {
     await pump(t, withAi(demoApi()), size: const Size(320, 640), textScale: 2);
     expect(t.takeException(), isNull);
-    for (final m in [Fr.moduleFiles, Fr.moduleRemote, Fr.moduleAi]) {
+    for (final m in [Fr.moduleFiles, Fr.moduleVaults, Fr.moduleRemote, Fr.moduleAi]) {
       final r = t.getRect(find.descendant(of: bar, matching: find.text(m)));
       expect(r.left >= 0 && r.right <= 320 && r.bottom <= 640, isTrue, reason: m);
     }

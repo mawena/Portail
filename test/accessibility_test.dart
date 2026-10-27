@@ -29,6 +29,7 @@ import 'package:fluluks/src/screens/text_editor_screen.dart';
 import 'package:fluluks/src/screens/trash_screen.dart';
 import 'package:fluluks/src/screens/encrypt_sheet.dart';
 import 'package:fluluks/src/screens/vault_create_screen.dart';
+import 'package:fluluks/src/screens/vaults_home_screen.dart';
 import 'package:fluluks/src/screens/welcome_screen.dart';
 import 'package:fluluks/src/terminal/terminal_screen.dart';
 import 'package:fluluks/src/terminal/tunnels_screen.dart';
@@ -48,7 +49,7 @@ void main() {
     'unlock': UnlockDialog, 'format': FormatScreen, 'editor': TextEditorScreen, 'serverForm': ServerFormScreen,
     'nowPlaying': NowPlayingScreen, 'terminal': TerminalScreen,
     'sshKeys': SshKeysScreen, 'tunnels': TunnelsScreen, 'encrypt': EncryptSheet, 'decrypt': DecryptDialog,
-    'vaultCreate': VaultCreateScreen, 'homeVaults': HomeScreen,
+    'vaultCreate': VaultCreateScreen, 'homeVaults': VaultsHomeScreen,
     'aiServers': AiServersScreen, 'aiServerForm': AiServerForm, 'chatList': ChatListScreen, 'chat': ChatScreen,
     'automations': AutomationsScreen, 'automationForm': AutomationForm, 'automationRuns': AutomationRunsScreen,
     'automationRun': AutomationRunScreen, 'remoteHome': RemoteHomeScreen, 'aiHome': AiHomeScreen,

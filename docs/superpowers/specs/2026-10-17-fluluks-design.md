@@ -729,9 +729,10 @@ Demande de l'utilisateur : « un menu en bas pour naviguer entre les différents
 accueil unique devient une longue page. Une **barre de navigation** en bas de l'écran mène aux modules ; l'analyseur
 de stockage (§ 26) y prend sa place au lieu d'un bouton de l'accueil.
 *(Modules, ordre et comportements : décisions du planificateur, à valider aux essais ; voir le plan de la phase 16.)*
-- **Modules** : **Fichiers** (raccourcis, stockage, disques USB, coffres, favoris), **Analyseur** (§ 26), **Distants**
-  (dossiers distants, sessions SSH, tunnels, clés SSH) et **IA** (chat, automatisations, serveurs IA). Réglages,
-  Aide et À propos restent accessibles depuis chaque module.
+- **Modules** : **Fichiers** (raccourcis, stockage, disques USB, favoris), **Coffres** (§ 22 : les coffres, leur
+  ouverture, leur contenu et « Créer un coffre » ; demande de l'utilisateur du 2026-10-27 aux essais : « un menu pour
+  les coffres aussi »), **Analyseur** (§ 26), **Distants** (dossiers distants, sessions SSH, tunnels, clés SSH) et
+  **IA** (chat, automatisations, serveurs IA). Réglages, Aide et À propos restent accessibles depuis chaque module.
 - **Comportement** : chaque module garde sa page quand on passe à un autre ; toucher le module déjà choisi ramène à sa
   racine ; Retour remonte dans le module, puis ramène à Fichiers, puis quitte. Les pages plein écran (visionneuses,
   lecteur vidéo, éditeur, terminal, conversation) passent au-dessus de la barre. Le lecteur réduit et la copie en
