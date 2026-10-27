@@ -443,7 +443,7 @@ dans le même commit que le travail.
 
 ### Phase 17 — Gestion des partitions, comme GParted ([plan](2026-10-27-phase17-partitions.md))
 - [x] Plan de la phase 17 écrit *(demande du 2026-10-22 ; spec § 17, § 24, § 25 et § 26 ; phase 12, puis 13, 14, 15, 16, 17 et 15, jusqu'au 2026-10-25, puis 16, puis 17 depuis le 2026-10-25 ; plan du 2026-10-27, décisions du planificateur à valider : pas de déplacement, FAT32 et exFAT non redimensionnés, MBR étendu en étiquette seulement)*
-- [ ] T1 — Moteur : table de partitions modifiable (GPT et MBR gardés tels quels hors changement, nouvelle table, espaces libres)
+- [x] T1 — Moteur : table de partitions modifiable (GPT et MBR gardés tels quels hors changement, nouvelle table, espaces libres) *(test_part_layout 11 cas jugés par sfdisk et sgdisk, coupure à chaque écriture ; table de la phase 8 écrite par fl_pt_store ; 52/52 tests natifs hors lents, ASan/UBSan propres)*
 - [ ] T2 — Moteur : créer, supprimer, formater une partition ; taille au formatage ; place occupée
 - [ ] T3 — e2fsprogs dans le moteur : vérification en lecture seule (`e2fsck -fn`) et redimensionnement d'ext4 (`resize2fs`)
 - [ ] T4 — `ntfsresize` et `ntfsfix -n` dans le moteur

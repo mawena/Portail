@@ -151,7 +151,7 @@ numérotation), § 14 (formatage de la phase 8), § 19 (interface et accessibili
   ```
   `fl_part_scan` (phase 1) reste tel quel pour le montage.
 
-- [ ] **Step 1 : tests en échec** (`test_part_layout.c`, images creuses de 64 Mio, 3 Gio et 8 Gio, secteurs de 512 et
+- [x] **Step 1 : tests en échec** (`test_part_layout.c`, images creuses de 64 Mio, 3 Gio et 8 Gio, secteurs de 512 et
   4096 octets, tables créées par `sfdisk` et `sgdisk`) : `loadMatchesSfdisk` (début, taille, type de chaque partition
   égaux à `sfdisk --json`) ; `storeRoundTripUnchanged` (charger puis écrire sans changement : les 34 premiers et 33
   derniers secteurs identiques octet pour octet, GPT ; secteur 0 identique, MBR) ; `foreignGptEntriesPreserved`
@@ -164,14 +164,14 @@ numérotation), § 14 (formatage de la phase 8), § 19 (interface et accessibili
   signatures effacées) ; `freeRegionsAligned` (trois trous dont un de 512 Kio : deux régions alignées sur 1 Mio) ;
   `sector4kLayout` ; `gptWriteCutLeavesOneValidCopy` (`fault_bdev` qui échoue à chaque écriture possible, l'une après
   l'autre : `fl_pt_load` relit toujours l'ancienne table ou la nouvelle, jamais une erreur).
-- [ ] **Step 2 :** `cmake --build build/native && ctest --test-dir build/native -R test_part_layout` : échec
+- [x] **Step 2 :** `cmake --build build/native && ctest --test-dir build/native -R test_part_layout` : échec
   (`partedit.h` absent).
-- [ ] **Step 3 : implémentation.** Ordre d'écriture GPT : entrées de secours, en-tête de secours, entrées principales,
+- [x] **Step 3 : implémentation.** Ordre d'écriture GPT : entrées de secours, en-tête de secours, entrées principales,
   MBR protecteur, en-tête principal en dernier, puis `fl_bdev_flush`. Entrées non comprises (nombre ≠ 128, taille ≠ 128)
   : FL_ENOTSUP au chargement (« table non modifiable ici »). Le code de `part_write.c` qui écrit un GPT ou un MBR à une
   partition passe par `fl_pt_store` (les tests de la phase 8 restent verts).
-- [ ] **Step 4 :** tests du moteur verts, ASan/UBSan propres ; `flutter build apk --debug` compile.
-- [ ] **Step 5 : commit** `feat(partitions): table de partitions modifiable dans le moteur`.
+- [x] **Step 4 :** tests du moteur verts, ASan/UBSan propres ; `flutter build apk --debug` compile.
+- [x] **Step 5 : commit** `feat(partitions): table de partitions modifiable dans le moteur`.
 
 ### Task 2 : créer, supprimer, formater une partition ; taille au formatage ; place occupée (moteur)
 
