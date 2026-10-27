@@ -568,7 +568,7 @@ tant que pile non vide et non annulé :
   `Future<bool?> confirmDelete(BuildContext context, {required String title, required String body, required bool trashOffered})`
   (null : annulé ; vrai : définitif).
 
-- [ ] **Step 1 : tests en échec** :
+- [x] **Step 1 : tests en échec** :
   - `progressShownThenLiveResults` (barre déterminée quand `usedBytes` est connu, sinon indéterminée ;
     « 12 345 fichiers · 4,2 Go », dossier en cours ; **Annuler** → `cancelAnalysis` ; bandeau « Résultats partiels :
     analyse arrêtée » et **Réanalyser**) ;
@@ -595,14 +595,14 @@ tant que pile non vide et non annulé :
 
   Run : `flutter test test/analyzer_screen_test.dart`
   Expected : FAIL (écran absent).
-- [ ] **Step 2 : implémentation.** Portrait : graphique carré en haut (45 % de la hauteur au plus), bande
+- [x] **Step 2 : implémentation.** Portrait : graphique carré en haut (45 % de la hauteur au plus), bande
   d'information, arbre dessous ; barre de titre : nom de l'emplacement, **Réanalyser**, choix du graphique, menu (tri,
   profondeur, plus gros fichiers). Lignes de l'arbre en deux lignes (nom et taille ; barre, pourcentage, éléments,
   date), retrait de 16 dp par niveau, 4 niveaux de retrait au plus. Écrans au banc d'accessibilité (48 dp, contraste,
   200 %, TalkBack, pas de texte sous la barre de navigation) ; images de référence clair et sombre.
-- [ ] **Step 3 :** Run : `flutter test test/analyzer_screen_test.dart test/explorer_screen_test.dart test/accessibility_test.dart && flutter test --update-goldens test/goldens_test.dart`
+- [x] **Step 3 :** Run : `flutter test test/analyzer_screen_test.dart test/explorer_screen_test.dart test/accessibility_test.dart && flutter test --update-goldens test/goldens_test.dart`
   — Expected : PASS ; les deux nouvelles images regardées une à une avant d'être gardées.
-- [ ] **Step 4 : commit** `feat(analyseur): écran de l'analyse, arbre synchronisé et actions`.
+- [x] **Step 4 : commit** `feat(analyseur): écran de l'analyse, arbre synchronisé et actions`.
 
 ### Task 10 : accueil de l'analyseur, points d'entrée, exclusions ; fin de l'ancienne analyse
 
