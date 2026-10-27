@@ -90,9 +90,12 @@ précédente jusqu'à la v1.9.0. Cochez chaque ligne faite et notez ce qui ne va
 
 ## 5. Actions sur un élément
 
-- [ ] Appui long sur un dossier → **Afficher dans l'explorateur** : l'explorateur s'ouvre dans ce dossier.
-- [ ] **Copier le chemin**, puis collez-le ailleurs : le chemin est juste.
-- [ ] **Propriétés** : taille sur le disque et taille des données.
+- [x] Appui long sur un dossier → **Afficher dans l'explorateur** : l'explorateur s'ouvre dans ce dossier.
+      *Essai du 2026-10-27 : appui long sur DCIM : Ouvrir, Afficher dans l'explorateur, Copier le chemin, Propriétés, Exclure des analyses, Supprimer ; Afficher dans l'explorateur ouvre Fichiers dans Téléphone › DCIM*
+- [x] **Copier le chemin**, puis collez-le ailleurs : le chemin est juste.
+      *Essai du 2026-10-27 : « Chemin copié » ; collé dans la recherche de l'explorateur : « /DCIM »*
+- [x] **Propriétés** : taille sur le disque et taille des données.
+      *Essai du 2026-10-27 : Défaut trouvé : seule la taille des données était montrée (feuille de l'explorateur). Corrigé (e7dcdbe, test menuActions) : DCIM → « Taille : 3,7 Go — 629 fichiers, 12 dossiers » et « Sur le disque : 3,7 Go »*
 - [ ] **Mettre à la corbeille** un fichier de test : l'arbre est mis à jour sans réanalyse, et le message dit que la
       place sera libérée au vidage de la corbeille.
 - [ ] **Exclure des analyses** un dossier, puis **Réanalyser** : il apparaît « Exclu des analyses ». Réglages →
