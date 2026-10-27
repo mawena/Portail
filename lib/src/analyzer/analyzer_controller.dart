@@ -32,6 +32,7 @@ class AnalyzerController extends ChangeNotifier {
   String? _sourceId;
   String? _path;
   AnalysisViewMsg? _view;
+  String _rootLabel = '';
   final _trail = <AnalysisNodeMsg>[];
   int? _selected;
   String? _error;
@@ -42,6 +43,9 @@ class AnalyzerController extends ChangeNotifier {
 
   String? get scanId => _scanId;
   AnalysisViewMsg? get view => _view;
+
+  /// Libellé de la racine de l'analyse (stockage ou dossier analysé), gardé quand on descend.
+  String get rootLabel => _rootLabel;
 
   /// Racine de l'analyse → nœud affiché.
   List<AnalysisNodeMsg> get trail => List.unmodifiable(_trail);
@@ -105,6 +109,20 @@ class AnalyzerController extends ChangeNotifier {
         _selected = null;
         await _load(node);
       });
+
+  /// Entre dans le dernier dossier de [chain] : ses ancêtres depuis le nœud affiché (exclu), lui compris ; pour une
+  /// ligne de l'arbre, qui peut être sous la profondeur de la vue.
+  Future<void> enter(List<AnalysisNodeMsg> chain) => _call(() async {
+        if (_view == null || chain.isEmpty) return;
+        final target = chain.last;
+        if (!target.hasChildren || (target.kind != 'dir' && target.kind != 'trash')) return;
+        _trail.addAll(chain);
+        _selected = null;
+        await _load(target.id);
+      });
+
+  /// Nœud affiché (racine de la vue), ou null.
+  AnalysisNodeMsg? get displayed => _trail.isEmpty ? null : _trail.last;
 
   /// Remonte d'un niveau.
   Future<void> up() async {
@@ -221,6 +239,7 @@ class AnalyzerController extends ChangeNotifier {
     if (id != _scanId || _disposed) return;
     _view = v;
     final top = v.nodes.first;
+    if (_trail.isEmpty || _trail.length == 1) _rootLabel = v.rootLabel;
     if (_trail.isEmpty) {
       _trail.add(top);
     } else {

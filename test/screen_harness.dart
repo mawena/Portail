@@ -10,6 +10,7 @@ import 'package:fluluks/src/ai/automation_runs_screen.dart';
 import 'package:fluluks/src/ai/automations_screen.dart';
 import 'package:fluluks/src/ai/chat_list_screen.dart';
 import 'package:fluluks/src/ai/chat_screen.dart';
+import 'package:fluluks/src/analyzer/analyzer_screen.dart';
 import 'package:fluluks/src/app.dart';
 import 'package:fluluks/src/bridge/fluluks_api.g.dart';
 import 'package:fluluks/src/screens/about_screen.dart';
@@ -48,6 +49,7 @@ const screens = [
   'aiServers', 'aiServerForm', 'chatList', 'chat', //
   'automations', 'automationForm', 'automationRuns', 'automationRun', //
   'remoteHome', 'aiHome', // racines des modules Distants et IA (phase 16)
+  'analyzer', 'analyzerTreemap', // écran d'une analyse (phase 16)
 ];
 
 /// Pont et état du dernier [pumpScreen] (pour les tests qui agissent ensuite sur l'écran).
@@ -80,6 +82,9 @@ Future<void> pumpScreen(
   final api = demoApi();
   if (screen == 'explorerGrid' || screen == 'filterGrid') {
     api.viewPrefs = ViewPrefsMsg(sort: 'name', ascending: true, grid: true, showHidden: false, builtInViewers: true);
+  }
+  if (screen == 'analyzerTreemap') {
+    api.uiPrefs = UiPrefsMsg(theme: 'system', haptics: true, welcomeSeen: true, analyzerChart: 'treemap');
   }
   if (screen == 'sshKeys') {
     api.sshKeyList.addAll([
@@ -182,6 +187,7 @@ Future<void> pumpScreen(
     'globalSearch' => GlobalSearchScreen(state: state, initialQuery: 'IMG'),
     'trash' => TrashScreen(state: state, sourceId: 'phone'),
     'space' => SpaceScreen(state: state, sourceId: 'phone'),
+    'analyzer' || 'analyzerTreemap' => AnalyzerScreen(state: state, sourceId: 'phone'),
     'settings' => SettingsScreen(state: state),
     'about' => AboutScreen(state: state),
     'help' => const HelpScreen(),

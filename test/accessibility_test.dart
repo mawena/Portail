@@ -9,6 +9,7 @@ import 'package:fluluks/src/ai/automation_runs_screen.dart';
 import 'package:fluluks/src/ai/automations_screen.dart';
 import 'package:fluluks/src/ai/chat_list_screen.dart';
 import 'package:fluluks/src/ai/chat_screen.dart';
+import 'package:fluluks/src/analyzer/analyzer_screen.dart';
 import 'package:fluluks/src/licenses.dart';
 import 'package:fluluks/src/screens/about_screen.dart';
 import 'package:fluluks/src/screens/explorer_screen.dart';
@@ -51,6 +52,7 @@ void main() {
     'aiServers': AiServersScreen, 'aiServerForm': AiServerForm, 'chatList': ChatListScreen, 'chat': ChatScreen,
     'automations': AutomationsScreen, 'automationForm': AutomationForm, 'automationRuns': AutomationRunsScreen,
     'automationRun': AutomationRunScreen, 'remoteHome': RemoteHomeScreen, 'aiHome': AiHomeScreen,
+    'analyzer': AnalyzerScreen, 'analyzerTreemap': AnalyzerScreen,
   };
   testWidgets('harnessShowsEachScreen', (t) async {
     for (final screen in screens) {

@@ -32,6 +32,9 @@ void main() {
     'shell_light': ('remoteHome', Brightness.light),
     'shell_dark': ('aiHome', Brightness.dark),
     'shell_rail': ('home', Brightness.light),
+    // écran d'une analyse (phase 16) : anneaux en clair, carte proportionnelle en sombre
+    'analyzer_light': ('analyzer', Brightness.light),
+    'analyzer_dark': ('analyzerTreemap', Brightness.dark),
   };
   for (final MapEntry(key: name, value: (screen, b)) in cases.entries) {
     testWidgets(name, (t) async {

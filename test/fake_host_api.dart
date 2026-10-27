@@ -192,6 +192,10 @@ class FakeHostApi with FakeAiApi implements HostApi {
   final analysisTrees = <String, List<AnalysisNodeMsg>>{};
   final analysisExclusionList = <AnalysisExclusionMsg>[];
   List<AnalysisNodeMsg> Function()? nextAnalysisTree;
+
+  /// Vues rendues : taille apparente (dossier distant) ou place occupée ; arbre simplifié (plafond de nœuds).
+  String analysisSizeKind = 'allocated';
+  bool analysisSimplified = false;
   int _scans = 0;
 
   List<AnalysisNodeMsg> _tree(String scanId) =>
@@ -249,8 +253,8 @@ class FakeHostApi with FakeAiApi implements HostApi {
         nodes: out.take(maxNodes).toList(),
         running: false,
         truncated: false,
-        simplified: false,
-        sizeKind: 'allocated');
+        simplified: analysisSimplified,
+        sizeKind: analysisSizeKind);
   }
 
   AnalysisNodeMsg _at(AnalysisNodeMsg n, int depth) => AnalysisNodeMsg(

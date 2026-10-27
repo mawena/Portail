@@ -1044,4 +1044,60 @@ class Fr {
       '${humanSize(alloc)} sur le disque (${humanSize(apparent)} de données)';
 
   static String analysisItems(int n) => count(n, 'élément', 'éléments');
+
+  // écran de l'analyse (phase 16, T9)
+  static const reanalyze = 'Réanalyser';
+  static const chartChoice = 'Graphique';
+  static const chartNone = 'Sans graphique';
+  static const fewerLevels = 'Moins de niveaux';
+  static const moreLevels = 'Plus de niveaux';
+  static const sortItems = 'Éléments';
+  static const analysisContent = 'Contenu';
+  static const showMore = 'Afficher plus';
+  static const expand = 'Développer';
+  static const collapse = 'Replier';
+  static const actions = 'Actions';
+  static const showInExplorer = "Afficher dans l'explorateur";
+  static const copyPath = 'Copier le chemin';
+  static const pathCopied = 'Chemin copié';
+  static const excludeFromAnalyses = 'Exclure des analyses';
+  static const excludedFromAnalyses = 'Exclu des analyses suivantes de ce stockage';
+  static const openTrash = 'Ouvrir la corbeille';
+  static const analysisPartial = 'Résultats partiels\u00A0: analyse arrêtée';
+  static const analysisSimplified = "Trop d'éléments\u00A0: le détail des plus petits dossiers est résumé";
+  static const analysisRemoteNotice = 'Dossier distant\u00A0: tailles annoncées par le serveur';
+  static const analysisInaccessible = 'Accès refusé par Android';
+  static const analysisExcluded = 'Exclu des analyses';
+  static const analysisOtherFs = 'Autre système de fichiers, non parcouru';
+  static const analysisOthersHelp = 'Éléments trop petits pour être montrés un à un, ou résumés';
+  static const analysisUnscannedHelp =
+      "Place occupée que l'analyse ne voit pas\u00A0: applications, système, dossiers protégés, réserve du système de fichiers";
+  static const trashedFromAnalysis = 'Mis à la corbeille\u00A0: la place sera libérée quand la corbeille sera vidée';
+
+  /// « 12345 fichiers · 4,2 Go ».
+  static String analysisProgress(int files, int bytes) => '${count(files, 'fichier', 'fichiers')} · ${humanSize(bytes)}';
+
+  /// Titre de la confirmation : « Supprimer « Photos » (12,3 Go) ? ».
+  static String deleteSized(String name, int bytes) => 'Supprimer «\u00A0$name\u00A0» (${humanSize(bytes)})\u202F?';
+
+  static String nodeKindLabel(String kind) => switch (kind) {
+        'dir' => 'dossier',
+        'trash' => 'corbeille',
+        'file' => 'fichier',
+        'others' => 'contenu résumé',
+        'unscanned' => 'hors analyse',
+        'inaccessible' => analysisInaccessible.toLowerCase(),
+        'excluded' => analysisExcluded.toLowerCase(),
+        _ => 'autre système de fichiers',
+      };
+
+  /// Ligne de l'arbre lue par TalkBack : « Photos, dossier, 12,3 Go, 45 % de Téléphone, 1234 éléments, modifié hier ».
+  static String analysisRow(String name, String kind, int bytes, int pct, String parent, int? items, int? mtime) => [
+        name,
+        nodeKindLabel(kind),
+        humanSize(bytes),
+        ofParent(pct, parent),
+        if (items != null) analysisItems(items),
+        if (mtime != null && mtime > 0) 'modifié ${friendlyDate(mtime).toLowerCase()}',
+      ].join(', ');
 }

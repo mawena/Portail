@@ -19,6 +19,7 @@ import '../widgets/bottom_dock.dart';
 import '../widgets/breadcrumbs.dart';
 import '../widgets/clipboard_bar.dart';
 import '../widgets/decrypt_dialog.dart';
+import '../widgets/delete_dialog.dart';
 import '../widgets/entry_collection.dart';
 import '../widgets/properties_sheet.dart';
 import '../widgets/thumb.dart';
@@ -435,22 +436,11 @@ class _ExplorerScreenState extends State<ExplorerScreen> {
   /// toujours définitif. Mise à la corbeille : le message propose « Annuler ».
   Future<void> _delete(List<String> paths) async {
     final inTrash = isInTrash(_path) || _remote;
-    final permanent = await showDialog<bool>(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        title: Text(paths.length == 1 ? Fr.deleteOne(nameOf(paths.single)) : Fr.deleteMany(paths.length)),
-        content: Text(_remote ? Fr.deleteRemoteBody : (inTrash ? Fr.deleteBody : Fr.deleteToTrashBody)),
-        actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx), child: const Text(Fr.cancel)),
-          if (!inTrash)
-            TextButton(
-              style: TextButton.styleFrom(foregroundColor: Theme.of(ctx).colorScheme.error),
-              onPressed: () => Navigator.pop(ctx, true),
-              child: const Text(Fr.deletePermanently),
-            ),
-          FilledButton(onPressed: () => Navigator.pop(ctx, inTrash), child: const Text(Fr.delete)),
-        ],
-      ),
+    final permanent = await confirmDelete(
+      context,
+      title: paths.length == 1 ? Fr.deleteOne(nameOf(paths.single)) : Fr.deleteMany(paths.length),
+      body: _remote ? Fr.deleteRemoteBody : (inTrash ? Fr.deleteBody : Fr.deleteToTrashBody),
+      trashOffered: !inTrash,
     );
     if (permanent == null) return;
     if (permanent) AppHaptics.warning(state);
