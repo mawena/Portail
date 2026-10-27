@@ -19,9 +19,11 @@ précédente jusqu'à la v1.9.0. Cochez chaque ligne faite et notez ce qui ne va
 - [x] Passez d'un module à l'autre : chacun montre sa page (Coffres : les coffres et **Créer un coffre** ; Analyseur :
       les emplacements ; Distants : dossiers distants, SSH, tunnels, clés ; IA : chat, automatisations, serveurs).
       *Essai du 2026-10-27 : Coffres : coffres et Créer un coffre ; Analyseur : Emplacements (Téléphone) et Analyser un dossier… ; Distants : dossiers distants, SSH, Tunnels, Clés SSH ; IA : Chat IA, Automatisations, Serveurs IA*
-- [ ] Dans Fichiers, entrez dans `Download/` ; passez à IA puis revenez : vous êtes toujours dans `Download/`.
+- [x] Dans Fichiers, entrez dans `Download/` ; passez à IA puis revenez : vous êtes toujours dans `Download/`.
       Touchez **Fichiers** de nouveau : retour à l'accueil.
-- [ ] Retour : dépile le module, puis ramène à Fichiers, puis quitte Portail.
+      *Essai du 2026-10-27 : Téléphone › Download gardé après un passage par IA ; toucher Fichiers de nouveau ramène à l'accueil*
+- [x] Retour : dépile le module, puis ramène à Fichiers, puis quitte Portail.
+      *Essai du 2026-10-27 : depuis IA › Chat IA : Retour → IA, → Fichiers (Download), → Téléphone, → accueil de Fichiers, → Portail quitté*
 - [ ] Réglages, Aide et À propos sont dans la barre de titre de chaque module ; l'Aide a les deux nouvelles questions
       sur l'analyseur.
 - [ ] Le lecteur de musique réduit et une copie en cours s'affichent au-dessus de la barre, pas dessous.
