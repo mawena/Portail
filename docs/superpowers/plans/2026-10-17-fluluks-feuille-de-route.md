@@ -434,7 +434,7 @@ dans le même commit que le travail.
 - [x] T9 — Écran de l'analyse : arbre synchronisé, fil d'Ariane, profondeur, actions (explorateur, chemin, propriétés, corbeille) *(analyzer_screen_test 17 ; dialogue de suppression partagé avec l'explorateur ; images de référence analyzer_light et analyzer_dark ; 892 tests Flutter)*
 - [x] T10 — Accueil de l'analyseur (module de la barre), points d'entrée, emplacements exclus ; retrait de l'analyse de la phase 9 *(analyzer_home_test 10 ; module Analyseur troisième de la barre, après Coffres ; Réglages → Analyseur de stockage → Emplacements exclus ; analyse de l'espace de la phase 9 retirée (Pigeon, Kotlin, Dart) ; 902 tests Flutter, 664 JVM)*
 - [x] T11 — Documentation *(README : analyseur de stockage, barre de navigation, renvois aux modules, limites, commandes de `test_fs_alloc` et des juges ; aide : deux questions ; [fiche d'essai](../research/2026-10-27-essais-phase16/essais.md) ; 902 tests Flutter)*
-- [ ] Essais Pixel reportés (téléphone non joignable le 2026-10-27) : démarrage de T1, tests natifs de T2
+- [x] Essais Pixel reportés (téléphone non joignable le 2026-10-27) : démarrage de T1, tests natifs de T2 *(faits le 2026-10-27 l'après-midi : démarrage et cinq modules ; 23 suites natives OK sur le Pixel)*
 - [ ] T12 — Essais instrumentés sur le Pixel
 - [ ] *(utilisateur)* T13 — Essais sur le Pixel (comparaison avec Baobab sous Ubuntu)
 - [ ] Relecture finale de toute la branche

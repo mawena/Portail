@@ -248,11 +248,11 @@ que si son module est à l'écran ; `Fr.moduleVaults`, `Fr.vaultsNoneTitle`.
   `allocated_size` ; dossier → `allocated_size` de `$INDEX_ALLOCATION:$I30` (0 sans) ; `ino` = `ni->mft_no` ;
   `nlink` = `link_count` de l'enregistrement. `test_fs_alloc` ajouté à `run_native_tests.sh` (images poussées avec
   les autres).
-- [ ] **Step 4 : vérification.** *(PC fait le 2026-10-27 : 50/50, ASan/UBSan propres ; Pixel à faire, téléphone non
+- [x] **Step 4 : vérification.** *(PC fait le 2026-10-27 : 50/50, ASan/UBSan propres ; Pixel à faire, téléphone non
   joignable par adb)*
 
   Run : `ctest --test-dir build/native --output-on-failure -LE lent` puis `tools/android/run_native_tests.sh <numéro-adb>`
-  Expected : tout vert, ASan/UBSan propres ; sur le Pixel, `test_fs_alloc` vert.
+  Expected : tout vert, ASan/UBSan propres ; sur le Pixel, `test_fs_alloc` vert. *(Pixel fait le 2026-10-27 l'après-midi : `run_native_tests.sh` 23 suites OK, dont `test_fs_alloc` ; juges du PC sautés sur le téléphone)*
 - [x] **Step 5 : commit** `feat(moteur): place allouée, inode et liens physiques dans la liste d'un dossier`.
 
 ### Task 3 : liste d'un dossier avec sa place réelle (Kotlin)
