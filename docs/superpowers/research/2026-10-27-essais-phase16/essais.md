@@ -82,9 +82,11 @@ précédente jusqu'à la v1.9.0. Cochez chaque ligne faite et notez ce qui ne va
       *Essai du 2026-10-27 : toucher DCIM y entre, glisser montre « Autres — 1,7 Go — 47 % de DCIM — 441 éléments », Dossier parent remonte ; Sans graphique ne garde que l'en-tête et l'arbre*
 - [x] Moins de niveaux, plus de niveaux : de 2 à 8 ; le réglage est gardé à l'analyse suivante.
       *Essai du 2026-10-27 : de 4 (défaut) à 2 : Moins de niveaux se désactive ; de 2 à 8 en six pas : Plus de niveaux se désactive ; 8 gardé pour l'analyse suivante (coffre Analyse16) ; remis à 4*
-- [ ] Arbre : trié par taille, puis par nom, nombre d'éléments et date ; dossiers dépliés ; « Autres » pour ce qui
+- [x] Arbre : trié par taille, puis par nom, nombre d'éléments et date ; dossiers dépliés ; « Autres » pour ce qui
       est résumé.
-- [ ] Onglet **Plus gros fichiers** : les plus gros fichiers de l'analyse.
+      *Essai du 2026-10-27 : tris Taille (Download, DCIM, iphone…), Nom (.$recycle_bin$, .trash-storage…), Éléments (Download 2093, Android 773, DCIM 641, Pictures 574), Date ; le chevron déplie Download dans l'arbre ; « Autres, contenu résumé, 1,7 Go, 51 % de Camera, 441 éléments » dans DCIM/Camera. Remarque : le chevron n'a pas de nœud d'accessibilité à lui (TalkBack ne peut que toucher la ligne, qui entre dans le dossier)*
+- [x] Onglet **Plus gros fichiers** : les plus gros fichiers de l'analyse.
+      *Essai du 2026-10-27 : gros-essai.bin (2,1 Go, deux fois), Annule.luks 1,1 Go, Mawena.luks 1,1 Go, PXL_….mp4 373,3 Mo, avec leur dossier*
 
 ## 5. Actions sur un élément
 
