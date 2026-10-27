@@ -14,7 +14,7 @@ LUKS2/ext4 qu'on utilise sous Ubuntu. Aucune application existante ne le permett
 
 > **État actuel : version 1.7.0 ; gestionnaire de fichiers (interface claire ou sombre et accessible, recherche dans
 > tous les stockages, lecteurs intégrés de photos, musique, vidéos et textes, dossiers distants FTP et SFTP, terminal
-> SSH avec clés et tunnels, archives ZIP, 7z, RAR et TAR, corbeille, analyse de l'espace, renommage par lot), fichiers
+> SSH avec clés et tunnels, archives ZIP, 7z, RAR et TAR, corbeille, analyseur de stockage, renommage par lot), fichiers
 > et dossiers chiffrés, coffres de fichiers, lecture et écriture sur ext4, FAT, exFAT et NTFS, formatage des disques
 > USB, en clair ou chiffrés.** L'écriture a été vérifiée sur PC (batteries de
 > non-corruption jugées par des outils indépendants et le noyau Linux, coupures simulées), sur le téléphone avec des
@@ -24,6 +24,49 @@ LUKS2/ext4 qu'on utilise sous Ubuntu. Aucune application existante ne le permett
 > [limites](#limites-actuelles).
 
 ## Ce que fait la version 1.7.0
+
+### Analyseur de stockage (nouveau en 1.9.0)
+
+Comme l'analyseur de disques d'Ubuntu (Baobab), le module **Analyseur** montre ce qui occupe la place, dossier par
+dossier. Il remplace l'analyse de l'espace de la version 1.2.0.
+
+- **Emplacements** : l'accueil de l'analyseur liste le téléphone, les cartes SD, les volumes ouverts des disques USB et
+  les coffres ouverts, avec leur jauge d'occupation ; toucher l'un d'eux lance l'analyse. **Analyser un dossier…**
+  choisit n'importe quel dossier. On y entre aussi par **Analyser le stockage** (menu d'un stockage, d'un volume ou
+  d'un coffre) et par **Analyser ce dossier** (menu de l'explorateur). Les analyses de la session restent listées
+  (taille, nombre de fichiers, date) : toucher en rouvre une, le menu propose **Réanalyser** et **Oublier**.
+- **Analyse** avec progression (fichiers comptés, place vue, pourcentage quand tout un stockage est analysé) et
+  **Annuler** ; les résultats s'affichent au fur et à mesure, et une analyse arrêtée garde ce qu'elle a vu, marqué
+  « Résultats partiels ». Une seule analyse à la fois ; elle continue si l'on quitte l'écran, et un point sur
+  **Analyseur** dans la barre le rappelle.
+- **Tailles réelles** : la place **occupée sur le support** (blocs alloués, comme `du`), pas la taille apparente, qui
+  reste dans les propriétés. Un fichier à liens physiques est compté une fois, un fichier creux pour ses seuls blocs
+  écrits ; les liens symboliques ne sont pas suivis et l'analyse ne passe pas sur un autre système de fichiers. Les
+  fichiers cachés sont comptés. Sur les disques USB et les coffres, le moteur lit la place allouée dans ext4, FAT,
+  exFAT et NTFS.
+- **Deux graphiques**, synchronisés avec l'arbre : **anneaux concentriques** ou **carte proportionnelle**, ou aucun
+  pour ne garder que l'arbre. **Toucher** un dossier y entre ; le centre des anneaux, le fil d'Ariane, **Dossier
+  parent** ou Retour remontent ; **glisser le doigt** montre le nom, la taille et la part de l'élément dessous ;
+  **appui long** ouvre son menu. Profondeur réglable, de 2 à 8 niveaux (4 par défaut). Sur grand écran, graphique et
+  arbre sont côte à côte.
+- **Arbre** trié par taille, nom, nombre d'éléments ou date : pour chaque élément sa taille, son contenu, sa date de
+  modification et sa part dans son parent. Les plus gros fichiers de chaque dossier figurent dans l'arbre, le reste est
+  résumé ; un onglet liste les plus gros fichiers de l'analyse.
+- **Menu d'un élément** : **Afficher dans l'explorateur**, **Copier le chemin**, **Propriétés**, mise à la corbeille
+  ou suppression définitive (mêmes confirmations que l'explorateur), **Exclure des analyses**. L'arbre est mis à jour
+  sans tout réanalyser ; la place mise à la corbeille n'est libérée qu'au vidage de la corbeille, et l'analyseur le dit.
+- **Emplacements exclus** (Réglages → **Analyseur de stockage**) : dossiers ignorés par les analyses suivantes,
+  stockage par stockage ; aucun par défaut. **Ne plus exclure** en retire un.
+- **Ce qui n'est pas compté** : `Android/data` et `Android/obb`, qu'Android interdit de lire, apparaissent « Accès
+  refusé par Android ». Quand tout un stockage est analysé, la différence entre la place occupée selon le système et ce
+  que l'analyse a compté forme une part à part : « Applications, système et dossiers protégés » sur le téléphone,
+  « Réservé par le système de fichiers » sur un disque.
+- **Dossiers distants** (SFTP, FTP) : depuis l'explorateur seulement, après un avertissement ; l'analyse est lente
+  (un aller-retour réseau par dossier) et les tailles sont celles qu'annonce le serveur. Un fichier déchiffré en
+  mémoire ne s'analyse pas.
+- **Accessibilité** : les graphiques sont décrits à TalkBack et l'arbre en est l'alternative complète ; noms, tailles
+  et pourcentages sont toujours écrits, les couleurs n'étant jamais la seule information ; couleurs contrastées en
+  clair comme en sombre.
 
 ### Intégration IA (nouveau en 1.8.0)
 
@@ -41,14 +84,14 @@ lancer des prompts réutilisables. Rien ne passe par un service tiers : les requ
   montre son empreinte SHA-256, à comparer à celle du serveur (`openssl x509 -in cert.pem -noout -fingerprint -sha256`)
   avant de toucher **Faire confiance**. L'empreinte est ensuite vérifiée à chaque connexion ; un certificat changé est
   refusé avec une explication, comme une clé d'hôte SSH changée.
-- **Chat IA** (section **IA** de l'accueil) : conversations comme dans les applications de chat courantes, réponses
+- **Chat IA** (module **IA** de la barre) : conversations comme dans les applications de chat courantes, réponses
   **en flux** (le texte s'affiche au fur et à mesure), **Arrêter**, **Régénérer**, **Copier** ; rendu Markdown
   (titres, listes, tableaux, citations, liens ouverts après confirmation de l'adresse, **blocs de code** copiables en
   police à chasse fixe), le HTML n'étant jamais interprété. Serveur et modèle choisis par conversation sous le titre,
   **prompt système** dans le menu ⋮, renommer et supprimer (appui long dans la liste). Une réponse continue quand
   l'écran se ferme ; Portail fermé pendant une réponse, elle est marquée **Interrompue**. Sur une tablette, la liste
   et la conversation s'affichent côte à côte.
-- **Automatisations** (section **IA** de l'accueil) : un prompt réutilisable où `{{nom}}` devient une valeur à saisir
+- **Automatisations** (module **IA** de la barre) : un prompt réutilisable où `{{nom}}` devient une valeur à saisir
   au lancement (`{{date}}` et `{{heure}}` sont remplies par Portail), avec son serveur, son modèle et son prompt
   système. **Lancer** à la main : le résultat s'affiche en flux, en Markdown, à copier ou partager. **Planifiée** :
   toutes les 15 min, 30 min, 1 h… jusqu'à une fois par jour, par WorkManager, quand le réseau est disponible et avec
@@ -83,11 +126,11 @@ lancer des prompts réutilisables. Rien ne passe par un service tiers : les requ
 - **ZIP protégés par un mot de passe** (AES ou ancien chiffrement ZipCrypto) : extraits après le mot de passe.
 - **Coffres de fichiers** : un coffre est un fichier chiffré **LUKS2** (`nom.luks`) qui contient un exFAT (par
   défaut) ou un ext4, ouvert par Portail comme un disque :
-  - **Créer un coffre** (section **Coffres** de l'accueil, ou bouton **Créer** de l'explorateur → **Nouveau
+  - **Créer un coffre** (module **Coffres** de la barre, ou bouton **Créer** de l'explorateur → **Nouveau
     coffre…**) : nom, emplacement (téléphone, carte SD ou disque USB ouvert), taille (256 Mio, 1 Gio, 4 Gio,
     16 Gio ou au choix, de 32 Mio à la place libre moins une réserve ; 4 Gio au plus sur un stockage FAT32),
     système de fichiers et mot de passe. La place est écrite à la création, avec progression et annulation ;
-  - **Ouvrir** depuis l'accueil, ou en touchant un `.luks` (ou un conteneur LUKS créé sous Linux) dans
+  - **Ouvrir** depuis le module **Coffres**, ou en touchant un `.luks` (ou un conteneur LUKS créé sous Linux) dans
     l'explorateur : le coffre devient un stockage de Portail et une racine de l'application **Fichiers** ;
   - **Fermer** : synchronisé, démonté, clé effacée. Un coffre se ferme aussi au verrouillage automatique et
     **avant** l'éjection du disque qui le porte ; débrancher ce disque ou retirer la carte SD le ferme de force,
@@ -128,8 +171,8 @@ ext4 appartient à l'utilisateur 1000 (le premier compte créé sous Ubuntu), co
 - **Barre de touches** au-dessus du clavier : Échap, Tab, Ctrl et Alt (un toucher pour la touche suivante, deux pour
   les verrouiller, valables aussi pour le clavier du téléphone), flèches, Début, Fin, pages et `~ | / -`.
 - **Sessions en arrière-plan** : jusqu'à 8 terminaux, qui restent ouverts en quittant Portail (notification « Sessions
-  SSH » avec **Tout fermer**) ; on passe de l'un à l'autre depuis la barre de titre ou la section **Sessions SSH** de
-  l'accueil. Une session coupée le dit et propose **Reconnecter**.
+  SSH » avec **Tout fermer**) ; on passe de l'un à l'autre depuis la barre de titre ou le module **Distants**.
+  Une session coupée le dit et propose **Reconnecter**.
 - **Clés SSH** (Réglages → Fichiers) : générer une clé Ed25519 ou RSA 4096 sur le téléphone, avec ou sans phrase,
   ou importer une clé OpenSSH ; copier ou partager la clé publique ; **Installer sur un serveur** l'ajoute à
   `~/.ssh/authorized_keys` par SFTP (lignes existantes gardées, droits corrigés, lien symbolique refusé), puis le
@@ -146,6 +189,11 @@ ext4 appartient à l'utilisateur 1000 (le premier compte créé sous Ubuntu), co
 
 ### Interface (nouveau en 1.4.0)
 
+- **Barre de navigation** (1.9.0) entre les modules : **Fichiers** (stockages, disques USB, recherche), **Coffres**,
+  **Analyseur**, **Distants** (dossiers distants, sessions SSH, tunnels, clés SSH) et **IA** (chat, automatisations,
+  serveurs IA) ; un rail à gauche dès 600 dp de large. Chaque module garde sa pile d'écrans quand on passe à un autre ;
+  toucher le module choisi ramène à sa racine, Retour ramène à Fichiers avant de quitter. Un point signale une activité
+  (analyse, session SSH, réponse en cours). Réglages, Aide et À propos sont dans la barre de titre de chaque module.
 - **Thèmes clair et sombre**, aux couleurs terracotta du logo : Réglages → Apparence → **Thème** (Système, par
   défaut, Clair ou Sombre). L'écran de démarrage est terracotta, sans éclair blanc en mode sombre.
 - **Accessibilité** : le texte suit la taille choisie dans Android jusqu'à 200 % sans déborder ; les écrans se
@@ -156,7 +204,7 @@ ext4 appartient à l'utilisateur 1000 (le premier compte créé sous Ubuntu), co
   paysage), la grille ajoute des colonnes selon la largeur, et les formulaires restent dans une largeur lisible.
 - **Liste ou grille partout** où cela a du sens : explorateur, raccourcis de l'accueil, recherche et recherche
   globale suivent le même choix (Réglages, ou le bouton de la barre de titre), vignettes comprises. La corbeille et
-  l'analyse de l'espace restent en liste, pour l'emplacement d'origine, les dates et les barres de taille.
+  l'arbre de l'analyseur restent en liste, pour l'emplacement d'origine, les dates et les barres de taille.
 - **Recherche dans tous les stockages** : la barre en haut de l'accueil fouille le téléphone, les cartes SD et les
   disques ouverts, et groupe les résultats par stockage ; la puce **Partout** y mène depuis la recherche de
   l'explorateur. Les dossiers distants n'y sont pas inclus, pour rester rapide.
@@ -167,13 +215,14 @@ ext4 appartient à l'utilisateur 1000 (le premier compte créé sous Ubuntu), co
   préremplie par le réglage.
 - **Bienvenue** au premier lancement, montrée une seule fois : ce que fait Portail, la confidentialité de la phrase
   de passe, et l'accès aux fichiers, inutile pour les disques USB.
-- **Aide** (menu **⋮** de l'accueil, ou Réglages) : huit questions courantes, de l'ouverture d'un disque chiffré au
+- **Aide** (menu **⋮** de chaque module, ou Réglages) : dix-huit questions courantes, de l'ouverture d'un disque chiffré au
   formatage.
 - **À propos** : version, appareil, et **Licences des bibliothèques** embarquées (lwext4, ntfs-3g, FatFs,
   libarchive, XZ Utils, Argon2, cJSON, Mbed TLS, Media3, Apache Commons Net, JSch, Bouncy Castle).
 - **Retours haptiques** : légère vibration à la sélection, au déverrouillage, à la fin d'une copie et à une
   suppression définitive ; Réglages → Confort → **Retours haptiques** pour les couper.
-- **Réglages regroupés** en sections : Apparence, Fichiers, Disques, Confort et Portail.
+- **Réglages regroupés** en sections : Apparence, Fichiers, Intelligence artificielle, Analyseur de stockage,
+  Disques, Confidentialité, Confort et Portail.
 
 <p align="center">
   <img src="docs/captures/accueil-clair.png" width="240" alt="Accueil en thème clair : recherche, raccourcis, stockages et disque USB ouvert">
@@ -208,7 +257,7 @@ ext4 appartient à l'utilisateur 1000 (le premier compte créé sous Ubuntu), co
   UTF-8 de 2 Mio au plus. Le BOM et les fins de ligne Windows sont gardés. L'enregistrement écrit un fichier
   temporaire qui remplace ensuite l'original, jamais d'original à moitié écrit ; si le fichier a changé depuis son
   ouverture, Portail demande avant d'écraser. **Modifier comme texte** ouvre un fichier d'une autre extension.
-- **Dossiers distants** (accueil, section **Dossiers distants**) : un serveur **FTP** ou **SFTP** enregistré (nom,
+- **Dossiers distants** (module **Distants** de la barre) : un serveur **FTP** ou **SFTP** enregistré (nom,
   adresse, port, utilisateur, dossier de départ) se parcourt comme les autres stockages : ouvrir avec les lecteurs
   (une vidéo distante s'avance sans être téléchargée), partager, copier et déplacer dans les deux sens, renommer,
   créer, supprimer, compresser et extraire.
@@ -247,7 +296,7 @@ ext4 appartient à l'utilisateur 1000 (le premier compte créé sous Ubuntu), co
   Sur un disque chiffré, elle reste dans le volume chiffré.
 - **Analyse de l'espace** : menu de l'explorateur, à la racine. Dossiers et fichiers du plus gros au plus
   petit, avec leur pourcentage ; on descend dans les dossiers sans relire le stockage ; les 100 plus gros
-  fichiers.
+  fichiers. Remplacée en 1.9.0 par l'[analyseur de stockage](#analyseur-de-stockage-nouveau-en-190).
 - **Propriétés** (menu **⋮** de la sélection) : taille (totale pour un dossier), date, système de fichiers ;
   droits et propriétaire sur ext4 ; **empreinte SHA-256** calculée à la demande, à comparer à `sha256sum`.
 - **Renommage par lot** (**Renommer** sur plusieurs éléments) : numérotation (« Vacances (01).jpg »),
@@ -467,6 +516,15 @@ Mesures sur le même téléphone, sur une image (test `PerfInstrumentedTest`, sa
   - archives en plusieurs volumes (`.part1.rar`, `.z01`…) non prises en charge ;
   - liens et fichiers spéciaux d'une archive non extraits ; les fichiers extraits portent la date de
     l'extraction, pas celle de l'archive.
+- **Analyseur de stockage** :
+  - la taille des applications installées et de leurs données n'est pas comptée (il faudrait l'accès aux
+    statistiques d'utilisation d'Android) : elle fait partie de la part « Applications, système et dossiers
+    protégés » ;
+  - les résultats restent en mémoire pendant la session, jamais sur le stockage, et trois analyses au plus sont
+    gardées ; une analyse s'arrête si Android ferme Portail ;
+  - sur FAT et exFAT, un dossier compte pour un seul cluster, même s'il en occupe plusieurs ;
+  - au-delà de 500 000 éléments, le détail des plus petits dossiers est résumé ;
+  - pas de recherche de doublons, de comparaison de deux analyses ni d'analyse planifiée.
 - **Corbeille** : les suppressions faites par une autre application (Fichiers d'Android) sur un disque restent
   définitives. Un nom de plus de 245 octets est restauré à la racine du stockage.
 - **Raccourcis de l'accueil** : les disques USB n'y figurent pas (Android ne les indexe pas ; la recherche de
@@ -609,6 +667,11 @@ python3 tools/fixtures/agejuge.py decrypt fichier.age sortie "mot de passe"
 python3 tools/fixtures/zipaesjuge.py read archive.zip "mot de passe"
 FL_KEEP=1 ctest --test-dir build/native -R '^test_vault$'           # garde deux coffres créés par le moteur…
 sudo tools/fixtures/verify_vault_with_kernel.sh build/native/tmp     # …ouverts et vérifiés par cryptsetup et le noyau
+
+# analyseur (phase 16) : place allouée lue par le moteur, comparée au manifeste de debugfs (ext4-du.alloc) et aux juges
+ctest --test-dir build/native --output-on-failure -R test_fs_alloc
+python3 tools/fixtures/fatjuge.py alloc build/native/fixtures/fat32-arbre.img   # place allouée selon un lecteur indépendant
+python3 tools/fixtures/ntfsjuge.py alloc build/native/fixtures/ntfs-arbre.img
 
 # intégration IA (phase 15) : serveur d'essai compatible OpenAI (http://127.0.0.1:8765, clé essai-portail) et contrat
 python3 tools/ia/serveur-essai.py

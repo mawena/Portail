@@ -598,7 +598,7 @@ class Fr {
     ),
     (
       'Les dossiers distants (FTP, SFTP)',
-      "Ajoutez un serveur dans la section Dossiers distants de l'accueil : il se parcourt ensuite comme les "
+      "Ajoutez un serveur dans le module Distants de la barre : il se parcourt ensuite comme les "
           'autres stockages. En SFTP, comparez l\'empreinte montrée à la première connexion à celle du serveur : '
           "une clé changée est refusée. FTP n'est pas chiffré : préférez SFTP hors de chez vous."
     ),
@@ -629,8 +629,8 @@ class Fr {
     ),
     (
       'Créer et ouvrir un coffre',
-      "Un coffre est un fichier chiffré qui s'ouvre comme un disque\u00A0: Créer un coffre dans la section Coffres de "
-          "l'accueil, ou Nouveau coffre… depuis le bouton Créer de l'explorateur. Ouvert, il se parcourt comme les "
+      "Un coffre est un fichier chiffré qui s'ouvre comme un disque\u00A0: Créer un coffre dans le module Coffres de "
+          "la barre, ou Nouveau coffre… depuis le bouton Créer de l'explorateur. Ouvert, il se parcourt comme les "
           "autres stockages et apparaît dans l'application Fichiers\u00A0; Fermer efface sa clé. Sous Linux, il s'ouvre "
           'par cryptsetup, ou par un double-clic après udisksctl loop-setup.'
     ),
@@ -650,17 +650,33 @@ class Fr {
     ),
     (
       'Discuter avec un modèle',
-      "Chat IA, dans la section IA de l'accueil, puis Nouvelle conversation\u00A0: la réponse s'affiche au fur et à "
+      "Chat IA, dans le module IA de la barre, puis Nouvelle conversation\u00A0: la réponse s'affiche au fur et à "
           "mesure, et Arrêter la coupe. Le serveur et le modèle se changent en touchant leur nom sous le titre, le "
           'prompt système dans le menu ⋮. Les conversations restent sur le téléphone et ne partent que vers le '
           'serveur choisi.'
     ),
     (
       'Créer une automatisation',
-      "Automatisations, dans la section IA de l'accueil, puis Nouvelle automatisation\u00A0: un prompt réutilisable où "
+      "Automatisations, dans le module IA de la barre, puis Nouvelle automatisation\u00A0: un prompt réutilisable où "
           "{{nom}} devient une valeur à saisir au lancement, {{date}} et {{heure}} étant remplies par Portail. Lancez-la "
           "à la main depuis sa fiche, ou planifiez-la toutes les 15 minutes au plus souvent, avec les valeurs par "
           'défaut\u00A0; son historique garde les 50 dernières exécutions.'
+    ),
+    (
+      "Qu'est-ce qui remplit mon téléphone ?",
+      "Touchez Analyseur dans la barre, puis Téléphone\u00A0: l'analyse compte la place réellement occupée par chaque "
+          "dossier et la montre en anneaux ou en carte, avec l'arbre trié par taille. Touchez un dossier pour y entrer, "
+          "glissez le doigt sur le graphique pour lire un nom et sa taille, et faites un appui long pour l'afficher dans "
+          "l'explorateur ou le mettre à la corbeille. Une mise à la corbeille ne libère la place qu'au vidage de la "
+          'corbeille.'
+    ),
+    (
+      "Pourquoi l'analyse ne compte pas tout ?",
+      "Android interdit de lire Android/data et Android/obb, et Portail ne voit ni les applications installées ni le "
+          "système\u00A0: quand tout le téléphone est analysé, cette place apparaît à part, en «\u00A0Applications, "
+          "système et dossiers protégés\u00A0». Les emplacements exclus (Réglages, Analyseur de stockage) et les autres "
+          "systèmes de fichiers ne sont pas parcourus. Ce qui est dans la corbeille compte encore, jusqu'à ce qu'elle "
+          'soit vidée.'
     ),
   ];
   static const addFavorite = 'Ajouter aux favoris';
