@@ -99,8 +99,9 @@ précédente jusqu'à la v1.9.0. Cochez chaque ligne faite et notez ce qui ne va
 - [x] **Mettre à la corbeille** un fichier de test : l'arbre est mis à jour sans réanalyse, et le message dit que la
       place sera libérée au vidage de la corbeille.
       *Essai du 2026-10-27 : gros-essai.bin (2,1 Go, fichier d'essai) : appui long → Supprimer → « Les éléments restent 30 jours dans la corbeille de ce stockage » → Supprimer : « Mis à la corbeille : la place sera libérée quand la corbeille sera vidée », Ouvrir la corbeille ; phase16 passe de 2,4 Go à 268,7 Mo sans réanalyse ; fichier dans .Portail-corbeille. Remarque : la liste Plus gros fichiers n'a pas d'appui long (toucher ouvre l'explorateur)*
-- [ ] **Exclure des analyses** un dossier, puis **Réanalyser** : il apparaît « Exclu des analyses ». Réglages →
+- [x] **Exclure des analyses** un dossier, puis **Réanalyser** : il apparaît « Exclu des analyses ». Réglages →
       **Analyseur de stockage** → **Emplacements exclus de l'analyse** : il y est ; **Ne plus exclure** le retire.
+      *Essai du 2026-10-27 : Movies : « Exclu des analyses suivantes de ce stockage » ; Réanalyser → « Movies, exclu des analyses, 0 octet » ; Réglages → Emplacements exclus de l'analyse : « /Movies · Téléphone » ; Ne plus exclure → « Aucun emplacement exclu »*
 
 ## 6. Disque USB, coffre et dossier distant
 
