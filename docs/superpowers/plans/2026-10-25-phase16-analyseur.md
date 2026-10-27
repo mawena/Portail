@@ -670,18 +670,18 @@ tant que pile non vide et non annulé :
 
 ### Task 11 : documentation
 
-- [ ] README : section « Analyseur de stockage (nouveau en 1.9.0) » à la place de « Analyse de l'espace » (emplacements,
+- [x] README : section « Analyseur de stockage (nouveau en 1.9.0) » à la place de « Analyse de l'espace » (emplacements,
   tailles réelles et liens physiques, anneaux et carte, gestes, actions, exclusions, part « hors analyse »,
   `Android/data`, dossiers distants) ; phrase d'introduction et « Liste ou grille partout » mises à jour ; limites (taille
   des applications non comptée, pas de cache sur le stockage, dossiers d'un cluster sur FAT) ; commande du jeu
   `ext4-du.img` dans « Tests ».
-- [ ] README : la barre de navigation (Fichiers, Coffres, Analyseur, Distants, IA ; rail sur grand écran) dans la présentation
+- [x] README : la barre de navigation (Fichiers, Coffres, Analyseur, Distants, IA ; rail sur grand écran) dans la présentation
   de l'interface.
-- [ ] Aide : « Qu'est-ce qui remplit mon téléphone ? » et « Pourquoi l'analyse ne compte pas tout ? » (applications et
+- [x] Aide : « Qu'est-ce qui remplit mon téléphone ? » et « Pourquoi l'analyse ne compte pas tout ? » (applications et
   système, `Android/data`, corbeille) ; strings testées.
-- [ ] Fiche d'essai `docs/superpowers/research/<AAAA-MM-JJ>-essais-phase16/essais.md` (T13), copiée sur `develop` et
-  sur le téléphone (`Download/portail-tests/phase16/`).
-- [ ] **Commit** `docs: analyseur de stockage`.
+- [x] Fiche d'essai `docs/superpowers/research/<AAAA-MM-JJ>-essais-phase16/essais.md` (T13), copiée sur `develop` et
+  sur le téléphone (`Download/portail-tests/phase16/`). *(fiche du 2026-10-27 ; copie sur le téléphone à faire quand il sera joignable)*
+- [x] **Commit** `docs: analyseur de stockage`.
 
 ### Task 12 : essais instrumentés sur le Pixel
 
