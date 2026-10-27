@@ -260,7 +260,7 @@ l'application », placé en T1 ; spec § 27.)*
   - `LocalSource(…, lstat: Lstat = AndroidLstat)` (paramètre ajouté en dernier) ;
   - `DirEntry.alloc: Long`, `DirEntry.ino: Long`, `DirEntry.nlink: Int` (absents du JSON : `size`, 0, 1).
 
-- [ ] **Step 1 : tests en échec** (`DuListTest`, `Lstat` factice) : `localAllocFromBlocks` (`blocks` = 8 → `alloc`
+- [x] **Step 1 : tests en échec** (`DuListTest`, `Lstat` factice) : `localAllocFromBlocks` (`blocks` = 8 → `alloc`
   4 096 pour 1 o), `localSparseUsesBlocks` (`size` 1 Gio, `blocks` 8 → 4 096), `localSymlinkIsLinkNotFollowed`
   (type `SYMLINK`, cible jamais lue), `localAndroidPrivateIsProtected` (`/Android/data` et `/Android/obb` →
   `ProtectedDirException`), `localOtherDeviceFlagged` (`dev` différent de celui de la racine → `otherDevice`),
@@ -271,11 +271,13 @@ l'application », placé en T1 ; spec § 27.)*
 
   Run : `cd android && ./gradlew -q --offline :app:testDebugUnitTest --tests 'com.mawena.fluluks.DuListTest'`
   Expected : FAIL (classes absentes).
-- [ ] **Step 2 : implémentation.** `LocalSource.duList` : mêmes contrôles que `list` (accès, chemin, `Android/data`),
+- [x] **Step 2 : implémentation.** `LocalSource.duList` : mêmes contrôles que `list` (accès, chemin, `Android/data`),
   noms par `File.list()`, **un seul** `lstat` par entrée (type par `S_ISDIR`/`S_ISREG`/`S_ISLNK` du mode, `alloc` =
   `blocks × 512`). `DiskSource.duList` : `engine.list` par `handle()` (activité du volume), comme `list`.
-- [ ] **Step 3 :** Run : `cd android && ./gradlew -q --offline :app:testDebugUnitTest` — Expected : PASS.
-- [ ] **Step 4 : commit** `feat(analyseur): liste d'un dossier avec la place réellement occupée`.
+- [x] **Step 3 :** Run : `cd android && ./gradlew -q --offline :app:testDebugUnitTest` — Expected : PASS.
+  *(Fait : `lstat` placé avant `hasAccess`, qui reste la lambda finale des appels existants ; tests écrits avec
+  l'implémentation ; DuListTest 11 ; 668 tests JVM, 823 Flutter.)*
+- [x] **Step 4 : commit** `feat(analyseur): liste d'un dossier avec la place réellement occupée`.
 
 ### Task 4 : arbre compact et parcours (Kotlin)
 

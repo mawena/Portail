@@ -2,6 +2,8 @@ package com.mawena.fluluks.files
 
 import android.net.Uri
 import android.provider.DocumentsContract
+import com.mawena.fluluks.analyzer.DuEntry
+import com.mawena.fluluks.analyzer.SizeKind
 import com.mawena.fluluks.engine.DirEntry
 import com.mawena.fluluks.engine.Engine
 import com.mawena.fluluks.engine.EngineError
@@ -87,6 +89,21 @@ class DiskSource(override val id: String, private val engine: Engine = NativeEng
         return DirEntry.parseList(engine.list(handle(), b(p))).map {
             Entry(it.name, DocumentIds.child(p, it.name), it.type, it.size, it.mtime)
         }
+    }
+
+    override val sizeKind = SizeKind.ALLOCATED
+
+    /** Comme [list] (une activité du volume), avec la place occupée, l'inode et les liens donnés par le moteur. */
+    override fun duList(path: String): List<DuEntry> {
+        val p = PathRules.require(path)
+        return DirEntry.parseList(engine.list(handle(), b(p))).map {
+            DuEntry(it.name, it.type, it.size, it.alloc, it.mtime, dev = 0, ino = it.ino, nlink = it.nlink)
+        }
+    }
+
+    override fun usedBytes(): Long {
+        val st = VolumeStat.parse(engine.statfs(handle()))
+        return (st.totalBytes - st.freeBytes).coerceAtLeast(0)
     }
 
     override fun stat(path: String): Entry? {

@@ -425,7 +425,7 @@ dans le même commit que le travail.
 - [x] Plan de la phase 16 écrit *(demande du 2026-10-25 ; spec § 26)*
 - [ ] T1 — Barre de navigation entre les modules (Fichiers, Distants, IA ; l'Analyseur y entre en T10), rail sur grand écran *(demande du 2026-10-26 ; spec § 27)*
 - [x] T2 — Moteur : place allouée, inode et liens physiques dans la liste d'un dossier (ext4, FAT, exFAT, NTFS) *(test_fs_alloc 8 cas jugés par debugfs, fatjuge.py et ntfsjuge.py ; 50/50 tests natifs sur PC ; passage sur le Pixel en attente)*
-- [ ] T3 — Liste d'un dossier avec sa place réelle : téléphone et cartes SD par lstat, disques et coffres par le moteur, distant en taille apparente
+- [x] T3 — Liste d'un dossier avec sa place réelle : téléphone et cartes SD par lstat, disques et coffres par le moteur, distant en taille apparente *(DuListTest 11 ; lstat avant hasAccess, qui reste la lambda finale ; 668 tests JVM, 823 Flutter)*
 - [ ] T4 — Arbre compact et parcours itératif borné (liens physiques une fois, fichiers creux, dossiers inaccessibles, exclusions)
 - [ ] T5 — Analyses gardées, vues élaguées pour les graphiques, part « hors analyse », corbeille et exclusions
 - [ ] T6 — Pont Pigeon et contrôleur de l'écran d'analyse (résultats au fur et à mesure)

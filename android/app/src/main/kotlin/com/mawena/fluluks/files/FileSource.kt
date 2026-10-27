@@ -1,6 +1,8 @@
 package com.mawena.fluluks.files
 
 import android.net.Uri
+import com.mawena.fluluks.analyzer.DuEntry
+import com.mawena.fluluks.analyzer.SizeKind
 import com.mawena.fluluks.engine.FileType
 import com.mawena.fluluks.provider.DocumentIds
 import java.io.File
@@ -49,6 +51,19 @@ interface FileSource {
 
     fun list(path: String): List<Entry>
     fun stat(path: String): Entry?
+
+    /** Ce que [duList] compte : la place occupée, ou la taille apparente (dossier distant). */
+    val sizeKind: SizeKind get() = SizeKind.APPARENT
+
+    /**
+     * Liste de [path] pour l'analyseur (phase 16) : place occupée, inode et liens. Par défaut depuis [list] : la taille
+     * apparente, inode inconnu (0), un lien.
+     */
+    fun duList(path: String): List<DuEntry> =
+        list(path).map { DuEntry(it.name, it.type, it.size, it.size, it.mtime, dev = 0, ino = 0, nlink = 1) }
+
+    /** Octets occupés sur tout le stockage (part « hors analyse »), ou null s'il ne le dit pas. */
+    fun usedBytes(): Long? = null
 
     /** (octets libres, octets au total). */
     fun space(): Pair<Long, Long>
