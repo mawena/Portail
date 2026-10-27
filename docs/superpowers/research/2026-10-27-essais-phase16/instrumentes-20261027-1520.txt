@@ -1,0 +1,16 @@
+# AnalyzerInstrumentedTest sur le Pixel 4 XL (10.228.2.40:5555), 2026-10-27 15:20
+
+INSTRUMENTATION_STATUS: test=phoneLstatAllocated
+INSTRUMENTATION_STATUS: test=fiftyThousandFilesBounded
+INSTRUMENTATION_STATUS: test=trashFromAnalysisMovesSize
+INSTRUMENTATION_STATUS: test=sharedStorageScanTimed
+INSTRUMENTATION_STATUS: test=diskImageAllocMatchesJudge
+Time: 7,434
+OK (5 tests)
+
+# Mesures (journal AnalyseurEssai)
+lstat : 1 o -> 4096 o ; creux 64 Mio -> 0 o
+50 000 fichiers créés en 3558 ms
+50 000 fichiers : analyse en 1154 ms, Java +20 Mio
+stockage partagé : 503 ms, 4105 fichiers, 138 dossiers, 7066934784 o vus sur 42821304320 o, 65 nœuds dans la vue, Java +5 Mio, natif +-1 Mio
+ext4-du.img : 350 entrées, 1531904 o, 71 nœuds
