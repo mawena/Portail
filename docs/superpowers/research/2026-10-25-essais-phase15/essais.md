@@ -42,6 +42,7 @@ précédente jusqu'à la v1.8.0. Cochez chaque ligne faite et notez ce qui ne va
       *Essai du 2026-10-27 : onglet IA → Chat IA → Nouvelle conversation : « PC · essai-court » (PC par défaut, Atelier injoignable) ; réponse en flux affichée*
 - [ ] Pendant une longue réponse, remontez dans la conversation : la vue ne vous ramène pas en bas.
       *Essai du 2026-10-27 : pas vérifiable avec le serveur d'essai : essai-long finit en 2 s environ*
+      *Essai du 2026-10-27 : en attente : Atelier ne génère plus rien (aucun octet en 150 s avec « default », 100 s avec « llama3.2:3b », même depuis le PC), serveur trop faible pour le moment ; Portail affiche bien « Le serveur ne répond plus » et Réessayer au bout de 60 s. À refaire quand Atelier tiendra la charge*
 - [x] **Arrêter** pendant une réponse : le texte reçu reste, marqué « Arrêtée ».
       *Essai du 2026-10-27 : sur essai-lent : réponse marquée « Arrêtée », Régénérer proposé*
 - [x] **Régénérer** la dernière réponse : une nouvelle réponse la remplace. **Copier** : la réponse est collable
@@ -52,8 +53,10 @@ précédente jusqu'à la v1.8.0. Cochez chaque ligne faite et notez ce qui ne va
       *Essai du 2026-10-27 : « Copier le code » copie le code seul (aperçu du presse-papiers d'Android) ; défilement horizontal non vu, le bloc d'essai est court*
 - [ ] Une réponse avec un lien : le toucher montre l'adresse et ne l'ouvre qu'après **Ouvrir**.
       *Essai du 2026-10-27 : pas faisable avec le serveur d'essai (aucun lien dans ses réponses) ; à faire avec Atelier*
+      *Essai du 2026-10-27 : en attente : Atelier ne génère plus rien (aucun octet en 150 s avec « default », 100 s avec « llama3.2:3b », même depuis le PC), serveur trop faible pour le moment ; Portail affiche bien « Le serveur ne répond plus » et Réessayer au bout de 60 s. À refaire quand Atelier tiendra la charge*
 - [ ] Menu ⋮ → **Prompt système** : « Réponds en une phrase. » → la réponse suivante tient en une phrase.
       *Essai du 2026-10-27 : le dialogue s'ouvre et enregistre « Reponds en une phrase. » ; l'effet sur la réponse demande un vrai modèle (Atelier injoignable)*
+      *Essai du 2026-10-27 : en attente : Atelier ne génère plus rien (aucun octet en 150 s avec « default », 100 s avec « llama3.2:3b », même depuis le PC), serveur trop faible pour le moment ; Portail affiche bien « Le serveur ne répond plus » et Réessayer au bout de 60 s. À refaire quand Atelier tiendra la charge*
 - [x] Touchez « Atelier · <modèle> » sous le titre : choisissez « PC » → `essai-long` ; la réponse suivante vient
       du serveur d'essai : les 2 000 morceaux, de « 0001 » à « 2000 », sans trou ni doublon.
       *Essai du 2026-10-27 : les 2 000 morceaux de 0001 à 2000, dans l'ordre, sans trou ni doublon (texte relu par uiautomator)*
