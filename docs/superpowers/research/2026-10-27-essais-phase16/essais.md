@@ -29,7 +29,8 @@ précédente jusqu'à la v1.9.0. Cochez chaque ligne faite et notez ce qui ne va
       *Essai du 2026-10-27 : dans les cinq modules : Réglages et ⋮ (Aide, À propos) dans la barre de titre ; l'Aide a « Qu'est-ce qui remplit mon téléphone ? » et « Pourquoi l'analyse ne compte pas tout ? », qui s'ouvrent*
 - [x] Le lecteur de musique réduit et une copie en cours s'affichent au-dessus de la barre, pas dessous.
       *Essai du 2026-10-27 : lecteur réduit (morceau-1-Aube.mp3, Pause, Arrêter) puis copie de 2 Go (« Copie de gros-essai.bin — 1 sur 1 · 9 % », Annuler, barre de progression) au-dessus de la barre ; copie terminée à 68 Mo/s*
-- [ ] Paysage : la barre devient un rail à gauche ; tous les modules restent accessibles.
+- [x] Paysage : la barre devient un rail à gauche ; tous les modules restent accessibles.
+      *Essai du 2026-10-27 : rail à gauche, les cinq modules s'ouvrent. Défaut trouvé : en paysage, le rail n'était pas dans l'arbre d'accessibilité (TalkBack ne pouvait pas l'atteindre) : la barrière des pages du module le masquait ; corrigé (1c636cc, test railDestinationsReadByTalkBack), vérifié sur le Pixel : « Fichiers, onglet 1 sur 5 »…*
 - [ ] Texte à 200 % (Paramètres → Affichage → Taille de la police) : les cinq libellés de la barre restent lisibles,
       sans chevauchement.
 - [ ] TalkBack sur la barre : « Fichiers, onglet 1 sur 5 », etc. ; le module choisi est annoncé comme sélectionné.
