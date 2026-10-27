@@ -276,6 +276,7 @@ class Fr {
   static const location = 'Emplacement';
   static const typeLabel = 'Type';
   static const sizeLabel = 'Taille';
+  static const onDiskLabel = 'Sur le disque';
   static const modifiedLabel = 'Modifié le';
   static const fsLabel = 'Système de fichiers';
   static const permissionsLabel = 'Droits';
