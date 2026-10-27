@@ -294,18 +294,23 @@ class ModuleShellState extends State<ModuleShell> with SingleTickerProviderState
             ),
           ),
         ),
+        // Conteneur sémantique : la barrière des pages d'un module (BlockSemantics) cacherait sinon à TalkBack le rail,
+        // peint avant elle.
         Expanded(
-          child: Column(children: [
-            Expanded(
-              child: MediaQuery.removePadding(
-                context: context,
-                removeLeft: true,
-                removeBottom: dock.isNotEmpty,
-                child: modules,
+          child: Semantics(
+            container: true,
+            child: Column(children: [
+              Expanded(
+                child: MediaQuery.removePadding(
+                  context: context,
+                  removeLeft: true,
+                  removeBottom: dock.isNotEmpty,
+                  child: modules,
+                ),
               ),
-            ),
-            DockSurface(children: dock),
-          ]),
+              DockSurface(children: dock),
+            ]),
+          ),
         ),
       ]);
     } else {
