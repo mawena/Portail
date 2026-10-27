@@ -74,10 +74,14 @@ précédente jusqu'à la v1.9.0. Cochez chaque ligne faite et notez ce qui ne va
 
 ## 4. Graphiques et arbre
 
-- [ ] Anneaux : toucher un dossier y entre ; le centre, le fil d'Ariane, **Dossier parent** et Retour remontent.
-- [ ] Glisser le doigt sur le graphique : le nom, la taille et la part de l'élément dessous s'affichent.
-- [ ] Carte proportionnelle : mêmes gestes ; **Sans graphique** ne garde que l'arbre.
-- [ ] Moins de niveaux, plus de niveaux : de 2 à 8 ; le réglage est gardé à l'analyse suivante.
+- [x] Anneaux : toucher un dossier y entre ; le centre, le fil d'Ariane, **Dossier parent** et Retour remontent.
+      *Essai du 2026-10-27 : toucher Download y entre (6,2 Go) ; le centre, Dossier parent, Retour et le fil d'Ariane (Téléphone › Download › portail-tests → Téléphone) remontent*
+- [x] Glisser le doigt sur le graphique : le nom, la taille et la part de l'élément dessous s'affichent.
+      *Essai du 2026-10-27 : doigt posé sur Download : « Download — 6,2 Go — 13 % de Téléphone — 2093 éléments » dans la bande sous le graphique*
+- [x] Carte proportionnelle : mêmes gestes ; **Sans graphique** ne garde que l'arbre.
+      *Essai du 2026-10-27 : toucher DCIM y entre, glisser montre « Autres — 1,7 Go — 47 % de DCIM — 441 éléments », Dossier parent remonte ; Sans graphique ne garde que l'en-tête et l'arbre*
+- [x] Moins de niveaux, plus de niveaux : de 2 à 8 ; le réglage est gardé à l'analyse suivante.
+      *Essai du 2026-10-27 : de 4 (défaut) à 2 : Moins de niveaux se désactive ; de 2 à 8 en six pas : Plus de niveaux se désactive ; 8 gardé pour l'analyse suivante (coffre Analyse16) ; remis à 4*
 - [ ] Arbre : trié par taille, puis par nom, nombre d'éléments et date ; dossiers dépliés ; « Autres » pour ce qui
       est résumé.
 - [ ] Onglet **Plus gros fichiers** : les plus gros fichiers de l'analyse.
