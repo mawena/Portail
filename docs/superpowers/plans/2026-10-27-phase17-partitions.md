@@ -200,7 +200,7 @@ numérotation), § 14 (formatage de la phase 8), § 19 (interface et accessibili
   Toute opération sur une partition existante recharge la table et rend FL_ECHANGED si `index` n'a plus
   `expect_first_lba`. Une partition étendue ou logique : FL_ENOTSUP pour créer, supprimer et formater.
 
-- [ ] **Step 1 : tests en échec** (`test_partops.c`) : `createInFreeSpaceJudged` (pour FAT32, exFAT, ext4, NTFS et ext4
+- [x] **Step 1 : tests en échec** (`test_partops.c`) : `createInFreeSpaceJudged` (pour FAT32, exFAT, ext4, NTFS et ext4
   chiffré : partition créée dans le trou entre deux partitions existantes ; `sfdisk --json` montre trois partitions,
   les deux voisines inchangées octet pour octet ; `fsck.fat -n`, `fsck.exfat -n`, `e2fsck -fn`, `ntfsfix -n`,
   `cryptsetup luksDump` propres sur la tranche extraite) ; `createTypeMatchesFs` (MBR `0x0C`/`0x07`/`0x83`, GPT
@@ -211,16 +211,17 @@ numérotation), § 14 (formatage de la phase 8), § 19 (interface et accessibili
   `df` du volume monté par le moteur ; LUKS verrouillé : `known` faux).
   `test_format.c` : `formatWithSizeLeavesRestFree` (`part_bytes` = 100 Mio sur 1 Gio : une partition de 100 Mio au
   Mio près, le reste libre selon `sfdisk`).
-- [ ] **Step 2 :** `ctest -R 'test_partops|test_format$'` : échec.
-- [ ] **Step 3 : implémentation.** Une seule fonction de formatage de tranche dans `format.c` (effacement du premier
+- [x] **Step 2 :** `ctest -R 'test_partops|test_format$'` : échec.
+- [x] **Step 3 : implémentation.** Une seule fonction de formatage de tranche dans `format.c` (effacement du premier
   et du dernier Mio de la tranche, LUKS2 éventuel, système de fichiers) sert `fl_format`, `fl_part_create` et
   `fl_part_format`. `fl_part_create` écrit la table **avant** le système de fichiers (un échec laisse une partition
   vide, signalée par le rapport). `tools/fixtures/verify_partitions_with_kernel.sh <image>` : `losetup -P`, montage de
   chaque partition par le noyau (`cryptsetup open` pour LUKS, phrase en argument), écriture et relecture d'un fichier,
   démontage, `fsck` propre.
-- [ ] **Step 4 :** tests du moteur verts ; `sudo tools/fixtures/verify_partitions_with_kernel.sh` sur les images
-  gardées (`FL_KEEP=1`) : tout monté et propre.
-- [ ] **Step 5 : commit** `feat(partitions): créer, supprimer et formater une partition, taille au formatage`.
+- [x] **Step 4 :** tests du moteur verts ; `sudo tools/fixtures/verify_partitions_with_kernel.sh` sur les images
+  gardées (`FL_KEEP=1`) : tout monté et propre. *(images gardées dans `build/native/tmp/partops-*.img` le
+  2026-10-27 ; le script demande sudo : à lancer par l'utilisateur)*
+- [x] **Step 5 : commit** `feat(partitions): créer, supprimer et formater une partition, taille au formatage`.
 
 ### Task 3 : e2fsprogs dans le moteur (libext2fs, e2fsck en lecture seule, resize2fs)
 
