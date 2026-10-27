@@ -30,6 +30,13 @@ typedef struct {
   uint64_t size;
   int64_t mtime;             /* secondes depuis l'époque Unix */
   uint32_t mode, uid, gid;   /* mode : type + droits, comme st_mode */
+  /* Place sur le support, comme st_blocks × 512 (phase 16) : blocs alloués en ext4 (fichier creux compté à ses
+   * blocs), taille arrondie au cluster en FAT et exFAT (un cluster par dossier, 0 pour la racine fixe de
+   * FAT12/16), taille allouée du flux non résident en NTFS (compressée pour un flux compressé ou creux, 0 pour
+   * des données résidentes ; index $I30 pour un dossier). */
+  uint64_t alloc;
+  uint64_t ino;              /* inode ext4, enregistrement MFT NTFS ; 0 en FAT et exFAT */
+  uint32_t nlink;            /* liens physiques ; 1 en FAT et exFAT */
 } fl_stat;
 
 typedef struct {

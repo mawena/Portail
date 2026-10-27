@@ -675,6 +675,12 @@ static void entry_json(fl_json *j, const char *name, size_t namelen, const fl_st
   fl_json_u64(j, st->uid);
   fl_json_key(j, "gid");
   fl_json_u64(j, st->gid);
+  fl_json_key(j, "alloc"); /* place sur le support (fl_stat.alloc), pour l'analyseur */
+  fl_json_u64(j, st->alloc);
+  fl_json_key(j, "ino");
+  fl_json_u64(j, st->ino);
+  fl_json_key(j, "nlink");
+  fl_json_u64(j, st->nlink);
   fl_json_obj_end(j);
 }
 

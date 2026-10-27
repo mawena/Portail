@@ -141,6 +141,38 @@ for motif in "Entry 'a-hors-bornes' in /hostile ([0-9]*) has invalid inode #: $h
 done
 if grep -qi checksum <<<"$h_fsck"; then echo "somme de contrôle fausse dans /hostile" >&2; exit 1; fi
 
+# --- ext4 : place allouée, inode et liens (phase 16, T2) -------------------
+# work/tree-du/ : un-octet.bin (1 o), dix-mille.bin (10 000 o), vide.bin (0 o), creux.bin (1 Gio apparent,
+#   4 096 o écrits à 512 Mio), lien-a.bin et lien-b.bin (un même fichier de 100 000 o : lien physique),
+#   gros-dossier/ (300 fichiers de 1 o), profond/ (40 niveaux, fond.txt au bout). mkfs -d garde les trous et
+#   les liens physiques.
+# ext4-du.alloc : une ligne « chemin<TAB>octets alloués<TAB>inode<TAB>liens » par entrée, racine comprise,
+#   tirée de debugfs (Blockcount × 512) : indépendant de lwext4.
+DU=work/tree-du
+mkdir -p "$DU/gros-dossier"
+printf x > "$DU/un-octet.bin"
+head -c 10000 /dev/zero | tr '\0' d > "$DU/dix-mille.bin"
+: > "$DU/vide.bin"
+truncate -s 1G "$DU/creux.bin"
+head -c 4096 /dev/zero | tr '\0' c | dd of="$DU/creux.bin" bs=4096 seek=$((512 * 256)) conv=notrunc status=none
+head -c 100000 /dev/zero | tr '\0' l > "$DU/lien-a.bin"
+ln "$DU/lien-a.bin" "$DU/lien-b.bin"
+for i in $(seq -w 1 300); do printf y > "$DU/gros-dossier/f-$i"; done
+p="$DU/profond"; for i in $(seq -w 1 40); do p="$p/n$i"; done
+mkdir -p "$p"; printf 'fond\n' > "$p/fond.txt"
+truncate -s 8M ext4-du.img
+"${MKFS_DISQUE[@]}" $(fixe d) -N 1024 -L FLUDU -d "$DU" ext4-du.img
+e2fsck -fn ext4-du.img >/dev/null
+{ echo /; (cd "$DU" && find . -mindepth 1 | LC_ALL=C sort | sed 's|^\.||'); } > work/du-chemins
+sed 's|^|stat |' work/du-chemins > work/du-cmds
+DBG -f work/du-cmds ext4-du.img | awk '
+  /^debugfs: stat / { p = substr($0, 15) }
+  /^Inode: / { ino = $2 }
+  /^Links: / { printf "%s\t%.0f\t%s\t%s\n", p, $4 * 512, ino, $2 }' > ext4-du.alloc
+[ "$(wc -l < ext4-du.alloc)" = "$(wc -l < work/du-chemins)" ] || { echo "ext4-du.alloc incomplet" >&2; exit 1; }
+grep -Pq '^/creux\.bin\t([0-9]{1,4}|1[0-6][0-9]{3})\t' ext4-du.alloc || { echo "creux.bin n'est pas creux" >&2; exit 1; }
+grep -Pq '^/lien-a\.bin\t[0-9]+\t[0-9]+\t2$' ext4-du.alloc || { echo "lien-a.bin sans lien physique" >&2; exit 1; }
+
 # --- ext4 : images d'écriture (phase 3, T3) --------------------------------
 # Banc de non-corruption : le moteur écrit sur une COPIE de ces images, e2fsck -fn juge le résultat.
 # Toutes sont créées avec « -d tree/ » puis passées par l'étape journal. mkfs laisse les options du
@@ -323,11 +355,12 @@ truncate -s 64M exfat-arbre.img;   mkfs.exfat -L FLUEXFAT exfat-arbre.img >/dev/
 $PY "$HERE/fatjuge.py" build-exfat exfat-arbre.img tree-exfat
 truncate -s 300M fat32-vide.img;   mkfs.vfat -F 32 -s 8 -n FLUVIDE fat32-vide.img >/dev/null
 truncate -s 64M exfat-vide.img;    mkfs.exfat -c 4096 -L FLUVIDE exfat-vide.img >/dev/null
+truncate -s 64M exfat-32k.img;     mkfs.exfat -c 32K -L FLU32K exfat-32k.img >/dev/null   # phase 16, T2
 truncate -s 6G exfat-grand.img;    mkfs.exfat -L FLUGRAND exfat-grand.img >/dev/null
 # FAT32 à secteurs de 512 o (clusters de 512 o : 40 Mio suffisent), ouverte sur un disque de 4096 o
 truncate -s 40M fat32-512-sur-4k.img; mkfs.vfat -F 32 -s 1 -n FLU512 fat32-512-sur-4k.img >/dev/null
 for i in fat12-arbre fat16-arbre fat32-arbre fat32-4k fat32-vide fat32-512-sur-4k; do fsck.fat -n "$i.img" >/dev/null; done
-for i in exfat-arbre exfat-vide exfat-grand; do fsck.exfat -n "$i.img" >/dev/null; done
+for i in exfat-arbre exfat-vide exfat-32k exfat-grand; do fsck.exfat -n "$i.img" >/dev/null; done
 
 # Images sales : copie, puis un seul octet modifié (ou-exclusif ou masque) à un offset donné.
 # poke <img> <offset> <opération python sur l'octet b>

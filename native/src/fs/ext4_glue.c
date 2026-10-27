@@ -73,6 +73,7 @@ typedef struct {
   uint64_t max_bytes; /* au-delà, les numéros de bloc logique (32 bits) débordent */
   uint64_t max_write; /* fin d'écriture au plus : lwext4 refuse le dernier bloc logique (EFBIG) */
   bool needs_recovery;
+  bool huge_file;     /* fonction huge_file : i_blocks sur 48 bits, en blocs pour un inode HUGE_FILE */
   bool rw;            /* monté en écriture, journal démarré */
   bool io_err;        /* une écriture ou une barrière a échoué : plus rien n'est écrit (g_lock) */
   bool io_wp;         /* l'échec venait d'une protection en écriture signalée (FL_EROFS) */
@@ -292,7 +293,17 @@ static void full_path(const ext4_vol *v, const char *path, char *buf) {
   snprintf(buf, FULL_CAP, "%s%s", v->mp, path + 1);
 }
 
-static void fill_stat(const struct ext4_inode *in, fl_stat *st) {
+/* Octets alloués, comme ext4_inode_blocks du noyau : i_blocks en secteurs de 512 octets, sur 48 bits avec la
+ * fonction huge_file, en blocs du système de fichiers si l'inode porte en plus EXT4_INODE_FLAG_HUGE_FILE. */
+static uint64_t alloc_bytes(const ext4_vol *v, const struct ext4_inode *in) {
+  uint64_t blocks = to_le32(in->blocks_count_lo);
+  if (!v->huge_file) return blocks * 512;
+  blocks |= (uint64_t)to_le16(in->osd2.linux2.blocks_high) << 32;
+  if (to_le32(in->flags) & EXT4_INODE_FLAG_HUGE_FILE) return blocks * v->block_size; /* < 2^48 × 2^16 */
+  return blocks * 512;
+}
+
+static void fill_stat(const ext4_vol *v, uint32_t ino, const struct ext4_inode *in, fl_stat *st) {
   uint32_t mode = to_le16(in->mode);
   memset(st, 0, sizeof *st);
   switch (mode & EXT4_INODE_MODE_TYPE_MASK) {
@@ -311,13 +322,21 @@ static void fill_stat(const struct ext4_inode *in, fl_stat *st) {
   st->size = to_le32(in->size_lo);
   /* comme le noyau (ext4_isize) : 64 bits pour les fichiers ordinaires */
   if (st->type == FL_FT_FILE) st->size |= (uint64_t)to_le32(in->size_hi) << 32;
+  st->alloc = alloc_bytes(v, in);
+  st->ino = ino;
+  st->nlink = to_le16(in->links_count);
+}
+
+/* Inode et numéro (ino peut être NULL) d'un chemin (sous g_lock). */
+static int inode_ino_of(ext4_vol *v, const char *path, struct ext4_inode *in, uint32_t *ino) {
+  char full[FULL_CAP];
+  full_path(v, path, full);
+  return rd_err(v, ext4_raw_inode_fill(full, ino, in));
 }
 
 /* Inode d'un chemin (sous g_lock). */
 static int inode_of(ext4_vol *v, const char *path, struct ext4_inode *in) {
-  char full[FULL_CAP];
-  full_path(v, path, full);
-  return rd_err(v, ext4_raw_inode_fill(full, NULL, in));
+  return inode_ino_of(v, path, in, NULL);
 }
 
 /* ---------- écriture différée (wbuf.c) ---------- */
@@ -397,12 +416,13 @@ static int e_statfs(fl_fs *fs, fl_statfs *out) {
 static int e_stat(fl_fs *fs, const char *path, fl_stat *out) {
   ext4_vol *v = fs->priv;
   struct ext4_inode in;
+  uint32_t ino = 0;
   pthread_mutex_lock(&g_lock);
   flush_all(v); /* taille et contenu à jour */
-  int rc = inode_of(v, path, &in);
+  int rc = inode_ino_of(v, path, &in, &ino);
   pthread_mutex_unlock(&g_lock);
   if (rc != FL_OK) return rc;
-  fill_stat(&in, out);
+  fill_stat(v, ino, &in, out);
   return FL_OK;
 }
 
@@ -427,7 +447,7 @@ static int next_entry(ext4_vol *v, ext4_dir *d, fl_dirent *e, bool *fin) {
     if (r != EOK) return rd_err(v, r);
     memcpy(e->name, de->name, n);
     e->name[n] = 0;
-    fill_stat(&in, &e->st);
+    fill_stat(v, de->inode, &in, &e->st);
     *fin = false;
     return FL_OK;
   }
@@ -493,12 +513,6 @@ static int parent_ok(ext4_vol *v, const char *path) {
   return rc;
 }
 
-/* Inode et numéro d'un chemin (sous g_lock). */
-static int inode_ino_of(ext4_vol *v, const char *path, struct ext4_inode *in, uint32_t *ino) {
-  char full[FULL_CAP];
-  full_path(v, path, full);
-  return rd_err(v, ext4_raw_inode_fill(full, ino, in));
-}
 
 static uint32_t inode_type(const struct ext4_inode *in) {
   return to_le16(in->mode) & EXT4_INODE_MODE_TYPE_MASK;
@@ -877,6 +891,7 @@ int fl_ext4_mount(fl_bdev *dev, bool want_rw, fl_fs **out) {
   v->max_bytes = (uint64_t)sbi.block_size << 32;
   v->max_write = (uint64_t)sbi.block_size * UINT32_MAX;
   v->needs_recovery = sbi.recover;
+  v->huge_file = (le32(v->sb + 0x64) & EXT4_FRO_COM_HUGE_FILE) != 0; /* s_feature_ro_compat */
   v->rw = want_rw && permis;
   v->bdif.open = bd_open;
   v->bdif.bread = bd_bread;

@@ -174,11 +174,12 @@ l'application », placé en T1 ; spec § 27.)*
   module. Écrans au banc d'accessibilité ; images de référence claire, sombre et rail.
 - [x] **Step 3 :** Run : `flutter analyze && flutter test && flutter test --update-goldens test/goldens_test.dart`
   — Expected : tout vert ; les trois nouvelles images regardées une à une avant d'être gardées.
-- [ ] **Step 4 : démarrage sur le Pixel.** `flutter build apk --debug`, `adb install -r` (téléphone inactif, APK de
+- [ ] **Step 4 : démarrage sur le Pixel.** *(à faire : téléphone non joignable par adb le 2026-10-27, regroupé avec
+  les étapes Pixel de T2 et T3)* `flutter build apk --debug`, `adb install -r` (téléphone inactif, APK de
   l'utilisateur sauvegardée), `adb logcat -c -b crash`, `adb shell am start -W -n com.mawena.fluluks/.MainActivity` ;
   Expected : `Status: ok`, processus vivant 5 s après, journal `-b crash` vide, barre lue par `uiautomator dump`
   (« Fichiers », « Distants », « IA »).
-- [ ] **Step 5 : commit** `feat(navigation): barre de navigation entre les modules`.
+- [x] **Step 5 : commit** `feat(navigation): barre de navigation entre les modules`.
 
 ### Task 2 : place allouée, inode et liens dans le moteur
 
@@ -198,7 +199,7 @@ l'application », placé en T1 ; spec § 27.)*
   `uint32_t nlink;` (liens physiques ; 1 sur FAT et exFAT).
 - Produces (JSON de `fj_list` et `fj_stat`) : clés `"alloc"`, `"ino"`, `"nlink"` après `"gid"`.
 
-- [ ] **Step 1 : jeu d'essai.** Dans `make_fixtures.sh`, l'arbre `tree-du/` : `un-octet.bin` (1 o),
+- [x] **Step 1 : jeu d'essai.** Dans `make_fixtures.sh`, l'arbre `tree-du/` : `un-octet.bin` (1 o),
   `dix-mille.bin` (10 000 o), `vide.bin` (0 o), `creux.bin` (1 Gio apparent, 4 096 o écrits à 512 Mio par
   `truncate` puis `dd conv=notrunc`), `lien-a.bin` et `lien-b.bin` (un même fichier de 100 000 o, lien physique),
   `gros-dossier/` (300 fichiers de 1 o), `profond/` (40 niveaux) ; `ext4-du.img` par
@@ -206,8 +207,8 @@ l'application », placé en T1 ; spec § 27.)*
   `ext4-du.alloc` : une ligne `chemin<TAB>Blockcount×512<TAB>inode<TAB>liens` par entrée, tirée de
   `debugfs -R "stat <chemin>"`. `fatjuge.py alloc` (clusters de la chaîne × taille du cluster) et `ntfsjuge.py alloc`
   (taille allouée du `$DATA` non résident, 0 en résident, `$INDEX_ALLOCATION` pour un dossier) écrivent le même
-  format.
-- [ ] **Step 2 : tests en échec** (`test_fs_alloc`) : `ext4AllocMatchesDebugfs` (chaque entrée : `alloc`, `ino`,
+  format. *(Fait : arbre dans `work/tree-du/`, 350 entrées au manifeste ; image `exfat-32k.img` ajoutée.)*
+- [x] **Step 2 : tests en échec** (`test_fs_alloc`) : `ext4AllocMatchesDebugfs` (chaque entrée : `alloc`, `ino`,
   `nlink` égaux au manifeste), `ext4SparseFileAllocSmall` (`creux.bin` : `size` = 1 073 741 824, `alloc` ≤ 16 384),
   `ext4HardLinksShareIno` (`lien-a.bin` et `lien-b.bin` : même `ino`, `nlink` = 2 ; `un-octet.bin` : `nlink` = 1),
   `ext4HugeFileFlagCountsBlocks` (copie de l'image, `debugfs -w -R "sif /dix-mille.bin flags 0x40000"` : `alloc` =
@@ -215,22 +216,25 @@ l'application », placé en T1 ; spec § 27.)*
   1 o → 4 096, 10 000 o → 12 288, 0 o → 0, dossier → 4 096 ; égal à `fatjuge.py alloc`), `exfatAllocClusterRounded`
   (`mkfs.exfat -c 32K` : 1 o → 32 768 ; égal au juge), `ntfsAllocMatchesJudge` (petit fichier résident → 0,
   10 000 o → 12 288, `gros-dossier` → taille de son index ; égal à `ntfsjuge.py alloc`) ; `test_handles` :
-  `listJsonHasAllocInoNlink`.
+  `listJsonHasAllocInoNlink`. *(Fait, écrits avec l'implémentation : `sif … flags 0xC0000` pour garder le drapeau
+  d'extents ; un dossier FAT de 300 noms longs occupe plusieurs clusters selon le juge, un seul selon le moteur
+  (décision 6) ; `fat16RootAllocZero` ajouté ; cas FAT, exFAT, NTFS et huge_file sautés sur Android, faute de juges.)*
 
   Run : `cmake --build build/native && ctest --test-dir build/native --output-on-failure -R 'test_fs_alloc|test_handles'`
   Expected : FAIL (champs absents de `fl_stat`).
-- [ ] **Step 3 : implémentation.** ext4 : `i_blocks` (bas 32 bits et `osd2.linux2.blocks_high`) en secteurs de
+- [x] **Step 3 : implémentation.** ext4 : `i_blocks` (bas 32 bits et `osd2.linux2.blocks_high`) en secteurs de
   512 o, en blocs du système si la fonction `huge_file` est active et l'inode porte `EXT4_INODE_FLAG_HUGE_FILE` ;
   `links_count`. FAT et exFAT : `alloc` = taille arrondie au cluster (`csize × SS`), un cluster par dossier, 0 pour la
   racine fixe de FAT12/16. NTFS : `$DATA` non résident → `compressed_size` s'il est compressé ou creux, sinon
   `allocated_size` ; dossier → `allocated_size` de `$INDEX_ALLOCATION:$I30` (0 sans) ; `ino` = `ni->mft_no` ;
   `nlink` = `link_count` de l'enregistrement. `test_fs_alloc` ajouté à `run_native_tests.sh` (images poussées avec
   les autres).
-- [ ] **Step 4 : vérification.**
+- [ ] **Step 4 : vérification.** *(PC fait le 2026-10-27 : 50/50, ASan/UBSan propres ; Pixel à faire, téléphone non
+  joignable par adb)*
 
   Run : `ctest --test-dir build/native --output-on-failure -LE lent` puis `tools/android/run_native_tests.sh <numéro-adb>`
   Expected : tout vert, ASan/UBSan propres ; sur le Pixel, `test_fs_alloc` vert.
-- [ ] **Step 5 : commit** `feat(moteur): place allouée, inode et liens physiques dans la liste d'un dossier`.
+- [x] **Step 5 : commit** `feat(moteur): place allouée, inode et liens physiques dans la liste d'un dossier`.
 
 ### Task 3 : liste d'un dossier avec sa place réelle (Kotlin)
 
