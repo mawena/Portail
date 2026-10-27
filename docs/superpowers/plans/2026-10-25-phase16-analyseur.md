@@ -383,7 +383,7 @@ tant que pile non vide et non annulé :
     (nœuds en largeur d'abord, la racine de la vue en premier, profondeur relative) ;
   - `data class Exclusion(val stableKey: String, val sourceLabel: String, val path: String)`.
 
-- [ ] **Step 1 : tests en échec** (`AnalysisViewsTest`) : `viewDepthLimited` (profondeur 2 : petits-enfants absents,
+- [x] **Step 1 : tests en échec** (`AnalysisViewsTest`) : `viewDepthLimited` (profondeur 2 : petits-enfants absents,
   `hasChildren` vrai), `smallNodesMergedIntoOthers` (moins de 0,2 % de la racine de la vue → un `others` par parent,
   place exacte), `viewNeverExceedsMaxNodes` (arbre de 50 000 dossiers égaux, `maxNodes` 1 500 → ≤ 1 500),
   `foldedContentShownAsOthers` (`DuTree.others` d'un dossier ajouté à son `others`), `childrenPagedAndSorted` (200
@@ -391,7 +391,7 @@ tant que pile non vide et non annulé :
   `unscannedPartForWholeStorage` (analyse de `/` : `unscanned` = occupé − compté s'il dépasse 0,5 % ; libellé
   « Applications, système et dossiers protégés » pour le téléphone, « Réservé par le système de fichiers » sinon ;
   aucun pour un sous-dossier ni pour un dossier distant), `trashDirMarked` (`/.Portail-corbeille` → `trash`).
-- [ ] **Step 2 : tests en échec** (`AnalyzerTest`, `Files.setResolverForTests`, horloge et répartiteur de test) :
+- [x] **Step 2 : tests en échec** (`AnalyzerTest`, `Files.setResolverForTests`, horloge et répartiteur de test) :
   `drillDownNeverRelists` (une source qui compte ses listes : `view` et `children` n'en font aucune ; repris de
   `drillDownUsesCache`), `unreadableDirSkipped` et `cancelStops` (repris de la phase 9), `oneScanAtATime` (un
   `start` arrête le précédent, marqué `cancelled`), `threeAnalysesKept` (la quatrième fait oublier la plus ancienne ;
@@ -408,12 +408,17 @@ tant que pile non vide et non annulé :
 
   Run : `cd android && ./gradlew -q --offline :app:testDebugUnitTest --tests 'com.mawena.fluluks.Analyzer*' --tests 'com.mawena.fluluks.AnalysisViewsTest'`
   Expected : FAIL (classes absentes).
-- [ ] **Step 3 : implémentation.** `Analyzer` lance le `Scanner` sur un fil à part de priorité basse
+- [x] **Step 3 : implémentation.** `Analyzer` lance le `Scanner` sur un fil à part de priorité basse
   (`THREAD_PRIORITY_BACKGROUND`), sous un verrou lecture-écriture de l'arbre (les vues lisent pendant l'analyse) ;
   observe `VolumeManager.volumes` ; libellés français en constantes (`MSG_SOURCE_CLOSED`, `MSG_ROOT`, `UNSCANNED_PHONE`,
   `UNSCANNED_FS`) testées.
-- [ ] **Step 4 :** Run : `cd android && ./gradlew -q --offline :app:testDebugUnitTest` — Expected : PASS.
-- [ ] **Step 5 : commit** `feat(analyseur): analyses gardées, vues élaguées, corbeille et exclusions`.
+- [x] **Step 4 :** Run : `cd android && ./gradlew -q --offline :app:testDebugUnitTest` — Expected : PASS.
+  *(Fait : la fermeture d'un volume est relue directement, entre deux entrées et à chaque accès, plutôt
+  qu'observée par un collecteur qui attendrait la fin du parcours ; `AnalysisProgress.fraction` porte la borne de
+  99 % ; un nœud de taille 0 (inaccessible, exclu) n'est que dans les pages d'enfants, pas dans les graphiques ;
+  la racine d'un stockage entier compte la part hors analyse ; le refus d'un coffre ouvert est simulé par la
+  source, VaultsTest couvrant le refus réel ; AnalyzerTest 15, AnalysisViewsTest 8, AnalyzerPrefsTest 2.)*
+- [x] **Step 5 : commit** `feat(analyseur): analyses gardées, vues élaguées, corbeille et exclusions`.
 
 ### Task 6 : pont Pigeon et contrôleur de l'écran
 
