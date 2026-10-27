@@ -98,8 +98,9 @@ précédente jusqu'à la v1.8.0. Cochez chaque ligne faite et notez ce qui ne va
 - [x] Coupez le serveur d'essai, attendez une exécution planifiée : elle est notée en échec avec la raison, sans
       exécutions en rafale ensuite.
       *Essai du 2026-10-27 : serveur coupé après 15 h 43, exécutions planifiées en échec à 15 h 58, 16 h 13 et 16 h 34 (une par période, pas de rafale), raison notée dans l'historique : « Le serveur a fermé la connexion : réessayez », notification « Automatisation « Planif » en échec ».*
-- [ ] Désactivez l'interrupteur : plus aucune exécution. Supprimez le serveur « PC » : ses automatisations se
+- [x] Désactivez l'interrupteur : plus aucune exécution. Supprimez le serveur « PC » : ses automatisations se
       désactivent.
+      *Essai du 2026-10-27 : « Planif » désactivée à 16 h 52 : travail retiré de JobScheduler, aucune exécution de 16 h 49 à 17 h 48. Réactivée à 17 h 49 : une exécution part aussitôt (première période de WorkManager, sans délai initial ; en échec, serveur d'essai arrêté), puis la suivante 15 min plus tard. Serveur « PC » supprimé : « Planif » désactivée (interrupteur décoché, travail retiré), « Planif » et « Meteo » affichent « Serveur supprimé ». Remarques : la confirmation de suppression ne dit pas que les automatisations du serveur seront désactivées ; l'interrupteur a pour libellé d'accessibilité « Activée » quel que soit son état (TalkBack : « Activée, désactivé »).*
 
 ## 4. Confidentialité et certificats
 
