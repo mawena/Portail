@@ -53,16 +53,14 @@ int fl_part_layout(const fl_bdev *d, uint64_t *first_lba, uint64_t *count, bool 
   return FL_OK;
 }
 
-int fl_part_write_single(fl_bdev *d, fl_fmt_fs fs, bool encrypted, uint64_t *first_lba, uint64_t *count) {
-  if (!d || !first_lba || !count) return FL_EINVAL;
-  if (fs < FL_FMT_FAT32 || fs > FL_FMT_NTFS) return FL_EINVAL;
-  if (d->read_only) return FL_EROFS;
-  uint64_t first, n;
-  bool gpt;
-  int rc = fl_part_layout(d, &first, &n, &gpt);
-  if (rc != FL_OK) return rc;
+void fl_fmt_part_type(fl_fmt_fs fs, bool encrypted, uint8_t *mbr, uint8_t gpt[16]) {
+  *mbr = mbr_type(fs, encrypted);
+  memcpy(gpt, (encrypted || fs == FL_FMT_EXT4) ? TYPE_LINUX : TYPE_MSDATA, 16);
+}
+
+int fl_part_write_one(fl_bdev *d, fl_fmt_fs fs, bool encrypted, uint64_t first, uint64_t count, bool gpt) {
   /* nouvelle table (premier et dernier Mio effacés), puis sa partition unique */
-  rc = fl_pt_new_table(d, gpt ? FL_PT_GPT : FL_PT_MBR);
+  int rc = fl_pt_new_table(d, gpt ? FL_PT_GPT : FL_PT_MBR);
   fl_pt_layout *l = rc == FL_OK ? calloc(1, sizeof *l) : NULL;
   if (rc == FL_OK && !l) rc = FL_ENOMEM;
   if (rc == FL_OK) rc = fl_pt_load(d, l);
@@ -71,12 +69,25 @@ int fl_part_write_single(fl_bdev *d, fl_fmt_fs fs, bool encrypted, uint64_t *fir
     memset(p, 0, sizeof *p);
     p->index = 1;
     p->first_lba = first;
-    p->sector_count = n;
-    if (gpt) memcpy(p->gpt_type, (encrypted || fs == FL_FMT_EXT4) ? TYPE_LINUX : TYPE_MSDATA, 16);
-    else p->mbr_type = mbr_type(fs, encrypted);
+    p->sector_count = count;
+    uint8_t mt, gt[16];
+    fl_fmt_part_type(fs, encrypted, &mt, gt);
+    if (gpt) memcpy(p->gpt_type, gt, 16);
+    else p->mbr_type = mt;
     rc = fl_pt_store(d, l);
   }
   free(l);
+  return rc;
+}
+
+int fl_part_write_single(fl_bdev *d, fl_fmt_fs fs, bool encrypted, uint64_t *first_lba, uint64_t *count) {
+  if (!d || !first_lba || !count) return FL_EINVAL;
+  if (fs < FL_FMT_FAT32 || fs > FL_FMT_NTFS) return FL_EINVAL;
+  if (d->read_only) return FL_EROFS;
+  uint64_t first, n;
+  bool gpt;
+  int rc = fl_part_layout(d, &first, &n, &gpt);
+  if (rc == FL_OK) rc = fl_part_write_one(d, fs, encrypted, first, n, gpt);
   if (rc != FL_OK) return rc;
   *first_lba = first;
   *count = n;

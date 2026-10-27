@@ -30,37 +30,33 @@ static void report(void (*progress)(int, void *), void *arg, int pct) {
   if (progress) progress(pct, arg);
 }
 
-int fl_format(fl_bdev *disk, const fl_fmt_opts *o, const void *pass, size_t passlen,
-              void (*progress)(int pct, void *arg), void *arg) {
+uint64_t fl_fmt_min_bytes(fl_fmt_fs fs, uint32_t ss, bool encrypted) {
+  return min_fs(fs, ss) + (encrypted ? LUKS_HDR : 0);
+}
+
+int fl_fmt_check(const fl_bdev *disk, const fl_fmt_opts *o, const void *pass, size_t passlen, uint64_t count) {
   if (!disk || !o || o->fs < FL_FMT_FAT32 || o->fs > FL_FMT_NTFS) return FL_EINVAL;
   if (disk->read_only) return FL_EROFS;
   int rc = fl_fmt_check_label(o->fs, o->label);
   if (rc != FL_OK) return rc;
   if (o->encrypted && (!pass || passlen == 0 || o->kdf_mem_kib < 8192)) return FL_EINVAL;
-  uint64_t first = 0, count = disk->sector_count;
-  bool gpt;
-  if (!o->no_table) {
-    rc = fl_part_layout(disk, &first, &count, &gpt);
-    if (rc != FL_OK) return rc;
-  }
-  uint64_t bytes = count * disk->sector_size;
-  if (bytes < min_fs(o->fs, disk->sector_size) + (o->encrypted ? LUKS_HDR : 0)) return FL_ENOSPC;
+  if (count * disk->sector_size < fl_fmt_min_bytes(o->fs, disk->sector_size, o->encrypted)) return FL_ENOSPC;
   /* FatFs : FAT32 sous 2^32 secteurs (2 Tio en secteurs de 512 octets) ; les secteurs chiffrés sont ceux du disque */
   uint64_t vol_sectors = count - (o->encrypted ? LUKS_HDR / disk->sector_size : 0);
   if (o->fs == FL_FMT_FAT32 && vol_sectors >= (1ull << 32)) return FL_EFBIG;
-  report(progress, arg, 0);
+  return FL_OK;
+}
 
-  if (!o->no_table) {
-    rc = fl_part_write_single(disk, o->fs, o->encrypted, &first, &count);
-    if (rc != FL_OK) return rc;
-  }
+int fl_fmt_slice(fl_bdev *disk, uint64_t first, uint64_t count, const fl_fmt_opts *o, bool wipe_end,
+                 uint64_t hidden_sectors, const void *pass, size_t passlen, void (*progress)(int pct, void *arg),
+                 void *arg) {
   fl_bdev *part = NULL, *vol = NULL;
-  rc = fl_slice_bdev_new(disk, first, count, &part);
+  int rc = fl_slice_bdev_new(disk, first, count, &part);
   if (rc != FL_OK) return rc;
   uint64_t align = MIB / disk->sector_size;
   /* anciennes signatures du début ; sans table, la fin (GPT de secours d'un disque) n'est pas touchée */
   rc = fl_fmt_zero(part, 0, align);
-  if (rc == FL_OK && !o->no_table) rc = fl_fmt_zero(part, count - align, align);
+  if (rc == FL_OK && wipe_end) rc = fl_fmt_zero(part, count - align, align);
   report(progress, arg, 10);
 
   if (rc == FL_OK && o->encrypted) {
@@ -74,13 +70,36 @@ int fl_format(fl_bdev *disk, const fl_fmt_opts *o, const void *pass, size_t pass
       case FL_FMT_FAT32: rc = fl_mkfs_fat(vol, false, o->label); break;
       case FL_FMT_EXFAT: rc = fl_mkfs_fat(vol, true, o->label); break;
       case FL_FMT_EXT4: rc = fl_mkfs_ext4(vol, o->label, o->root_uid, o->root_gid); break;
-      case FL_FMT_NTFS: rc = fl_mkfs_ntfs(vol, o->label, o->encrypted ? 0 : first); break;
+      case FL_FMT_NTFS: rc = fl_mkfs_ntfs(vol, o->label, o->encrypted ? 0 : hidden_sectors); break;
     }
     report(progress, arg, 95);
   }
   if (vol && vol != part) fl_bdev_close(vol);
   fl_bdev_close(part);
   if (rc == FL_OK) rc = fl_bdev_flush(disk);
+  return rc;
+}
+
+int fl_format(fl_bdev *disk, const fl_fmt_opts *o, const void *pass, size_t passlen,
+              void (*progress)(int pct, void *arg), void *arg) {
+  if (!disk || !o) return FL_EINVAL;
+  uint64_t first = 0, count = disk->sector_count;
+  bool gpt = false;
+  int rc;
+  if (!o->no_table) {
+    rc = fl_part_layout(disk, &first, &count, &gpt);
+    if (rc != FL_OK) return rc;
+    uint64_t align = MIB / disk->sector_size, want = o->part_bytes / disk->sector_size / align * align;
+    if (o->part_bytes && want < count) count = want; /* taille choisie : le reste du disque reste libre */
+  }
+  rc = fl_fmt_check(disk, o, pass, passlen, count);
+  if (rc != FL_OK) return rc;
+  report(progress, arg, 0);
+  if (!o->no_table) {
+    rc = fl_part_write_one(disk, o->fs, o->encrypted, first, count, gpt);
+    if (rc != FL_OK) return rc;
+  }
+  rc = fl_fmt_slice(disk, first, count, o, !o->no_table, first, pass, passlen, progress, arg);
   if (rc == FL_OK) report(progress, arg, 100);
   return rc;
 }

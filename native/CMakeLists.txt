@@ -32,6 +32,8 @@ set(FL_SOURCES
   src/part/partition.c
   src/part/layout.c
   src/part/layout_write.c
+  src/partops/create.c
+  src/partops/usage.c
   src/probe/probe.c
   src/crypto/fl_crypto.c
   src/crypto/sector_cipher.c
@@ -180,6 +182,9 @@ if(FL_TESTS)
   # Phase 17 : table de partitions modifiable, jugée par sfdisk et sgdisk.
   fl_add_test(test_part_layout)
   target_link_libraries(test_part_layout PRIVATE fl_testsupport)
+  fl_add_test(test_partops)
+  target_link_libraries(test_partops PRIVATE fl_testsupport)
+  set_tests_properties(test_partops PROPERTIES TIMEOUT 900)
   fl_add_test(test_format_fat)
   target_link_libraries(test_format_fat PRIVATE fl_testsupport)
   fl_add_test(test_format_ext4)

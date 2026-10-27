@@ -49,6 +49,9 @@ typedef struct {
   /* Coffre (phase 14) : LUKS2 (ou système de fichiers) sur tout `disk`, sans table de partitions, sans
    * effacer de secteurs de table (le dernier Mio n'est pas touché). */
   bool no_table;
+  /* Phase 17 : taille de la partition unique (arrondie au Mio inférieur), le reste du disque laissé libre ;
+   * 0 = tout le disque. Ignoré sans table. */
+  uint64_t part_bytes;
 } fl_fmt_opts;
 
 /* Formate tout `disk` : vérifications (taille minimale, étiquette, phrase) avant toute écriture, table à
