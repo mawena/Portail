@@ -56,17 +56,21 @@ précédente jusqu'à la v1.9.0. Cochez chaque ligne faite et notez ce qui ne va
 
 ## 3. Analyse du téléphone
 
-- [ ] Touchez **Téléphone** : la progression (fichiers comptés, place vue, pourcentage) avance et les premiers
+- [x] Touchez **Téléphone** : la progression (fichiers comptés, place vue, pourcentage) avance et les premiers
       dossiers apparaissent avant la fin. Notez la durée.
+      *Essai du 2026-10-27 : l'analyse du téléphone finit en moins de 2 s (4108 fichiers, 11,5 Go vus ; 503 ms mesurés par l'essai instrumenté), trop vite pour voir la progression par uiautomator ; progression vue sur l'analyse lente de /usr en SFTP : dossier en cours, fichiers comptés et place vue avancent, premiers dossiers dans le graphique avant la fin*
 - [x] Total de l'analyse, part « Applications, système et dossiers protégés » comprise, comparé à Paramètres →
       Stockage d'Android : notez les deux.
       *Essai du 2026-10-27 : Portail : 47,1 Go sur 53,7 Go (dont « Applications, système et dossiers protégés » 35,6 Go) ; accueil de Fichiers : 6,4 Go libres sur 53,7 Go, soit 47,3 Go utilisés. Paramètres → Stockage d'Android : 58 Go utilisés sur 64 Go (Applis 24 Go, Système 23 Go, Jeux 4,4 Go, Vidéos 2,4 Go, Images 1,5 Go, Documents et autres 2,8 Go) : Android compte aussi la partition système, hors de la partition de données que voit Portail*
 - [x] `Android/data` et `Android/obb` apparaissent « Accès refusé par Android ».
       *Essai du 2026-10-27 : Android → data et obb : « accès refusé par android », 0 octet ; media 321,9 Mo*
-- [ ] Quittez l'écran pendant une analyse : le point d'activité est sur **Analyseur** ; l'accueil de l'analyseur
+- [x] Quittez l'écran pendant une analyse : le point d'activité est sur **Analyseur** ; l'accueil de l'analyseur
       montre l'analyse en cours, toucher la rouvre.
-- [ ] **Annuler** pendant une analyse : « Résultats partiels », ce qui a été vu reste affiché.
-- [ ] Lancez une autre analyse pendant qu'une tourne : Portail demande d'arrêter la première.
+      *Essai du 2026-10-27 : pendant l'analyse SFTP de /usr : point rouge sur Analyseur (TalkBack : « Analyseur, activité en cours ») ; accueil de l'analyseur : « Analyse en cours · usr (mawena cloud) · 2527 fichiers · 759,4 Mo » avec Annuler ; toucher la rouvre*
+- [x] **Annuler** pendant une analyse : « Résultats partiels », ce qui a été vu reste affiché.
+      *Essai du 2026-10-27 : « Résultats partiels : analyse arrêtée », Réanalyser ; usr — 765,1 Mo — 3422 éléments restent affichés (bin, include)*
+- [x] Lancez une autre analyse pendant qu'une tourne : Portail demande d'arrêter la première.
+      *Essai du 2026-10-27 : Téléphone touché pendant l'analyse de /usr : « Arrêter l'analyse de usr (mawena cloud) ? Ses résultats partiels restent dans les analyses de la session. » Annuler / Analyser ; Annuler la laisse tourner*
 
 ## 4. Graphiques et arbre
 
@@ -96,8 +100,9 @@ précédente jusqu'à la v1.9.0. Cochez chaque ligne faite et notez ce qui ne va
 - [x] Coffre ouvert : analysé depuis le module Coffres (menu du coffre → **Analyser le stockage**) ou l'accueil de
       l'analyseur.
       *Essai du 2026-10-27 : coffre d'essai Analyse16 (256 Mio, exFAT, dossier Music copié dedans) : menu du coffre → Analyser le stockage → 36,6 Mo, 13 éléments, module Analyseur sélectionné ; le coffre figure aussi dans les emplacements de l'accueil de l'analyseur*
-- [ ] Dossier distant SFTP : menu ⋮ de l'explorateur → **Analyser ce dossier** : avertissement d'abord, puis
+- [x] Dossier distant SFTP : menu ⋮ de l'explorateur → **Analyser ce dossier** : avertissement d'abord, puis
       « Dossier distant : tailles annoncées par le serveur ».
+      *Essai du 2026-10-27 : mawena cloud, /usr : « Analyser un dossier distant ? L'analyse lit chaque dossier par le réseau : elle peut être longue. Les tailles sont celles annoncées par le serveur. » puis « Dossier distant : tailles annoncées par le serveur » sous la progression. Remarque : le dossier distant s'ouvre dans le module Fichiers (onglet Fichiers sélectionné)*
 
 ## 7. Accessibilité et apparence
 
