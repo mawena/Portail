@@ -49,8 +49,9 @@ précédente jusqu'à la v1.9.0. Cochez chaque ligne faite et notez ce qui ne va
 - [x] **Analyser un dossier…** : le sélecteur montre aussi les dossiers en lecture seule ; l'analyse du dossier
       choisi démarre.
       *Essai du 2026-10-27 : le sélecteur montre Téléphone et ses dossiers, dont Android/data et Android/obb (protégés) ; Music choisi → analyse de Music (36,6 Mo, 12 éléments). Aucun volume en lecture seule disponible (ni disque USB ni coffre ouvert) : à revoir avec le disque*
-- [ ] Après plusieurs analyses : elles sont listées sous **Analyses de la session** (taille, nombre de fichiers,
+- [x] Après plusieurs analyses : elles sont listées sous **Analyses de la session** (taille, nombre de fichiers,
       date) ; toucher en rouvre une sans tout relire ; menu → **Réanalyser**, puis **Oublier**.
+      *Essai du 2026-10-27 : Téléphone, DCIM, Music listés (taille, fichiers, heure) ; toucher DCIM la rouvre aussitôt sans relire ; Oublier retire l'analyse ; trois analyses gardées au plus. Défaut trouvé : Réanalyser ajoutait une seconde entrée du même dossier et chassait l'analyse du téléphone ; corrigé (6c4a6ec, test rescanReplacesSameLocation), vérifié sur le Pixel : une seule entrée DCIM, Téléphone gardé. Remarque : la liste donne 11,3 Go pour le téléphone (place vue) quand l'en-tête de l'analyse donne 46,9 Go (avec la part « Applications, système et dossiers protégés »)*
 
 ## 3. Analyse du téléphone
 
