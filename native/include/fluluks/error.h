@@ -24,7 +24,8 @@ typedef enum {
   FL_ETIMEDOUT = -15, /* le disque ne répond pas */
   FL_ESTALL = -16,    /* transfert USB bloqué (interne au transport USB) */
   FL_EBUSY = -17,     /* volume occupé */
-  FL_EFBIG = -18      /* fichier trop gros pour ce système de fichiers (4 Gio - 1 en FAT) */
+  FL_EFBIG = -18,     /* fichier trop gros pour ce système de fichiers (4 Gio - 1 en FAT) */
+  FL_ECHANGED = -19   /* le disque ne correspond plus à ce qui a été préparé (phase 17) */
 } fl_err;
 
 /* Message lisible pour un code d'erreur. Jamais NULL ; code inconnu -> "erreur inconnue". */
