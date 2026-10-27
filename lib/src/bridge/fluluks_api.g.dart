@@ -1683,6 +1683,451 @@ class SpaceReportMsg {
   }
 }
 
+/// Nœud d'une vue de l'analyseur (phase 16). `kind` : `dir`, `file`, `others` (contenu trop petit ou résumé, nom
+/// vide), `inaccessible`, `excluded`, `otherFs`, `unscanned` (part hors analyse), `trash` ; `others` et `unscanned`
+/// ont un identifiant négatif. `alloc` : place occupée (ou taille apparente, selon `sizeKind` de la vue) ; `items` :
+/// éléments dessous ; `mtime` : le plus récent dessous (secondes) ; `depth` : relative à la racine de la vue.
+class AnalysisNodeMsg {
+  AnalysisNodeMsg({
+    required this.id,
+    required this.parent,
+    required this.name,
+    required this.path,
+    required this.kind,
+    required this.alloc,
+    required this.apparent,
+    required this.items,
+    required this.mtime,
+    required this.hasChildren,
+    required this.complete,
+    required this.depth,
+  });
+
+  int id;
+
+  int parent;
+
+  String name;
+
+  String path;
+
+  String kind;
+
+  int alloc;
+
+  int apparent;
+
+  int items;
+
+  int mtime;
+
+  bool hasChildren;
+
+  bool complete;
+
+  int depth;
+
+  List<Object?> _toList() {
+    return <Object?>[
+      id,
+      parent,
+      name,
+      path,
+      kind,
+      alloc,
+      apparent,
+      items,
+      mtime,
+      hasChildren,
+      complete,
+      depth,
+    ];
+  }
+
+  Object encode() {
+    return _toList();  }
+
+  static AnalysisNodeMsg decode(Object result) {
+    result as List<Object?>;
+    return AnalysisNodeMsg(
+      id: result[0]! as int,
+      parent: result[1]! as int,
+      name: result[2]! as String,
+      path: result[3]! as String,
+      kind: result[4]! as String,
+      alloc: result[5]! as int,
+      apparent: result[6]! as int,
+      items: result[7]! as int,
+      mtime: result[8]! as int,
+      hasChildren: result[9]! as bool,
+      complete: result[10]! as bool,
+      depth: result[11]! as int,
+    );
+  }
+
+  @override
+  // ignore: avoid_equals_and_hash_code_on_mutable_classes
+  bool operator ==(Object other) {
+    if (other is! AnalysisNodeMsg || other.runtimeType != runtimeType) {
+      return false;
+    }
+    if (identical(this, other)) {
+      return true;
+    }
+    return _deepEquals(id, other.id) && _deepEquals(parent, other.parent) && _deepEquals(name, other.name) && _deepEquals(path, other.path) && _deepEquals(kind, other.kind) && _deepEquals(alloc, other.alloc) && _deepEquals(apparent, other.apparent) && _deepEquals(items, other.items) && _deepEquals(mtime, other.mtime) && _deepEquals(hasChildren, other.hasChildren) && _deepEquals(complete, other.complete) && _deepEquals(depth, other.depth);
+  }
+
+  @override
+  // ignore: avoid_equals_and_hash_code_on_mutable_classes
+  int get hashCode => _deepHash(<Object?>[runtimeType, ..._toList()]);
+
+  @override
+  String toString() {
+    return 'AnalysisNodeMsg(id: $id, parent: $parent, name: $name, path: $path, kind: $kind, alloc: $alloc, apparent: $apparent, items: $items, mtime: $mtime, hasChildren: $hasChildren, complete: $complete, depth: $depth)';
+  }
+}
+
+/// Vue d'une analyse pour les graphiques : nœuds en largeur d'abord, la racine de la vue en premier (1 500 au plus).
+/// `sizeKind` : `allocated` (place occupée) ou `apparent` (dossier distant).
+class AnalysisViewMsg {
+  AnalysisViewMsg({
+    required this.scanId,
+    required this.root,
+    required this.rootLabel,
+    required this.nodes,
+    required this.running,
+    required this.truncated,
+    required this.simplified,
+    required this.sizeKind,
+  });
+
+  String scanId;
+
+  int root;
+
+  String rootLabel;
+
+  List<AnalysisNodeMsg> nodes;
+
+  bool running;
+
+  bool truncated;
+
+  bool simplified;
+
+  String sizeKind;
+
+  List<Object?> _toList() {
+    return <Object?>[
+      scanId,
+      root,
+      rootLabel,
+      nodes,
+      running,
+      truncated,
+      simplified,
+      sizeKind,
+    ];
+  }
+
+  Object encode() {
+    return _toList();  }
+
+  static AnalysisViewMsg decode(Object result) {
+    result as List<Object?>;
+    return AnalysisViewMsg(
+      scanId: result[0]! as String,
+      root: result[1]! as int,
+      rootLabel: result[2]! as String,
+      nodes: (result[3]! as List<Object?>).cast<AnalysisNodeMsg>(),
+      running: result[4]! as bool,
+      truncated: result[5]! as bool,
+      simplified: result[6]! as bool,
+      sizeKind: result[7]! as String,
+    );
+  }
+
+  @override
+  // ignore: avoid_equals_and_hash_code_on_mutable_classes
+  bool operator ==(Object other) {
+    if (other is! AnalysisViewMsg || other.runtimeType != runtimeType) {
+      return false;
+    }
+    if (identical(this, other)) {
+      return true;
+    }
+    return _deepEquals(scanId, other.scanId) && _deepEquals(root, other.root) && _deepEquals(rootLabel, other.rootLabel) && _deepEquals(nodes, other.nodes) && _deepEquals(running, other.running) && _deepEquals(truncated, other.truncated) && _deepEquals(simplified, other.simplified) && _deepEquals(sizeKind, other.sizeKind);
+  }
+
+  @override
+  // ignore: avoid_equals_and_hash_code_on_mutable_classes
+  int get hashCode => _deepHash(<Object?>[runtimeType, ..._toList()]);
+
+  @override
+  String toString() {
+    return 'AnalysisViewMsg(scanId: $scanId, root: $root, rootLabel: $rootLabel, nodes: $nodes, running: $running, truncated: $truncated, simplified: $simplified, sizeKind: $sizeKind)';
+  }
+}
+
+/// Avancement de l'analyse en cours ou de la dernière. `usedBytes` : place occupée du stockage, seulement pour un
+/// stockage entier en place occupée ; `fraction` : de 0 à 1, bornée à 0,99 avant la fin.
+class AnalysisProgressMsg {
+  AnalysisProgressMsg({
+    required this.scanId,
+    required this.sourceId,
+    required this.path,
+    required this.running,
+    required this.cancelled,
+    this.error,
+    required this.files,
+    required this.dirs,
+    required this.bytes,
+    this.usedBytes,
+    required this.current,
+    required this.inaccessible,
+    required this.elapsedMs,
+    required this.fraction,
+  });
+
+  String scanId;
+
+  String sourceId;
+
+  String path;
+
+  bool running;
+
+  bool cancelled;
+
+  String? error;
+
+  int files;
+
+  int dirs;
+
+  int bytes;
+
+  int? usedBytes;
+
+  String current;
+
+  int inaccessible;
+
+  int elapsedMs;
+
+  double fraction;
+
+  List<Object?> _toList() {
+    return <Object?>[
+      scanId,
+      sourceId,
+      path,
+      running,
+      cancelled,
+      error,
+      files,
+      dirs,
+      bytes,
+      usedBytes,
+      current,
+      inaccessible,
+      elapsedMs,
+      fraction,
+    ];
+  }
+
+  Object encode() {
+    return _toList();  }
+
+  static AnalysisProgressMsg decode(Object result) {
+    result as List<Object?>;
+    return AnalysisProgressMsg(
+      scanId: result[0]! as String,
+      sourceId: result[1]! as String,
+      path: result[2]! as String,
+      running: result[3]! as bool,
+      cancelled: result[4]! as bool,
+      error: result[5] as String?,
+      files: result[6]! as int,
+      dirs: result[7]! as int,
+      bytes: result[8]! as int,
+      usedBytes: result[9] as int?,
+      current: result[10]! as String,
+      inaccessible: result[11]! as int,
+      elapsedMs: result[12]! as int,
+      fraction: result[13]! as double,
+    );
+  }
+
+  @override
+  // ignore: avoid_equals_and_hash_code_on_mutable_classes
+  bool operator ==(Object other) {
+    if (other is! AnalysisProgressMsg || other.runtimeType != runtimeType) {
+      return false;
+    }
+    if (identical(this, other)) {
+      return true;
+    }
+    return _deepEquals(scanId, other.scanId) && _deepEquals(sourceId, other.sourceId) && _deepEquals(path, other.path) && _deepEquals(running, other.running) && _deepEquals(cancelled, other.cancelled) && _deepEquals(error, other.error) && _deepEquals(files, other.files) && _deepEquals(dirs, other.dirs) && _deepEquals(bytes, other.bytes) && _deepEquals(usedBytes, other.usedBytes) && _deepEquals(current, other.current) && _deepEquals(inaccessible, other.inaccessible) && _deepEquals(elapsedMs, other.elapsedMs) && _deepEquals(fraction, other.fraction);
+  }
+
+  @override
+  // ignore: avoid_equals_and_hash_code_on_mutable_classes
+  int get hashCode => _deepHash(<Object?>[runtimeType, ..._toList()]);
+
+  @override
+  String toString() {
+    return 'AnalysisProgressMsg(scanId: $scanId, sourceId: $sourceId, path: $path, running: $running, cancelled: $cancelled, error: $error, files: $files, dirs: $dirs, bytes: $bytes, usedBytes: $usedBytes, current: $current, inaccessible: $inaccessible, elapsedMs: $elapsedMs, fraction: $fraction)';
+  }
+}
+
+/// Analyse gardée en mémoire ; `state` : `running`, `done`, `cancelled` ou `failed`.
+class AnalysisSummaryMsg {
+  AnalysisSummaryMsg({
+    required this.scanId,
+    required this.sourceId,
+    required this.label,
+    required this.path,
+    required this.startedAtMs,
+    this.finishedAtMs,
+    required this.bytes,
+    required this.files,
+    required this.state,
+    required this.sizeKind,
+  });
+
+  String scanId;
+
+  String sourceId;
+
+  String label;
+
+  String path;
+
+  int startedAtMs;
+
+  int? finishedAtMs;
+
+  int bytes;
+
+  int files;
+
+  String state;
+
+  String sizeKind;
+
+  List<Object?> _toList() {
+    return <Object?>[
+      scanId,
+      sourceId,
+      label,
+      path,
+      startedAtMs,
+      finishedAtMs,
+      bytes,
+      files,
+      state,
+      sizeKind,
+    ];
+  }
+
+  Object encode() {
+    return _toList();  }
+
+  static AnalysisSummaryMsg decode(Object result) {
+    result as List<Object?>;
+    return AnalysisSummaryMsg(
+      scanId: result[0]! as String,
+      sourceId: result[1]! as String,
+      label: result[2]! as String,
+      path: result[3]! as String,
+      startedAtMs: result[4]! as int,
+      finishedAtMs: result[5] as int?,
+      bytes: result[6]! as int,
+      files: result[7]! as int,
+      state: result[8]! as String,
+      sizeKind: result[9]! as String,
+    );
+  }
+
+  @override
+  // ignore: avoid_equals_and_hash_code_on_mutable_classes
+  bool operator ==(Object other) {
+    if (other is! AnalysisSummaryMsg || other.runtimeType != runtimeType) {
+      return false;
+    }
+    if (identical(this, other)) {
+      return true;
+    }
+    return _deepEquals(scanId, other.scanId) && _deepEquals(sourceId, other.sourceId) && _deepEquals(label, other.label) && _deepEquals(path, other.path) && _deepEquals(startedAtMs, other.startedAtMs) && _deepEquals(finishedAtMs, other.finishedAtMs) && _deepEquals(bytes, other.bytes) && _deepEquals(files, other.files) && _deepEquals(state, other.state) && _deepEquals(sizeKind, other.sizeKind);
+  }
+
+  @override
+  // ignore: avoid_equals_and_hash_code_on_mutable_classes
+  int get hashCode => _deepHash(<Object?>[runtimeType, ..._toList()]);
+
+  @override
+  String toString() {
+    return 'AnalysisSummaryMsg(scanId: $scanId, sourceId: $sourceId, label: $label, path: $path, startedAtMs: $startedAtMs, finishedAtMs: $finishedAtMs, bytes: $bytes, files: $files, state: $state, sizeKind: $sizeKind)';
+  }
+}
+
+/// Emplacement exclu des analyses (`stableKey` du stockage : `phone`, `sd:…`, `disk:…`).
+class AnalysisExclusionMsg {
+  AnalysisExclusionMsg({
+    required this.stableKey,
+    required this.sourceLabel,
+    required this.path,
+  });
+
+  String stableKey;
+
+  String sourceLabel;
+
+  String path;
+
+  List<Object?> _toList() {
+    return <Object?>[
+      stableKey,
+      sourceLabel,
+      path,
+    ];
+  }
+
+  Object encode() {
+    return _toList();  }
+
+  static AnalysisExclusionMsg decode(Object result) {
+    result as List<Object?>;
+    return AnalysisExclusionMsg(
+      stableKey: result[0]! as String,
+      sourceLabel: result[1]! as String,
+      path: result[2]! as String,
+    );
+  }
+
+  @override
+  // ignore: avoid_equals_and_hash_code_on_mutable_classes
+  bool operator ==(Object other) {
+    if (other is! AnalysisExclusionMsg || other.runtimeType != runtimeType) {
+      return false;
+    }
+    if (identical(this, other)) {
+      return true;
+    }
+    return _deepEquals(stableKey, other.stableKey) && _deepEquals(sourceLabel, other.sourceLabel) && _deepEquals(path, other.path);
+  }
+
+  @override
+  // ignore: avoid_equals_and_hash_code_on_mutable_classes
+  int get hashCode => _deepHash(<Object?>[runtimeType, ..._toList()]);
+
+  @override
+  String toString() {
+    return 'AnalysisExclusionMsg(stableKey: $stableKey, sourceLabel: $sourceLabel, path: $path)';
+  }
+}
+
 /// Résultats d'une recherche ; `truncated` au-delà de 500.
 class SearchResultMsg {
   SearchResultMsg({
@@ -2142,6 +2587,8 @@ class UiPrefsMsg {
     this.closeVaultsOnScreenOff,
     this.hideVaults,
     this.hideChats,
+    this.analyzerChart,
+    this.analyzerDepth,
   });
 
   String theme;
@@ -2164,6 +2611,12 @@ class UiPrefsMsg {
   /// Phase 15 : conversations et automatisations masquées dans les captures et les applications récentes (null : non).
   bool? hideChats;
 
+  /// Phase 16 : graphique de l'analyseur (`rings`, `treemap` ou `none` ; null : `rings`) et sa profondeur (2 à 8 ;
+  /// null : 4).
+  String? analyzerChart;
+
+  int? analyzerDepth;
+
   List<Object?> _toList() {
     return <Object?>[
       theme,
@@ -2174,6 +2627,8 @@ class UiPrefsMsg {
       closeVaultsOnScreenOff,
       hideVaults,
       hideChats,
+      analyzerChart,
+      analyzerDepth,
     ];
   }
 
@@ -2191,6 +2646,8 @@ class UiPrefsMsg {
       closeVaultsOnScreenOff: result[5] as bool?,
       hideVaults: result[6] as bool?,
       hideChats: result[7] as bool?,
+      analyzerChart: result[8] as String?,
+      analyzerDepth: result[9] as int?,
     );
   }
 
@@ -2203,7 +2660,7 @@ class UiPrefsMsg {
     if (identical(this, other)) {
       return true;
     }
-    return _deepEquals(theme, other.theme) && _deepEquals(haptics, other.haptics) && _deepEquals(welcomeSeen, other.welcomeSeen) && _deepEquals(terminalFontSize, other.terminalFontSize) && _deepEquals(terminalSecure, other.terminalSecure) && _deepEquals(closeVaultsOnScreenOff, other.closeVaultsOnScreenOff) && _deepEquals(hideVaults, other.hideVaults) && _deepEquals(hideChats, other.hideChats);
+    return _deepEquals(theme, other.theme) && _deepEquals(haptics, other.haptics) && _deepEquals(welcomeSeen, other.welcomeSeen) && _deepEquals(terminalFontSize, other.terminalFontSize) && _deepEquals(terminalSecure, other.terminalSecure) && _deepEquals(closeVaultsOnScreenOff, other.closeVaultsOnScreenOff) && _deepEquals(hideVaults, other.hideVaults) && _deepEquals(hideChats, other.hideChats) && _deepEquals(analyzerChart, other.analyzerChart) && _deepEquals(analyzerDepth, other.analyzerDepth);
   }
 
   @override
@@ -2212,7 +2669,7 @@ class UiPrefsMsg {
 
   @override
   String toString() {
-    return 'UiPrefsMsg(theme: $theme, haptics: $haptics, welcomeSeen: $welcomeSeen, terminalFontSize: $terminalFontSize, terminalSecure: $terminalSecure, closeVaultsOnScreenOff: $closeVaultsOnScreenOff, hideVaults: $hideVaults, hideChats: $hideChats)';
+    return 'UiPrefsMsg(theme: $theme, haptics: $haptics, welcomeSeen: $welcomeSeen, terminalFontSize: $terminalFontSize, terminalSecure: $terminalSecure, closeVaultsOnScreenOff: $closeVaultsOnScreenOff, hideVaults: $hideVaults, hideChats: $hideChats, analyzerChart: $analyzerChart, analyzerDepth: $analyzerDepth)';
   }
 }
 
@@ -3088,59 +3545,74 @@ class _PigeonCodec extends StandardMessageCodec {
     }    else if (value is SpaceReportMsg) {
       buffer.putUint8(149);
       writeValue(buffer, value.encode());
-    }    else if (value is SearchResultMsg) {
+    }    else if (value is AnalysisNodeMsg) {
       buffer.putUint8(150);
       writeValue(buffer, value.encode());
-    }    else if (value is RemoteServerMsg) {
+    }    else if (value is AnalysisViewMsg) {
       buffer.putUint8(151);
       writeValue(buffer, value.encode());
-    }    else if (value is SnippetMsg) {
+    }    else if (value is AnalysisProgressMsg) {
       buffer.putUint8(152);
       writeValue(buffer, value.encode());
-    }    else if (value is TunnelMsg) {
+    }    else if (value is AnalysisSummaryMsg) {
       buffer.putUint8(153);
       writeValue(buffer, value.encode());
-    }    else if (value is SshKeyMsg) {
+    }    else if (value is AnalysisExclusionMsg) {
       buffer.putUint8(154);
       writeValue(buffer, value.encode());
-    }    else if (value is ViewPrefsMsg) {
+    }    else if (value is SearchResultMsg) {
       buffer.putUint8(155);
       writeValue(buffer, value.encode());
-    }    else if (value is UiPrefsMsg) {
+    }    else if (value is RemoteServerMsg) {
       buffer.putUint8(156);
       writeValue(buffer, value.encode());
-    }    else if (value is AppInfoMsg) {
+    }    else if (value is SnippetMsg) {
       buffer.putUint8(157);
       writeValue(buffer, value.encode());
-    }    else if (value is FavoriteMsg) {
+    }    else if (value is TunnelMsg) {
       buffer.putUint8(158);
       writeValue(buffer, value.encode());
-    }    else if (value is AiServerMsg) {
+    }    else if (value is SshKeyMsg) {
       buffer.putUint8(159);
       writeValue(buffer, value.encode());
-    }    else if (value is AiTestResultMsg) {
+    }    else if (value is ViewPrefsMsg) {
       buffer.putUint8(160);
       writeValue(buffer, value.encode());
-    }    else if (value is AiHealthMsg) {
+    }    else if (value is UiPrefsMsg) {
       buffer.putUint8(161);
       writeValue(buffer, value.encode());
-    }    else if (value is ConversationMsg) {
+    }    else if (value is AppInfoMsg) {
       buffer.putUint8(162);
       writeValue(buffer, value.encode());
-    }    else if (value is ChatMessageMsg) {
+    }    else if (value is FavoriteMsg) {
       buffer.putUint8(163);
       writeValue(buffer, value.encode());
-    }    else if (value is ConversationDetailMsg) {
+    }    else if (value is AiServerMsg) {
       buffer.putUint8(164);
       writeValue(buffer, value.encode());
-    }    else if (value is AutomationVarMsg) {
+    }    else if (value is AiTestResultMsg) {
       buffer.putUint8(165);
       writeValue(buffer, value.encode());
-    }    else if (value is AutomationMsg) {
+    }    else if (value is AiHealthMsg) {
       buffer.putUint8(166);
       writeValue(buffer, value.encode());
-    }    else if (value is AutomationRunMsg) {
+    }    else if (value is ConversationMsg) {
       buffer.putUint8(167);
+      writeValue(buffer, value.encode());
+    }    else if (value is ChatMessageMsg) {
+      buffer.putUint8(168);
+      writeValue(buffer, value.encode());
+    }    else if (value is ConversationDetailMsg) {
+      buffer.putUint8(169);
+      writeValue(buffer, value.encode());
+    }    else if (value is AutomationVarMsg) {
+      buffer.putUint8(170);
+      writeValue(buffer, value.encode());
+    }    else if (value is AutomationMsg) {
+      buffer.putUint8(171);
+      writeValue(buffer, value.encode());
+    }    else if (value is AutomationRunMsg) {
+      buffer.putUint8(172);
       writeValue(buffer, value.encode());
     } else {
       super.writeValue(buffer, value);
@@ -3193,40 +3665,50 @@ class _PigeonCodec extends StandardMessageCodec {
       case 149:
         return SpaceReportMsg.decode(readValue(buffer)!);
       case 150:
-        return SearchResultMsg.decode(readValue(buffer)!);
+        return AnalysisNodeMsg.decode(readValue(buffer)!);
       case 151:
-        return RemoteServerMsg.decode(readValue(buffer)!);
+        return AnalysisViewMsg.decode(readValue(buffer)!);
       case 152:
-        return SnippetMsg.decode(readValue(buffer)!);
+        return AnalysisProgressMsg.decode(readValue(buffer)!);
       case 153:
-        return TunnelMsg.decode(readValue(buffer)!);
+        return AnalysisSummaryMsg.decode(readValue(buffer)!);
       case 154:
-        return SshKeyMsg.decode(readValue(buffer)!);
+        return AnalysisExclusionMsg.decode(readValue(buffer)!);
       case 155:
-        return ViewPrefsMsg.decode(readValue(buffer)!);
+        return SearchResultMsg.decode(readValue(buffer)!);
       case 156:
-        return UiPrefsMsg.decode(readValue(buffer)!);
+        return RemoteServerMsg.decode(readValue(buffer)!);
       case 157:
-        return AppInfoMsg.decode(readValue(buffer)!);
+        return SnippetMsg.decode(readValue(buffer)!);
       case 158:
-        return FavoriteMsg.decode(readValue(buffer)!);
+        return TunnelMsg.decode(readValue(buffer)!);
       case 159:
-        return AiServerMsg.decode(readValue(buffer)!);
+        return SshKeyMsg.decode(readValue(buffer)!);
       case 160:
-        return AiTestResultMsg.decode(readValue(buffer)!);
+        return ViewPrefsMsg.decode(readValue(buffer)!);
       case 161:
-        return AiHealthMsg.decode(readValue(buffer)!);
+        return UiPrefsMsg.decode(readValue(buffer)!);
       case 162:
-        return ConversationMsg.decode(readValue(buffer)!);
+        return AppInfoMsg.decode(readValue(buffer)!);
       case 163:
-        return ChatMessageMsg.decode(readValue(buffer)!);
+        return FavoriteMsg.decode(readValue(buffer)!);
       case 164:
-        return ConversationDetailMsg.decode(readValue(buffer)!);
+        return AiServerMsg.decode(readValue(buffer)!);
       case 165:
-        return AutomationVarMsg.decode(readValue(buffer)!);
+        return AiTestResultMsg.decode(readValue(buffer)!);
       case 166:
-        return AutomationMsg.decode(readValue(buffer)!);
+        return AiHealthMsg.decode(readValue(buffer)!);
       case 167:
+        return ConversationMsg.decode(readValue(buffer)!);
+      case 168:
+        return ChatMessageMsg.decode(readValue(buffer)!);
+      case 169:
+        return ConversationDetailMsg.decode(readValue(buffer)!);
+      case 170:
+        return AutomationVarMsg.decode(readValue(buffer)!);
+      case 171:
+        return AutomationMsg.decode(readValue(buffer)!);
+      case 172:
         return AutomationRunMsg.decode(readValue(buffer)!);
       default:
         return super.readValueOfType(type, buffer);
@@ -4299,6 +4781,7 @@ class FluLuksHostApi {
     return pigeonVar_replyValue! as SpaceReportMsg;
   }
 
+  /// Arrête l'analyse en cours (`analyzeSpace` et analyseur de la phase 16).
   Future<void> cancelAnalysis() async {
     final pigeonVar_channelName = 'dev.flutter.pigeon.fluluks.FluLuksHostApi.cancelAnalysis$pigeonVar_messageChannelSuffix';
     final pigeonVar_channel = BasicMessageChannel<Object?>(
@@ -4307,6 +4790,195 @@ class FluLuksHostApi {
       binaryMessenger: pigeonVar_binaryMessenger,
     );
     final Future<Object?> pigeonVar_sendFuture = pigeonVar_channel.send(null);
+    final pigeonVar_replyList = await pigeonVar_sendFuture as List<Object?>?;
+
+    _extractReplyValueOrThrow(
+        pigeonVar_replyList,
+        pigeonVar_channelName,
+        isNullValid: true,
+    )
+    ;
+  }
+
+  /// Analyse `path` (arrête celle en cours) ; rend son identifiant.
+  Future<String> startAnalysis(String sourceId, String path) async {
+    final pigeonVar_channelName = 'dev.flutter.pigeon.fluluks.FluLuksHostApi.startAnalysis$pigeonVar_messageChannelSuffix';
+    final pigeonVar_channel = BasicMessageChannel<Object?>(
+      pigeonVar_channelName,
+      pigeonChannelCodec,
+      binaryMessenger: pigeonVar_binaryMessenger,
+    );
+    final Future<Object?> pigeonVar_sendFuture = pigeonVar_channel.send(<Object?>[sourceId, path]);
+    final pigeonVar_replyList = await pigeonVar_sendFuture as List<Object?>?;
+
+    final Object? pigeonVar_replyValue = _extractReplyValueOrThrow(
+        pigeonVar_replyList,
+        pigeonVar_channelName,
+        isNullValid: false,
+    )
+    ;
+    return pigeonVar_replyValue! as String;
+  }
+
+  Future<List<AnalysisSummaryMsg>> analyses() async {
+    final pigeonVar_channelName = 'dev.flutter.pigeon.fluluks.FluLuksHostApi.analyses$pigeonVar_messageChannelSuffix';
+    final pigeonVar_channel = BasicMessageChannel<Object?>(
+      pigeonVar_channelName,
+      pigeonChannelCodec,
+      binaryMessenger: pigeonVar_binaryMessenger,
+    );
+    final Future<Object?> pigeonVar_sendFuture = pigeonVar_channel.send(null);
+    final pigeonVar_replyList = await pigeonVar_sendFuture as List<Object?>?;
+
+    final Object? pigeonVar_replyValue = _extractReplyValueOrThrow(
+        pigeonVar_replyList,
+        pigeonVar_channelName,
+        isNullValid: false,
+    )
+    ;
+    return (pigeonVar_replyValue! as List<Object?>).cast<AnalysisSummaryMsg>();
+  }
+
+  Future<void> forgetAnalysis(String scanId) async {
+    final pigeonVar_channelName = 'dev.flutter.pigeon.fluluks.FluLuksHostApi.forgetAnalysis$pigeonVar_messageChannelSuffix';
+    final pigeonVar_channel = BasicMessageChannel<Object?>(
+      pigeonVar_channelName,
+      pigeonChannelCodec,
+      binaryMessenger: pigeonVar_binaryMessenger,
+    );
+    final Future<Object?> pigeonVar_sendFuture = pigeonVar_channel.send(<Object?>[scanId]);
+    final pigeonVar_replyList = await pigeonVar_sendFuture as List<Object?>?;
+
+    _extractReplyValueOrThrow(
+        pigeonVar_replyList,
+        pigeonVar_channelName,
+        isNullValid: true,
+    )
+    ;
+  }
+
+  Future<AnalysisViewMsg> analysisView(String scanId, int node, int depth, int maxNodes) async {
+    final pigeonVar_channelName = 'dev.flutter.pigeon.fluluks.FluLuksHostApi.analysisView$pigeonVar_messageChannelSuffix';
+    final pigeonVar_channel = BasicMessageChannel<Object?>(
+      pigeonVar_channelName,
+      pigeonChannelCodec,
+      binaryMessenger: pigeonVar_binaryMessenger,
+    );
+    final Future<Object?> pigeonVar_sendFuture = pigeonVar_channel.send(<Object?>[scanId, node, depth, maxNodes]);
+    final pigeonVar_replyList = await pigeonVar_sendFuture as List<Object?>?;
+
+    final Object? pigeonVar_replyValue = _extractReplyValueOrThrow(
+        pigeonVar_replyList,
+        pigeonVar_channelName,
+        isNullValid: false,
+    )
+    ;
+    return pigeonVar_replyValue! as AnalysisViewMsg;
+  }
+
+  /// Enfants d'un nœud pour l'arbre, `sort` : `size`, `name`, `items` ou `date` ; 200 par page au plus.
+  Future<List<AnalysisNodeMsg>> analysisChildren(String scanId, int node, String sort, int offset, int limit) async {
+    final pigeonVar_channelName = 'dev.flutter.pigeon.fluluks.FluLuksHostApi.analysisChildren$pigeonVar_messageChannelSuffix';
+    final pigeonVar_channel = BasicMessageChannel<Object?>(
+      pigeonVar_channelName,
+      pigeonChannelCodec,
+      binaryMessenger: pigeonVar_binaryMessenger,
+    );
+    final Future<Object?> pigeonVar_sendFuture = pigeonVar_channel.send(<Object?>[scanId, node, sort, offset, limit]);
+    final pigeonVar_replyList = await pigeonVar_sendFuture as List<Object?>?;
+
+    final Object? pigeonVar_replyValue = _extractReplyValueOrThrow(
+        pigeonVar_replyList,
+        pigeonVar_channelName,
+        isNullValid: false,
+    )
+    ;
+    return (pigeonVar_replyValue! as List<Object?>).cast<AnalysisNodeMsg>();
+  }
+
+  Future<List<EntryMsg>> analysisBiggest(String scanId, int node) async {
+    final pigeonVar_channelName = 'dev.flutter.pigeon.fluluks.FluLuksHostApi.analysisBiggest$pigeonVar_messageChannelSuffix';
+    final pigeonVar_channel = BasicMessageChannel<Object?>(
+      pigeonVar_channelName,
+      pigeonChannelCodec,
+      binaryMessenger: pigeonVar_binaryMessenger,
+    );
+    final Future<Object?> pigeonVar_sendFuture = pigeonVar_channel.send(<Object?>[scanId, node]);
+    final pigeonVar_replyList = await pigeonVar_sendFuture as List<Object?>?;
+
+    final Object? pigeonVar_replyValue = _extractReplyValueOrThrow(
+        pigeonVar_replyList,
+        pigeonVar_channelName,
+        isNullValid: false,
+    )
+    ;
+    return (pigeonVar_replyValue! as List<Object?>).cast<EntryMsg>();
+  }
+
+  /// Corbeille ou suppression définitive par le chemin de l'explorateur ; l'arbre suit sans réanalyse.
+  Future<void> analysisDelete(String scanId, int node, bool permanent) async {
+    final pigeonVar_channelName = 'dev.flutter.pigeon.fluluks.FluLuksHostApi.analysisDelete$pigeonVar_messageChannelSuffix';
+    final pigeonVar_channel = BasicMessageChannel<Object?>(
+      pigeonVar_channelName,
+      pigeonChannelCodec,
+      binaryMessenger: pigeonVar_binaryMessenger,
+    );
+    final Future<Object?> pigeonVar_sendFuture = pigeonVar_channel.send(<Object?>[scanId, node, permanent]);
+    final pigeonVar_replyList = await pigeonVar_sendFuture as List<Object?>?;
+
+    _extractReplyValueOrThrow(
+        pigeonVar_replyList,
+        pigeonVar_channelName,
+        isNullValid: true,
+    )
+    ;
+  }
+
+  Future<void> analysisExclude(String scanId, int node) async {
+    final pigeonVar_channelName = 'dev.flutter.pigeon.fluluks.FluLuksHostApi.analysisExclude$pigeonVar_messageChannelSuffix';
+    final pigeonVar_channel = BasicMessageChannel<Object?>(
+      pigeonVar_channelName,
+      pigeonChannelCodec,
+      binaryMessenger: pigeonVar_binaryMessenger,
+    );
+    final Future<Object?> pigeonVar_sendFuture = pigeonVar_channel.send(<Object?>[scanId, node]);
+    final pigeonVar_replyList = await pigeonVar_sendFuture as List<Object?>?;
+
+    _extractReplyValueOrThrow(
+        pigeonVar_replyList,
+        pigeonVar_channelName,
+        isNullValid: true,
+    )
+    ;
+  }
+
+  Future<List<AnalysisExclusionMsg>> analysisExclusions() async {
+    final pigeonVar_channelName = 'dev.flutter.pigeon.fluluks.FluLuksHostApi.analysisExclusions$pigeonVar_messageChannelSuffix';
+    final pigeonVar_channel = BasicMessageChannel<Object?>(
+      pigeonVar_channelName,
+      pigeonChannelCodec,
+      binaryMessenger: pigeonVar_binaryMessenger,
+    );
+    final Future<Object?> pigeonVar_sendFuture = pigeonVar_channel.send(null);
+    final pigeonVar_replyList = await pigeonVar_sendFuture as List<Object?>?;
+
+    final Object? pigeonVar_replyValue = _extractReplyValueOrThrow(
+        pigeonVar_replyList,
+        pigeonVar_channelName,
+        isNullValid: false,
+    )
+    ;
+    return (pigeonVar_replyValue! as List<Object?>).cast<AnalysisExclusionMsg>();
+  }
+
+  Future<void> removeAnalysisExclusion(String stableKey, String path) async {
+    final pigeonVar_channelName = 'dev.flutter.pigeon.fluluks.FluLuksHostApi.removeAnalysisExclusion$pigeonVar_messageChannelSuffix';
+    final pigeonVar_channel = BasicMessageChannel<Object?>(
+      pigeonVar_channelName,
+      pigeonChannelCodec,
+      binaryMessenger: pigeonVar_binaryMessenger,
+    );
+    final Future<Object?> pigeonVar_sendFuture = pigeonVar_channel.send(<Object?>[stableKey, path]);
     final pigeonVar_replyList = await pigeonVar_sendFuture as List<Object?>?;
 
     _extractReplyValueOrThrow(
@@ -5424,6 +6096,9 @@ abstract class FluLuksEventsApi {
   /// Pourcentage du calcul d'empreinte en cours ; null à la fin.
   void onHashProgress(int? pct);
 
+  /// Avancement de l'analyseur (phase 16), au plus toutes les 250 ms, et à la fin ; null avant la première analyse.
+  void onAnalysisProgress(AnalysisProgressMsg? progress);
+
   /// Musique en cours, ou null à l'arrêt ; `message` : raison d'un arrêt subi (« Lecture arrêtée : stockage fermé »).
   void onPlayerChanged(PlayerMsg? player, String? message);
 
@@ -5538,6 +6213,27 @@ abstract class FluLuksEventsApi {
           final int? arg_pct = args[0] as int?;
           try {
             api.onHashProgress(arg_pct);
+            return wrapResponse(empty: true);
+          } on PlatformException catch (e) {
+            return wrapResponse(error: e);
+          }          catch (e) {
+            return wrapResponse(error: PlatformException(code: 'error', message: e.toString()));
+          }
+        });
+      }
+    }
+    {
+      final pigeonVar_channel = BasicMessageChannel<Object?>(
+          'dev.flutter.pigeon.fluluks.FluLuksEventsApi.onAnalysisProgress$messageChannelSuffix', pigeonChannelCodec,
+          binaryMessenger: binaryMessenger);
+      if (api == null) {
+        pigeonVar_channel.setMessageHandler(null);
+      } else {
+        pigeonVar_channel.setMessageHandler((Object? message) async {
+          final List<Object?> args = message! as List<Object?>;
+          final AnalysisProgressMsg? arg_progress = args[0] as AnalysisProgressMsg?;
+          try {
+            api.onAnalysisProgress(arg_progress);
             return wrapResponse(empty: true);
           } on PlatformException catch (e) {
             return wrapResponse(error: e);

@@ -5,6 +5,7 @@ import 'package:flutter/services.dart';
 import 'package:fluluks/src/bridge/fluluks_api.g.dart';
 import 'package:fluluks/src/state/host_api.dart';
 
+import 'demo_data.dart';
 import 'fake_ai_api.dart';
 
 PartitionMsg part({
@@ -185,6 +186,155 @@ class FakeHostApi with FakeAiApi implements HostApi {
 
   @override
   Future<void> cancelAnalysis() async => calls.add('cancelAnalysis');
+
+  /// Analyseur (phase 16) : arbre à plat de chaque analyse (racine d'identifiant 0, enfants par `parent`) ; une
+  /// analyse absente de [analysisTrees] est « oubliée » (PlatformException, comme Kotlin).
+  final analysisTrees = <String, List<AnalysisNodeMsg>>{};
+  final analysisExclusionList = <AnalysisExclusionMsg>[];
+  List<AnalysisNodeMsg> Function()? nextAnalysisTree;
+  int _scans = 0;
+
+  List<AnalysisNodeMsg> _tree(String scanId) =>
+      analysisTrees[scanId] ??
+      (throw PlatformException(code: 'ENOENT', message: "Cette analyse n'est plus disponible"));
+
+  @override
+  Future<String> startAnalysis(String sourceId, String path) async {
+    calls.add('startAnalysis $sourceId $path');
+    final id = 'a${++_scans}';
+    analysisTrees[id] = nextAnalysisTree?.call() ?? demoAnalysisTree();
+    return id;
+  }
+
+  @override
+  Future<List<AnalysisSummaryMsg>> analyses() async => [
+        for (final e in analysisTrees.entries)
+          AnalysisSummaryMsg(
+              scanId: e.key,
+              sourceId: 'phone',
+              label: 'Téléphone',
+              path: '/',
+              startedAtMs: 0,
+              finishedAtMs: 1,
+              bytes: e.value.first.alloc,
+              files: e.value.first.items,
+              state: 'done',
+              sizeKind: 'allocated'),
+      ];
+
+  @override
+  Future<void> forgetAnalysis(String scanId) async {
+    calls.add('forgetAnalysis $scanId');
+    analysisTrees.remove(scanId);
+  }
+
+  @override
+  Future<AnalysisViewMsg> analysisView(String scanId, int node, int depth, int maxNodes) async {
+    calls.add('analysisView $scanId $node $depth');
+    final t = _tree(scanId);
+    final root = t.firstWhere((n) => n.id == node);
+    final out = [_at(root, 0)];
+    var level = [root];
+    for (var d = 1; d <= depth && level.isNotEmpty; d++) {
+      final next = [
+        for (final p in level) ...(t.where((n) => n.parent == p.id && n.id != p.id).toList()..sort((a, b) => b.alloc - a.alloc)),
+      ];
+      out.addAll(next.map((n) => _at(n, d)));
+      level = next.where((n) => n.id >= 0).toList();
+    }
+    return AnalysisViewMsg(
+        scanId: scanId,
+        root: node,
+        rootLabel: node == 0 ? 'Téléphone' : root.name,
+        nodes: out.take(maxNodes).toList(),
+        running: false,
+        truncated: false,
+        simplified: false,
+        sizeKind: 'allocated');
+  }
+
+  AnalysisNodeMsg _at(AnalysisNodeMsg n, int depth) => AnalysisNodeMsg(
+      id: n.id,
+      parent: n.parent,
+      name: n.name,
+      path: n.path,
+      kind: n.kind,
+      alloc: n.alloc,
+      apparent: n.apparent,
+      items: n.items,
+      mtime: n.mtime,
+      hasChildren: n.hasChildren,
+      complete: n.complete,
+      depth: depth);
+
+  @override
+  Future<List<AnalysisNodeMsg>> analysisChildren(String scanId, int node, String sort, int offset, int limit) async {
+    calls.add('analysisChildren $scanId $node $sort $offset');
+    final kids = _tree(scanId).where((n) => n.parent == node && n.id != node).toList();
+    switch (sort) {
+      case 'name':
+        kids.sort((a, b) => a.name.compareTo(b.name));
+      case 'items':
+        kids.sort((a, b) => b.items - a.items);
+      case 'date':
+        kids.sort((a, b) => b.mtime - a.mtime);
+      default:
+        kids.sort((a, b) => b.alloc - a.alloc);
+    }
+    return kids.skip(offset).take(limit).map((n) => _at(n, 1)).toList();
+  }
+
+  @override
+  Future<List<EntryMsg>> analysisBiggest(String scanId, int node) async {
+    calls.add('analysisBiggest $scanId $node');
+    final t = _tree(scanId);
+    final path = t.firstWhere((n) => n.id == node).path;
+    final files = t.where((n) => n.kind == 'file' && (path == '/' || n.path.startsWith('$path/'))).toList()
+      ..sort((a, b) => b.alloc - a.alloc);
+    return [for (final f in files) EntryMsg(name: f.name, path: f.path, size: f.apparent, mtime: f.mtime, type: 'file')];
+  }
+
+  /// Retire le nœud et ce qui est dessous ; ses ancêtres diminuent.
+  @override
+  Future<void> analysisDelete(String scanId, int node, bool permanent) async {
+    calls.add('analysisDelete $scanId $node $permanent');
+    final t = _tree(scanId);
+    final n = t.firstWhere((e) => e.id == node);
+    final gone = <int>{node};
+    var grew = true;
+    while (grew) {
+      final before = gone.length;
+      gone.addAll(t.where((e) => gone.contains(e.parent) && e.id != e.parent).map((e) => e.id));
+      grew = gone.length != before;
+    }
+    t.removeWhere((e) => gone.contains(e.id));
+    var p = n.parent;
+    while (true) {
+      final i = t.indexWhere((e) => e.id == p);
+      if (i < 0) break;
+      t[i].alloc -= n.alloc;
+      t[i].apparent -= n.apparent;
+      t[i].items -= n.items + 1;
+      if (t[i].id == 0) break;
+      p = t[i].parent;
+    }
+  }
+
+  @override
+  Future<void> analysisExclude(String scanId, int node) async {
+    calls.add('analysisExclude $scanId $node');
+    final n = _tree(scanId).firstWhere((e) => e.id == node);
+    analysisExclusionList.add(AnalysisExclusionMsg(stableKey: 'phone', sourceLabel: 'Téléphone', path: n.path));
+  }
+
+  @override
+  Future<List<AnalysisExclusionMsg>> analysisExclusions() async => List.of(analysisExclusionList);
+
+  @override
+  Future<void> removeAnalysisExclusion(String stableKey, String path) async {
+    calls.add('removeAnalysisExclusion $stableKey $path');
+    analysisExclusionList.removeWhere((e) => e.stableKey == stableKey && e.path == path);
+  }
 
   /// Propriétés par chemin ; taille des dossiers ; réponse de sha256 (null : annulé).
   final detailsByPath = <String, DetailsMsg>{};

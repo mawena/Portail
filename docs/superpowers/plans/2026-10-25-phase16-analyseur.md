@@ -451,7 +451,7 @@ tant que pile non vide et non annulé :
   `Future<void> delete(int node, {required bool permanent})`, `Future<void> exclude(int node)`, `Future<void> rescan()`,
   `void dispose()`.
 
-- [ ] **Step 1 : tests en échec** (`analyzer_controller_test`, `FakeHostApi`) : `startShowsLiveViewThrottled`
+- [x] **Step 1 : tests en échec** (`analyzer_controller_test`, `FakeHostApi`) : `startShowsLiveViewThrottled`
   (événements toutes les 100 ms pendant 2 s : vue rechargée au plus toutes les 500 ms, puis une fois à la fin),
   `zoomAndUpKeepTrail`, `goToBreadcrumb`, `depthBounded2to8` (et mémorisée dans `UiPrefsMsg.analyzerDepth`),
   `chartKindRemembered`, `deleteRefreshesView`, `forgottenScanReturnsToHome` (analyse oubliée par Kotlin : erreur
@@ -460,12 +460,15 @@ tant que pile non vide et non annulé :
 
   Run : `flutter test test/analyzer_controller_test.dart`
   Expected : FAIL (contrôleur absent).
-- [ ] **Step 2 : implémentation** ; `HostApiImpl` relaie `Analyzer.progress` comme `Transfers.state`
+- [x] **Step 2 : implémentation** ; `HostApiImpl` relaie `Analyzer.progress` comme `Transfers.state`
   (`events.onAnalysisProgress`) ; les appels `@async` passent par le répartiteur d'E/S. `cancelAnalysis` arrête
   désormais l'analyse de l'`Analyzer` comme celle de `SpaceAnalysis`.
-- [ ] **Step 3 :** Run : `dart run pigeon --input pigeons/fluluks_api.dart && flutter analyze && flutter test && (cd android && ./gradlew -q --offline :app:testDebugUnitTest)`
+- [x] **Step 3 :** Run : `dart run pigeon --input pigeons/fluluks_api.dart && flutter analyze && flutter test && (cd android && ./gradlew -q --offline :app:testDebugUnitTest)`
   — Expected : tout vert.
-- [ ] **Step 4 : commit** `feat(analyseur): pont Pigeon et contrôleur de l'écran d'analyse`.
+  *(Fait : `AnalysisProgressMsg.fraction` ajouté ; `zoom` n'entre que dans un dossier qui a un contenu ;
+  `UiSettings` garde `analyzerChart` et `analyzerDepth` (UiPrefsTest) ; analyzer_controller_test 8,
+  AnalyzerMsgTest 1 ; 831 tests Flutter, 670 JVM.)*
+- [x] **Step 4 : commit** `feat(analyseur): pont Pigeon et contrôleur de l'écran d'analyse`.
 
 ### Task 7 : géométrie des anneaux et de la carte proportionnelle
 

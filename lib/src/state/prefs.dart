@@ -13,7 +13,8 @@ extension ViewPrefsCopy on ViewPrefsMsg {
       );
 }
 
-/// Copie modifiée des préférences d'interface (thème, retours haptiques, bienvenue vue, terminal, coffres, IA).
+/// Copie modifiée des préférences d'interface (thème, retours haptiques, bienvenue vue, terminal, coffres, IA,
+/// analyseur).
 extension UiPrefsCopy on UiPrefsMsg {
   UiPrefsMsg copyWith({
     String? theme,
@@ -24,6 +25,8 @@ extension UiPrefsCopy on UiPrefsMsg {
     bool? closeVaultsOnScreenOff,
     bool? hideVaults,
     bool? hideChats,
+    String? analyzerChart,
+    int? analyzerDepth,
   }) =>
       UiPrefsMsg(
         theme: theme ?? this.theme,
@@ -34,11 +37,20 @@ extension UiPrefsCopy on UiPrefsMsg {
         closeVaultsOnScreenOff: closeVaultsOnScreenOff ?? this.closeVaultsOnScreenOff,
         hideVaults: hideVaults ?? this.hideVaults,
         hideChats: hideChats ?? this.hideChats,
+        analyzerChart: analyzerChart ?? this.analyzerChart,
+        analyzerDepth: analyzerDepth ?? this.analyzerDepth,
       );
 
   /// Taille du texte du terminal, bornée (13 par défaut).
   int get terminalFont => (terminalFontSize ?? terminalFontDefault).clamp(terminalFontMin, terminalFontMax);
+
+  /// Profondeur des graphiques de l'analyseur, bornée (4 par défaut).
+  int get analyzerLevels => (analyzerDepth ?? analyzerDepthDefault).clamp(analyzerDepthMin, analyzerDepthMax);
 }
+
+const analyzerDepthDefault = 4;
+const analyzerDepthMin = 2;
+const analyzerDepthMax = 8;
 
 const terminalFontDefault = 13;
 const terminalFontMin = 8;

@@ -1012,6 +1012,10 @@ class Fr {
   static const moduleFiles = 'Fichiers';
   static const moduleRemote = 'Distants';
   static const moduleAi = 'IA';
+
+  // --- analyseur de stockage (phase 16)
+  /// Même texte que `Analyzer.MSG_GONE` côté Kotlin.
+  static const analysisGone = "Cette analyse n'est plus disponible";
   static String moduleBusy(String module) => '$module, activité en cours';
   static const remoteNoServers = 'Aucun serveur';
   static const sectionSsh = 'SSH';

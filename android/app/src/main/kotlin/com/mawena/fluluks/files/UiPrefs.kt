@@ -6,7 +6,8 @@ package com.mawena.fluluks.files
  * phase 13) ; [terminalSecure] : terminal masqué dans les captures et les applications récentes ;
  * [closeVaultsOnScreenOff] : coffres fermés quand l'écran s'éteint ; [hideVaults] : coffres parcourus et fichiers
  * déchiffrés masqués dans les captures et les applications récentes (phase 14, désactivés par défaut) ; [hideChats] :
- * conversations et automatisations masquées de même (phase 15, désactivé par défaut).
+ * conversations et automatisations masquées de même (phase 15, désactivé par défaut) ; [analyzerChart] : graphique
+ * de l'analyseur (`rings`, `treemap`, `none`) et [analyzerDepth] : sa profondeur (2 à 8, phase 16).
  */
 data class UiSettings(
     val theme: String = "system",
@@ -17,11 +18,17 @@ data class UiSettings(
     val closeVaultsOnScreenOff: Boolean = false,
     val hideVaults: Boolean = false,
     val hideChats: Boolean = false,
+    val analyzerChart: String = "rings",
+    val analyzerDepth: Int = ANALYZER_DEPTH_DEFAULT,
 ) {
     companion object {
         const val TERMINAL_FONT_DEFAULT = 13
         const val TERMINAL_FONT_MIN = 8
         const val TERMINAL_FONT_MAX = 32
+        const val ANALYZER_DEPTH_DEFAULT = 4
+        const val ANALYZER_DEPTH_MIN = 2
+        const val ANALYZER_DEPTH_MAX = 8
+        val ANALYZER_CHARTS = setOf("rings", "treemap", "none")
     }
 }
 
@@ -36,6 +43,8 @@ class UiPrefs(private val store: PrefStore) {
         store.getBoolean(VAULTS_SCREEN_OFF, false),
         store.getBoolean(VAULTS_HIDDEN, false),
         store.getBoolean(CHATS_HIDDEN, false),
+        store.getString(ANALYZER_CHART)?.takeIf { it in UiSettings.ANALYZER_CHARTS } ?: "rings",
+        store.getString(ANALYZER_DEPTH)?.toIntOrNull()?.let(::depth) ?: UiSettings.ANALYZER_DEPTH_DEFAULT,
     )
 
     fun set(v: UiSettings) {
@@ -47,9 +56,12 @@ class UiPrefs(private val store: PrefStore) {
         store.putBoolean(VAULTS_SCREEN_OFF, v.closeVaultsOnScreenOff)
         store.putBoolean(VAULTS_HIDDEN, v.hideVaults)
         store.putBoolean(CHATS_HIDDEN, v.hideChats)
+        store.putString(ANALYZER_CHART, v.analyzerChart.takeIf { it in UiSettings.ANALYZER_CHARTS } ?: "rings")
+        store.putString(ANALYZER_DEPTH, depth(v.analyzerDepth).toString())
     }
 
     private fun font(size: Int) = size.coerceIn(UiSettings.TERMINAL_FONT_MIN, UiSettings.TERMINAL_FONT_MAX)
+    private fun depth(d: Int) = d.coerceIn(UiSettings.ANALYZER_DEPTH_MIN, UiSettings.ANALYZER_DEPTH_MAX)
 
     companion object {
         private val THEMES = setOf("system", "light", "dark")
@@ -61,5 +73,7 @@ class UiPrefs(private val store: PrefStore) {
         private const val VAULTS_SCREEN_OFF = "coffres_ecran_eteint"
         private const val VAULTS_HIDDEN = "coffres_masques"
         private const val CHATS_HIDDEN = "ia_conversations_masquees"
+        private const val ANALYZER_CHART = "analyseur_graphique"
+        private const val ANALYZER_DEPTH = "analyseur_profondeur"
     }
 }
