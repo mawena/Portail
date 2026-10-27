@@ -1,0 +1,99 @@
+# Essais instrumentés de la phase 15 sur le Pixel 4 XL (Android 13), 2026-10-25 20:24
+# Branche feature/ia d0e5eaf, APK de débogage 1.6.1 (14) ; serveur d'essai tools/ia/serveur-essai.py --reverse
+# am instrument -w -r -e class com.mawena.fluluks.AiInstrumentedTest,com.mawena.fluluks.ChatStoreInstrumentedTest,com.mawena.fluluks.AutomationWorkerInstrumentedTest com.mawena.fluluks.test/androidx.test.runner.AndroidJUnitRunner
+
+INSTRUMENTATION_STATUS: class=com.mawena.fluluks.AiInstrumentedTest
+INSTRUMENTATION_STATUS: test=connectionTestAndModels
+INSTRUMENTATION_STATUS_CODE: 1
+INSTRUMENTATION_STATUS: class=com.mawena.fluluks.AiInstrumentedTest
+INSTRUMENTATION_STATUS: test=connectionTestAndModels
+INSTRUMENTATION_STATUS_CODE: 0
+INSTRUMENTATION_STATUS: class=com.mawena.fluluks.AiInstrumentedTest
+INSTRUMENTATION_STATUS: test=longStreamWithoutLossOrDuplicate
+INSTRUMENTATION_STATUS_CODE: 1
+INSTRUMENTATION_STATUS: class=com.mawena.fluluks.AiInstrumentedTest
+INSTRUMENTATION_STATUS: test=longStreamWithoutLossOrDuplicate
+INSTRUMENTATION_STATUS_CODE: 0
+INSTRUMENTATION_STATUS: class=com.mawena.fluluks.AiInstrumentedTest
+INSTRUMENTATION_STATUS: test=neitherKeyNorContentInLogcat
+INSTRUMENTATION_STATUS_CODE: 1
+INSTRUMENTATION_STATUS: class=com.mawena.fluluks.AiInstrumentedTest
+INSTRUMENTATION_STATUS: test=neitherKeyNorContentInLogcat
+INSTRUMENTATION_STATUS_CODE: 0
+INSTRUMENTATION_STATUS: class=com.mawena.fluluks.AiInstrumentedTest
+INSTRUMENTATION_STATUS: test=silentServerTimesOut
+INSTRUMENTATION_STATUS_CODE: 1
+INSTRUMENTATION_STATUS: class=com.mawena.fluluks.AiInstrumentedTest
+INSTRUMENTATION_STATUS: test=silentServerTimesOut
+INSTRUMENTATION_STATUS_CODE: 0
+INSTRUMENTATION_STATUS: class=com.mawena.fluluks.AiInstrumentedTest
+INSTRUMENTATION_STATUS: test=errorInTheMiddleOfTheStreamKeepsText
+INSTRUMENTATION_STATUS_CODE: 1
+INSTRUMENTATION_STATUS: class=com.mawena.fluluks.AiInstrumentedTest
+INSTRUMENTATION_STATUS: test=errorInTheMiddleOfTheStreamKeepsText
+INSTRUMENTATION_STATUS_CODE: 0
+INSTRUMENTATION_STATUS: class=com.mawena.fluluks.AiInstrumentedTest
+INSTRUMENTATION_STATUS: test=wrongKeyRefusedOnce
+INSTRUMENTATION_STATUS_CODE: 1
+INSTRUMENTATION_STATUS: class=com.mawena.fluluks.AiInstrumentedTest
+INSTRUMENTATION_STATUS: test=wrongKeyRefusedOnce
+INSTRUMENTATION_STATUS_CODE: 0
+INSTRUMENTATION_STATUS: class=com.mawena.fluluks.AiInstrumentedTest
+INSTRUMENTATION_STATUS: test=stopKeepsReceivedTextAndNothingArrivesAfter
+INSTRUMENTATION_STATUS_CODE: 1
+INSTRUMENTATION_STATUS: class=com.mawena.fluluks.AiInstrumentedTest
+INSTRUMENTATION_STATUS: test=stopKeepsReceivedTextAndNothingArrivesAfter
+INSTRUMENTATION_STATUS_CODE: 0
+INSTRUMENTATION_STATUS: class=com.mawena.fluluks.ChatStoreInstrumentedTest
+INSTRUMENTATION_STATUS: test=listOrderRenameDeleteCascade
+INSTRUMENTATION_STATUS_CODE: 1
+INSTRUMENTATION_STATUS: class=com.mawena.fluluks.ChatStoreInstrumentedTest
+INSTRUMENTATION_STATUS: test=listOrderRenameDeleteCascade
+INSTRUMENTATION_STATUS_CODE: 0
+INSTRUMENTATION_STATUS: class=com.mawena.fluluks.ChatStoreInstrumentedTest
+INSTRUMENTATION_STATUS: test=schemaVersion1Validates
+INSTRUMENTATION_STATUS_CODE: 1
+INSTRUMENTATION_STATUS: class=com.mawena.fluluks.ChatStoreInstrumentedTest
+INSTRUMENTATION_STATUS: test=schemaVersion1Validates
+INSTRUMENTATION_STATUS_CODE: 0
+INSTRUMENTATION_STATUS: class=com.mawena.fluluks.ChatStoreInstrumentedTest
+INSTRUMENTATION_STATUS: test=streamingFoundInterrupted
+INSTRUMENTATION_STATUS_CODE: 1
+INSTRUMENTATION_STATUS: class=com.mawena.fluluks.ChatStoreInstrumentedTest
+INSTRUMENTATION_STATUS: test=streamingFoundInterrupted
+INSTRUMENTATION_STATUS_CODE: 0
+INSTRUMENTATION_STATUS: class=com.mawena.fluluks.AutomationWorkerInstrumentedTest
+INSTRUMENTATION_STATUS: test=scheduledOnceWithNetworkAndRunWrittenToHistory
+INSTRUMENTATION_STATUS_CODE: 1
+INSTRUMENTATION_STATUS: class=com.mawena.fluluks.AutomationWorkerInstrumentedTest
+INSTRUMENTATION_STATUS: test=scheduledOnceWithNetworkAndRunWrittenToHistory
+INSTRUMENTATION_STATUS_CODE: 0
+INSTRUMENTATION_STATUS: class=com.mawena.fluluks.AutomationWorkerInstrumentedTest
+INSTRUMENTATION_STATUS: test=disabledDeletedOrServerDeletedCancelsWork
+INSTRUMENTATION_STATUS_CODE: 1
+INSTRUMENTATION_STATUS: class=com.mawena.fluluks.AutomationWorkerInstrumentedTest
+INSTRUMENTATION_STATUS: test=disabledDeletedOrServerDeletedCancelsWork
+INSTRUMENTATION_STATUS_CODE: 0
+Time: 31,029
+OK (12 tests)
+
+# logcat complet du téléphone après les essais (14797 lignes), occurrences :
+  « essai-portail » : 0
+  « REPERE-PORTAIL-7f3a91 » : 0
+  « réponse d'essai » : 0
+  « Compte jusqu » : 0
+  « Question secrète » : 0
+  « 0001 0002 » : 0
+
+# journal du serveur d'essai (sans contenu)
+20:20:46  GET /health → 200 (0 ms)
+20:23:59  GET /health → 200 (1 ms)
+20:23:59  GET /v1/models → 200 (0 ms)
+20:23:59  GET /v1/models → 200 (0 ms)
+20:23:59  POST /v1/chat/completions → 200 (8 ms)
+20:24:02  POST /v1/chat/completions → 200 (1256 ms)
+20:24:22  POST /v1/chat/completions → 200, erreur en flux (201 ms)
+20:24:23  GET /health → 200 (0 ms)
+20:24:23  GET /v1/models → 401 (0 ms)
+20:24:24  POST /v1/chat/completions → 200, coupé par le client (1155 ms)
+20:24:27  POST /v1/chat/completions → 200 (0 ms)

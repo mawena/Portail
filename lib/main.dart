@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
+import 'src/ai/ai_events.dart';
 import 'src/app.dart';
 import 'src/bridge/fluluks_api.g.dart';
 import 'src/licenses.dart';
@@ -14,6 +15,7 @@ Future<void> main() async {
   registerLicenses(); // licences des bibliothèques natives et Android, pour « À propos »
   final state = AppState(PigeonHostApi());
   FluLuksEventsApi.setUp(state); // Kotlin pousse chaque changement
+  AiEventsApi.setUp(AiEvents(state.chats, state.automations)); // réponses et automatisations en flux (phase 15)
   // thème et bienvenue lus avant la première image : pas d'éclair de bienvenue pour qui l'a déjà vue
   await state.loadUiPrefs();
   state.refresh(); // état initial (un seul rendu : refresh remplace l'état)

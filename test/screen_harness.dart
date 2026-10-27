@@ -3,6 +3,13 @@ import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:fluluks/src/ai/ai_server_form.dart';
+import 'package:fluluks/src/ai/ai_servers_screen.dart';
+import 'package:fluluks/src/ai/automation_form.dart';
+import 'package:fluluks/src/ai/automation_runs_screen.dart';
+import 'package:fluluks/src/ai/automations_screen.dart';
+import 'package:fluluks/src/ai/chat_list_screen.dart';
+import 'package:fluluks/src/ai/chat_screen.dart';
 import 'package:fluluks/src/app.dart';
 import 'package:fluluks/src/bridge/fluluks_api.g.dart';
 import 'package:fluluks/src/screens/about_screen.dart';
@@ -29,6 +36,7 @@ import 'package:fluluks/src/widgets/unlock_dialog.dart';
 import 'package:fluluks/src/screens/vault_create_screen.dart';
 
 import 'demo_data.dart';
+import 'fake_ai_api.dart';
 import 'fake_host_api.dart';
 
 /// Écrans que [pumpScreen] sait afficher, sur les données de [demoApi].
@@ -36,6 +44,8 @@ const screens = [
   'home', 'explorerList', 'explorerGrid', 'filterGrid', 'search', 'globalSearch', 'trash', 'space', 'settings', //
   'about', 'help', 'welcome', 'unlock', 'format', 'editor', 'serverForm', 'nowPlaying', 'terminal', 'sshKeys', 'tunnels',
   'encrypt', 'decrypt', 'vaultCreate', 'homeVaults',
+  'aiServers', 'aiServerForm', 'chatList', 'chat', //
+  'automations', 'automationForm', 'automationRuns', 'automationRun', //
 ];
 
 /// Pont et état du dernier [pumpScreen] (pour les tests qui agissent ensuite sur l'écran).
@@ -76,6 +86,43 @@ Future<void> pumpScreen(
       SshKeyMsg(id: 'k2', name: 'Ancien portable', type: 'ssh-rsa', fingerprint: 'SHA256:Zt8mWq1bLc7r', encrypted: true,
           usedBy: []),
     ]);
+  }
+  if (screen.startsWith('ai') || screen.startsWith('chat') || screen.startsWith('automation')) {
+    api.aiServerList.addAll([
+      aiServer('a1', 'Atelier', 'https://atelier.mawena.cloud', isDefault: true, model: 'essai-court'),
+      aiServer('a2', 'PC du salon', 'http://192.168.0.20:11434', hasKey: false),
+      aiServer('a3', 'VPS de secours', 'http://203.0.113.5:8000'),
+    ]);
+    api.aiHealthById['a2'] = AiHealthMsg(serverId: 'a2', state: 'offline', error: 'Connexion refusée');
+    api.aiHealthById['a3'] = AiHealthMsg(serverId: 'a3', state: 'key-refused');
+  }
+  if (screen.startsWith('chat')) {
+    // une conversation en Markdown (titre, liste, code), une autre terminée par un échec
+    await api.createConversation('a1', 'essai-court');
+    await api.sendChatMessage(1, 'Comment sauvegarder mon dossier Photos chaque soir ?');
+    api.finishFakeReply(1, '## Sauvegarde du soir\n\nDeux étapes :\n\n1. Créez le script ci-dessous.\n'
+        '2. Ajoutez-le à **cron** avec `crontab -e`.\n\n```bash\nrsync -a --delete ~/Photos/ /mnt/sauvegarde/Photos/\n```\n\n'
+        '> Vérifiez d\'abord que le disque est monté.');
+    await api.createConversation('a2', 'llama3.2');
+    await api.sendChatMessage(2, 'Résume ce texte');
+    api.finishFakeReply(2, '', state: 'failed', error: 'Le serveur ne répond pas. Vérifiez qu\'il est allumé.',
+        errorDetail: 'Connection refused');
+  }
+  if (screen.startsWith('automation')) {
+    // une automatisation planifiée (dernière exécution réussie), une autre à la demande (dernière en échec)
+    await api.saveAutomation(AutomationMsg(id: 0, name: 'Météo du matin', template: 'Quel temps fera-t-il à {{ville}} le {{date}} ?',
+        variables: [AutomationVarMsg(name: 'ville', defaultValue: 'Lomé')], serverId: 'a1', model: 'essai-court',
+        trigger: 'periodic', intervalMinutes: 60, enabled: true));
+    await api.saveAutomation(AutomationMsg(id: 0, name: "Résumé d'article", template: 'Résume en trois points :\n\n{{texte}}',
+        variables: [AutomationVarMsg(name: 'texte')], serverId: 'a2', model: 'llama3.2', trigger: 'manual', enabled: true));
+    await api.runAutomation(1, const {});
+    api.finishFakeRun(1, '## Lomé, 25/10/2026\n\n- **Matin** : ensoleillé, 27 °C\n- **Après-midi** : orages possibles',
+        scheduled: true);
+    await api.runAutomation(1, const {});
+    api.finishFakeRun(2, null, state: 'failed', error: 'Le serveur ne répond pas : vérifiez l\'adresse et le réseau',
+        errorDetail: 'Connection refused', scheduled: true);
+    await api.runAutomation(2, const {'texte': 'Portail lit les disques chiffrés…'});
+    api.finishFakeRun(3, '1. Lecture\n2. Écriture\n3. Chiffrement');
   }
   if (screen == 'homeVaults') {
     // un coffre fermé, un ouvert, un indisponible (carte SD absente)
@@ -142,6 +189,14 @@ Future<void> pumpScreen(
     'terminal' => TerminalScreen(state: state, sessionId: terminalId!),
     'sshKeys' => SshKeysScreen(state: state),
     'tunnels' => TunnelsScreen(state: state, serverId: 's1', sessionId: terminalId),
+    'aiServers' => AiServersScreen(state: state),
+    'aiServerForm' => AiServerForm(state: state, server: api.aiServerList.first),
+    'chatList' => ChatListScreen(state: state),
+    'chat' => ChatScreen(state: state, conversationId: 1),
+    'automations' => AutomationsScreen(state: state),
+    'automationForm' => AutomationForm(state: state, automation: (await api.automations()).first),
+    'automationRuns' => AutomationRunsScreen(state: state, automationId: 1),
+    'automationRun' => AutomationRunScreen(state: state, runId: 1),
     'encrypt' => EncryptSheet(state: state, sourceId: 'phone', paths: const ['/notes-1.txt', '/Documents'], dir: '/'),
     'vaultCreate' => VaultCreateScreen(state: state, sourceId: 'phone', dir: '/Documents'),
     'unlock' || 'nowPlaying' || 'decrypt' => null,

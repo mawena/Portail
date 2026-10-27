@@ -230,6 +230,9 @@ class Fr {
   static const closeVaultsOnScreenOffHelp = "Une copie en cours dans un coffre se termine d'abord";
   static const hideVaults = 'Masquer les coffres et les fichiers déchiffrés';
   static const hideVaultsHelp = "Dans les captures d'écran et les applications récentes";
+  static const hideChats = 'Masquer les conversations avec les modèles';
+  static const hideChatsHelp =
+      "Conversations et résultats d'automatisations, dans les captures d'écran et les applications récentes";
   static const never = 'Jamais';
 
   /// « 15 min », « 1 h ».
@@ -641,6 +644,27 @@ class Fr {
           "passe en donnant la clé à la place de l'ancien. Le déverrouillage biométrique, s'il est activé, ouvre "
           'aussi le coffre.'
     ),
+    (
+      'Connecter un serveur IA',
+      "Réglages, Serveurs IA, Ajouter un serveur IA\u00A0: son adresse (votre serveur, Ollama, vLLM ou LocalAI), et sa "
+          "clé API s'il en demande une. Tester la connexion vérifie le serveur et liste ses modèles\u00A0; touchez un "
+          "modèle pour en faire celui par défaut. Un certificat que le téléphone ne reconnaît pas n'est accepté "
+          "qu'après avoir comparé son empreinte à celle du serveur."
+    ),
+    (
+      'Discuter avec un modèle',
+      "Chat IA, dans la section IA de l'accueil, puis Nouvelle conversation\u00A0: la réponse s'affiche au fur et à "
+          "mesure, et Arrêter la coupe. Le serveur et le modèle se changent en touchant leur nom sous le titre, le "
+          'prompt système dans le menu ⋮. Les conversations restent sur le téléphone et ne partent que vers le '
+          'serveur choisi.'
+    ),
+    (
+      'Créer une automatisation',
+      "Automatisations, dans la section IA de l'accueil, puis Nouvelle automatisation\u00A0: un prompt réutilisable où "
+          "{{nom}} devient une valeur à saisir au lancement, {{date}} et {{heure}} étant remplies par Portail. Lancez-la "
+          "à la main depuis sa fiche, ou planifiez-la toutes les 15 minutes au plus souvent, avec les valeurs par "
+          'défaut\u00A0; son historique garde les 50 dernières exécutions.'
+    ),
   ];
   static const addFavorite = 'Ajouter aux favoris';
   static const add = 'Ajouter';
@@ -821,4 +845,166 @@ class Fr {
       'Tout le contenu de «\u00A0$name\u00A0» ($size) sera effacé définitivement, sur toutes ses partitions.';
   static String formatting(int pct) => 'Formatage… $pct\u202F%';
   static const formatted = 'Disque formaté';
+
+  // --- intégration IA (phase 15)
+  static const sectionAi = 'Intelligence artificielle';
+  static const aiServers = 'Serveurs IA';
+  static const aiServersHelp = 'Vos serveurs compatibles OpenAI, pour le chat et les automatisations';
+  static const aiAddServer = 'Ajouter un serveur IA';
+  static const aiNoServers = 'Aucun serveur IA';
+  static const aiNoServersBody =
+      'Ajoutez un serveur compatible OpenAI (le vôtre, Ollama, vLLM ou LocalAI) pour discuter avec un modèle.';
+  static const aiServerName = 'Nom';
+  static const aiServerUrl = 'Adresse (URL de base)';
+  static const aiServerUrlHelp = 'Par exemple https://atelier.mawena.cloud ou http://192.168.0.20:11434';
+  static const aiUrlRequired = "Saisissez l'adresse du serveur";
+  static const aiUrlScheme = "L'adresse doit commencer par http:// ou https://";
+  static const aiApiKey = 'Clé API';
+  static const aiApiKeyHelp = "Facultative (Ollama n'en demande pas)";
+  static const aiApiKeyKeep = 'Clé enregistrée, laissez vide pour la garder';
+  static const aiRemoveKey = 'Retirer la clé';
+  static const aiKeyRemoved = 'Clé retirée';
+  static const aiClearTextWarning = 'La clé et les conversations passent en clair sur Internet';
+  static const aiClearTextHelp = 'Préférez https:// pour un serveur hors de votre réseau local.';
+  static const aiDefaultServer = 'Serveur par défaut';
+  static const aiDefaultServerHelp = 'Utilisé pour les nouvelles conversations';
+  static const aiDefaultBadge = 'Par défaut';
+  static const aiDeleteServer = 'Supprimer le serveur IA';
+  static String aiDeleteServerBody(String name) =>
+      '« $name » et sa clé seront supprimés. Ses conversations restent lisibles.';
+  static String aiConnectionOk(String? version, int models) => version == null
+      ? 'Connexion réussie (${count(models, 'modèle', 'modèles')})'
+      : 'Connexion réussie (version $version, ${count(models, 'modèle', 'modèles')})';
+  static const aiModels = 'Modèles';
+  static const aiRefreshModels = 'Actualiser les modèles';
+  static const aiNoModels =
+      'Ce serveur ne propose aucun modèle : installez-en un sur le serveur (par exemple « ollama pull llama3.2 »), puis actualisez.';
+  static const aiModelsHelp = 'Touchez un modèle pour en faire le modèle par défaut de ce serveur.';
+  static const aiCertUnknownTitle = 'Certificat non reconnu';
+  static const aiCertUnknownBody =
+      "Ce serveur présente un certificat qu'Android ne reconnaît pas, comme souvent un serveur personnel. Avant de lui "
+      'faire confiance, vérifiez sur le serveur que son empreinte SHA-256 est bien celle-ci\u00A0:';
+  static const aiCertChangedTitle = 'Le certificat a changé';
+  static const aiCertChangedBody =
+      "Ce serveur présentait un autre certificat. Si vous ne l'avez pas renouvelé vous-même, quelqu'un se fait peut-être "
+      'passer pour lui\u00A0: ne lui faites confiance que si vous en êtes sûr. Empreinte SHA-256 présentée\u00A0:';
+  static const aiCertHelp = 'Sur le serveur\u00A0: openssl x509 -in cert.pem -noout -fingerprint -sha256';
+  static const aiTrustCert = 'Faire confiance';
+  static const aiStatusOnline = 'En ligne';
+  static const aiStatusOffline = 'Hors ligne';
+  static const aiStatusKeyRefused = 'Clé refusée';
+  static const aiStatusUnknown = 'Inconnu';
+  static String aiStatusLabel(String state) => switch (state) {
+        'online' => aiStatusOnline,
+        'offline' => aiStatusOffline,
+        'key-refused' => aiStatusKeyRefused,
+        _ => aiStatusUnknown,
+      };
+
+  // chat (phase 15, T7)
+  static const sectionAiHome = 'IA';
+  static const chatTitle = 'Chat IA';
+  static String chatCount(int n) => n == 0 ? 'Discuter avec vos modèles' : count(n, 'conversation', 'conversations');
+  static const chatNew = 'Nouvelle conversation';
+  static const chatNoConversations = 'Aucune conversation';
+  static const chatNoConversationsBody =
+      'Touchez «\u00A0Nouvelle conversation\u00A0» pour poser une question à un modèle.';
+  static const chatNoServersBody = 'Ajoutez un serveur IA pour discuter avec un modèle.';
+  static const chatEmptyThread = 'Écrivez un message pour commencer.';
+  static const chatInputHint = 'Message';
+  static const chatSend = 'Envoyer';
+  static const chatStop = 'Arrêter';
+  static const chatRegenerate = 'Régénérer';
+  static const chatCopyReply = 'Copier la réponse';
+  static const chatCopyCode = 'Copier le code';
+  static const chatCopied = 'Copié';
+  static const chatOpenLinkTitle = 'Ouvrir ce lien\u202F?';
+  static const chatOpenLink = 'Ouvrir';
+  static const chatGenerating = 'Réponse en cours';
+  static const chatStopped = 'Arrêtée';
+  static const chatInterrupted = 'Interrompue\u00A0: Portail a été fermé pendant la réponse';
+  static const chatYou = 'Vous';
+  static const chatAssistant = 'Modèle';
+  static const chatSystemPrompt = 'Prompt système';
+  static const chatSystemPromptHelp =
+      'Consignes données au modèle avant chaque échange de cette conversation. Laissez vide pour aucune.';
+  static const chatRenameTitle = 'Renommer la conversation';
+  static const chatTitleLabel = 'Titre';
+  static const chatTitleEmpty = 'Saisissez un titre';
+  static const chatDeleteTitle = 'Supprimer la conversation\u202F?';
+  static const chatDeleteBody = 'Ses messages seront effacés de ce téléphone.';
+  static const chatChooseModel = 'Serveur et modèle';
+  static const chatNoModel = 'Choisir un modèle';
+  static const chatServerGone = 'Serveur supprimé';
+  static const chatPickModelFirst = "Choisissez un serveur et un modèle, en haut de l'écran.";
+
+  // automatisations (phase 15, T9)
+  static const automations = 'Automatisations';
+  static String automationsCount(int n) =>
+      n == 0 ? 'Prompts réutilisables, lancés à la main ou planifiés' : count(n, 'automatisation', 'automatisations');
+  static const automationNew = 'Nouvelle automatisation';
+  static const automationNoneTitle = 'Aucune automatisation';
+  static const automationNoneBody =
+      'Une automatisation garde un prompt à réutiliser, à lancer à la main ou à intervalle régulier.';
+  static const automationNoServersBody = 'Ajoutez un serveur IA pour créer une automatisation.';
+  static const automationName = 'Nom';
+  static const automationNameRequired = "Donnez un nom à l'automatisation";
+  static const automationTemplate = 'Modèle de prompt';
+  static const automationTemplateRequired = 'Écrivez le prompt à envoyer';
+  static const automationTemplateHelp =
+      'Écrivez {{nom}} pour une valeur à saisir au lancement\u00A0; {{date}} et {{heure}} sont remplies par Portail.';
+  static const automationVariables = 'Variables';
+  static String automationDefaultFor(String name) => 'Valeur par défaut de {{$name}}';
+  static const automationDefaultRequired = 'Obligatoire pour une automatisation planifiée';
+  static const automationModel = 'Serveur et modèle';
+  static const automationTrigger = 'Déclenchement';
+  static const automationManual = 'À la demande';
+  static const automationPeriodic = 'Planifiée';
+  static const automationIntervals = [15, 30, 60, 120, 360, 720, 1440];
+  static String automationInterval(int minutes) => switch (minutes) {
+        < 60 => 'Toutes les $minutes\u00A0min',
+        60 => 'Toutes les heures',
+        1440 => 'Tous les jours',
+        _ when minutes % 60 == 0 => 'Toutes les ${minutes ~/ 60}\u00A0h',
+        _ => 'Toutes les $minutes\u00A0min',
+      };
+  static const automationEnabled = 'Activée';
+  static const automationDisabled = 'Désactivée';
+  static const automationPeriodicHelp =
+      "Exécutée en arrière-plan quand le réseau est disponible, avec les valeurs par défaut\u00A0; une notification "
+      "signale la fin, sans montrer le résultat.";
+  static const automationRun = 'Lancer';
+  static String automationRunTitle(String name) => 'Lancer «\u00A0$name\u00A0»';
+  static const automationEdit = 'Modifier';
+  static const automationDuplicate = 'Dupliquer';
+  static const automationDeleteTitle = "Supprimer l'automatisation\u202F?";
+  static const automationDeleteBody = 'Son historique sera effacé et sa planification annulée.';
+  static const automationHistory = 'Historique';
+  static const automationNoRuns = 'Aucune exécution';
+  static const automationNeverRun = 'Jamais lancée';
+  static const automationClearHistory = "Effacer l'historique";
+  static const automationClearTitle = "Effacer l'historique\u202F?";
+  static const automationClearBody = 'Les résultats des exécutions passées seront effacés de ce téléphone.';
+  static String automationRunState(String state) => switch (state) {
+        'running' => 'En cours',
+        'done' => 'Terminée',
+        'failed' => 'Échec',
+        'stopped' => 'Arrêtée',
+        'interrupted' => 'Interrompue',
+        _ => state,
+      };
+  static const automationScheduledRun = 'Planifiée';
+  static const automationManualRun = 'À la main';
+  static String automationDuration(int ms) {
+    final s = (ms / 1000).round();
+    if (s < 60) return '$s\u00A0s';
+    return '${s ~/ 60}\u00A0min\u00A0${(s % 60).toString().padLeft(2, '0')}\u00A0s';
+  }
+
+  static const automationInput = 'Prompt envoyé';
+  static const automationResult = 'Résultat';
+  static const automationCopyResult = 'Copier le résultat';
+  static const automationShareResult = 'Partager le résultat';
+  static const automationStopped = 'Exécution arrêtée';
+  static const automationInterrupted = "Interrompue\u00A0: Portail a été fermé pendant l'exécution";
 }

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../ai/ai_servers_screen.dart';
 import '../state/app_state.dart';
 import '../state/prefs.dart';
 import '../strings_fr.dart';
@@ -96,6 +97,15 @@ class SettingsScreen extends StatelessWidget {
               onTap: () => Navigator.of(context)
                   .push(MaterialPageRoute<void>(builder: (_) => SshKeysScreen(state: state))),
             ),
+            const SectionHeader(Fr.sectionAi),
+            ListTile(
+              leading: const Icon(Icons.smart_toy_rounded),
+              title: const Text(Fr.aiServers),
+              subtitle: const Text(Fr.aiServersHelp),
+              trailing: const Icon(Icons.chevron_right_rounded),
+              onTap: () => Navigator.of(context)
+                  .push(MaterialPageRoute<void>(builder: (_) => AiServersScreen(state: state))),
+            ),
             const SectionHeader(Fr.sectionDisks),
             SwitchListTile(
               title: const Text(Fr.readOnlySwitch),
@@ -129,6 +139,12 @@ class SettingsScreen extends StatelessWidget {
               subtitle: const Text(Fr.hideVaultsHelp),
               value: state.hideVaults,
               onChanged: (on) => state.setUiPrefs(state.uiPrefs.copyWith(hideVaults: on)),
+            ),
+            SwitchListTile(
+              title: const Text(Fr.hideChats),
+              subtitle: const Text(Fr.hideChatsHelp),
+              value: state.hideChats,
+              onChanged: (on) => state.setUiPrefs(state.uiPrefs.copyWith(hideChats: on)),
             ),
             const SectionHeader(Fr.sectionComfort),
             SwitchListTile(

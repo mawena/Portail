@@ -530,6 +530,7 @@ class UiPrefsMsg {
     this.terminalSecure,
     this.closeVaultsOnScreenOff,
     this.hideVaults,
+    this.hideChats,
   });
   String theme;
   bool haptics;
@@ -543,6 +544,9 @@ class UiPrefsMsg {
   /// captures et les applications récentes (null : non).
   bool? closeVaultsOnScreenOff;
   bool? hideVaults;
+
+  /// Phase 15 : conversations et automatisations masquées dans les captures et les applications récentes (null : non).
+  bool? hideChats;
 }
 
 /// Version de Portail (`versionName`, `versionCode` du paquet) et appareil (`Build.VERSION.RELEASE`, `Build.MODEL`),
@@ -882,4 +886,311 @@ abstract class FluLuksEventsApi {
 
   /// Phase 13 : état d'un terminal changé (ouvert, fermé par le serveur, connexion perdue, fermé à la demande).
   void onTerminalChanged(TerminalSessionMsg session);
+}
+
+// --- intégration IA (phase 15) : API à part, pour ne pas mêler les serveurs IA au reste du pont
+
+/// Serveur IA enregistré (« fournisseur ») : [baseUrl] normalisée ; [hasKey] : une clé API est enregistrée (elle
+/// n'est jamais renvoyée) ; [isDefault] : serveur des nouvelles conversations ; [defaultModel] : modèle par défaut.
+class AiServerMsg {
+  AiServerMsg({
+    required this.id,
+    required this.name,
+    required this.baseUrl,
+    required this.hasKey,
+    required this.isDefault,
+    this.defaultModel,
+  });
+  String id;
+  String name;
+  String baseUrl;
+  bool hasKey;
+  bool isDefault;
+  String? defaultModel;
+}
+
+/// Résultat de « Tester la connexion » : [version] lue sur `/health` ; [models] ; [log] : journal de la tentative,
+/// sans aucun secret ; en cas d'échec, [error] (français, dit quoi faire) et [detail] (message du serveur tel quel).
+class AiTestResultMsg {
+  AiTestResultMsg({
+    required this.ok,
+    this.version,
+    required this.models,
+    required this.log,
+    this.error,
+    this.detail,
+    this.certFingerprint,
+    this.certChanged,
+  });
+  bool ok;
+  String? version;
+  List<String> models;
+  List<String> log;
+  String? error;
+  String? detail;
+
+  /// Certificat refusé (T10) : son empreinte SHA-256, à montrer avant « Faire confiance » ; [certChanged] : une autre
+  /// empreinte avait été approuvée pour ce serveur.
+  String? certFingerprint;
+  bool? certChanged;
+}
+
+/// État d'un serveur IA : [state] ∈ `online`, `offline`, `key-refused` ; [error] et [detail] comme pour le test.
+class AiHealthMsg {
+  AiHealthMsg({
+    required this.serverId,
+    required this.state,
+    this.version,
+    this.modelCount,
+    this.error,
+    this.detail,
+  });
+  String serverId;
+  String state;
+  String? version;
+  int? modelCount;
+  String? error;
+  String? detail;
+}
+
+/// Conversation (phase 15) : [title] vide tant que le premier message ne l'a pas fixé ; [serverId] peut désigner un
+/// serveur supprimé depuis (la conversation reste lisible) ; dates en millisecondes depuis l'époque.
+class ConversationMsg {
+  ConversationMsg({
+    required this.id,
+    required this.title,
+    this.serverId,
+    this.model,
+    this.systemPrompt,
+    required this.createdAt,
+    required this.updatedAt,
+  });
+  int id;
+  String title;
+  String? serverId;
+  String? model;
+  String? systemPrompt;
+  int createdAt;
+  int updatedAt;
+}
+
+/// Message : [role] `user` ou `assistant` ; [state] ∈ `done`, `streaming`, `stopped`, `failed`, `interrupted` (Portail
+/// fermé pendant la génération) ; [error] : message français d'un échec (dit quoi faire) ; [errorDetail] : message
+/// du serveur tel quel.
+class ChatMessageMsg {
+  ChatMessageMsg({
+    required this.id,
+    required this.conversationId,
+    required this.role,
+    required this.content,
+    required this.state,
+    this.error,
+    this.errorDetail,
+    required this.createdAt,
+  });
+  int id;
+  int conversationId;
+  String role;
+  String content;
+  String state;
+  String? error;
+  String? errorDetail;
+  int createdAt;
+}
+
+/// Conversation et ses messages, dans l'ordre.
+class ConversationDetailMsg {
+  ConversationDetailMsg({required this.conversation, required this.messages});
+  ConversationMsg conversation;
+  List<ChatMessageMsg> messages;
+}
+
+/// Variable d'un modèle de prompt et sa valeur par défaut (obligatoire pour une exécution planifiée).
+class AutomationVarMsg {
+  AutomationVarMsg({required this.name, this.defaultValue});
+  String name;
+  String? defaultValue;
+}
+
+/// Automatisation (phase 15, T8) : [trigger] `manual` ou `periodic` (toutes les [intervalMinutes] minutes, 15 au moins) ;
+/// [id] 0 : pas encore enregistrée ; [lastRun] : dernière exécution, s'il y en a une.
+class AutomationMsg {
+  AutomationMsg({
+    required this.id,
+    required this.name,
+    required this.template,
+    required this.variables,
+    this.serverId,
+    this.model,
+    this.systemPrompt,
+    required this.trigger,
+    this.intervalMinutes,
+    required this.enabled,
+    this.lastRun,
+  });
+  int id;
+  String name;
+  String template;
+  List<AutomationVarMsg> variables;
+  String? serverId;
+  String? model;
+  String? systemPrompt;
+  String trigger;
+  int? intervalMinutes;
+  bool enabled;
+  AutomationRunMsg? lastRun;
+}
+
+/// Exécution : [state] ∈ `running`, `done`, `failed`, `stopped`, `interrupted` ; [input] : prompt envoyé ; [error] :
+/// message français d'un échec, [errorDetail] : message du serveur ; [scheduled] : lancée par la planification.
+class AutomationRunMsg {
+  AutomationRunMsg({
+    required this.id,
+    required this.automationId,
+    required this.startedAt,
+    this.endedAt,
+    required this.state,
+    required this.scheduled,
+    required this.input,
+    this.output,
+    this.error,
+    this.errorDetail,
+  });
+  int id;
+  int automationId;
+  int startedAt;
+  int? endedAt;
+  String state;
+  bool scheduled;
+  String input;
+  String? output;
+  String? error;
+  String? errorDetail;
+}
+
+/// Serveurs IA (phase 15). Erreurs : code `ai` (message français ; détails : message du serveur), ou les codes du
+/// moteur pour une fiche invalide (`saveAiServer` : adresse ou nom refusés).
+@HostApi()
+abstract class AiHostApi {
+  List<AiServerMsg> aiServers();
+
+  /// `server.id` vide : nouveau serveur ; `key` null ou vide : la clé enregistrée est gardée (mise à zéro après).
+  AiServerMsg saveAiServer(AiServerMsg server, Uint8List? key);
+
+  /// « Retirer la clé » : le fichier scellé est supprimé.
+  void removeAiServerKey(String serverId);
+
+  /// Supprime le serveur et sa clé ; ses conversations restent lisibles, ses automatisations sont désactivées.
+  @async
+  void deleteAiServer(String serverId);
+  void setDefaultAiServer(String serverId);
+  @async
+  AiTestResultMsg testAiServer(String serverId);
+  @async
+  List<String> aiModels(String serverId);
+  void setAiDefaultModel(String serverId, String? model);
+  @async
+  AiHealthMsg aiHealth(String serverId);
+
+  /// Journal du dernier test du serveur, sans aucun secret.
+  List<String> aiAttemptLog(String serverId);
+
+  /// « Faire confiance » (T10) : le certificat d'empreinte [fingerprint] (celle montrée à l'utilisateur) est accepté
+  /// pour ce serveur, puis vérifié à chaque connexion.
+  void trustAiCertificate(String serverId, String fingerprint);
+
+  // --- historique des conversations (T5) ; erreur FL_ENOENT : conversation supprimée
+
+  /// Plus récente d'abord.
+  @async
+  List<ConversationMsg> conversations();
+  @async
+  ConversationDetailMsg conversation(int id);
+
+  /// Sans [serverId] : serveur par défaut ; sans [model] : modèle par défaut du serveur.
+  @async
+  ConversationMsg createConversation(String? serverId, String? model);
+  @async
+  void renameConversation(int id, String title);
+
+  /// Supprime la conversation et ses messages.
+  @async
+  void deleteConversation(int id);
+  @async
+  void setConversationModel(int id, String? serverId, String? model);
+
+  /// Vide ou null : aucun prompt système.
+  @async
+  void setSystemPrompt(int id, String? prompt);
+
+  // --- réponses en flux (T6) ; erreur FL_EBUSY : réponse déjà en cours dans la conversation, ou trois en tout
+
+  /// Écrit le message et la réponse vide (`streaming`), puis lance la génération ; rend la réponse vide. Le texte
+  /// arrive par `AiEventsApi.onChatDelta`, la fin par `onChatState`.
+  @async
+  ChatMessageMsg sendChatMessage(int conversationId, String text);
+
+  /// Arrête la réponse en cours : le texte reçu est gardé, état `stopped`.
+  void stopGeneration(int conversationId);
+
+  /// Remplace la dernière réponse par une nouvelle (même historique, même modèle) ; sert aussi à « Réessayer ».
+  @async
+  ChatMessageMsg regenerate(int conversationId);
+
+  /// Conversations dont une réponse est en cours.
+  List<int> runningChats();
+
+  // --- automatisations (T8) ; erreurs FL_EINVAL (fiche invalide), FL_ENOSPC (20 au plus), FL_EBUSY (déjà lancée)
+
+  @async
+  List<AutomationMsg> automations();
+
+  /// Enregistre (id 0 : nouvelle) ; seules les variables du modèle sont gardées ; planifie ou annule.
+  @async
+  AutomationMsg saveAutomation(AutomationMsg automation);
+  @async
+  void deleteAutomation(int id);
+  @async
+  AutomationMsg setAutomationEnabled(int id, bool enabled);
+
+  /// Copie désactivée, « Nom (copie) ».
+  @async
+  AutomationMsg duplicateAutomation(int id);
+
+  /// Variables à saisir d'un modèle de prompt, dans l'ordre, sans `date` ni `heure` (fournies).
+  List<String> templateVariables(String template);
+
+  /// Lancement manuel : [values] saisies (absentes : valeurs par défaut) ; rend l'exécution « en cours », dont le
+  /// texte arrive par `AiEventsApi.onAutomationDelta` et la fin par `onAutomationState`.
+  @async
+  AutomationRunMsg runAutomation(int id, Map<String, String> values);
+  void stopAutomationRun(int runId);
+
+  /// Exécutions manuelles en cours.
+  List<int> runningAutomationRuns();
+
+  /// Plus récente d'abord (50 au plus).
+  @async
+  List<AutomationRunMsg> automationRuns(int automationId);
+  @async
+  AutomationRunMsg automationRun(int runId);
+  @async
+  void clearAutomationRuns(int automationId);
+}
+
+/// Réponses en flux (phase 15, T6), poussées par Kotlin.
+@FlutterApi()
+abstract class AiEventsApi {
+  /// Texte reçu pour la réponse [messageId], par lots (au plus un toutes les 50 ms, 16 Kio au plus) ; la réponse
+  /// (acquittement) permet le lot suivant, 4 lots en route au plus.
+  void onChatDelta(int conversationId, int messageId, String text);
+
+  /// Réponse terminée (`done`, `stopped`, `failed`), avec tout son texte : aucun lot ne suit.
+  void onChatState(ChatMessageMsg message);
+
+  /// Texte reçu d'un lancement manuel d'automatisation, par lots (mêmes règles que [onChatDelta]).
+  void onAutomationDelta(int runId, String text);
+
+  /// Lancement manuel terminé, avec tout son résultat : aucun lot ne suit.
+  void onAutomationState(AutomationRunMsg run);
 }
