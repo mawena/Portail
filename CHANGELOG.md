@@ -6,10 +6,19 @@ porte une étiquette `vX.Y.Z` sur `main`. Le détail de chaque phase est dans la
 
 ## À venir
 
-- **1.9.0** : analyseur de stockage, comme celui d'Ubuntu (anneaux, carte proportionnelle, tailles réelles), et
-  barre de navigation entre les modules.
 - **1.10.0** : gestion des partitions (créer, supprimer, redimensionner).
 - **1.11.0** : vérification et réparation des disques.
+
+## 1.9.0 — 2026-10-27
+
+### Ajouté
+
+- Analyseur de stockage, comme celui d'Ubuntu : place réellement occupée (liens physiques comptés une fois, fichiers
+  creux), anneaux concentriques ou carte proportionnelle synchronisés avec l'arbre, plus gros fichiers.
+- Analyse du téléphone, des cartes SD, des disques USB, des coffres et des dossiers distants, avec progression,
+  annulation et résultats au fur et à mesure ; analyses de la session gardées.
+- Menu d'un élément : afficher dans l'explorateur, copier le chemin, propriétés, corbeille, exclure des analyses.
+- Barre de navigation entre les modules Fichiers, Coffres, Analyseur, Distants et IA ; rail sur grand écran.
 
 ## 1.8.0 — 2026-10-27
 
