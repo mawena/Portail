@@ -111,6 +111,50 @@ data: [DONE]
 
 Prévue dans l'interface de Portail pour une recherche sémantique future ; aucun écran ne s'en sert en v1.8.0.
 
+## Voix de narration (facultatives, à partir de la v1.12.0)
+
+Extension maison, hors API d'OpenAI sauf `POST /v1/audio/speech`. Un serveur qui ne les a pas (404) masque le module
+« Voix » de Portail. Conception : § 28 de la spec. **Exclu par décision** : toute transformation de voix en direct et
+toute création de voix à partir d'un fichier importé ; le serveur n'expose donc aucune route de conversion de voix.
+
+### `GET /v1/voices`
+
+```json
+{ "object": "list", "data": [ { "id": "voix_7f3a", "name": "Charles", "created": 1793433600, "model": "chatterbox-multilingual" } ] }
+```
+
+### `POST /v1/voices`
+
+`multipart/form-data`, tous les champs obligatoires :
+
+| Champ | Contenu |
+|---|---|
+| `name` | Nom affiché de la personne |
+| `consent_text` | Texte de consentement affiché, avec le nom, le code à 6 chiffres et la date |
+| `consent_code` | Le code aléatoire tiré par Portail pour cette session |
+| `consent_audio` | La lecture du texte de consentement (WAV ou M4A, enregistrée par le micro) |
+| `sample_audio` | L'échantillon de voix (environ 1 min), même session |
+
+Réponse 201 : l'objet voix, comme dans la liste. Le serveur garde le consentement (audio, texte, code, horodatage) avec
+la voix. **422** `consent_rejected` si le consentement retranscrit ne contient pas le code ou le nom ; **422**
+`sample_quality` si l'échantillon est trop court, trop faible ou saturé (le message dit lequel).
+
+### `DELETE /v1/voices/{id}`
+
+204. Supprime l'échantillon, le consentement et l'empreinte vocale. Une voix supprimée n'est plus utilisable.
+
+### `POST /v1/audio/speech`
+
+Compatible OpenAI :
+
+```json
+{ "model": "chatterbox-multilingual", "input": "Bonjour et bienvenue.", "voice": "voix_7f3a", "response_format": "mp3", "speed": 1.0 }
+```
+
+Réponse : le fichier audio (`audio/mpeg` ou `audio/wav`). `input` : 5 000 caractères au plus par appel (Portail découpe
+au-delà, aux fins de phrase). Le filigrane inaudible éventuel est posé par le serveur ; Portail ajoute lui-même le
+suffixe `-voix-synthese` et la métadonnée « Voix de synthèse générée par Portail ».
+
 ## Erreurs
 
 Codes 400, 401, 403, 404, 429, 500, 503, corps :

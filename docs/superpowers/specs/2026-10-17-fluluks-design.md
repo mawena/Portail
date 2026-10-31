@@ -740,3 +740,54 @@ de stockage (§ 26) y prend sa place au lieu d'un bouton de l'accueil.
   automatisation de l'IA).
 - **Grand écran et accessibilité** : rail à gauche sur une tablette ou un téléphone en paysage ; libellés toujours
   écrits, lus par TalkBack, texte jusqu'à 200 % ; écrans ajoutés au banc d'accessibilité.
+
+## 28. Évolution du 2026-10-31 : voix de narration (phase 19)
+
+Demande de l'utilisateur : un module de **clonage de voix** où l'on ajoute des personnes puis leur fait dire un texte,
+utilisable aussi **en direct** pendant les appels, les notes vocales et les autres enregistrements. Après échange, le
+périmètre retenu est une **voix de narration** : chacun clone **sa propre voix**, avec un consentement vérifié, pour
+produire des **fichiers audio** (narration de vidéos et de documents de formation). Une **phase 19** (**v1.12.0**)
+l'ajoute au module **IA**, après la réparation des disques (phase 18).
+*(Écrans, formats et valeurs marqués « proposition du planificateur » : décisions du planificateur, à valider aux
+essais.)*
+
+- **Hors périmètre, décision du 2026-10-31** : pas de transformation de la voix **en direct** (appels, notes vocales,
+  enregistrements d'autres applications), même avec l'accord de la personne clonée. Le risque vise surtout
+  l'**interlocuteur**, qui croit parler à la personne : c'est le procédé des fraudes au faux dirigeant et des faux
+  appels de conseiller. Pas de clonage à partir d'un fichier audio importé (la voix d'un tiers récupérée ailleurs).
+  Ces deux points ne doivent pas être réintroduits par une phase ultérieure sans nouvelle décision écrite ici.
+- **Personnes** : une fiche par voix (nom affiché, date de création, serveur IA qui la porte, état). Plusieurs personnes
+  possibles sur un même téléphone, chacune enregistrée **en personne, sur ce téléphone**.
+- **Consentement vérifié, à l'enregistrement** :
+  - l'écran affiche le texte de consentement (« Je, [nom], accepte que ma voix soit clonée par Portail pour générer
+    des narrations. Code : [6 chiffres], le [date] ») avec un **code aléatoire** tiré à l'instant : un enregistrement
+    préparé à l'avance ne peut pas le contenir ;
+  - la personne le lit, puis lit un texte d'échantillon (environ 1 min) dans la **même session** ; enregistrement par
+    le micro du téléphone uniquement, **aucun import de fichier** ;
+  - contrôle de qualité avant l'envoi (volume, saturation, bruit de fond), avec un conseil en français si c'est
+    insuffisant ;
+  - le serveur conserve l'enregistrement du consentement, son texte, le code et l'horodatage avec la voix ;
+    *(proposition du planificateur)* il retranscrit le consentement (Whisper) et refuse la voix si le code ou le nom
+    n'y figurent pas.
+- **Retrait** : supprimer une voix la retire du serveur (échantillon, consentement, empreinte vocale) et du téléphone.
+  Les fichiers déjà générés restent, marqués comme synthétiques.
+- **Générer une narration** : texte saisi ou fichier `.txt`/`.md` choisi dans le gestionnaire, voix, vitesse
+  (0,8 à 1,2) ; génération en arrière-plan (WorkManager) avec progression, résultat **MP3** ou **WAV** écrit dans le
+  dossier choisi (téléphone, carte SD, disque USB, coffre ouvert). Écoute dans le lecteur de musique de Portail.
+- **Marquage des fichiers générés** : suffixe `-voix-synthese` dans le nom ; métadonnée de commentaire
+  « Voix de synthèse générée par Portail » (ID3 pour le MP3, `INFO` pour le WAV) ; filigrane inaudible si le modèle du
+  serveur en pose un (cas de Chatterbox, ci-dessous). Ces marques ne sont pas désactivables.
+- **Journal local** des générations : date, voix, début du texte, fichier produit ; base Room privée, jamais dans un
+  journal système ni un rapport d'erreur (comme les conversations, § 23).
+- **Serveur** : extension du contrat d'API des serveurs IA ([contrat](../../ia/contrat-api.md), routes `/v1/voices` et
+  `/v1/audio/speech`), servie par le serveur maison (`atelier.mawena.cloud`). Modèle de synthèse
+  *(proposition du planificateur, à vérifier par une recherche en début de phase)* : **Chatterbox Multilingual**
+  (Resemble AI, licence MIT, français, filigrane PerTh intégré) de préférence ; **XTTS-v2** (Coqui) seulement pour un
+  usage non commercial (licence CPML). Rien n'est généré sur le téléphone. Un serveur qui n'a pas ces routes masque le
+  module dans Portail.
+- **Tests** : routes simulées par `MockWebServer` (création d'une voix avec consentement, 422 si le consentement est
+  refusé, génération, suppression) ; serveur d'essai Python étendu (`tools/ia/serveur-essai.py`) avec une synthèse
+  factice (sinusoïde) ; règle de source : aucun échantillon ni texte de narration dans les journaux.
+- **Confidentialité** : échantillons et consentements ne quittent le téléphone que vers le serveur choisi, en
+  `https://` obligatoire pour cette fonction (refus en `http://` hors réseau local) ; rien n'est gardé sur le téléphone
+  une fois la voix créée.
