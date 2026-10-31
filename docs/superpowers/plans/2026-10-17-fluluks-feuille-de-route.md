@@ -467,6 +467,22 @@ dans le même commit que le travail.
 - [ ] Réparation FAT32 et exFAT par fsck.fat et fsck.exfat
 - [ ] LUKS : vérification des deux en-têtes, sauvegarde et restauration de l'en-tête
 - [ ] Version `v1.11.0`
+
+### Phase 19 — Voix de narration : sa propre voix clonée, avec consentement, pour des fichiers audio
+- [ ] Plan de la phase 19 écrit *(demande du 2026-10-31 ; spec § 28 ; après la phase 18 ; transformation en direct (appels, notes vocales) et clonage depuis un fichier importé exclus, décision du 2026-10-31)*
+- [ ] Recherche : modèle de synthèse du serveur (Chatterbox Multilingual, XTTS-v2 ou autre : français, licence, filigrane, temps de génération sur le VPS)
+- [ ] Contrat d'API : routes `/v1/voices` et `/v1/audio/speech`, serveur d'essai et `contrat_test.py` étendus
+- [ ] Couche réseau : voix (création avec consentement, liste, suppression) et génération *(MockWebServer)*
+- [ ] Enregistrement sur le téléphone : texte de consentement avec code aléatoire, échantillon dans la même session, contrôle de qualité, aucun import
+- [ ] Écrans des personnes et de leurs voix (module IA), retrait d'une voix
+- [ ] Génération en arrière-plan (WorkManager), MP3 ou WAV dans le dossier choisi, marquage des fichiers (suffixe, métadonnée, filigrane du serveur)
+- [ ] Journal local des générations (Room), règle de source sans échantillon ni texte dans les journaux
+- [ ] Documentation (README, aide, contrat)
+- [ ] Essais instrumentés sur le Pixel
+- [ ] *(utilisateur)* Essais sur le Pixel avec le serveur maison
+- [ ] Relecture finale de toute la branche
+- [ ] Fusion `feature/voix-narration` → `develop`
+- [ ] Version `v1.12.0`
 ---
 
 ## Principes
