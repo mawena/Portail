@@ -439,7 +439,7 @@ dans le même commit que le travail.
 - [x] *(utilisateur)* T13 — Essais sur le Pixel (comparaison avec Baobab sous Ubuntu) *(fiche : 41 lignes réussies, le 2026-10-27, disque USB, Baobab et TalkBack faits par l'utilisateur ; quatre défauts trouvés et corrigés, chacun avec son test : rail invisible pour TalkBack en paysage, Réanalyser qui doublait l'analyse, propriétés sans la place sur le disque, onglet coupé à 200 %)*
 - [x] Relecture finale de toute la branche *(relue par l'auteur, sans relecteur neuf, en visant suppression et corbeille depuis l'analyse, verrou de l'arbre pendant le parcours, liste des dossiers par lstat et code natif ; aucun point critique ni important ; mineurs reportés : un écran resté ouvert sur une analyse oubliée montre « Cette analyse n'est plus disponible » sans Réanalyser, bouton ⋮ de l'explorateur lu « Trier par », chevron de l'arbre sans nœud d'accessibilité à lui, taille vue dans la liste des analyses quand l'en-tête donne le total)*
 - [x] Fusion `feature/analyseur` → `develop` *(2026-10-27, à la demande de l'utilisateur, avant ses essais sur le Pixel ; branche supprimée ; version à publier après les essais)*
-- [ ] Version `v1.9.0`
+- [x] Version `v1.9.0` *(2026-10-27)*
 
 ### Phase 17 — Gestion des partitions, comme GParted ([plan](2026-10-27-phase17-partitions.md))
 - [x] Plan de la phase 17 écrit *(demande du 2026-10-22 ; spec § 17, § 24, § 25 et § 26 ; phase 12, puis 13, 14, 15, 16, 17 et 15, jusqu'au 2026-10-25, puis 16, puis 17 depuis le 2026-10-25 ; plan du 2026-10-27, décisions du planificateur à valider : pas de déplacement, FAT32 et exFAT non redimensionnés, MBR étendu en étiquette seulement)*
