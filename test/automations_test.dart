@@ -66,9 +66,11 @@ void main() {
   String allText(WidgetTester t) =>
       t.widgetList<RichText>(find.byType(RichText)).map((r) => r.text.toPlainText()).join('\n');
 
-  testWidgets('homeOpensAutomations', (t) async {
+  testWidgets('aiModuleOpensAutomations', (t) async {
     await pumpPage(t, withServer(), null);
-    await scrollTo(t, find.text(Fr.automations));
+    // 800 dp de large : le rail des modules
+    await t.tap(find.descendant(of: find.byType(NavigationRail), matching: find.text(Fr.moduleAi)));
+    await settle(t);
     await t.tap(find.text(Fr.automations));
     await settle(t);
     expect(find.byType(AutomationsScreen), findsOneWidget);

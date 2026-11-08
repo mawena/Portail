@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
+import '../analyzer/analyzer_home_screen.dart';
 import '../bridge/fluluks_api.g.dart';
 import '../state/app_state.dart';
 import '../state/prefs.dart';
@@ -19,22 +20,26 @@ import '../widgets/bottom_dock.dart';
 import '../widgets/breadcrumbs.dart';
 import '../widgets/clipboard_bar.dart';
 import '../widgets/decrypt_dialog.dart';
+import '../widgets/delete_dialog.dart';
 import '../widgets/entry_collection.dart';
 import '../widgets/properties_sheet.dart';
 import '../widgets/thumb.dart';
 import '../widgets/unlock_dialog.dart';
 import 'batch_rename_screen.dart';
 import 'encrypt_sheet.dart';
+import 'module_shell.dart';
 import 'search_screen.dart';
-import 'space_screen.dart';
 import 'trash_screen.dart';
 import 'vault_create_screen.dart';
 
-/// Ouvre l'explorateur sur [sourceId] (à la racine, ou sur [path]).
-Future<void> openExplorer(BuildContext context, AppState state, String sourceId, {String path = '/'}) =>
-    Navigator.of(context).push(MaterialPageRoute<void>(
-      builder: (_) => ExplorerScreen(state: state, sourceId: sourceId, path: path),
-    ));
+/// Ouvre l'explorateur sur [sourceId] (à la racine, ou sur [path]), dans le module [module] d'où qu'on vienne :
+/// Fichiers, sauf le contenu d'un coffre ouvert depuis le module Coffres.
+Future<void> openExplorer(BuildContext context, AppState state, String sourceId,
+    {String path = '/', PortailModule module = PortailModule.files}) {
+  final route = MaterialPageRoute<void>(builder: (_) => ExplorerScreen(state: state, sourceId: sourceId, path: path));
+  final shell = ModuleShell.maybeOf(context);
+  return shell == null ? Navigator.of(context).push(route) : shell.push(module, route);
+}
 
 String parentOf(String path) {
   final i = path.lastIndexOf('/');
@@ -133,6 +138,11 @@ class _ExplorerScreenState extends State<ExplorerScreen> {
       if (!state.takeClosedNotice(widget.sourceId)) return; // un autre explorateur s'en est chargé
       // message sur le ScaffoldMessenger de l'application : il reste affiché sur l'accueil
       showMessage(context, Fr.volumeClosed);
+      // pages plein écran ouvertes d'ici (visionneuse) comprises, si le module de cet explorateur est à l'écran
+      final shell = ModuleShell.maybeOf(context);
+      if (shell == null || shell.current == shell.moduleOf(context)) {
+        Navigator.of(context, rootNavigator: true).popUntil((r) => r.isFirst);
+      }
       Navigator.of(context).popUntil((r) => r.isFirst);
       return;
     }
@@ -414,6 +424,7 @@ class _ExplorerScreenState extends State<ExplorerScreen> {
 
   /// Dossier distant : pas de corbeille, suppression toujours définitive.
   bool get _remote => _source?.kind == 'remote';
+  bool get _decrypted => _source?.kind == 'decrypted';
 
   /// Serveur SFTP de ce dossier distant (« Ouvrir un terminal ici », phase 13), sinon null.
   RemoteServerMsg? get _sshServer {
@@ -429,22 +440,11 @@ class _ExplorerScreenState extends State<ExplorerScreen> {
   /// toujours définitif. Mise à la corbeille : le message propose « Annuler ».
   Future<void> _delete(List<String> paths) async {
     final inTrash = isInTrash(_path) || _remote;
-    final permanent = await showDialog<bool>(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        title: Text(paths.length == 1 ? Fr.deleteOne(nameOf(paths.single)) : Fr.deleteMany(paths.length)),
-        content: Text(_remote ? Fr.deleteRemoteBody : (inTrash ? Fr.deleteBody : Fr.deleteToTrashBody)),
-        actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx), child: const Text(Fr.cancel)),
-          if (!inTrash)
-            TextButton(
-              style: TextButton.styleFrom(foregroundColor: Theme.of(ctx).colorScheme.error),
-              onPressed: () => Navigator.pop(ctx, true),
-              child: const Text(Fr.deletePermanently),
-            ),
-          FilledButton(onPressed: () => Navigator.pop(ctx, inTrash), child: const Text(Fr.delete)),
-        ],
-      ),
+    final permanent = await confirmDelete(
+      context,
+      title: paths.length == 1 ? Fr.deleteOne(nameOf(paths.single)) : Fr.deleteMany(paths.length),
+      body: _remote ? Fr.deleteRemoteBody : (inTrash ? Fr.deleteBody : Fr.deleteToTrashBody),
+      trashOffered: !inTrash,
     );
     if (permanent == null) return;
     if (permanent) AppHaptics.warning(state);
@@ -664,7 +664,7 @@ class _ExplorerScreenState extends State<ExplorerScreen> {
             'asc' => _setPrefs(ascending: true),
             'desc' => _setPrefs(ascending: false),
             'trash' => openTrash(context, state, widget.sourceId),
-            'space' => openSpace(context, state, widget.sourceId),
+            'analyze' => analyzeLocation(context, state, widget.sourceId, _path),
             'terminal' => openTerminal(context, state, _sshServer!, startDir: _path),
             _ => _setPrefs(showHidden: !v.showHidden),
           },
@@ -677,11 +677,14 @@ class _ExplorerScreenState extends State<ExplorerScreen> {
             CheckedPopupMenuItem(value: 'desc', checked: !v.ascending, child: const Text(Fr.descending)),
             const PopupMenuDivider(),
             CheckedPopupMenuItem(value: 'hidden', checked: v.showHidden, child: const Text(Fr.showHidden)),
-            if (_path == '/') ...[
-              const PopupMenuDivider(),
-              if (!_remote) const PopupMenuItem(value: 'trash', child: Text(Fr.trash)),
-              const PopupMenuItem(value: 'space', child: Text(Fr.spaceAnalysis)),
-            ],
+            if (_path == '/' && !_remote || !_decrypted) const PopupMenuDivider(),
+            if (_path == '/' && !_remote) const PopupMenuItem(value: 'trash', child: Text(Fr.trash)),
+            // tout dossier, distant compris (avertissement d'abord) ; jamais une vue déchiffrée
+            if (!_decrypted)
+              PopupMenuItem(
+                value: 'analyze',
+                child: Text(_path == '/' && !_remote ? Fr.analyzeStorage : Fr.analyzeThisFolder),
+              ),
             if (_sshServer != null) ...[
               const PopupMenuDivider(),
               const PopupMenuItem(value: 'terminal', child: Text(Fr.openTerminalHere)),

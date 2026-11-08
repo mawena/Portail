@@ -18,7 +18,7 @@ Future<FakeHostApi> pump(WidgetTester tester, {FakeHostApi? api}) async {
   final state = AppState(a);
   await state.refresh();
   await tester.pumpWidget(FluLuksApp(state: state));
-  tester.state<NavigatorState>(find.byType(Navigator)).push(
+  tester.state<NavigatorState>(find.byType(Navigator).first).push(
       MaterialPageRoute<void>(builder: (_) => SearchScreen(state: state, sourceId: 'phone', path: '/DCIM')));
   await tester.pumpAndSettle();
   return a;
@@ -97,7 +97,7 @@ void main() {
     final state = AppState(api);
     await state.refresh();
     await tester.pumpWidget(FluLuksApp(state: state));
-    tester.state<NavigatorState>(find.byType(Navigator)).push(
+    tester.state<NavigatorState>(find.byType(Navigator).first).push(
         MaterialPageRoute<void>(builder: (_) => ExplorerScreen(state: state, sourceId: 'phone')));
     await tester.pumpAndSettle();
     await tester.tap(find.byTooltip('Rechercher'));

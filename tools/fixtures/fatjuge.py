@@ -4,6 +4,7 @@
 Usage :
   fatjuge.py manifest <img> <sortie>    manifeste au format de tm_write_manifest (tree_model.h)
   fatjuge.py free <img>                 octets libres (clusters libres × taille de cluster)
+  fatjuge.py alloc <img>                place allouée de chaque entrée, sur la sortie standard (phase 16)
   fatjuge.py locate <img> <chemin>      offset (octets) du premier cluster de données du fichier
   fatjuge.py set-ro <img> <chemin>      pose l'attribut lecture seule (0x01) sur l'entrée du fichier
   fatjuge.py build-exfat <img> <dossier>  remplit une image fraîche de mkfs.exfat avec le dossier
@@ -15,6 +16,10 @@ Manifeste : une ligne par entrée, triée par chemin (octets UTF-8), champs sép
 type (d/f), taille, condensat (« - » pour un dossier), uid (0), gid (0), mode octal (100644, 100444 si
 attribut lecture seule, 40755 pour un dossier), chemin. Condensat = sha256 de la suite des sha256 de
 chaque tranche de 1 Mio du contenu (dernière tranche plus courte).
+
+Place allouée (alloc) : une ligne par entrée, racine comprise, triée par chemin, séparée par des tabulations :
+chemin, octets alloués (clusters de la chaîne × taille du cluster ; 0 pour la racine fixe de FAT12/16), inode
+(0), liens (1).
 """
 import hashlib
 import os
@@ -249,6 +254,24 @@ class Fat:
     def tree(self):
         out = [("d", 0, "-", 0o40755, "/", self.root(), None)]
         self.walk(self.root(), "/", set(), out)
+        return out
+
+    def chain_bytes(self, start):
+        return len(self.chain(start)) * self.clsz if start else 0
+
+    def alloc_walk(self, start, path, seen, out):
+        for name, attr, clus, size, eoff in self.entries(start):
+            p = path.rstrip("/") + "/" + name
+            out.append((p, self.chain_bytes(clus)))
+            if attr & 0x10:
+                if clus in seen or clus == 0:
+                    raise Bad("dossier en boucle ou sans cluster : %s" % p)
+                seen.add(clus)
+                self.alloc_walk(clus, p, seen, out)
+
+    def alloc_tree(self):
+        out = [("/", self.chain_bytes(self.root()))]
+        self.alloc_walk(self.root(), "/", set(), out)
         return out
 
     def set_ro(self, eoff):
@@ -492,6 +515,24 @@ class ExFat:
         self.walk(raw, offs, "/", {self.rootclus}, out)
         return out
 
+    def alloc_walk(self, raw, offs, path, seen, out):
+        for name, attr, first, nofat, length, valid, eoff in self.entries(raw, offs):
+            p = path.rstrip("/") + "/" + name
+            n = 0 if not length else len(self.clusters(first, True, length)) if nofat else len(self.chain(first))
+            out.append((p, n * self.clsz))
+            if attr & 0x10:
+                if first in seen:
+                    raise Bad("dossier en boucle : %s" % p)
+                seen.add(first)
+                r2, o2 = self.dir_raw(first, nofat, length)
+                self.alloc_walk(r2, o2, p, seen, out)
+
+    def alloc_tree(self):
+        out = [("/", len(self.chain(self.rootclus)) * self.clsz)]
+        raw, offs = self.root_raw()
+        self.alloc_walk(raw, offs, "/", {self.rootclus}, out)
+        return out
+
     def bitmap(self):
         first, length = self.bitmap_ent
         return bytearray(b"".join(self.stream(first, False, length)))
@@ -690,6 +731,9 @@ def main(argv):
                     f.write("%s\t%d\t%s\t0\t0\t%o\t%s\n" % (t, size, dig, mode, p))
         elif cmd == "free":
             print(fs.free_bytes())
+        elif cmd == "alloc":
+            for p, n in sorted(fs.alloc_tree(), key=lambda e: e[0].encode("utf-8", "surrogatepass")):
+                print("%s\t%d\t0\t1" % (p, n))
         elif cmd == "locate":
             clus, eoff = find(fs, argv[3])
             if clus < 2:

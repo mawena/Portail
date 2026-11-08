@@ -40,6 +40,9 @@ class ChatHub extends ChangeNotifier {
   /// Une réponse est en cours dans [id].
   bool isRunning(int id) => _running.contains(id);
 
+  /// Une réponse est en cours, dans une conversation au moins (point d'activité du module IA).
+  bool get busy => _running.isNotEmpty;
+
   /// Conversation [id] si elle a été ouverte ([open]).
   ChatThread? thread(int id) => _threads[id];
 

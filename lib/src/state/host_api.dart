@@ -67,9 +67,19 @@ abstract class HostApi implements AiApi {
   Future<void> forgetVault(String vaultId);
   Future<SearchResultMsg> search(String sourceId, String path, String query, bool showHidden);
   Future<void> cancelSearch();
-  Future<SpaceReportMsg> analyzeSpace(String sourceId, String path);
-  Future<SpaceReportMsg> spaceChildren(String sourceId, String path);
   Future<void> cancelAnalysis();
+
+  // analyseur de stockage (phase 16) ; avancement par onAnalysisProgress
+  Future<String> startAnalysis(String sourceId, String path);
+  Future<List<AnalysisSummaryMsg>> analyses();
+  Future<void> forgetAnalysis(String scanId);
+  Future<AnalysisViewMsg> analysisView(String scanId, int node, int depth, int maxNodes);
+  Future<List<AnalysisNodeMsg>> analysisChildren(String scanId, int node, String sort, int offset, int limit);
+  Future<List<EntryMsg>> analysisBiggest(String scanId, int node);
+  Future<void> analysisDelete(String scanId, int node, bool permanent);
+  Future<void> analysisExclude(String scanId, int node);
+  Future<List<AnalysisExclusionMsg>> analysisExclusions();
+  Future<void> removeAnalysisExclusion(String stableKey, String path);
   Future<DetailsMsg> details(String sourceId, String path);
   Future<FolderSizeMsg> folderSize(String sourceId, String path);
   Future<String?> sha256(String sourceId, String path);
@@ -269,11 +279,29 @@ class PigeonHostApi with PigeonAiApi implements HostApi {
   @override
   Future<void> cancelSearch() => _api.cancelSearch();
   @override
-  Future<SpaceReportMsg> analyzeSpace(String sourceId, String path) => _api.analyzeSpace(sourceId, path);
-  @override
-  Future<SpaceReportMsg> spaceChildren(String sourceId, String path) => _api.spaceChildren(sourceId, path);
-  @override
   Future<void> cancelAnalysis() => _api.cancelAnalysis();
+  @override
+  Future<String> startAnalysis(String sourceId, String path) => _api.startAnalysis(sourceId, path);
+  @override
+  Future<List<AnalysisSummaryMsg>> analyses() => _api.analyses();
+  @override
+  Future<void> forgetAnalysis(String scanId) => _api.forgetAnalysis(scanId);
+  @override
+  Future<AnalysisViewMsg> analysisView(String scanId, int node, int depth, int maxNodes) =>
+      _api.analysisView(scanId, node, depth, maxNodes);
+  @override
+  Future<List<AnalysisNodeMsg>> analysisChildren(String scanId, int node, String sort, int offset, int limit) =>
+      _api.analysisChildren(scanId, node, sort, offset, limit);
+  @override
+  Future<List<EntryMsg>> analysisBiggest(String scanId, int node) => _api.analysisBiggest(scanId, node);
+  @override
+  Future<void> analysisDelete(String scanId, int node, bool permanent) => _api.analysisDelete(scanId, node, permanent);
+  @override
+  Future<void> analysisExclude(String scanId, int node) => _api.analysisExclude(scanId, node);
+  @override
+  Future<List<AnalysisExclusionMsg>> analysisExclusions() => _api.analysisExclusions();
+  @override
+  Future<void> removeAnalysisExclusion(String stableKey, String path) => _api.removeAnalysisExclusion(stableKey, path);
   @override
   Future<DetailsMsg> details(String sourceId, String path) => _api.details(sourceId, path);
   @override

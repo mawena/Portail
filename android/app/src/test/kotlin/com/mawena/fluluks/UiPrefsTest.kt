@@ -59,4 +59,17 @@ class UiPrefsTest {
         store.m["ui_terminal_font"] = "2"
         assertEquals(8, UiPrefs(store).get().terminalFontSize)
     }
+
+    /** Phase 16 : graphique et profondeur de l'analyseur, bornés. */
+    @Test fun analyzerChartAndDepth() {
+        assertEquals("rings", UiPrefs(store).get().analyzerChart)
+        assertEquals(4, UiPrefs(store).get().analyzerDepth)
+        UiPrefs(store).set(UiSettings(analyzerChart = "treemap", analyzerDepth = 12))
+        assertEquals("treemap", UiPrefs(store).get().analyzerChart)
+        assertEquals(8, UiPrefs(store).get().analyzerDepth)
+        store.m["analyseur_graphique"] = "camembert"
+        store.m["analyseur_profondeur"] = "1"
+        assertEquals("rings", UiPrefs(store).get().analyzerChart)
+        assertEquals(2, UiPrefs(store).get().analyzerDepth)
+    }
 }

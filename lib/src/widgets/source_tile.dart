@@ -35,14 +35,14 @@ class TonalIcon extends StatelessWidget {
 }
 
 /// Un stockage de l'accueil : libellé, place libre en chiffres tabulaires et jauge d'occupation (« Espace
-/// inconnu » pour un dossier distant) ; menu « Options de … » : corbeille et analyse de l'espace, si données.
+/// inconnu » pour un dossier distant) ; menu « Options de … » : corbeille et « Analyser le stockage », si données.
 class SourceTile extends StatelessWidget {
-  const SourceTile({super.key, required this.source, required this.onTap, this.onTrash, this.onSpace});
+  const SourceTile({super.key, required this.source, required this.onTap, this.onTrash, this.onAnalyze});
 
   final SourceMsg source;
   final VoidCallback? onTap;
   final VoidCallback? onTrash;
-  final VoidCallback? onSpace;
+  final VoidCallback? onAnalyze;
 
   @override
   Widget build(BuildContext context) {
@@ -65,22 +65,22 @@ class SourceTile extends StatelessWidget {
             if (total >= 0) ...[const SizedBox(height: Space.s), UsageBar(used: used.toDouble())],
           ],
         ),
-        trailing: onTrash == null && onSpace == null
+        trailing: onTrash == null && onAnalyze == null
             ? const Icon(Icons.chevron_right_rounded)
             : PopupMenuButton<String>(
                 tooltip: Fr.sourceMenu(source.label),
                 icon: const Icon(Icons.more_vert_rounded),
-                onSelected: (v) => (v == 'trash' ? onTrash : onSpace)?.call(),
+                onSelected: (v) => (v == 'trash' ? onTrash : onAnalyze)?.call(),
                 itemBuilder: (_) => [
                   if (onTrash != null)
                     const PopupMenuItem(
                       value: 'trash',
                       child: ListTile(leading: Icon(Icons.delete_outline_rounded), title: Text(Fr.trash)),
                     ),
-                  if (onSpace != null)
+                  if (onAnalyze != null)
                     const PopupMenuItem(
-                      value: 'space',
-                      child: ListTile(leading: Icon(Icons.pie_chart_outline_rounded), title: Text(Fr.spaceAnalysis)),
+                      value: 'analyze',
+                      child: ListTile(leading: Icon(Icons.pie_chart_outline_rounded), title: Text(Fr.analyzeStorage)),
                     ),
                 ],
               ),

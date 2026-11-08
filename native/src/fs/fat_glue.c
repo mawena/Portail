@@ -212,19 +212,31 @@ static int64_t fat_time(WORD d, WORD t) {
   return r == (time_t)-1 ? 0 : (int64_t)r;
 }
 
-static void fill_stat(const FILINFO *fi, fl_stat *out) {
+/* Taille d'un cluster en octets (≤ 32 Mio en exFAT). */
+static uint64_t cluster_bytes(const fat_vol *v) { return (uint64_t)v->ff.csize * v->ss; }
+
+/* Place allouée : la taille arrondie au cluster pour un fichier ; un cluster pour un dossier, sans suivre sa
+ * chaîne (FatFs ne donne pas la taille d'un dossier : quelques clusters d'écart sur un très gros dossier). */
+static void fill_stat(const fat_vol *v, const FILINFO *fi, fl_stat *out) {
   memset(out, 0, sizeof *out);
   bool dir = fi->fattrib & AM_DIR;
+  uint64_t cl = cluster_bytes(v);
   out->type = dir ? FL_FT_DIR : FL_FT_FILE;
   out->size = dir ? 0 : (uint64_t)fi->fsize;
   out->mtime = fat_time(fi->fdate, fi->ftime);
   out->mode = dir ? 040755 : (fi->fattrib & AM_RDO) ? 0100444 : 0100644;
+  /* taille d'une entrée exFAT hostile proche de 2^64 : bornée plutôt que repliée */
+  out->alloc = dir ? cl : out->size > UINT64_MAX - cl ? out->size : (out->size + cl - 1) / cl * cl;
+  out->nlink = 1;
 }
 
-static void root_stat(fl_stat *out) {
+/* Racine : un cluster en FAT32 et exFAT, aucun pour la zone fixe de FAT12/16. */
+static void root_stat(const fat_vol *v, fl_stat *out) {
   memset(out, 0, sizeof *out);
   out->type = FL_FT_DIR;
   out->mode = 040755;
+  out->alloc = v->ff.fs_type == FS_FAT32 || v->ff.fs_type == FS_EXFAT ? cluster_bytes(v) : 0;
+  out->nlink = 1;
 }
 
 /* FR_NO_PATH : un composant intermédiaire manque (FL_ENOENT) ou n'est pas un dossier (FL_ENOTDIR). Sous
@@ -268,8 +280,8 @@ static int f_stat_op(fl_fs *fs, const char *path, fl_stat *out) {
   int rc = stat_locked(v, path, &fi, &root);
   pthread_mutex_unlock(&g_fat_lock);
   if (rc != FL_OK) return rc;
-  if (root) root_stat(out);
-  else fill_stat(&fi, out);
+  if (root) root_stat(v, out);
+  else fill_stat(v, &fi, out);
   return FL_OK;
 }
 
@@ -309,7 +321,7 @@ static int f_readdir_op(fl_fs *fs, const char *path, fl_readdir_cb cb, void *ctx
       }
       if (!strcmp(fi->fname, ".") || !strcmp(fi->fname, "..")) continue;
       snprintf(batch[n].name, sizeof batch[n].name, "%s", fi->fname);
-      fill_stat(fi, &batch[n].st);
+      fill_stat(v, fi, &batch[n].st);
       n++;
     }
     pthread_mutex_unlock(&g_fat_lock);

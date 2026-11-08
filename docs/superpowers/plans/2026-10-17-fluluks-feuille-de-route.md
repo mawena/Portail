@@ -423,7 +423,7 @@ dans le même commit que le travail.
 
 ### Phase 16 — Analyseur de stockage, comme celui d'Ubuntu ([plan](2026-10-25-phase16-analyseur.md))
 - [x] Plan de la phase 16 écrit *(demande du 2026-10-25 ; spec § 26)*
-- [ ] T1 — Barre de navigation entre les modules (Fichiers, Coffres, Distants, IA ; l'Analyseur y entre en T10), rail sur grand écran *(demande du 2026-10-26, Coffres demandé le 2026-10-27 ; spec § 27 ; code commité, reste le démarrage sur le Pixel)*
+- [x] T1 — Barre de navigation entre les modules (Fichiers, Coffres, Distants, IA ; l'Analyseur y entre en T10), rail sur grand écran *(demande du 2026-10-26, Coffres demandé le 2026-10-27 ; spec § 27 ; démarrage sur le Pixel le 2026-10-27 : cinq modules affichés, sans plantage)*
 - [x] T2 — Moteur : place allouée, inode et liens physiques dans la liste d'un dossier (ext4, FAT, exFAT, NTFS) *(test_fs_alloc 8 cas jugés par debugfs, fatjuge.py et ntfsjuge.py ; 50/50 tests natifs sur PC ; passage sur le Pixel en attente)*
 - [x] T3 — Liste d'un dossier avec sa place réelle : téléphone et cartes SD par lstat, disques et coffres par le moteur, distant en taille apparente *(DuListTest 11 ; lstat avant hasAccess, qui reste la lambda finale ; 668 tests JVM, 823 Flutter)*
 - [x] T4 — Arbre compact et parcours itératif borné (liens physiques une fois, fichiers creux, dossiers inaccessibles, exclusions) *(DuTreeTest 8, ScannerTest 18 ; sous-dossier illisible sur un disque montré inaccessible, comme en phase 9 ; 668 tests JVM)*
@@ -434,21 +434,29 @@ dans le même commit que le travail.
 - [x] T9 — Écran de l'analyse : arbre synchronisé, fil d'Ariane, profondeur, actions (explorateur, chemin, propriétés, corbeille) *(analyzer_screen_test 17 ; dialogue de suppression partagé avec l'explorateur ; images de référence analyzer_light et analyzer_dark ; 892 tests Flutter)*
 - [x] T10 — Accueil de l'analyseur (module de la barre), points d'entrée, emplacements exclus ; retrait de l'analyse de la phase 9 *(analyzer_home_test 10 ; module Analyseur troisième de la barre, après Coffres ; Réglages → Analyseur de stockage → Emplacements exclus ; analyse de l'espace de la phase 9 retirée (Pigeon, Kotlin, Dart) ; 902 tests Flutter, 664 JVM)*
 - [x] T11 — Documentation *(README : analyseur de stockage, barre de navigation, renvois aux modules, limites, commandes de `test_fs_alloc` et des juges ; aide : deux questions ; [fiche d'essai](../research/2026-10-27-essais-phase16/essais.md) ; 902 tests Flutter)*
-- [ ] Essais Pixel reportés (téléphone non joignable le 2026-10-27) : démarrage de T1, tests natifs de T2
-- [ ] T12 — Essais instrumentés sur le Pixel
-- [ ] *(utilisateur)* T13 — Essais sur le Pixel (comparaison avec Baobab sous Ubuntu)
-- [ ] Relecture finale de toute la branche
-- [ ] Fusion `feature/analyseur` → `develop`
-- [ ] Version `v1.9.0`
+- [x] Essais Pixel reportés (téléphone non joignable le 2026-10-27) : démarrage de T1, tests natifs de T2 *(faits le 2026-10-27 l'après-midi : démarrage et cinq modules ; 23 suites natives OK sur le Pixel)*
+- [x] T12 — Essais instrumentés sur le Pixel *(AnalyzerInstrumentedTest 5/5 : stockage partagé entier en 0,5 s (4 105 fichiers, 7,1 Go vus sur 42,8 Go occupés), 50 000 fichiers en 1,2 s pour +20 Mio Java, image ext4 égale au manifeste ; Android/data monté à part corrigé ; 666 tests JVM)*
+- [x] *(utilisateur)* T13 — Essais sur le Pixel (comparaison avec Baobab sous Ubuntu) *(fiche : 41 lignes réussies, le 2026-10-27, disque USB, Baobab et TalkBack faits par l'utilisateur ; quatre défauts trouvés et corrigés, chacun avec son test : rail invisible pour TalkBack en paysage, Réanalyser qui doublait l'analyse, propriétés sans la place sur le disque, onglet coupé à 200 %)*
+- [x] Relecture finale de toute la branche *(relue par l'auteur, sans relecteur neuf, en visant suppression et corbeille depuis l'analyse, verrou de l'arbre pendant le parcours, liste des dossiers par lstat et code natif ; aucun point critique ni important ; mineurs reportés : un écran resté ouvert sur une analyse oubliée montre « Cette analyse n'est plus disponible » sans Réanalyser, bouton ⋮ de l'explorateur lu « Trier par », chevron de l'arbre sans nœud d'accessibilité à lui, taille vue dans la liste des analyses quand l'en-tête donne le total)*
+- [x] Fusion `feature/analyseur` → `develop` *(2026-10-27, à la demande de l'utilisateur, avant ses essais sur le Pixel ; branche supprimée ; version à publier après les essais)*
+- [x] Version `v1.9.0` *(2026-10-27)*
 
-### Phase 17 — Gestion des partitions, comme GParted
-- [ ] Plan de la phase 17 écrit *(demande du 2026-10-22 ; spec § 17, § 24, § 25 et § 26 ; phase 12, puis 13, 14, 15, 16, 17 et 15, jusqu'au 2026-10-25, puis 16, puis 17 depuis le 2026-10-25)*
-- [ ] Vue du disque : partitions et espace libre à l'échelle, système de fichiers, étiquette, taille, place occupée
-- [ ] Taille choisie au formatage ; créer une partition dans un espace libre, en supprimer une, formater une seule partition
-- [ ] Changer l'étiquette d'une partition ; nouvelle table MBR ou GPT
-- [ ] Redimensionner (agrandir, réduire) : ext4 par resize2fs, NTFS par ntfsresize, système de fichiers dans LUKS2 ; FAT32 et exFAT à étudier
-- [ ] Déplacer une partition, si le plan sait le rendre sûr
-- [ ] Opérations préparées, résumées, puis appliquées après confirmation
+### Phase 17 — Gestion des partitions, comme GParted ([plan](2026-10-27-phase17-partitions.md))
+- [x] Plan de la phase 17 écrit *(demande du 2026-10-22 ; spec § 17, § 24, § 25 et § 26 ; phase 12, puis 13, 14, 15, 16, 17 et 15, jusqu'au 2026-10-25, puis 16, puis 17 depuis le 2026-10-25 ; plan du 2026-10-27, décisions du planificateur à valider : pas de déplacement, FAT32 et exFAT non redimensionnés, MBR étendu en étiquette seulement)*
+- [x] T1 — Moteur : table de partitions modifiable (GPT et MBR gardés tels quels hors changement, nouvelle table, espaces libres) *(test_part_layout 11 cas jugés par sfdisk et sgdisk, coupure à chaque écriture ; table de la phase 8 écrite par fl_pt_store ; 52/52 tests natifs hors lents, ASan/UBSan propres)*
+- [x] T2 — Moteur : créer, supprimer, formater une partition ; taille au formatage ; place occupée *(test_partops 9 cas jugés par fsck.fat, fsck.exfat, e2fsck, ntfsfix, cryptsetup et sfdisk ; formatage d'une tranche partagé avec la phase 8 ; 52/52 tests natifs, 902 Flutter, 664 JVM ; vérification par le noyau à lancer par l'utilisateur (sudo))*
+- [ ] T3 — e2fsprogs dans le moteur : vérification en lecture seule (`e2fsck -fn`) et redimensionnement d'ext4 (`resize2fs`)
+- [ ] T4 — `ntfsresize` et `ntfsfix -n` dans le moteur
+- [ ] T5 — Étiquette d'une partition (FAT32, exFAT, ext4, NTFS, dans LUKS)
+- [ ] T6 — Agrandir et réduire une partition et son système de fichiers (ext4, NTFS, dans LUKS1 et LUKS2)
+- [ ] T7 — JNI, gestionnaire des partitions en Kotlin et pont Pigeon
+- [ ] T8 — Opérations en attente et aperçu du disque (Dart)
+- [ ] T9 — Écran du disque comme GParted : barre à l'échelle, actions, résumé, application ; taille dans l'écran de formatage
+- [ ] T10 — Documentation
+- [ ] T11 — Essais instrumentés sur le Pixel
+- [ ] *(utilisateur)* T12 — Essais sur le Pixel avec une clé USB sacrifiée
+- [ ] Relecture finale de toute la branche
+- [ ] Fusion `feature/partitions` → `develop`
 - [ ] Version `v1.10.0`
 
 ### Phase 18 — Vérification et réparation des disques

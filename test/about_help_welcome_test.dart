@@ -107,7 +107,7 @@ void main() {
     addTearDown(tester.view.reset);
     await pumpApp(tester, FakeHostApi());
     await homeMenu(tester, Fr.help);
-    expect(find.byType(ExpansionTile), findsNWidgets(16));
+    expect(find.byType(ExpansionTile), findsNWidgets(18));
     final titles = [
       'Ouvrir un disque chiffré',
       'Pourquoi mon disque s\'ouvre en lecture seule ?',
@@ -125,6 +125,8 @@ void main() {
       'Connecter un serveur IA',
       'Discuter avec un modèle',
       'Créer une automatisation',
+      "Qu'est-ce qui remplit mon téléphone ?",
+      "Pourquoi l'analyse ne compte pas tout ?",
     ];
     expect(Fr.helpEntries.map((e) => e.$1).toList(), titles);
     for (final (title, answer) in Fr.helpEntries) {

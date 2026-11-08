@@ -269,16 +269,14 @@ class Fr {
   static const deletePermanently = 'Supprimer définitivement';
   static const deleteToTrashBody = 'Les éléments restent 30 jours dans la corbeille de ce stockage.';
   static const trashNote = 'Les éléments supprimés depuis plus de 30 jours sont effacés.';
-  static const spaceAnalysis = "Analyse de l'espace";
-  static const spaceFolders = 'Dossiers';
   static const biggestFiles = 'Plus gros fichiers';
   static const analyzing = 'Analyse en cours…';
-  static const spaceTruncated = "Analyse incomplète\u00A0: arrêtée, ou trop d'éléments";
   static const properties = 'Propriétés';
   static const moreActions = "Plus d'actions";
   static const location = 'Emplacement';
   static const typeLabel = 'Type';
   static const sizeLabel = 'Taille';
+  static const onDiskLabel = 'Sur le disque';
   static const modifiedLabel = 'Modifié le';
   static const fsLabel = 'Système de fichiers';
   static const permissionsLabel = 'Droits';
@@ -601,7 +599,7 @@ class Fr {
     ),
     (
       'Les dossiers distants (FTP, SFTP)',
-      "Ajoutez un serveur dans la section Dossiers distants de l'accueil : il se parcourt ensuite comme les "
+      "Ajoutez un serveur dans le module Distants de la barre : il se parcourt ensuite comme les "
           'autres stockages. En SFTP, comparez l\'empreinte montrée à la première connexion à celle du serveur : '
           "une clé changée est refusée. FTP n'est pas chiffré : préférez SFTP hors de chez vous."
     ),
@@ -632,8 +630,8 @@ class Fr {
     ),
     (
       'Créer et ouvrir un coffre',
-      "Un coffre est un fichier chiffré qui s'ouvre comme un disque\u00A0: Créer un coffre dans la section Coffres de "
-          "l'accueil, ou Nouveau coffre… depuis le bouton Créer de l'explorateur. Ouvert, il se parcourt comme les "
+      "Un coffre est un fichier chiffré qui s'ouvre comme un disque\u00A0: Créer un coffre dans le module Coffres de "
+          "la barre, ou Nouveau coffre… depuis le bouton Créer de l'explorateur. Ouvert, il se parcourt comme les "
           "autres stockages et apparaît dans l'application Fichiers\u00A0; Fermer efface sa clé. Sous Linux, il s'ouvre "
           'par cryptsetup, ou par un double-clic après udisksctl loop-setup.'
     ),
@@ -653,17 +651,33 @@ class Fr {
     ),
     (
       'Discuter avec un modèle',
-      "Chat IA, dans la section IA de l'accueil, puis Nouvelle conversation\u00A0: la réponse s'affiche au fur et à "
+      "Chat IA, dans le module IA de la barre, puis Nouvelle conversation\u00A0: la réponse s'affiche au fur et à "
           "mesure, et Arrêter la coupe. Le serveur et le modèle se changent en touchant leur nom sous le titre, le "
           'prompt système dans le menu ⋮. Les conversations restent sur le téléphone et ne partent que vers le '
           'serveur choisi.'
     ),
     (
       'Créer une automatisation',
-      "Automatisations, dans la section IA de l'accueil, puis Nouvelle automatisation\u00A0: un prompt réutilisable où "
+      "Automatisations, dans le module IA de la barre, puis Nouvelle automatisation\u00A0: un prompt réutilisable où "
           "{{nom}} devient une valeur à saisir au lancement, {{date}} et {{heure}} étant remplies par Portail. Lancez-la "
           "à la main depuis sa fiche, ou planifiez-la toutes les 15 minutes au plus souvent, avec les valeurs par "
           'défaut\u00A0; son historique garde les 50 dernières exécutions.'
+    ),
+    (
+      "Qu'est-ce qui remplit mon téléphone ?",
+      "Touchez Analyseur dans la barre, puis Téléphone\u00A0: l'analyse compte la place réellement occupée par chaque "
+          "dossier et la montre en anneaux ou en carte, avec l'arbre trié par taille. Touchez un dossier pour y entrer, "
+          "glissez le doigt sur le graphique pour lire un nom et sa taille, et faites un appui long pour l'afficher dans "
+          "l'explorateur ou le mettre à la corbeille. Une mise à la corbeille ne libère la place qu'au vidage de la "
+          'corbeille.'
+    ),
+    (
+      "Pourquoi l'analyse ne compte pas tout ?",
+      "Android interdit de lire Android/data et Android/obb, et Portail ne voit ni les applications installées ni le "
+          "système\u00A0: quand tout le téléphone est analysé, cette place apparaît à part, en «\u00A0Applications, "
+          "système et dossiers protégés\u00A0». Les emplacements exclus (Réglages, Analyseur de stockage) et les autres "
+          "systèmes de fichiers ne sont pas parcourus. Ce qui est dans la corbeille compte encore, jusqu'à ce qu'elle "
+          'soit vidée.'
     ),
   ];
   static const addFavorite = 'Ajouter aux favoris';
@@ -740,8 +754,6 @@ class Fr {
   static String emptyTrashBody(int n) =>
       n < 2 ? "L'élément sera supprimé définitivement." : 'Les $n éléments seront supprimés définitivement.';
   static String actionsOf(String name) => 'Actions de $name';
-  static String spaceTotal(int bytes, int files) => '${humanSize(bytes)} — ${count(files, 'fichier', 'fichiers')}';
-  static String spaceOthers(int n) => '… et ${count(n, 'autre élément', 'autres éléments')}';
   static String percent(int p) => '$p\u202F%';
   static String folderSize(int bytes, int files, int dirs, {bool truncated = false}) =>
       '${truncated ? 'Au moins ' : ''}${humanSize(bytes)} — ${count(files, 'fichier', 'fichiers')}, '
@@ -1007,4 +1019,133 @@ class Fr {
   static const automationShareResult = 'Partager le résultat';
   static const automationStopped = 'Exécution arrêtée';
   static const automationInterrupted = "Interrompue\u00A0: Portail a été fermé pendant l'exécution";
+
+  // --- barre de navigation entre les modules (phase 16, T1)
+  static const moduleFiles = 'Fichiers';
+  static const moduleVaults = 'Coffres';
+  static const moduleAnalyzer = 'Analyseur';
+  static const moduleRemote = 'Distants';
+  static const moduleAi = 'IA';
+
+  static String moduleBusy(String module) => '$module, activité en cours';
+  static const remoteNoServers = 'Aucun serveur';
+  static const vaultsNoneTitle = 'Aucun coffre';
+  static const sectionSsh = 'SSH';
+  static const remoteNoServersBody =
+      'Ajoutez un serveur SFTP ou FTP pour parcourir ses dossiers\u202F; un serveur SFTP ouvre aussi un terminal SSH.';
+  static const tunnelsHelp = 'Ports du téléphone reliés à un service du serveur';
+  static const tunnelsNeedSftp = 'Ajoutez un serveur SFTP pour préparer des tunnels';
+  static const tunnelsChooseServer = 'Tunnels de quel serveur\u202F?';
+  static String aiServersCount(int n) => n == 0 ? aiServersHelp : count(n, 'serveur', 'serveurs');
+
+  // --- analyseur de stockage (phase 16)
+  /// Même texte que `Analyzer.MSG_GONE` côté Kotlin.
+  static const analysisGone = "Cette analyse n'est plus disponible";
+  static const analysisOthers = 'Autres';
+  static const chartRings = 'Graphique en anneaux';
+  static const chartTreemap = 'Carte proportionnelle';
+
+  /// Résumé lu par TalkBack : « Graphique en anneaux de Téléphone : Photos, 12,3 Go, 45 % ; … » (cinq plus gros).
+  static String chartSummary(String kind, String root, List<(String, int, int)> top) {
+    final what = kind == 'treemap' ? chartTreemap : chartRings;
+    final parts = [for (final (name, bytes, pct) in top) '$name, ${humanSize(bytes)}, ${percent(pct)}'];
+    return parts.isEmpty ? '$what de $root' : '$what de $root\u00A0: ${parts.join('\u202F; ')}';
+  }
+
+  static String ofParent(int pct, String parent) => '${percent(pct)} de $parent';
+
+  /// Place occupée et taille des données quand elles diffèrent (fichier creux, petits fichiers, compression).
+  static String onDiskOfData(int alloc, int apparent) =>
+      '${humanSize(alloc)} sur le disque (${humanSize(apparent)} de données)';
+
+  static String analysisItems(int n) => count(n, 'élément', 'éléments');
+
+  // écran de l'analyse (phase 16, T9)
+  static const reanalyze = 'Réanalyser';
+  static const chartChoice = 'Graphique';
+  static const chartNone = 'Sans graphique';
+  static const fewerLevels = 'Moins de niveaux';
+  static const moreLevels = 'Plus de niveaux';
+  static const sortItems = 'Éléments';
+  static const analysisContent = 'Contenu';
+  static const showMore = 'Afficher plus';
+  static const expand = 'Développer';
+  static const collapse = 'Replier';
+  static const actions = 'Actions';
+  static const showInExplorer = "Afficher dans l'explorateur";
+  static const copyPath = 'Copier le chemin';
+  static const pathCopied = 'Chemin copié';
+  static const excludeFromAnalyses = 'Exclure des analyses';
+  static const excludedFromAnalyses = 'Exclu des analyses suivantes de ce stockage';
+  static const openTrash = 'Ouvrir la corbeille';
+  static const analysisPartial = 'Résultats partiels\u00A0: analyse arrêtée';
+  static const analysisSimplified = "Trop d'éléments\u00A0: le détail des plus petits dossiers est résumé";
+  static const analysisRemoteNotice = 'Dossier distant\u00A0: tailles annoncées par le serveur';
+  static const analysisInaccessible = 'Accès refusé par Android';
+  static const analysisExcluded = 'Exclu des analyses';
+  static const analysisOtherFs = 'Autre système de fichiers, non parcouru';
+  static const analysisOthersHelp = 'Éléments trop petits pour être montrés un à un, ou résumés';
+  static const analysisUnscannedHelp =
+      "Place occupée que l'analyse ne voit pas\u00A0: applications, système, dossiers protégés, réserve du système de fichiers";
+  static const trashedFromAnalysis = 'Mis à la corbeille\u00A0: la place sera libérée quand la corbeille sera vidée';
+
+  /// « 12345 fichiers · 4,2 Go ».
+  static String analysisProgress(int files, int bytes) => '${count(files, 'fichier', 'fichiers')} · ${humanSize(bytes)}';
+
+  /// Titre de la confirmation : « Supprimer « Photos » (12,3 Go) ? ».
+  static String deleteSized(String name, int bytes) => 'Supprimer «\u00A0$name\u00A0» (${humanSize(bytes)})\u202F?';
+
+  static String nodeKindLabel(String kind) => switch (kind) {
+        'dir' => 'dossier',
+        'trash' => 'corbeille',
+        'file' => 'fichier',
+        'others' => 'contenu résumé',
+        'unscanned' => 'hors analyse',
+        'inaccessible' => analysisInaccessible.toLowerCase(),
+        'excluded' => analysisExcluded.toLowerCase(),
+        _ => 'autre système de fichiers',
+      };
+
+  /// Ligne de l'arbre lue par TalkBack : « Photos, dossier, 12,3 Go, 45 % de Téléphone, 1234 éléments, modifié hier ».
+  static String analysisRow(String name, String kind, int bytes, int pct, String parent, int? items, int? mtime) => [
+        name,
+        nodeKindLabel(kind),
+        humanSize(bytes),
+        ofParent(pct, parent),
+        if (items != null) analysisItems(items),
+        if (mtime != null && mtime > 0) 'modifié ${friendlyDate(mtime).toLowerCase()}',
+      ].join(', ');
+
+  // accueil de l'analyseur, points d'entrée, emplacements exclus (phase 16, T10)
+  static const analyzerLocations = 'Emplacements';
+  static const analyzeFolder = 'Analyser un dossier…';
+  static const analyzerKept = 'Analyses de la session';
+  static const analyze = 'Analyser';
+  static const analyzeStorage = 'Analyser le stockage';
+  static const analyzeThisFolder = 'Analyser ce dossier';
+  static const forgetAnalysis = 'Oublier';
+  static const analysisRunning = 'Analyse en cours';
+  static const analysisRemoteWarningTitle = 'Analyser un dossier distant ?';
+  static const analysisRemoteWarning =
+      "L'analyse lit chaque dossier par le réseau : elle peut être longue. Les tailles sont celles annoncées par le serveur.";
+  static String stopAnalysisTitle(String label) => "Arrêter l'analyse de $label ?";
+  static const stopAnalysisBody = 'Ses résultats partiels restent dans les analyses de la session.';
+  static String analysisMenu(String label) => "Options de l'analyse de $label";
+
+  /// « 12,3 Go · 4 567 fichiers · partielle · aujourd'hui, 10:42 ».
+  static String analysisSummary(int bytes, int files, String state, int? finishedSeconds) => [
+        humanSize(bytes),
+        count(files, 'fichier', 'fichiers'),
+        if (state == 'cancelled') 'partielle',
+        if (state == 'failed') 'interrompue',
+        if (finishedSeconds != null) friendlyDate(finishedSeconds).toLowerCase(),
+      ].join(' · ');
+
+  static const sectionAnalyzer = 'Analyseur de stockage';
+  static const analysisExclusions = "Emplacements exclus de l'analyse";
+  static const analysisExclusionsHelp = 'Dossiers ignorés par les analyses, stockage par stockage';
+  static const noAnalysisExclusions = 'Aucun emplacement exclu';
+  static const noAnalysisExclusionsBody =
+      'Dans une analyse, touchez longuement un dossier, puis « Exclure des analyses ».';
+  static const removeExclusion = 'Ne plus exclure';
 }

@@ -14,6 +14,7 @@ import 'terminal_hub.dart';
 Future<SnippetMsg?> showSnippetsSheet(BuildContext context, AppState state, TerminalEntry entry) =>
     showModalBottomSheet<SnippetMsg>(
       context: context,
+      useRootNavigator: true, // au-dessus de la barre des modules
       isScrollControlled: true,
       showDragHandle: true,
       builder: (_) => SnippetsSheet(state: state, entry: entry),

@@ -2,6 +2,10 @@ package com.mawena.fluluks.files
 
 import android.net.Uri
 import androidx.core.content.FileProvider
+import com.mawena.fluluks.analyzer.AndroidLstat
+import com.mawena.fluluks.analyzer.DuEntry
+import com.mawena.fluluks.analyzer.Lstat
+import com.mawena.fluluks.analyzer.SizeKind
 import com.mawena.fluluks.engine.FileType
 import com.mawena.fluluks.provider.DocNames
 import com.mawena.fluluks.provider.DocumentIds
@@ -19,13 +23,14 @@ import java.nio.file.LinkOption
 /**
  * Stockage du téléphone ou carte SD, par java.io.File sous [root]. Un chemin dont le chemin canonique sort
  * de [root] (lien symbolique vers l'extérieur) est refusé. [hasAccess] : faux tant que l'accès à tous les
- * fichiers n'est pas accordé.
+ * fichiers n'est pas accordé (dernier paramètre : lambda finale). [lstat] : celui d'Android, remplacé dans les tests.
  */
 class LocalSource(
     override val id: String,
     override val stableKey: String,
     override val label: String,
     internal val root: File,
+    private val lstat: Lstat = AndroidLstat,
     private val hasAccess: () -> Boolean,
 ) : FileSource {
     override val readOnlyReason: String?
@@ -78,15 +83,46 @@ class LocalSource(
             (parts[1].equals("data", ignoreCase = true) || parts[1].equals("obb", ignoreCase = true))
     }
 
-    override fun list(path: String): List<Entry> {
+    /** Dossier lisible de [path] (mêmes contrôles pour [list] et [duList]). */
+    private fun listable(path: String): File {
         val d = file(path)
-        val p = PathRules.require(path)
-        if (isAndroidPrivate(p)) throw ProtectedDirException()
+        if (isAndroidPrivate(PathRules.require(path))) throw ProtectedDirException()
         if (!d.exists()) throw FileNotFoundException("Dossier introuvable")
         if (!d.isDirectory) throw FileNotFoundException("Ce n'est pas un dossier")
+        return d
+    }
+
+    override fun list(path: String): List<Entry> {
+        val d = listable(path)
+        val p = PathRules.require(path)
         val children = d.listFiles() ?: throw ProtectedDirException()
         return children.map { entry(it, DocumentIds.child(p, it.name)) }
     }
+
+    override val sizeKind = SizeKind.ALLOCATED
+
+    /** Système de fichiers de la racine : une entrée d'un autre (point de montage) est marquée, jamais parcourue. */
+    private val rootDev: Long? by lazy { lstat.of(root.path)?.dev }
+
+    /**
+     * Un seul lstat par entrée, liens jamais suivis ; `alloc` = st_blocks × 512 (fichier creux compté à ses blocs). Une
+     * entrée disparue entre la liste et son lstat est omise.
+     */
+    override fun duList(path: String): List<DuEntry> {
+        val d = listable(path)
+        val names = d.list() ?: throw ProtectedDirException()
+        val dev = rootDev
+        val p = PathRules.require(path)
+        return names.mapNotNull { n ->
+            lstat.of(File(d, n).path)?.let {
+                // Android/data et Android/obb, montés à part sur certains téléphones : protégés, pas un autre système
+                val mounted = dev != null && it.dev != dev && !isAndroidPrivate(DocumentIds.child(p, n))
+                DuEntry(n, it.type, it.size, it.blocks * 512, it.mtime, it.dev, it.ino, it.nlink, otherDevice = mounted)
+            }
+        }
+    }
+
+    override fun usedBytes(): Long = (root.totalSpace - root.freeSpace).coerceAtLeast(0)
 
     override fun stat(path: String): Entry? {
         val f = file(path, linkItself = true)

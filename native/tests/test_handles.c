@@ -1097,6 +1097,46 @@ static void test_stat_droits(void) {
   unlink(img);
 }
 
+/* Phase 16, T2 : place allouée, inode et liens dans fj_stat et fj_list (clés "alloc", "ino", "nlink"). */
+static void test_listJsonHasAllocInoNlink(void) {
+  char img[4200], contenu[32];
+  image_vierge(img, sizeof img, "alloc-json.img");
+  int64_t d = fj_open_image(img, false);
+  TT_ASSERT(d > 0);
+  TT_ASSERT_EQ(fj_format(d, "{\"fs\":\"ext4\"}", NULL, 0, NULL, NULL), FL_OK);
+  int idx = partition_unique(d, contenu, sizeof contenu);
+  int64_t v = fj_mount(d, (uint32_t)idx, NULL, 0, true);
+  TT_ASSERT(v > 0);
+  int64_t f = fj_open_file(v, "/a.txt", FL_O_RDWR | FL_O_CREAT);
+  TT_ASSERT(f > 0);
+  TT_ASSERT_EQ(fj_pwrite(f, "x", 1, 0), 1);
+  TT_ASSERT_EQ(fj_close_file(f), FL_OK);
+  fl_json j;
+  fl_json_init(&j);
+  cJSON *st = json_de(fj_stat(v, "/a.txt", &j), &j);
+  fl_json_free(&j);
+  TT_ASSERT(st != NULL);
+  int64_t ino = nombre(st, "ino");
+  int ok = nombre(st, "alloc") == 4096 && ino > 2 && nombre(st, "nlink") == 1;
+  cJSON_Delete(st);
+  TT_ASSERT(ok);
+  fl_json_init(&j);
+  cJSON *l = json_de(fj_list(v, "/", &j), &j);
+  fl_json_free(&j);
+  TT_ASSERT(cJSON_IsArray(l));
+  int vus = 0;
+  for (const cJSON *e = l ? l->child : NULL; e; e = e->next) {
+    const char *n = cJSON_GetStringValue(cJSON_GetObjectItem(e, "name"));
+    if (n && !strcmp(n, "a.txt")) vus += nombre(e, "alloc") == 4096 && nombre(e, "ino") == ino && nombre(e, "nlink") == 1;
+  }
+  cJSON_Delete(l);
+  TT_ASSERT_EQ(vus, 1);
+  TT_ASSERT_EQ(fj_unmount(v, false), FL_OK);
+  TT_ASSERT_EQ(fj_close_disk(d), FL_OK);
+  TT_ASSERT_EQ(fj_debug_used(), 0);
+  unlink(img);
+}
+
 /* --- chiffrement et coffres (phase 14, T4) --------------------------------------------------- */
 
 #define COFFRE_PASS "phrase du coffre"
@@ -1533,6 +1573,7 @@ int main(void) {
   TT_RUN(test_arc_disque_ferme);
   TT_RUN(test_arc_flux_brut);
   TT_RUN(test_stat_droits);
+  TT_RUN(test_listJsonHasAllocInoNlink);
   TT_RUN(closingHostFileClosesVaultDisk);
   TT_RUN(ejectHostDiskCascades);
   TT_RUN(agerChildOfFile);

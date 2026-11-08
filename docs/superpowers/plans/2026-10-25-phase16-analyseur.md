@@ -8,7 +8,7 @@ affichés au fur et à mesure, place réellement occupée (blocs alloués, liens
 par taille, **anneaux concentriques** et **carte proportionnelle** synchronisés avec l'arbre, zoom au doigt, profondeur
 réglable, menu d'un élément (explorateur, chemin, propriétés, corbeille), emplacements exclus. Il remplace l'analyse
 de l'espace de la phase 9. Elle commence par une **barre de navigation** en bas de l'écran entre les modules de
-Portail (Fichiers, Analyseur, Distants, IA), demandée le 2026-10-26. Fin de phase : version **v1.9.0**.
+Portail (Fichiers, Coffres, Analyseur, Distants, IA), demandée le 2026-10-26 (Coffres le 2026-10-27). Fin de phase : version **v1.9.0**.
 
 **Architecture :**
 - **Navigation (T1)** : `ModuleShell` remplace l'accueil unique ; une barre de Material 3 en bas (un rail à gauche sur
@@ -130,7 +130,7 @@ l'application », placé en T1 ; spec § 27.)*
 - Consumes : `HomeScreen`, `ServerTile`, `SshSessionsCard`, `TunnelsScreen`, `SshKeysScreen`, `ChatListScreen`,
   `AutomationsScreen`, `AiServersScreen`, `PlayerFrame` et `DockHost` (`mini_player.dart`), `BottomDock`,
   `openHelp`, `openAbout`, `EmptyState`.
-- Produces : `enum PortailModule { files, remote, ai }` (T10 ajoute `analyzer`, en deuxième) ;
+- Produces : `enum PortailModule { files, remote, ai }` (T10 ajoute `analyzer`, en deuxième ; Coffres s'y glisse avant lui le 2026-10-27, voir la fin de la tâche) ;
   `ModuleShell({required AppState state})` ; `ModuleShell.of(BuildContext context)` → `ModuleShellState` avec
   `PortailModule get current`, `void select(PortailModule m)` et
   `Future<T?> push<T>(PortailModule m, Route<T> route)` (choisit le module, puis empile sur sa pile) ;
@@ -138,7 +138,7 @@ l'application », placé en T1 ; spec § 27.)*
   racine de chaque module) ; `Fr.moduleFiles` « Fichiers », `Fr.moduleRemote` « Distants », `Fr.moduleAi` « IA »,
   `Fr.moduleBusy(String module)` « IA, activité en cours ».
 
-- [ ] **Step 1 : tests en échec** (`test/module_shell_test.dart`) :
+- [x] **Step 1 : tests en échec** (`test/module_shell_test.dart`) :
   - `barListsModulesFilesFirst` (barre en bas : **Fichiers**, **Distants**, **IA**, icône et libellé toujours
     visibles ; Fichiers choisi au démarrage ; TalkBack lit « Fichiers, onglet 1 sur 3 ») ;
   - `eachModuleKeepsItsStack` (Fichiers → Téléphone → `/DCIM`, puis IA → Chat, puis Fichiers : `/DCIM` toujours
@@ -167,18 +167,38 @@ l'application », placé en T1 ; spec § 27.)*
 
   Run : `flutter test test/module_shell_test.dart`
   Expected : FAIL (coquille absente).
-- [ ] **Step 2 : implémentation.** `NavigationBar` de Material 3 (`NavigationDestinationLabelBehavior.alwaysShow`) ou
+- [x] **Step 2 : implémentation.** `NavigationBar` de Material 3 (`NavigationDestinationLabelBehavior.alwaysShow`) ou
   `NavigationRail` selon la largeur ; un `Navigator` par module dans un `IndexedStack`, construit au premier passage ;
   `PopScope` pour Retour ; passage d'un module à l'autre en fondu de `Motion.short`, coupé quand Android coupe les
   animations ; les tests existants qui ouvraient Chat, Automatisations ou un serveur depuis l'accueil passent par leur
   module. Écrans au banc d'accessibilité ; images de référence claire, sombre et rail.
-- [ ] **Step 3 :** Run : `flutter analyze && flutter test && flutter test --update-goldens test/goldens_test.dart`
+- [x] **Step 3 :** Run : `flutter analyze && flutter test && flutter test --update-goldens test/goldens_test.dart`
   — Expected : tout vert ; les trois nouvelles images regardées une à une avant d'être gardées.
-- [ ] **Step 4 : démarrage sur le Pixel.** `flutter build apk --debug`, `adb install -r` (téléphone inactif, APK de
+- [x] **Step 4 : démarrage sur le Pixel.** *(à faire : téléphone non joignable par adb le 2026-10-27, regroupé avec
+  les étapes Pixel de T2 et T3)* `flutter build apk --debug`, `adb install -r` (téléphone inactif, APK de
   l'utilisateur sauvegardée), `adb logcat -c -b crash`, `adb shell am start -W -n com.mawena.fluluks/.MainActivity` ;
   Expected : `Status: ok`, processus vivant 5 s après, journal `-b crash` vide, barre lue par `uiautomator dump`
-  (« Fichiers », « Distants », « IA »).
-- [ ] **Step 5 : commit** `feat(navigation): barre de navigation entre les modules`.
+  (« Fichiers », « Distants », « IA »). *(fait le 2026-10-27 l'après-midi : APK de `develop` installée par `adb install -r`, démarrage sans plantage, accueil de Fichiers, barre à cinq modules lue par uiautomator « onglet n sur 5 », chaque module affiché ; coffres, serveurs et conversations de l'utilisateur gardés)*
+- [x] **Step 5 : commit** `feat(navigation): barre de navigation entre les modules`.
+
+*(Ajout du 2026-10-27, demande de l'utilisateur aux essais de la phase 15 : « un menu pour les coffres aussi ».)*
+Module **Coffres**, deuxième de la barre : `enum PortailModule { files, vaults, remote, ai }` (T10 ajoute `analyzer`
+après `vaults`) ; `lib/src/screens/vaults_home_screen.dart` (`VaultsHomeScreen` : les coffres et **Créer un coffre** ;
+aucun coffre : écran vide qui explique et propose de créer) ; la section « Coffres » quitte l'accueil de Fichiers ;
+**Ouvrir** et **Parcourir** un coffre montrent son contenu dans le module Coffres (`openExplorer(…, module:)`),
+**Afficher l'emplacement** dans Fichiers ; un explorateur dont le stockage disparaît ne ferme les pages plein écran
+que si son module est à l'écran ; `Fr.moduleVaults`, `Fr.vaultsNoneTitle`.
+- [x] **Step 6 : tests en échec** (`test/module_shell_test.dart`) : `barListsModulesFilesFirst` (quatre modules,
+  « onglet 1 sur 4 »), `filesHomeWithoutRemoteAndAi` (plus de section « Coffres »), `vaultsHomeListsVaults` (les
+  coffres et **Créer un coffre** ; **Parcourir** un coffre ouvert : explorateur dans Coffres),
+  `vaultsHomeEmptyInvitesToCreate`, `moduleRootsShareSettingsHelpAbout` et `labelsFitAt200Percent` sur quatre
+  modules ; les tests des coffres (`vault_screens_test`, `vault_keys_test`, `vault_biometric_test`) passent par le
+  module Coffres ; banc : `homeVaults` devient la racine du module Coffres.
+- [x] **Step 7 : implémentation**, puis `flutter analyze && flutter test` ; image de référence `shell_rail` refaite et
+  regardée. *(Fait : six images refaites et regardées (barre à quatre onglets, accueil sans coffres) ; en paysage avec
+  le texte à 200 %, le rail à quatre modules ne tenait plus (7 px) : il défile alors, et seulement alors
+  (`railScrollsOnlyWhenTooTall`) ; 895 tests Flutter.)*
+- [x] **Step 8 : commit** `feat(navigation): module Coffres dans la barre`.
 
 ### Task 2 : place allouée, inode et liens dans le moteur
 
@@ -198,7 +218,7 @@ l'application », placé en T1 ; spec § 27.)*
   `uint32_t nlink;` (liens physiques ; 1 sur FAT et exFAT).
 - Produces (JSON de `fj_list` et `fj_stat`) : clés `"alloc"`, `"ino"`, `"nlink"` après `"gid"`.
 
-- [ ] **Step 1 : jeu d'essai.** Dans `make_fixtures.sh`, l'arbre `tree-du/` : `un-octet.bin` (1 o),
+- [x] **Step 1 : jeu d'essai.** Dans `make_fixtures.sh`, l'arbre `tree-du/` : `un-octet.bin` (1 o),
   `dix-mille.bin` (10 000 o), `vide.bin` (0 o), `creux.bin` (1 Gio apparent, 4 096 o écrits à 512 Mio par
   `truncate` puis `dd conv=notrunc`), `lien-a.bin` et `lien-b.bin` (un même fichier de 100 000 o, lien physique),
   `gros-dossier/` (300 fichiers de 1 o), `profond/` (40 niveaux) ; `ext4-du.img` par
@@ -206,8 +226,8 @@ l'application », placé en T1 ; spec § 27.)*
   `ext4-du.alloc` : une ligne `chemin<TAB>Blockcount×512<TAB>inode<TAB>liens` par entrée, tirée de
   `debugfs -R "stat <chemin>"`. `fatjuge.py alloc` (clusters de la chaîne × taille du cluster) et `ntfsjuge.py alloc`
   (taille allouée du `$DATA` non résident, 0 en résident, `$INDEX_ALLOCATION` pour un dossier) écrivent le même
-  format.
-- [ ] **Step 2 : tests en échec** (`test_fs_alloc`) : `ext4AllocMatchesDebugfs` (chaque entrée : `alloc`, `ino`,
+  format. *(Fait : arbre dans `work/tree-du/`, 350 entrées au manifeste ; image `exfat-32k.img` ajoutée.)*
+- [x] **Step 2 : tests en échec** (`test_fs_alloc`) : `ext4AllocMatchesDebugfs` (chaque entrée : `alloc`, `ino`,
   `nlink` égaux au manifeste), `ext4SparseFileAllocSmall` (`creux.bin` : `size` = 1 073 741 824, `alloc` ≤ 16 384),
   `ext4HardLinksShareIno` (`lien-a.bin` et `lien-b.bin` : même `ino`, `nlink` = 2 ; `un-octet.bin` : `nlink` = 1),
   `ext4HugeFileFlagCountsBlocks` (copie de l'image, `debugfs -w -R "sif /dix-mille.bin flags 0x40000"` : `alloc` =
@@ -215,22 +235,25 @@ l'application », placé en T1 ; spec § 27.)*
   1 o → 4 096, 10 000 o → 12 288, 0 o → 0, dossier → 4 096 ; égal à `fatjuge.py alloc`), `exfatAllocClusterRounded`
   (`mkfs.exfat -c 32K` : 1 o → 32 768 ; égal au juge), `ntfsAllocMatchesJudge` (petit fichier résident → 0,
   10 000 o → 12 288, `gros-dossier` → taille de son index ; égal à `ntfsjuge.py alloc`) ; `test_handles` :
-  `listJsonHasAllocInoNlink`.
+  `listJsonHasAllocInoNlink`. *(Fait, écrits avec l'implémentation : `sif … flags 0xC0000` pour garder le drapeau
+  d'extents ; un dossier FAT de 300 noms longs occupe plusieurs clusters selon le juge, un seul selon le moteur
+  (décision 6) ; `fat16RootAllocZero` ajouté ; cas FAT, exFAT, NTFS et huge_file sautés sur Android, faute de juges.)*
 
   Run : `cmake --build build/native && ctest --test-dir build/native --output-on-failure -R 'test_fs_alloc|test_handles'`
   Expected : FAIL (champs absents de `fl_stat`).
-- [ ] **Step 3 : implémentation.** ext4 : `i_blocks` (bas 32 bits et `osd2.linux2.blocks_high`) en secteurs de
+- [x] **Step 3 : implémentation.** ext4 : `i_blocks` (bas 32 bits et `osd2.linux2.blocks_high`) en secteurs de
   512 o, en blocs du système si la fonction `huge_file` est active et l'inode porte `EXT4_INODE_FLAG_HUGE_FILE` ;
   `links_count`. FAT et exFAT : `alloc` = taille arrondie au cluster (`csize × SS`), un cluster par dossier, 0 pour la
   racine fixe de FAT12/16. NTFS : `$DATA` non résident → `compressed_size` s'il est compressé ou creux, sinon
   `allocated_size` ; dossier → `allocated_size` de `$INDEX_ALLOCATION:$I30` (0 sans) ; `ino` = `ni->mft_no` ;
   `nlink` = `link_count` de l'enregistrement. `test_fs_alloc` ajouté à `run_native_tests.sh` (images poussées avec
   les autres).
-- [ ] **Step 4 : vérification.**
+- [x] **Step 4 : vérification.** *(PC fait le 2026-10-27 : 50/50, ASan/UBSan propres ; Pixel à faire, téléphone non
+  joignable par adb)*
 
   Run : `ctest --test-dir build/native --output-on-failure -LE lent` puis `tools/android/run_native_tests.sh <numéro-adb>`
-  Expected : tout vert, ASan/UBSan propres ; sur le Pixel, `test_fs_alloc` vert.
-- [ ] **Step 5 : commit** `feat(moteur): place allouée, inode et liens physiques dans la liste d'un dossier`.
+  Expected : tout vert, ASan/UBSan propres ; sur le Pixel, `test_fs_alloc` vert. *(Pixel fait le 2026-10-27 l'après-midi : `run_native_tests.sh` 23 suites OK, dont `test_fs_alloc` ; juges du PC sautés sur le téléphone)*
+- [x] **Step 5 : commit** `feat(moteur): place allouée, inode et liens physiques dans la liste d'un dossier`.
 
 ### Task 3 : liste d'un dossier avec sa place réelle (Kotlin)
 
@@ -256,7 +279,7 @@ l'application », placé en T1 ; spec § 27.)*
   - `LocalSource(…, lstat: Lstat = AndroidLstat)` (paramètre ajouté en dernier) ;
   - `DirEntry.alloc: Long`, `DirEntry.ino: Long`, `DirEntry.nlink: Int` (absents du JSON : `size`, 0, 1).
 
-- [ ] **Step 1 : tests en échec** (`DuListTest`, `Lstat` factice) : `localAllocFromBlocks` (`blocks` = 8 → `alloc`
+- [x] **Step 1 : tests en échec** (`DuListTest`, `Lstat` factice) : `localAllocFromBlocks` (`blocks` = 8 → `alloc`
   4 096 pour 1 o), `localSparseUsesBlocks` (`size` 1 Gio, `blocks` 8 → 4 096), `localSymlinkIsLinkNotFollowed`
   (type `SYMLINK`, cible jamais lue), `localAndroidPrivateIsProtected` (`/Android/data` et `/Android/obb` →
   `ProtectedDirException`), `localOtherDeviceFlagged` (`dev` différent de celui de la racine → `otherDevice`),
@@ -267,11 +290,13 @@ l'application », placé en T1 ; spec § 27.)*
 
   Run : `cd android && ./gradlew -q --offline :app:testDebugUnitTest --tests 'com.mawena.fluluks.DuListTest'`
   Expected : FAIL (classes absentes).
-- [ ] **Step 2 : implémentation.** `LocalSource.duList` : mêmes contrôles que `list` (accès, chemin, `Android/data`),
+- [x] **Step 2 : implémentation.** `LocalSource.duList` : mêmes contrôles que `list` (accès, chemin, `Android/data`),
   noms par `File.list()`, **un seul** `lstat` par entrée (type par `S_ISDIR`/`S_ISREG`/`S_ISLNK` du mode, `alloc` =
   `blocks × 512`). `DiskSource.duList` : `engine.list` par `handle()` (activité du volume), comme `list`.
-- [ ] **Step 3 :** Run : `cd android && ./gradlew -q --offline :app:testDebugUnitTest` — Expected : PASS.
-- [ ] **Step 4 : commit** `feat(analyseur): liste d'un dossier avec la place réellement occupée`.
+- [x] **Step 3 :** Run : `cd android && ./gradlew -q --offline :app:testDebugUnitTest` — Expected : PASS.
+  *(Fait : `lstat` placé avant `hasAccess`, qui reste la lambda finale des appels existants ; tests écrits avec
+  l'implémentation ; DuListTest 11 ; 668 tests JVM, 823 Flutter.)*
+- [x] **Step 4 : commit** `feat(analyseur): liste d'un dossier avec la place réellement occupée`.
 
 ### Task 4 : arbre compact et parcours (Kotlin)
 
@@ -297,10 +322,10 @@ l'application », placé en T1 ; spec § 27.)*
     l'exception sort) ; `data class ScanCounters(val files: Long, val dirs: Long, val alloc: Long, val current: String, val inaccessible: Int)` ;
     `val biggest: List<Entry>` (500 plus gros fichiers, par place occupée).
 
-- [ ] **Step 1 : tests en échec** (`DuTreeTest`) : `childrenSortedBySizeThenName`, `pathRebuiltFromParents`,
+- [x] **Step 1 : tests en échec** (`DuTreeTest`) : `childrenSortedBySizeThenName`, `pathRebuiltFromParents`,
   `findByPath`, `removePropagatesToAncestors`, `addToPropagates`, `namesUtf8Pool` (« été ☀ », nom de 255 octets),
   `bytesEstimateUnder64BytesPerNode` (100 000 nœuds aux noms de 12 octets : `bytesEstimate()` < 6,4 Mo).
-- [ ] **Step 2 : tests en échec** (`ScannerTest`) :
+- [x] **Step 2 : tests en échec** (`ScannerTest`) :
   - `sizesSumAllocAndApparent` (`a.bin` 100 o / 4 096 alloués, `D/b.bin`, `D/E/c.bin`, `.cache/x` caché compté,
     dossier vide : `alloc` et `apparent` de la racine = sommes ; `items` = 7) ;
   - `hardLinksCountedOnce` (deux entrées de même `dev`/`ino`, `nlink` 2, dans deux dossiers : comptées une fois, la
@@ -321,10 +346,10 @@ l'application », placé en T1 ; spec § 27.)*
 
   Run : `cd android && ./gradlew -q --offline :app:testDebugUnitTest --tests 'com.mawena.fluluks.DuTreeTest' --tests 'com.mawena.fluluks.ScannerTest'`
   Expected : FAIL (classes absentes).
-- [ ] **Step 3 : implémentation de `DuTree`** : tableaux primitifs qui grandissent par doublement (`IntArray` parent,
+- [x] **Step 3 : implémentation de `DuTree`** : tableaux primitifs qui grandissent par doublement (`IntArray` parent,
   premier enfant, frère suivant, début du nom ; `LongArray` alloc, apparent, items, mtime, autres ; `ByteArray` des
   noms en UTF-8 ; `ByteArray` des drapeaux) ; enfants triés à la fin de chaque dossier.
-- [ ] **Step 4 : implémentation de `Scanner`** — parcours en profondeur **itératif** :
+- [x] **Step 4 : implémentation de `Scanner`** — parcours en profondeur **itératif** :
 
 ```text
 pile ← [cadre(racine, sous-dossiers à visiter)]
@@ -340,8 +365,12 @@ tant que pile non vide et non annulé :
 ```
 
   `onProgress` à chaque dossier ; `cancelled()` relu entre deux entrées.
-- [ ] **Step 5 :** Run : `cd android && ./gradlew -q --offline :app:testDebugUnitTest` — Expected : PASS.
-- [ ] **Step 6 : commit** `feat(analyseur): arbre compact et parcours itératif borné`.
+- [x] **Step 5 :** Run : `cd android && ./gradlew -q --offline :app:testDebugUnitTest` — Expected : PASS.
+  *(Fait : `items` compte les éléments strictement dessous, soit 8 et non 7 dans `sizesSumAllocAndApparent` ;
+  ajouts `addFile`, `addOthers`, `touch`, `setComplete`, `hasChildren`, `full` ; une `EngineError` sur un
+  sous-dossier le montre inaccessible, comme la phase 9 (`engineErrorOnSubdirShownInaccessible`) ; DuTreeTest 8,
+  ScannerTest 18.)*
+- [x] **Step 6 : commit** `feat(analyseur): arbre compact et parcours itératif borné`.
 
 ### Task 5 : analyses gardées, vues, actions et exclusions (Kotlin)
 
@@ -373,7 +402,7 @@ tant que pile non vide et non annulé :
     (nœuds en largeur d'abord, la racine de la vue en premier, profondeur relative) ;
   - `data class Exclusion(val stableKey: String, val sourceLabel: String, val path: String)`.
 
-- [ ] **Step 1 : tests en échec** (`AnalysisViewsTest`) : `viewDepthLimited` (profondeur 2 : petits-enfants absents,
+- [x] **Step 1 : tests en échec** (`AnalysisViewsTest`) : `viewDepthLimited` (profondeur 2 : petits-enfants absents,
   `hasChildren` vrai), `smallNodesMergedIntoOthers` (moins de 0,2 % de la racine de la vue → un `others` par parent,
   place exacte), `viewNeverExceedsMaxNodes` (arbre de 50 000 dossiers égaux, `maxNodes` 1 500 → ≤ 1 500),
   `foldedContentShownAsOthers` (`DuTree.others` d'un dossier ajouté à son `others`), `childrenPagedAndSorted` (200
@@ -381,7 +410,7 @@ tant que pile non vide et non annulé :
   `unscannedPartForWholeStorage` (analyse de `/` : `unscanned` = occupé − compté s'il dépasse 0,5 % ; libellé
   « Applications, système et dossiers protégés » pour le téléphone, « Réservé par le système de fichiers » sinon ;
   aucun pour un sous-dossier ni pour un dossier distant), `trashDirMarked` (`/.Portail-corbeille` → `trash`).
-- [ ] **Step 2 : tests en échec** (`AnalyzerTest`, `Files.setResolverForTests`, horloge et répartiteur de test) :
+- [x] **Step 2 : tests en échec** (`AnalyzerTest`, `Files.setResolverForTests`, horloge et répartiteur de test) :
   `drillDownNeverRelists` (une source qui compte ses listes : `view` et `children` n'en font aucune ; repris de
   `drillDownUsesCache`), `unreadableDirSkipped` et `cancelStops` (repris de la phase 9), `oneScanAtATime` (un
   `start` arrête le précédent, marqué `cancelled`), `threeAnalysesKept` (la quatrième fait oublier la plus ancienne ;
@@ -398,12 +427,17 @@ tant que pile non vide et non annulé :
 
   Run : `cd android && ./gradlew -q --offline :app:testDebugUnitTest --tests 'com.mawena.fluluks.Analyzer*' --tests 'com.mawena.fluluks.AnalysisViewsTest'`
   Expected : FAIL (classes absentes).
-- [ ] **Step 3 : implémentation.** `Analyzer` lance le `Scanner` sur un fil à part de priorité basse
+- [x] **Step 3 : implémentation.** `Analyzer` lance le `Scanner` sur un fil à part de priorité basse
   (`THREAD_PRIORITY_BACKGROUND`), sous un verrou lecture-écriture de l'arbre (les vues lisent pendant l'analyse) ;
   observe `VolumeManager.volumes` ; libellés français en constantes (`MSG_SOURCE_CLOSED`, `MSG_ROOT`, `UNSCANNED_PHONE`,
   `UNSCANNED_FS`) testées.
-- [ ] **Step 4 :** Run : `cd android && ./gradlew -q --offline :app:testDebugUnitTest` — Expected : PASS.
-- [ ] **Step 5 : commit** `feat(analyseur): analyses gardées, vues élaguées, corbeille et exclusions`.
+- [x] **Step 4 :** Run : `cd android && ./gradlew -q --offline :app:testDebugUnitTest` — Expected : PASS.
+  *(Fait : la fermeture d'un volume est relue directement, entre deux entrées et à chaque accès, plutôt
+  qu'observée par un collecteur qui attendrait la fin du parcours ; `AnalysisProgress.fraction` porte la borne de
+  99 % ; un nœud de taille 0 (inaccessible, exclu) n'est que dans les pages d'enfants, pas dans les graphiques ;
+  la racine d'un stockage entier compte la part hors analyse ; le refus d'un coffre ouvert est simulé par la
+  source, VaultsTest couvrant le refus réel ; AnalyzerTest 15, AnalysisViewsTest 8, AnalyzerPrefsTest 2.)*
+- [x] **Step 5 : commit** `feat(analyseur): analyses gardées, vues élaguées, corbeille et exclusions`.
 
 ### Task 6 : pont Pigeon et contrôleur de l'écran
 
@@ -436,7 +470,7 @@ tant que pile non vide et non annulé :
   `Future<void> delete(int node, {required bool permanent})`, `Future<void> exclude(int node)`, `Future<void> rescan()`,
   `void dispose()`.
 
-- [ ] **Step 1 : tests en échec** (`analyzer_controller_test`, `FakeHostApi`) : `startShowsLiveViewThrottled`
+- [x] **Step 1 : tests en échec** (`analyzer_controller_test`, `FakeHostApi`) : `startShowsLiveViewThrottled`
   (événements toutes les 100 ms pendant 2 s : vue rechargée au plus toutes les 500 ms, puis une fois à la fin),
   `zoomAndUpKeepTrail`, `goToBreadcrumb`, `depthBounded2to8` (et mémorisée dans `UiPrefsMsg.analyzerDepth`),
   `chartKindRemembered`, `deleteRefreshesView`, `forgottenScanReturnsToHome` (analyse oubliée par Kotlin : erreur
@@ -445,12 +479,15 @@ tant que pile non vide et non annulé :
 
   Run : `flutter test test/analyzer_controller_test.dart`
   Expected : FAIL (contrôleur absent).
-- [ ] **Step 2 : implémentation** ; `HostApiImpl` relaie `Analyzer.progress` comme `Transfers.state`
+- [x] **Step 2 : implémentation** ; `HostApiImpl` relaie `Analyzer.progress` comme `Transfers.state`
   (`events.onAnalysisProgress`) ; les appels `@async` passent par le répartiteur d'E/S. `cancelAnalysis` arrête
   désormais l'analyse de l'`Analyzer` comme celle de `SpaceAnalysis`.
-- [ ] **Step 3 :** Run : `dart run pigeon --input pigeons/fluluks_api.dart && flutter analyze && flutter test && (cd android && ./gradlew -q --offline :app:testDebugUnitTest)`
+- [x] **Step 3 :** Run : `dart run pigeon --input pigeons/fluluks_api.dart && flutter analyze && flutter test && (cd android && ./gradlew -q --offline :app:testDebugUnitTest)`
   — Expected : tout vert.
-- [ ] **Step 4 : commit** `feat(analyseur): pont Pigeon et contrôleur de l'écran d'analyse`.
+  *(Fait : `AnalysisProgressMsg.fraction` ajouté ; `zoom` n'entre que dans un dossier qui a un contenu ;
+  `UiSettings` garde `analyzerChart` et `analyzerDepth` (UiPrefsTest) ; analyzer_controller_test 8,
+  AnalyzerMsgTest 1 ; 831 tests Flutter, 670 JVM.)*
+- [x] **Step 4 : commit** `feat(analyseur): pont Pigeon et contrôleur de l'écran d'analyse`.
 
 ### Task 7 : géométrie des anneaux et de la carte proportionnelle
 
@@ -477,7 +514,7 @@ tant que pile non vide et non annulé :
     profondeur ; `file` en ton neutre de la même teinte, `others`, `unscanned`, `inaccessible` en gris
     (`surfaceContainerHighest`, `outline`).
 
-- [ ] **Step 1 : tests en échec** : `ringsAnglesProportional` (balayages ∝ place ; chaque enfant dans la plage de son
+- [x] **Step 1 : tests en échec** : `ringsAnglesProportional` (balayages ∝ place ; chaque enfant dans la plage de son
   parent ; somme ≤ 2π), `ringsDepthRadii`, `ringsTinySegmentsDropped` (moins de 0,01 rad : non dessiné),
   `ringsHitTest` (angle et rayon → segment ; centre → `center` vrai ; dehors → null),
   `treemapAreasProportional` (aires ∝ place à 1 % près, à chaque niveau, bandes de titre déduites),
@@ -488,10 +525,13 @@ tant que pile non vide et non annulé :
 
   Run : `flutter test test/chart_layout_test.dart`
   Expected : FAIL (fonctions absentes).
-- [ ] **Step 2 : implémentation** (fonctions pures, sans widget). Squarified : lignes remplies tant que le pire
+- [x] **Step 2 : implémentation** (fonctions pures, sans widget). Squarified : lignes remplies tant que le pire
   rapport ne se dégrade pas, côté court d'abord.
-- [ ] **Step 3 :** Run : `flutter test test/chart_layout_test.dart` — Expected : PASS.
-- [ ] **Step 4 : commit** `feat(analyseur): géométrie des anneaux et de la carte proportionnelle`.
+- [x] **Step 3 :** Run : `flutter test test/chart_layout_test.dart` — Expected : PASS.
+  *(Fait : la luminosité HSL n'étant pas perceptuelle, la limite de chaque teinte est cherchée pour garder 3,2:1
+  contre `surface`, les profondeurs s'étageant à partir d'elle ; `squarify` exposé pour le test de l'article ;
+  chart_layout_test 11 ; 842 tests Flutter.)*
+- [x] **Step 4 : commit** `feat(analyseur): géométrie des anneaux et de la carte proportionnelle`.
 
 ### Task 8 : graphiques à l'écran et gestes
 
@@ -507,7 +547,7 @@ tant que pile non vide et non annulé :
   `Fr.chartSummary(String kind, String root, List<(String name, int bytes, int pct)> top)`, `Fr.ofParent(int pct, String parent)`,
   `Fr.onDiskOfData(int alloc, int apparent)`, `Fr.analysisItems(int n)`.
 
-- [ ] **Step 1 : tests en échec** : `tapDirZooms` (toucher un segment de dossier → `onZoom(id)`), `tapFileSelectsOnly`
+- [x] **Step 1 : tests en échec** : `tapDirZooms` (toucher un segment de dossier → `onZoom(id)`), `tapFileSelectsOnly`
   (fichier, `others`, `unscanned` → `onSelect`, jamais `onZoom`), `tapCenterGoesUp` (anneaux), `dragUpdatesInfoStrip`
   (glisser le doigt : la bande montre « Photos — 12,3 Go — 45 % de Téléphone — 1 234 éléments »),
   `apparentShownWhenDifferent` (« 4 Ko sur le disque (1 octet de données) »), `longPressOpensMenu` (`onMenu(id)`),
@@ -518,12 +558,15 @@ tant que pile non vide et non annulé :
 
   Run : `flutter test test/analysis_chart_test.dart`
   Expected : FAIL (widgets absents).
-- [ ] **Step 2 : implémentation.** `CustomPainter` (segments séparés par un trait de 1 dp couleur `surface` ; noms
+- [x] **Step 2 : implémentation.** `CustomPainter` (segments séparés par un trait de 1 dp couleur `surface` ; noms
   dessinés dans les segments et cellules assez grands, en `onSurface` ou `surface` selon le contraste) ; gestes par un
   seul `GestureDetector` (`onTapUp`, `onLongPressStart`, `onPanStart/Update/End`) ; passage d'un zoom à l'autre en
   fondu de `Motion.medium`, coupé quand Android coupe les animations.
-- [ ] **Step 3 :** Run : `flutter test test/analysis_chart_test.dart` — Expected : PASS.
-- [ ] **Step 4 : commit** `feat(analyseur): anneaux et carte proportionnelle, au doigt et lus par TalkBack`.
+- [x] **Step 3 :** Run : `flutter test test/analysis_chart_test.dart` — Expected : PASS.
+  *(Fait : la bande d'information est sous le dessin, dans `AnalysisChart`, avec le survol au doigt ou l'élément
+  choisi ; sans animations, pas d'`AnimatedSwitcher` du tout ; un dossier vide se choisit au lieu d'y entrer ;
+  analysis_chart_test 11 ; 853 tests Flutter.)*
+- [x] **Step 4 : commit** `feat(analyseur): anneaux et carte proportionnelle, au doigt et lus par TalkBack`.
 
 ### Task 9 : écran de l'analyse (graphique, arbre, actions)
 
@@ -544,7 +587,7 @@ tant que pile non vide et non annulé :
   `Future<bool?> confirmDelete(BuildContext context, {required String title, required String body, required bool trashOffered})`
   (null : annulé ; vrai : définitif).
 
-- [ ] **Step 1 : tests en échec** :
+- [x] **Step 1 : tests en échec** :
   - `progressShownThenLiveResults` (barre déterminée quand `usedBytes` est connu, sinon indéterminée ;
     « 12 345 fichiers · 4,2 Go », dossier en cours ; **Annuler** → `cancelAnalysis` ; bandeau « Résultats partiels :
     analyse arrêtée » et **Réanalyser**) ;
@@ -571,20 +614,20 @@ tant que pile non vide et non annulé :
 
   Run : `flutter test test/analyzer_screen_test.dart`
   Expected : FAIL (écran absent).
-- [ ] **Step 2 : implémentation.** Portrait : graphique carré en haut (45 % de la hauteur au plus), bande
+- [x] **Step 2 : implémentation.** Portrait : graphique carré en haut (45 % de la hauteur au plus), bande
   d'information, arbre dessous ; barre de titre : nom de l'emplacement, **Réanalyser**, choix du graphique, menu (tri,
   profondeur, plus gros fichiers). Lignes de l'arbre en deux lignes (nom et taille ; barre, pourcentage, éléments,
   date), retrait de 16 dp par niveau, 4 niveaux de retrait au plus. Écrans au banc d'accessibilité (48 dp, contraste,
   200 %, TalkBack, pas de texte sous la barre de navigation) ; images de référence clair et sombre.
-- [ ] **Step 3 :** Run : `flutter test test/analyzer_screen_test.dart test/explorer_screen_test.dart test/accessibility_test.dart && flutter test --update-goldens test/goldens_test.dart`
+- [x] **Step 3 :** Run : `flutter test test/analyzer_screen_test.dart test/explorer_screen_test.dart test/accessibility_test.dart && flutter test --update-goldens test/goldens_test.dart`
   — Expected : PASS ; les deux nouvelles images regardées une à une avant d'être gardées.
-- [ ] **Step 4 : commit** `feat(analyseur): écran de l'analyse, arbre synchronisé et actions`.
+- [x] **Step 4 : commit** `feat(analyseur): écran de l'analyse, arbre synchronisé et actions`.
 
 ### Task 10 : accueil de l'analyseur, points d'entrée, exclusions ; fin de l'ancienne analyse
 
 **Files :**
 - Create : `lib/src/analyzer/analyzer_home_screen.dart`
-- Modify : `lib/src/screens/module_shell.dart` (module **Analyseur**, deuxième de la barre : `PortailModule.analyzer`,
+- Modify : `lib/src/screens/module_shell.dart` (module **Analyseur**, troisième de la barre, après Coffres : `PortailModule.analyzer`,
   accueil de l'analyseur à sa racine),
   `lib/src/widgets/source_tile.dart`, `lib/src/widgets/partition_tile.dart`, `lib/src/widgets/vault_tile.dart` (menu
   **Analyser**), `lib/src/screens/explorer_screen.dart` (**Analyser ce dossier** dans tout dossier ; avertissement pour
@@ -604,7 +647,7 @@ tant que pile non vide et non annulé :
   `pickFolder`, `state.sources`.
 - Produces : `Future<void> openAnalyzerHome(BuildContext context, AppState state)`.
 
-- [ ] **Step 1 : tests en échec** : `listsLocationsWithUsage` (téléphone, cartes SD, volumes ouverts, coffres ouverts,
+- [x] **Step 1 : tests en échec** : `listsLocationsWithUsage` (téléphone, cartes SD, volumes ouverts, coffres ouverts,
   avec leur jauge ; ni dossier distant ni fichier déchiffré), `analyzeFolderUsesPicker` (**Analyser un dossier…** →
   `pickFolder` ; dossier distant → avertissement « L'analyse lit chaque dossier par le réseau : elle peut être longue.
   Les tailles sont celles annoncées par le serveur. »), `keptAnalysesListed` (date, taille, **Ouvrir**,
@@ -618,44 +661,48 @@ tant que pile non vide et non annulé :
 
   Run : `flutter test test/analyzer_home_test.dart`
   Expected : FAIL (écran absent).
-- [ ] **Step 2 : implémentation** ; écran ajouté au banc d'accessibilité ; libellés : « Analyser le stockage » (tuiles,
+- [x] **Step 2 : implémentation** ; écran ajouté au banc d'accessibilité ; libellés : « Analyser le stockage » (tuiles,
   racine de l'explorateur), « Analyser ce dossier » (sous-dossier).
-- [ ] **Step 3 :** Run : `dart run pigeon --input pigeons/fluluks_api.dart && flutter analyze && flutter test && (cd android && ./gradlew -q --offline :app:testDebugUnitTest)`
+- [x] **Step 3 :** Run : `dart run pigeon --input pigeons/fluluks_api.dart && flutter analyze && flutter test && (cd android && ./gradlew -q --offline :app:testDebugUnitTest)`
   — Expected : tout vert, aucune référence à `space_screen.dart` ni à `SpaceAnalysis`.
-- [ ] **Step 4 : commit** `feat(analyseur): accueil de l'analyseur, points d'entrée et emplacements exclus`.
+*(Fait : en plus du plan, `remoteFolderWarnsFromExplorer` ; le sélecteur de dossier propose aussi les stockages en lecture seule pour une analyse (`writableOnly: false`) ; avec cinq modules, la taille des libellés de la barre est bornée pour que chacun tienne dans sa case (TalkBack les lit en entier) ; emplacements exclus dans une section « Analyseur de stockage » des Réglages, comme le dit la spec § 26.)*
+- [x] **Step 4 : commit** `feat(analyseur): accueil de l'analyseur, points d'entrée et emplacements exclus`.
 
 ### Task 11 : documentation
 
-- [ ] README : section « Analyseur de stockage (nouveau en 1.9.0) » à la place de « Analyse de l'espace » (emplacements,
+- [x] README : section « Analyseur de stockage (nouveau en 1.9.0) » à la place de « Analyse de l'espace » (emplacements,
   tailles réelles et liens physiques, anneaux et carte, gestes, actions, exclusions, part « hors analyse »,
   `Android/data`, dossiers distants) ; phrase d'introduction et « Liste ou grille partout » mises à jour ; limites (taille
   des applications non comptée, pas de cache sur le stockage, dossiers d'un cluster sur FAT) ; commande du jeu
   `ext4-du.img` dans « Tests ».
-- [ ] README : la barre de navigation (Fichiers, Analyseur, Distants, IA ; rail sur grand écran) dans la présentation
+- [x] README : la barre de navigation (Fichiers, Coffres, Analyseur, Distants, IA ; rail sur grand écran) dans la présentation
   de l'interface.
-- [ ] Aide : « Qu'est-ce qui remplit mon téléphone ? » et « Pourquoi l'analyse ne compte pas tout ? » (applications et
+- [x] Aide : « Qu'est-ce qui remplit mon téléphone ? » et « Pourquoi l'analyse ne compte pas tout ? » (applications et
   système, `Android/data`, corbeille) ; strings testées.
-- [ ] Fiche d'essai `docs/superpowers/research/<AAAA-MM-JJ>-essais-phase16/essais.md` (T13), copiée sur `develop` et
-  sur le téléphone (`Download/portail-tests/phase16/`).
-- [ ] **Commit** `docs: analyseur de stockage`.
+- [x] Fiche d'essai `docs/superpowers/research/<AAAA-MM-JJ>-essais-phase16/essais.md` (T13), copiée sur `develop` et
+  sur le téléphone (`Download/portail-tests/phase16/`). *(fiche du 2026-10-27 ; copie sur le téléphone à faire quand il sera joignable)*
+- [x] **Commit** `docs: analyseur de stockage`.
 
 ### Task 12 : essais instrumentés sur le Pixel
 
 **Files :** Create `android/app/src/androidTest/kotlin/com/mawena/fluluks/AnalyzerInstrumentedTest.kt` ; Modify
 `Fixtures.kt`
 
-- [ ] **Step 1 : essais** (dossier privé de l'application et `/data/local/tmp/fluluks/`) : `phoneLstatAllocated` (1 o
+- [x] **Step 1 : essais** (dossier privé de l'application et `/data/local/tmp/fluluks/`) : `phoneLstatAllocated` (1 o
   → au moins 4 096 alloués ; fichier creux de 64 Mio par `RandomAccessFile.setLength` → moins de 1 Mio ; lien
   physique par `Os.link` compté une fois), `sharedStorageScanTimed` (stockage partagé entier : durée, fichiers, nœuds,
   mémoire Java et native notées ; `Android/data` « inaccessible » ; part « hors analyse » présente),
   `diskImageAllocMatchesJudge` (`ext4-du.img` ouverte par le moteur comme dans `EngineTest` : totaux et nœuds égaux
   au manifeste `ext4-du.alloc`), `fiftyThousandFilesBounded` (50 000 fichiers dans 500 dossiers : durée, mémoire Java
   gagnée < 64 Mio), `trashFromAnalysisMovesSize` (source locale sur le dossier privé).
-- [ ] **Step 2 :** `adb install -r -t` des deux APK puis
+- [x] **Step 2 :** `adb install -r -t` des deux APK puis
   `adb shell am instrument -w -r -e class com.mawena.fluluks.AnalyzerInstrumentedTest com.mawena.fluluks.test/androidx.test.runner.AndroidJUnitRunner`
   (jamais `connectedAndroidTest`) ; journal `docs/superpowers/research/<date>-essais-phase16/instrumentes-<horodatage>.txt` ;
   Expected : `OK (5 tests)`, durées et mémoire notées dans la feuille de route.
-- [ ] **Step 3 : commit** `test(analyseur): essais instrumentés sur le Pixel`.
+- [x] **Step 3 : commit** `test(analyseur): essais instrumentés sur le Pixel`. *(2026-10-27 : OK (5 tests) ; lien physique
+  refusé par Android dans le dossier privé (EACCES), jugé par `ext4-du.img` et les tests JVM ; défaut trouvé et corrigé :
+  `Android/data` et `Android/obb`, montés à part sur le Pixel, étaient « autre système de fichiers » au lieu de
+  « accès refusé par Android » ; journal [instrumentes-20261027-1520.txt](../research/2026-10-27-essais-phase16/instrumentes-20261027-1520.txt))*
 
 ### Task 13 *(utilisateur)* : essais sur le Pixel
 
@@ -674,7 +721,7 @@ tant que pile non vide et non annulé :
 
 - [ ] Relecture finale de toute la branche.
 - [ ] Fusion `feature/analyseur` → `develop`, puis `release/1.9.0` (pubspec `1.9.0+17`), `main`, étiquette signée
-  `v1.9.0`. Pas de push sans l'accord de l'utilisateur.
+  `v1.9.0`. Pas de push sans l'accord de l'utilisateur. *(fusion dans `develop` faite le 2026-10-27 à la demande de l'utilisateur, branche supprimée ; version après les essais)*
 
 ---
 

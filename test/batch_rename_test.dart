@@ -40,7 +40,7 @@ Future<AppState> pump(WidgetTester tester, FakeHostApi api) async {
   final state = AppState(api);
   await state.refresh();
   await tester.pumpWidget(FluLuksApp(state: state));
-  tester.state<NavigatorState>(find.byType(Navigator)).push(
+  tester.state<NavigatorState>(find.byType(Navigator).first).push(
       MaterialPageRoute<void>(builder: (_) => ExplorerScreen(state: state, sourceId: 'phone')));
   await tester.pumpAndSettle();
   return state;
@@ -87,7 +87,7 @@ void main() {
     final state = AppState(api);
     await state.refresh();
     await tester.pumpWidget(FluLuksApp(state: state));
-    tester.state<NavigatorState>(find.byType(Navigator)).push(MaterialPageRoute<void>(
+    tester.state<NavigatorState>(find.byType(Navigator).first).push(MaterialPageRoute<void>(
         builder: (_) => BatchRenameScreen(state: state, sourceId: 'phone', paths: const ['/a.jpg', '/b.png'])));
     await tester.pumpAndSettle();
     await tester.tap(find.text('Remplacer'));

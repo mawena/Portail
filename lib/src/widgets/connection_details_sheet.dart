@@ -13,6 +13,7 @@ Future<void> showConnectionDetails(BuildContext context, AppState state, String 
   if (!context.mounted) return;
   await showModalBottomSheet<void>(
     context: context,
+    useRootNavigator: true, // au-dessus de la barre des modules
     isScrollControlled: true,
     showDragHandle: true,
     builder: (_) => ConnectionDetailsSheet(cause: cause, lines: lines),

@@ -343,6 +343,17 @@ class AppState extends ChangeNotifier implements FluLuksEventsApi {
     notifyListeners();
   }
 
+  AnalysisProgressMsg? _analysisProgress;
+
+  /// Avancement de l'analyseur (phase 16) : analyse en cours ou dernière finie ; null avant la première.
+  AnalysisProgressMsg? get analysisProgress => _analysisProgress;
+
+  @override
+  void onAnalysisProgress(AnalysisProgressMsg? progress) {
+    _analysisProgress = progress;
+    notifyListeners();
+  }
+
   int _editorHolds = 0;
 
   /// Un éditeur ouvert avec des modifications retient le retour à l'accueil des explorateurs d'un stockage disparu :

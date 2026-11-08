@@ -28,7 +28,7 @@ Future<AppState> pumpGlobal(WidgetTester tester, FakeHostApi api, {String query 
   final state = AppState(api);
   await state.refresh();
   await tester.pumpWidget(FluLuksApp(state: state));
-  tester.state<NavigatorState>(find.byType(Navigator)).push(
+  tester.state<NavigatorState>(find.byType(Navigator).first).push(
       MaterialPageRoute<void>(builder: (_) => GlobalSearchScreen(state: state, initialQuery: query)));
   await tester.pumpAndSettle();
   return state;
@@ -132,7 +132,7 @@ void main() {
     final state = AppState(api);
     await state.refresh();
     await tester.pumpWidget(FluLuksApp(state: state));
-    tester.state<NavigatorState>(find.byType(Navigator)).push(
+    tester.state<NavigatorState>(find.byType(Navigator).first).push(
         MaterialPageRoute<void>(builder: (_) => SearchScreen(state: state, sourceId: 'phone', path: '/DCIM')));
     await tester.pumpAndSettle();
     await tester.enterText(find.byType(TextField), 'mer');
@@ -172,7 +172,7 @@ void main() {
     final state = AppState(api);
     await state.refresh();
     await tester.pumpWidget(FluLuksApp(state: state));
-    tester.state<NavigatorState>(find.byType(Navigator)).push(
+    tester.state<NavigatorState>(find.byType(Navigator).first).push(
         MaterialPageRoute<void>(builder: (_) => SearchScreen(state: state, sourceId: 'phone', path: '/DCIM')));
     await tester.pumpAndSettle();
     await tester.enterText(find.byType(TextField), 'mer');

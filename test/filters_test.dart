@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:fluluks/src/analyzer/analyzer_screen.dart';
 import 'package:fluluks/src/app.dart';
 import 'package:fluluks/src/bridge/fluluks_api.g.dart';
 import 'package:fluluks/src/screens/explorer_screen.dart';
 import 'package:fluluks/src/screens/filter_screen.dart';
 import 'package:fluluks/src/screens/image_viewer_screen.dart';
-import 'package:fluluks/src/screens/space_screen.dart';
 import 'package:fluluks/src/screens/trash_screen.dart';
 import 'package:fluluks/src/state/app_state.dart';
 import 'package:fluluks/src/strings_fr.dart';
@@ -69,7 +69,7 @@ void main() {
   testWidgets('filterScreenOpensFile', (tester) async {
     final api = api0();
     final state = await pumpHome(tester, api);
-    tester.state<NavigatorState>(find.byType(Navigator)).push(MaterialPageRoute<void>(
+    tester.state<NavigatorState>(find.byType(Navigator).first).push(MaterialPageRoute<void>(
         builder: (_) => FilterScreen(state: state, filter: 'documents', title: 'Documents')));
     await tester.pumpAndSettle();
     await tester.tap(find.text('rapport.pdf'));
@@ -87,7 +87,7 @@ void main() {
   testWidgets('emptyFilterMessage', (tester) async {
     final api = api0();
     final state = await pumpHome(tester, api);
-    tester.state<NavigatorState>(find.byType(Navigator)).push(MaterialPageRoute<void>(
+    tester.state<NavigatorState>(find.byType(Navigator).first).push(MaterialPageRoute<void>(
         builder: (_) => FilterScreen(state: state, filter: 'music', title: 'Musique')));
     await tester.pumpAndSettle();
     expect(find.text('Aucun fichier'), findsOneWidget);
@@ -99,7 +99,8 @@ void main() {
       (const Size(412, 869), 1.0, 3),
       (const Size(412, 869), 2.0, 2),
       (const Size(869, 412), 1.0, 3), // accueil en deux colonnes : les raccourcis n'ont que la moitié
-      (const Size(1280, 800), 1.0, 6),
+      (const Size(1280, 800), 1.0, 3), // le rail des modules (phase 16) prend sa part de la largeur
+      (const Size(1600, 900), 1.0, 6),
     ]) {
       tester.view.physicalSize = size;
       tester.view.devicePixelRatio = 1;
@@ -124,7 +125,7 @@ void main() {
 
   Future<AppState> pushFilter(WidgetTester tester, FakeHostApi api, String filter) async {
     final state = await pumpHome(tester, api);
-    tester.state<NavigatorState>(find.byType(Navigator)).push(MaterialPageRoute<void>(
+    tester.state<NavigatorState>(find.byType(Navigator).first).push(MaterialPageRoute<void>(
         builder: (_) => FilterScreen(state: state, filter: filter, title: filter)));
     await tester.pumpAndSettle();
     return state;
@@ -199,15 +200,13 @@ void main() {
     expect(api.calls, contains('listDir sd:1 /Docs false'));
   });
 
-  testWidgets('trashAndSpaceStayLists', (tester) async {
-    // décision du plan : la corbeille (emplacement d'origine, date) et l'analyse (barres) restent en liste
+  testWidgets('trashAndAnalysisStayLists', (tester) async {
+    // décision du plan : la corbeille (emplacement d'origine, date) et l'arbre de l'analyse restent en liste
     final api = api0()
       ..viewPrefs = gridPrefs
       ..trash['phone'] = [
         TrashItemMsg(id: 't', name: 'a.jpg', originalPath: '/DCIM/a.jpg', deletedAt: 0, size: 10, isDir: false),
       ];
-    api.space['/'] = SpaceReportMsg(
-        path: '/', totalBytes: 10, fileCount: 1, children: [], biggest: [], truncated: false, otherCount: 0, otherBytes: 0);
     final state = await pumpHome(tester, api);
     final ctx = tester.element(find.byType(Scaffold).first);
     openTrash(ctx, state, 'phone');
@@ -215,9 +214,9 @@ void main() {
     expect(find.byType(TrashScreen), findsOneWidget);
     expect(find.byType(SliverGrid), findsNothing);
     expect(find.byType(GridView), findsNothing);
-    openSpace(ctx, state, 'phone');
+    openAnalysis(ctx, state, sourceId: 'phone');
     await tester.pumpAndSettle();
-    expect(find.byType(SpaceScreen), findsOneWidget);
+    expect(find.byType(AnalyzerScreen), findsOneWidget);
     expect(find.byType(SliverGrid), findsNothing);
     expect(find.byType(GridView), findsNothing);
   });

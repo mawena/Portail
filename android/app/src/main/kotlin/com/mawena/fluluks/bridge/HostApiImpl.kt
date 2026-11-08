@@ -30,8 +30,7 @@ import com.mawena.fluluks.files.SharedPrefStore
 import com.mawena.fluluks.files.UiPrefs
 import com.mawena.fluluks.files.UiSettings
 import com.mawena.fluluks.files.Sources
-import com.mawena.fluluks.files.SpaceAnalysis
-import com.mawena.fluluks.files.SpaceReport
+import com.mawena.fluluks.analyzer.Analyzer
 import com.mawena.fluluks.files.Thumbnails
 import com.mawena.fluluks.files.TransferState
 import com.mawena.fluluks.files.Trash
@@ -85,6 +84,7 @@ import kotlinx.coroutines.cancel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
 
 /**
@@ -109,6 +109,7 @@ class HostApiImpl(
         TerminalSessions.listener = terminalListener
         if (Music.backend == null) Music.backend = AndroidMusic(context)
         Vaults.init(context)
+        Analyzer.init(context.filesDir)
         scope.launch {
             combine(VolumeManager.disks, VolumeManager.volumes) { d, v -> toMsgs(d, v) }
                 .collect { (d, v) ->
@@ -134,6 +135,9 @@ class HostApiImpl(
         }
         scope.launch {
             hashProgress.collect { pct -> events.onHashProgress(pct?.toLong()) { /* réponse ignorée */ } }
+        }
+        scope.launch {
+            Analyzer.progress.collect { p -> events.onAnalysisProgress(p?.let(AnalyzerMsgs::progress)) { /* réponse ignorée */ } }
         }
         if (Build.VERSION.SDK_INT >= 30) {
             context.getSystemService(StorageManager::class.java)
@@ -818,13 +822,35 @@ class HostApiImpl(
             SearchResultMsg(r.entries.map(::entryMsg), r.truncated)
         }
 
-    override fun analyzeSpace(sourceId: String, path: String, callback: (Result<SpaceReportMsg>) -> Unit) =
-        io(callback) { spaceMsg(SpaceAnalysis.run(sourceId, path)) }
+    override fun cancelAnalysis() = Analyzer.cancel()
 
-    override fun spaceChildren(sourceId: String, path: String, callback: (Result<SpaceReportMsg>) -> Unit) =
-        io(callback) { spaceMsg(SpaceAnalysis.children(sourceId, path)) }
+    // --- analyseur de stockage (phase 16)
 
-    override fun cancelAnalysis() = SpaceAnalysis.cancel()
+    override fun startAnalysis(sourceId: String, path: String): String = guardedValue { Analyzer.start(sourceId, path) }
+
+    override fun analyses(): List<AnalysisSummaryMsg> = guardedValue { Analyzer.list().map(AnalyzerMsgs::summary) }
+
+    override fun forgetAnalysis(scanId: String) = guarded { Analyzer.forget(scanId) }
+
+    override fun analysisView(scanId: String, node: Long, depth: Long, maxNodes: Long, callback: (Result<AnalysisViewMsg>) -> Unit) =
+        io(callback) { AnalyzerMsgs.view(Analyzer.view(scanId, node.toInt(), depth.toInt(), maxNodes.toInt())) }
+
+    override fun analysisChildren(
+        scanId: String, node: Long, sort: String, offset: Long, limit: Long, callback: (Result<List<AnalysisNodeMsg>>) -> Unit,
+    ) = io(callback) { Analyzer.children(scanId, node.toInt(), sort, offset.toInt(), limit.toInt()).map(AnalyzerMsgs::node) }
+
+    override fun analysisBiggest(scanId: String, node: Long, callback: (Result<List<EntryMsg>>) -> Unit) =
+        io(callback) { Analyzer.biggest(scanId, node.toInt()).map(::entryMsg) }
+
+    override fun analysisDelete(scanId: String, node: Long, permanent: Boolean, callback: (Result<Unit>) -> Unit) =
+        io(callback) { runBlocking { Analyzer.delete(scanId, node.toInt(), permanent) } }
+
+    override fun analysisExclude(scanId: String, node: Long) = guarded { Analyzer.exclude(scanId, node.toInt()) }
+
+    override fun analysisExclusions(): List<AnalysisExclusionMsg> =
+        guardedValue { Analyzer.exclusions().map(AnalyzerMsgs::exclusion) }
+
+    override fun removeAnalysisExclusion(stableKey: String, path: String) = guarded { Analyzer.removeExclusion(stableKey, path) }
 
     override fun details(sourceId: String, path: String, callback: (Result<DetailsMsg>) -> Unit) =
         io(callback) {
@@ -919,7 +945,7 @@ class HostApiImpl(
     override fun getUiPrefs(): UiPrefsMsg = uiPrefs.get().let {
         UiPrefsMsg(
             it.theme, it.haptics, it.welcomeSeen, it.terminalFontSize.toLong(), it.terminalSecure,
-            it.closeVaultsOnScreenOff, it.hideVaults, it.hideChats,
+            it.closeVaultsOnScreenOff, it.hideVaults, it.hideChats, it.analyzerChart, it.analyzerDepth.toLong(),
         )
     }
 
@@ -933,6 +959,8 @@ class HostApiImpl(
                 prefs.closeVaultsOnScreenOff ?: old.closeVaultsOnScreenOff,
                 prefs.hideVaults ?: old.hideVaults,
                 prefs.hideChats ?: old.hideChats,
+                prefs.analyzerChart ?: old.analyzerChart,
+                prefs.analyzerDepth?.toInt() ?: old.analyzerDepth,
             ),
         )
     }
@@ -1060,13 +1088,6 @@ class HostApiImpl(
         private fun detailsMsg(d: Details) = DetailsMsg(
             name = d.name, path = d.path, type = typeName(d.type), size = d.size, mtime = d.mtime, mode = d.mode?.toLong(),
             uid = d.uid, gid = d.gid, permissions = d.permissions, fs = d.fs,
-        )
-
-        private fun spaceMsg(r: SpaceReport) = SpaceReportMsg(
-            path = r.path, totalBytes = r.totalBytes, fileCount = r.fileCount.toLong(),
-            children = r.children.map { SpaceItemMsg(it.name, it.path, it.isDir, it.size, it.fileCount.toLong()) },
-            biggest = r.biggest.map(::entryMsg), truncated = r.truncated, otherCount = r.otherCount.toLong(),
-            otherBytes = r.otherBytes,
         )
 
         internal fun transferMsg(t: TransferState) = TransferMsg(

@@ -14,13 +14,14 @@ bool opensInPortail(AppState state, String name) =>
     state.viewPrefs.builtInViewers && _available.contains(viewerFor(name));
 
 /// Ouvre [e] de [sourceId] dans le lecteur de Portail qui lui convient ; [folder] : éléments du dossier dans
-/// l'ordre affiché (visionneuse, file d'attente de la musique).
+/// l'ordre affiché (visionneuse, file d'attente de la musique). Visionneuse et éditeur : plein écran, au-dessus de
+/// la barre des modules.
 Future<void> openViewer(BuildContext context, AppState state, String sourceId, EntryMsg e, List<EntryMsg> folder) async {
   switch (viewerFor(e.name)) {
     case 'image':
       final images = folder.where((x) => x.type == 'file' && viewerFor(x.name) == 'image').toList();
       final i = images.indexWhere((x) => x.path == e.path);
-      await Navigator.of(context).push(MaterialPageRoute<void>(
+      await Navigator.of(context, rootNavigator: true).push(MaterialPageRoute<void>(
           builder: (_) => ImageViewerScreen(state: state, sourceId: sourceId, images: images, initialIndex: i < 0 ? 0 : i)));
     case 'text':
       await openTextEditor(context, state, sourceId, e);
@@ -37,5 +38,5 @@ Future<void> openViewer(BuildContext context, AppState state, String sourceId, E
 
 /// Ouvre [e] dans l'éditeur de texte, quel que soit son nom (« Modifier comme texte »).
 Future<void> openTextEditor(BuildContext context, AppState state, String sourceId, EntryMsg e) =>
-    Navigator.of(context).push(MaterialPageRoute<void>(
+    Navigator.of(context, rootNavigator: true).push(MaterialPageRoute<void>(
         builder: (_) => TextEditorScreen(state: state, sourceId: sourceId, path: e.path, name: e.name)));

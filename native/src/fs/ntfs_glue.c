@@ -323,10 +323,21 @@ static uint32_t reparse_tag(ntfs_inode *ni) {
   return tag;
 }
 
-/* Type, taille, droits et date d'un inode ouvert (voir Global Constraints du plan, « Ce que voit l'API »). */
+/* Place allouée d'un flux ouvert : 0 s'il est résident (dans l'enregistrement MFT), la taille compressée s'il est
+ * compressé ou creux (clusters réellement posés), sinon la taille allouée. */
+static uint64_t attr_alloc(ntfs_attr *na) {
+  if (!NAttrNonResident(na)) return 0;
+  s64 n = NAttrCompressed(na) || NAttrSparse(na) ? na->compressed_size : na->allocated_size;
+  return n > 0 ? (uint64_t)n : 0;
+}
+
+/* Type, taille, droits et date d'un inode ouvert (voir Global Constraints du plan, « Ce que voit l'API ») ;
+ * place allouée, numéro d'enregistrement MFT et liens physiques (phase 16). */
 static int fill_stat(ntfs_inode *ni, fl_stat *out) {
   memset(out, 0, sizeof *out);
   out->mtime = (int64_t)ntfs2timespec(ni->last_data_change_time).tv_sec;
+  out->ino = (uint64_t)ni->mft_no;
+  out->nlink = le16_to_cpu(ni->mrec->link_count);
   if (ni->flags & FILE_ATTR_REPARSE_POINT) {
     uint32_t tag = reparse_tag(ni);
     bool link = tag == IO_REPARSE_TAG_SYMLINK || tag == IO_REPARSE_TAG_MOUNT_POINT;
@@ -337,6 +348,10 @@ static int fill_stat(ntfs_inode *ni, fl_stat *out) {
   if (ni->mrec->flags & MFT_RECORD_IS_DIRECTORY) {
     out->type = FL_FT_DIR;
     out->mode = 040755;
+    ntfs_attr *ia = ntfs_attr_open(ni, AT_INDEX_ALLOCATION, NTFS_INDEX_I30, 4);
+    if (!ia) return errno == ENOENT ? FL_OK : ntfs_err(errno); /* petit dossier : index résident */
+    out->alloc = attr_alloc(ia);
+    ntfs_attr_close(ia);
     return FL_OK;
   }
   if (ni->flags & FILE_ATTR_SYSTEM) { /* fichiers spéciaux Interix (lien, tube, périphérique) */
@@ -352,6 +367,7 @@ static int fill_stat(ntfs_inode *ni, fl_stat *out) {
   ntfs_attr *na = ntfs_attr_open(ni, AT_DATA, AT_UNNAMED, 0);
   if (!na) return errno == ENOENT ? FL_OK : ntfs_err(errno); /* fichier sans $DATA : vide */
   out->size = (uint64_t)na->data_size;
+  out->alloc = attr_alloc(na);
   ntfs_attr_close(na);
   return FL_OK;
 }

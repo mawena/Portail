@@ -19,6 +19,7 @@ class SheetAction<T> {
 Future<T?> showActionSheet<T>(BuildContext context, {String? title, required List<SheetAction<T>> actions}) =>
     showModalBottomSheet<T>(
       context: context,
+      useRootNavigator: true, // au-dessus de la barre des modules
       isScrollControlled: true,
       useSafeArea: true,
       builder: (ctx) {

@@ -374,37 +374,129 @@ class FolderSizeMsg {
   bool truncated;
 }
 
-/// Élément d'un dossier analysé (taille totale pour un dossier).
-class SpaceItemMsg {
-  SpaceItemMsg({required this.name, required this.path, required this.isDir, required this.size, required this.fileCount});
+/// Nœud d'une vue de l'analyseur (phase 16). `kind` : `dir`, `file`, `others` (contenu trop petit ou résumé, nom
+/// vide), `inaccessible`, `excluded`, `otherFs`, `unscanned` (part hors analyse), `trash` ; `others` et `unscanned`
+/// ont un identifiant négatif. `alloc` : place occupée (ou taille apparente, selon `sizeKind` de la vue) ; `items` :
+/// éléments dessous ; `mtime` : le plus récent dessous (secondes) ; `depth` : relative à la racine de la vue.
+class AnalysisNodeMsg {
+  AnalysisNodeMsg({
+    required this.id,
+    required this.parent,
+    required this.name,
+    required this.path,
+    required this.kind,
+    required this.alloc,
+    required this.apparent,
+    required this.items,
+    required this.mtime,
+    required this.hasChildren,
+    required this.complete,
+    required this.depth,
+  });
+  int id;
+  int parent;
   String name;
   String path;
-  bool isDir;
-  int size;
-  int fileCount;
+  String kind;
+  int alloc;
+  int apparent;
+  int items;
+  int mtime;
+  bool hasChildren;
+  bool complete;
+  int depth;
 }
 
-/// Occupation d'un dossier : enfants du plus gros au plus petit (200 au plus, le reste résumé par `otherCount` et
-/// `otherBytes`), plus gros fichiers sous lui ; `truncated` si l'analyse s'est arrêtée avant la fin.
-class SpaceReportMsg {
-  SpaceReportMsg({
-    required this.path,
-    required this.totalBytes,
-    required this.fileCount,
-    required this.children,
-    required this.biggest,
+/// Vue d'une analyse pour les graphiques : nœuds en largeur d'abord, la racine de la vue en premier (1 500 au plus).
+/// `sizeKind` : `allocated` (place occupée) ou `apparent` (dossier distant).
+class AnalysisViewMsg {
+  AnalysisViewMsg({
+    required this.scanId,
+    required this.root,
+    required this.rootLabel,
+    required this.nodes,
+    required this.running,
     required this.truncated,
-    required this.otherCount,
-    required this.otherBytes,
+    required this.simplified,
+    required this.sizeKind,
   });
-  String path;
-  int totalBytes;
-  int fileCount;
-  List<SpaceItemMsg> children;
-  List<EntryMsg> biggest;
+  String scanId;
+  int root;
+  String rootLabel;
+  List<AnalysisNodeMsg> nodes;
+  bool running;
   bool truncated;
-  int otherCount;
-  int otherBytes;
+  bool simplified;
+  String sizeKind;
+}
+
+/// Avancement de l'analyse en cours ou de la dernière. `usedBytes` : place occupée du stockage, seulement pour un
+/// stockage entier en place occupée ; `fraction` : de 0 à 1, bornée à 0,99 avant la fin.
+class AnalysisProgressMsg {
+  AnalysisProgressMsg({
+    required this.scanId,
+    required this.sourceId,
+    required this.path,
+    required this.running,
+    required this.cancelled,
+    this.error,
+    required this.files,
+    required this.dirs,
+    required this.bytes,
+    this.usedBytes,
+    required this.current,
+    required this.inaccessible,
+    required this.elapsedMs,
+    required this.fraction,
+  });
+  String scanId;
+  String sourceId;
+  String path;
+  bool running;
+  bool cancelled;
+  String? error;
+  int files;
+  int dirs;
+  int bytes;
+  int? usedBytes;
+  String current;
+  int inaccessible;
+  int elapsedMs;
+  double fraction;
+}
+
+/// Analyse gardée en mémoire ; `state` : `running`, `done`, `cancelled` ou `failed`.
+class AnalysisSummaryMsg {
+  AnalysisSummaryMsg({
+    required this.scanId,
+    required this.sourceId,
+    required this.label,
+    required this.path,
+    required this.startedAtMs,
+    this.finishedAtMs,
+    required this.bytes,
+    required this.files,
+    required this.state,
+    required this.sizeKind,
+  });
+  String scanId;
+  String sourceId;
+  String label;
+  String path;
+  int startedAtMs;
+  int? finishedAtMs;
+  int bytes;
+  int files;
+  String state;
+  String sizeKind;
+}
+
+/// Emplacement exclu des analyses (`stableKey` du stockage : `phone`, `sd:…`, `disk:…`).
+class AnalysisExclusionMsg {
+  AnalysisExclusionMsg({required this.stableKey, required this.sourceLabel, required this.path});
+  String stableKey;
+  String sourceLabel;
+  String path;
 }
 
 /// Résultats d'une recherche ; `truncated` au-delà de 500.
@@ -531,6 +623,8 @@ class UiPrefsMsg {
     this.closeVaultsOnScreenOff,
     this.hideVaults,
     this.hideChats,
+    this.analyzerChart,
+    this.analyzerDepth,
   });
   String theme;
   bool haptics;
@@ -547,6 +641,11 @@ class UiPrefsMsg {
 
   /// Phase 15 : conversations et automatisations masquées dans les captures et les applications récentes (null : non).
   bool? hideChats;
+
+  /// Phase 16 : graphique de l'analyseur (`rings`, `treemap` ou `none` ; null : `rings`) et sa profondeur (2 à 8 ;
+  /// null : 4).
+  String? analyzerChart;
+  int? analyzerDepth;
 }
 
 /// Version de Portail (`versionName`, `versionCode` du paquet) et appareil (`Build.VERSION.RELEASE`, `Build.MODEL`),
@@ -717,12 +816,29 @@ abstract class FluLuksHostApi {
   SearchResultMsg search(String sourceId, String path, String query, bool showHidden);
   void cancelSearch();
 
-  /// Analyse de l'espace sous `path` (une à la fois) ; `spaceChildren` relit un dossier de la dernière analyse.
-  @async
-  SpaceReportMsg analyzeSpace(String sourceId, String path);
-  @async
-  SpaceReportMsg spaceChildren(String sourceId, String path);
+  /// Arrête l'analyse en cours de l'analyseur.
   void cancelAnalysis();
+
+  // --- analyseur de stockage (phase 16) : avancement par `onAnalysisProgress`
+  /// Analyse `path` (arrête celle en cours) ; rend son identifiant.
+  String startAnalysis(String sourceId, String path);
+  List<AnalysisSummaryMsg> analyses();
+  void forgetAnalysis(String scanId);
+  @async
+  AnalysisViewMsg analysisView(String scanId, int node, int depth, int maxNodes);
+
+  /// Enfants d'un nœud pour l'arbre, `sort` : `size`, `name`, `items` ou `date` ; 200 par page au plus.
+  @async
+  List<AnalysisNodeMsg> analysisChildren(String scanId, int node, String sort, int offset, int limit);
+  @async
+  List<EntryMsg> analysisBiggest(String scanId, int node);
+
+  /// Corbeille ou suppression définitive par le chemin de l'explorateur ; l'arbre suit sans réanalyse.
+  @async
+  void analysisDelete(String scanId, int node, bool permanent);
+  void analysisExclude(String scanId, int node);
+  List<AnalysisExclusionMsg> analysisExclusions();
+  void removeAnalysisExclusion(String stableKey, String path);
 
   /// Propriétés ; taille d'un dossier et SHA-256 d'un fichier calculés à la demande, arrêtés par `cancelHash`
   /// (`sha256` rend alors null ; progression par `onHashProgress`).
@@ -873,6 +989,9 @@ abstract class FluLuksEventsApi {
 
   /// Pourcentage du calcul d'empreinte en cours ; null à la fin.
   void onHashProgress(int? pct);
+
+  /// Avancement de l'analyseur (phase 16), au plus toutes les 250 ms, et à la fin ; null avant la première analyse.
+  void onAnalysisProgress(AnalysisProgressMsg? progress);
 
   /// Musique en cours, ou null à l'arrêt ; `message` : raison d'un arrêt subi (« Lecture arrêtée : stockage fermé »).
   void onPlayerChanged(PlayerMsg? player, String? message);

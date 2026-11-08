@@ -129,6 +129,8 @@ class FrMaterialLocalizations extends DefaultMaterialLocalizations {
   @override
   String get scrimLabel => 'Fond';
   @override
+  String tabLabel({required int tabIndex, required int tabCount}) => 'onglet $tabIndex sur $tabCount';
+  @override
   String scrimOnTapHint(String modalRouteContentName) => 'Fermer $modalRouteContentName';
   @override
   String get refreshIndicatorSemanticLabel => 'Actualiser';

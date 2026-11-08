@@ -10,6 +10,7 @@ import 'ai_status_dot.dart';
 Future<(String, String)?> showModelPicker(BuildContext context, AppState state, {String? serverId, String? model}) =>
     showModalBottomSheet<(String, String)>(
       context: context,
+      useRootNavigator: true, // au-dessus de la barre des modules
       isScrollControlled: true,
       useSafeArea: true,
       builder: (_) => _ModelPicker(state: state, serverId: serverId, model: model),

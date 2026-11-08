@@ -8,22 +8,26 @@ import '../ui/feedback.dart';
 import '../ui/states.dart';
 import '../ui/tokens.dart';
 
-/// Ouvre la feuille des propriétés de [path] dans [sourceId].
-Future<void> showProperties(BuildContext context, AppState state, String sourceId, String path) =>
+/// Ouvre la feuille des propriétés de [path] dans [sourceId] ; [onDisk] : place occupée connue de l'analyseur.
+Future<void> showProperties(BuildContext context, AppState state, String sourceId, String path, {int? onDisk}) =>
     showModalBottomSheet<void>(
       context: context,
+      useRootNavigator: true, // au-dessus de la barre des modules
       isScrollControlled: true,
-      builder: (_) => PropertiesSheet(state: state, sourceId: sourceId, path: path),
+      builder: (_) => PropertiesSheet(state: state, sourceId: sourceId, path: path, onDisk: onDisk),
     );
 
 /// Propriétés d'un élément : emplacement, type, taille (calculée pour un dossier), date, système de fichiers, et
 /// droits et propriétaire sur ext4 ; pour un fichier, empreinte SHA-256 à la demande (progression, Annuler).
 class PropertiesSheet extends StatefulWidget {
-  const PropertiesSheet({super.key, required this.state, required this.sourceId, required this.path});
+  const PropertiesSheet({super.key, required this.state, required this.sourceId, required this.path, this.onDisk});
 
   final AppState state;
   final String sourceId;
   final String path;
+
+  /// Place occupée sur le disque (blocs alloués), quand l'analyseur la connaît ; la taille reste celle des données.
+  final int? onDisk;
 
   @override
   State<PropertiesSheet> createState() => _PropertiesSheetState();
@@ -163,6 +167,7 @@ class _PropertiesSheetState extends State<PropertiesSheet> {
         _row(Fr.location, _parentOf(d.path)),
         _row(Fr.typeLabel, Fr.typeName(d.type)),
         _row(Fr.sizeLabel, size),
+        if (widget.onDisk != null) _row(Fr.onDiskLabel, Fr.humanSize(widget.onDisk!)),
         if (d.mtime > 0) _row(Fr.modifiedLabel, Fr.shortDate(d.mtime)),
         if (d.fs.isNotEmpty) _row(Fr.fsLabel, d.fs),
         if (d.permissions != null && mode != null)

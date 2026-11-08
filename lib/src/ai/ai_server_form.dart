@@ -176,6 +176,7 @@ class _AiServerFormState extends State<AiServerForm> {
       if (!mounted) return;
       void details() => showModalBottomSheet<void>(
             context: context,
+            useRootNavigator: true, // au-dessus de la barre des modules
             isScrollControlled: true,
             showDragHandle: true,
             builder: (_) => ConnectionDetailsSheet(cause: r.detail, lines: r.log),

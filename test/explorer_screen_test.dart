@@ -51,7 +51,7 @@ Future<AppState> pump(WidgetTester tester, FakeHostApi api, {String source = 'ph
   final state = AppState(api);
   await state.refresh();
   await tester.pumpWidget(FluLuksApp(state: state));
-  final nav = tester.state<NavigatorState>(find.byType(Navigator));
+  final nav = tester.state<NavigatorState>(find.byType(Navigator).first);
   nav.push(MaterialPageRoute<void>(builder: (_) => ExplorerScreen(state: state, sourceId: source, path: path)));
   await tester.pumpAndSettle();
   return state;
@@ -147,7 +147,7 @@ void main() {
     await tester.pump();
     expect(find.text('2 éléments à copier'), findsOneWidget);
     // coller sur le disque
-    tester.state<NavigatorState>(find.byType(Navigator)).push(
+    tester.state<NavigatorState>(find.byType(Navigator).first).push(
         MaterialPageRoute<void>(builder: (_) => ExplorerScreen(state: state, sourceId: 'v1')));
     await tester.pumpAndSettle();
     await tester.tap(find.text('Coller ici'));
@@ -381,7 +381,7 @@ void main() {
     await tester.pump(const Duration(seconds: 5)); // résultat vu
     await tester.tap(find.byTooltip('Retour'));
     await tester.pumpAndSettle();
-    final nav = tester.state<NavigatorState>(find.byType(Navigator));
+    final nav = tester.state<NavigatorState>(find.byType(Navigator).first);
     nav.push(MaterialPageRoute<void>(builder: (_) => ExplorerScreen(state: state, sourceId: 'phone', path: '/DCIM')));
     await tester.pumpAndSettle();
     expect(find.textContaining('Terminé'), findsNothing);
@@ -393,7 +393,7 @@ void main() {
   testWidgets('oneClosedMessageForStackedExplorers', (tester) async {
     final api = api0()..dirs['v1']!['/sous'] = [];
     final state = await pump(tester, api, source: 'v1');
-    tester.state<NavigatorState>(find.byType(Navigator)).push(
+    tester.state<NavigatorState>(find.byType(Navigator).first).push(
         MaterialPageRoute<void>(builder: (_) => ExplorerScreen(state: state, sourceId: 'v1', path: '/sous')));
     await tester.pumpAndSettle();
     api.sources = [src('phone')];
