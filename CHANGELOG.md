@@ -2,7 +2,7 @@
 
 Les versions suivent la [gestion sémantique de version](https://semver.org/lang/fr/). Chaque version publiée
 porte une étiquette `vX.Y.Z` sur `main`. Le détail de chaque phase est dans la
-[feuille de route](docs/superpowers/plans/2026-10-17-fluluks-feuille-de-route.md).
+[feuille de route](ROADMAP.md).
 
 ## À venir
 

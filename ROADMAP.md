@@ -1,15 +1,14 @@
-# FluLuks — Feuille de route
+# Portail — Feuille de route
 
-## Suivi
 
 Légende : `[x]` terminé · `[ ]` à faire. Une case est cochée dès que l'étape est terminée et vérifiée,
 dans le même commit que le travail.
 
-### Conception
-- [x] Document de conception validé ([spec](../specs/2026-10-17-fluluks-design.md))
+## Conception
+- [x] Document de conception validé ([spec](docs/superpowers/specs/2026-10-17-fluluks-design.md))
 - [x] Dépôt git et branches git flow (`main`, `develop`)
 
-### Phase 1 — Moteur natif en lecture, sur PC Linux ([plan](2026-10-17-phase1-moteur-natif-lecture.md))
+## Phase 1 — Moteur natif en lecture, sur PC Linux ([plan](docs/superpowers/plans/2026-10-17-phase1-moteur-natif-lecture.md))
 - [x] Plan de la phase 1 écrit
 - [x] T1 — Squelette natif et dépendances
 - [x] T2 — Images de test (fixtures) + vérification par le noyau Linux *(vérifié par le noyau le 2026-10-17 : 5 images « NOYAU OK »)*
@@ -23,7 +22,7 @@ dans le même commit que le travail.
 - [x] T10 — Outil `fluluks-cli` + lecture du vrai disque sur PC *(vrai disque lu le 2026-10-17 : `/dev/sdb1` LUKS2 aes-xts-plain64 déverrouillé, racine ext4 listée ; déverrouillage + montage + listage en 5,1 s sur le vrai disque (build Release, PC), mesure sur téléphone en phase 2)*
 - [x] Fusion `feature/moteur-natif-lecture` → `develop`
 
-### Phase 2 — Android en lecture : jalon « mon disque dans VLC » ([plan](2026-10-17-phase2-android-lecture.md))
+## Phase 2 — Android en lecture : jalon « mon disque dans VLC » ([plan](docs/superpowers/plans/2026-10-17-phase2-android-lecture.md))
 - [x] Plan de la phase 2 écrit
 - [x] *(utilisateur)* Libérer au moins 10 Gio sur `/` (7,5 Gio libres le 2026-10-17 ; ≈ 60 Gio libres ensuite)
 - [x] T1 — Environnement Android (SDK 36, NDK 28.2, licences acceptées par l'utilisateur) *(flutter doctor affiche « license status unknown » : incompatibilité entre Flutter 3.41 et le nouvel Android CLI ; la compilation est vérifiée en T5)*
@@ -81,9 +80,9 @@ dans le même commit que le travail.
   - **Essais** : refaire la grille avec une clé USB-C sacrifiée (dont le débranchement en cours de
     lecture) et chronométrer le déverrouillage dans l'application.
 
-### Phase 3 — ext4 en écriture ([plan](2026-10-18-phase3-ext4-ecriture.md))
+## Phase 3 — ext4 en écriture ([plan](docs/superpowers/plans/2026-10-18-phase3-ext4-ecriture.md))
 - [x] Essai préalable de l'écriture lwext4 face à `e2fsck`
-      ([rapport](../research/2026-10-18-essai-lwext4-ecriture/RAPPORT.md))
+      ([rapport](docs/superpowers/research/2026-10-18-essai-lwext4-ecriture/RAPPORT.md))
 - [x] Plan de la phase 3 écrit
 - [x] T1 — Dettes de lecture dans lwext4 (noms de 255 octets, trous de dossier, entrées hostiles)
 - [x] T2 — Tests manquants des phases 1 et 2, `FL_EBUSY` en fermeture, écriture LUKS2
@@ -166,7 +165,7 @@ dans le même commit que le travail.
   - [x] Version `v0.2.1` *(2026-10-18, branche `hotfix/0.2.1` → `main` et `develop`)*
   - [x] Essai sur le Pixel *(2026-10-19, par l'utilisateur : copie nettement plus rapide qu'en 0.2.0)*
 
-### Phase 4 — FAT16 / FAT32 / exFAT (lecture puis écriture) ([plan](2026-10-19-phase4-fat-exfat.md))
+## Phase 4 — FAT16 / FAT32 / exFAT (lecture puis écriture) ([plan](docs/superpowers/plans/2026-10-19-phase4-fat-exfat.md))
 - [x] Plan de la phase 4 écrit *(2026-10-19 ; FatFs R0.16, FAT12 inclus)*
 - [x] T1 — Images FAT/exFAT et juges indépendants (`fsck.fat`, `fsck.exfat`, `fatjuge.py`) *(mtools ne sait pas
       écrire un émoji : il n'est que dans l'arbre exFAT ; test_fat_banc 6/6)*
@@ -196,7 +195,7 @@ dans le même commit que le travail.
       corrigé ; suite rapide 27/27)*
 - [x] Version `v0.3.0` *(2026-10-19, branche `release/0.3.0` → `main` et `develop`)*
 
-### Phase 5 — NTFS (lecture puis écriture) ([plan](2026-10-19-phase5-ntfs.md))
+## Phase 5 — NTFS (lecture puis écriture) ([plan](docs/superpowers/plans/2026-10-19-phase5-ntfs.md))
 - [x] Plan de la phase 5 écrit *(2026-10-19 ; libntfs-3g 2022.10.3, juge indépendant `ntfsjuge.py`)*
 - [x] T1 — libntfs-3g dans l'arbre, images NTFS et juge indépendant *(correctif 0001 : accès non alignés de
       compress.c vus par UBSan ; test_ntfs_banc 5/5, suite rapide 28/28)*
@@ -228,7 +227,7 @@ dans le même commit que le travail.
       cas hostile « liste d'attributs » ; corrigés, suite rapide 34/34, Pixel 15/15)*
 - [x] Version `v0.4.0`
 
-### Phase 6 — Portail : nom, logo et gestionnaire de fichiers ([plan](2026-10-20-phase6-portail.md))
+## Phase 6 — Portail : nom, logo et gestionnaire de fichiers ([plan](docs/superpowers/plans/2026-10-20-phase6-portail.md))
 - [x] Plan de la phase 6 écrit *(spec § 11 : nom Portail, logo dossier-bouclier, gestionnaire de fichiers
       complet avec accès à tous les fichiers)*
 - [x] T1 — Nom « Portail » et logo *(icône adaptative avec silhouette monochrome, icône de notification ; rendu vérifié sur le Pixel)*
@@ -250,7 +249,7 @@ dans le même commit que le travail.
       carte SD retirée non suivie ; corrigés, JVM 114/114, Flutter 60/60, Pixel 59/59)*
 - [x] Version `v0.5.0`
 
-### Phase 7 — Robustesse et performances ([plan](2026-10-22-phase7-robustesse.md))
+## Phase 7 — Robustesse et performances ([plan](docs/superpowers/plans/2026-10-22-phase7-robustesse.md))
 - [x] Plan de la phase 7 écrit *(spec § 13)*
 - [x] T1 — Logo orange, plus représentatif : arche de portail, dossier et cadenas *(demande du 2026-10-22 ; AppIdentityTest 3/3 sur le Pixel)*
 - [x] T2 — Système de fichiers et chiffrement connus pour chaque volume *(clé « fs » du statfs natif)*
@@ -271,7 +270,7 @@ dans le même commit que le travail.
 - [x] T11 — Documentation : README (robustesse, mesures, limite levée)
 - [x] Version `v1.0.0`
 
-### Phase 8 — Formatage des disques USB ([plan](2026-10-22-phase8-formatage.md))
+## Phase 8 — Formatage des disques USB ([plan](docs/superpowers/plans/2026-10-22-phase8-formatage.md))
 - [x] Plan de la phase 8 écrit *(demande du 2026-10-22 ; spec § 14)*
 - [x] T1 — Table de partitions à une partition (MBR jusqu'à 2 Tio, GPT au-delà) *(jugée par sfdisk et sgdisk)*
 - [x] T2 — FAT32 et exFAT *(f_mkfs de FatFs ; fsck.fat et fsck.exfat propres, étiquette dans le secteur de démarrage)*
@@ -285,7 +284,7 @@ dans le même commit que le travail.
 - [x] Fusion `feature/formatage` → `develop`
 - [x] Version `v1.1.0`
 
-### Phase 9 — Compression, corbeille et outils du gestionnaire ([plan](2026-10-22-phase9-compression.md))
+## Phase 9 — Compression, corbeille et outils du gestionnaire ([plan](docs/superpowers/plans/2026-10-22-phase9-compression.md))
 - [x] Plan de la phase 9 écrit *(demande du 2026-10-22 ; spec § 15)*
 - [x] T1 — libarchive 3.8.10 et liblzma 5.8.4 dans le moteur
 - [x] T2 — Lecture d'archives : ZIP, 7z, RAR4, RAR5, TAR, TAR.GZ, TAR.XZ, GZ, XZ
@@ -299,7 +298,7 @@ dans le même commit que le travail.
 - [x] T10 — Renommage par lot
 - [x] T11 — Filtres rapides sur l'accueil (photos, vidéos, musique, documents, archives, récents)
 - [x] Essais instrumentés sur le Pixel : archives 3/3, filtres 1/1, copies 5/5 *(2026-10-23)*
-- [x] *(utilisateur)* T12 — Essais sur le Pixel ([fiche](../research/2026-10-22-essais-phase9/essais.md))
+- [x] *(utilisateur)* T12 — Essais sur le Pixel ([fiche](docs/superpowers/research/2026-10-22-essais-phase9/essais.md))
       *(2026-10-23 : toutes les lignes de la fiche réussies)*
 - [x] T13 — Documentation
 - [x] Relecture finale de toute la branche *(aucun point critique ; 5 importants corrigés : place réelle relue à
@@ -308,7 +307,7 @@ dans le même commit que le travail.
 - [x] Fusion `feature/compression` → `develop`
 - [x] Version `v1.2.0`
 
-### Phase 10 — Lecteurs intégrés et dossiers distants ([plan](2026-10-23-phase10-lecteurs-distants.md))
+## Phase 10 — Lecteurs intégrés et dossiers distants ([plan](docs/superpowers/plans/2026-10-23-phase10-lecteurs-distants.md))
 - [x] Plan de la phase 10 écrit
       *(demande du 2026-10-20, J.1 ; déplacée en phase 9 puis en phase 10 le 2026-10-22 ; spec § 18)*
 - [x] T1 — Lecture d'images et de textes, enregistrement sûr des textes
@@ -328,7 +327,7 @@ dans le même commit que le travail.
 - [x] Fusion `feature/lecteurs-distants` → `develop`
 - [x] Version `v1.3.0`
 
-### Phase 11 — Interface complète et professionnelle ([plan](2026-10-23-phase11-interface.md))
+## Phase 11 — Interface complète et professionnelle ([plan](docs/superpowers/plans/2026-10-23-phase11-interface.md))
 - [x] Plan de la phase 11 écrit *(demande du 2026-10-23 ; spec § 19 ; choix de conception à valider par l'utilisateur)*
 - [x] T1 — Système de design : couleurs du logo, thèmes clair et sombre, choix du thème
 - [x] T2 — Composants communs (états vides, erreurs, chargements, confirmations, feuilles d'actions)
@@ -342,13 +341,13 @@ dans le même commit que le travail.
 - [x] T10 — Barres du bas et écrans de la phase 10
 - [x] T11 — Accessibilité, grands écrans et tests dorés
 - [x] T12 — Captures et essais instrumentés sur le Pixel 4 XL
-- [x] *(utilisateur)* T13 — Essais sur le Pixel *(2026-10-23 : toute la fiche réussie selon l'utilisateur ; [fiche](../research/2026-10-23-essais-phase11/essais.md))*
+- [x] *(utilisateur)* T13 — Essais sur le Pixel *(2026-10-23 : toute la fiche réussie selon l'utilisateur ; [fiche](docs/superpowers/research/2026-10-23-essais-phase11/essais.md))*
 - [x] T14 — Documentation *(README : section « Interface » et trois captures du Pixel)*
 - [x] Relecture finale de toute la branche *(6 points importants corrigés, chacun avec son test ; 430 tests Flutter)*
 - [x] Fusion `feature/interface` → `develop`
 - [x] Version `v1.4.0`
 
-### Phase 12 — Lecteur vidéo : orientation, pistes et gestes ([plan](2026-10-23-phase12-lecteur-video.md))
+## Phase 12 — Lecteur vidéo : orientation, pistes et gestes ([plan](docs/superpowers/plans/2026-10-23-phase12-lecteur-video.md))
 - [x] Plan de la phase 12 écrit *(demande du 2026-10-23 ; spec § 20)*
 - [x] T1 — Orientation : portrait par défaut, rotation selon le réglage d'Android, boutons « Tourner » et cadenas
 - [x] T2 — Choix des pistes audio et des sous-titres, désactivables
@@ -356,12 +355,12 @@ dans le même commit que le travail.
 - [x] T4 — Toucher deux fois pour reculer ou avancer de 10 s, cumulable
 - [x] T5 — Documentation
 - [x] T6 — Essais instrumentés sur le Pixel
-- [x] *(utilisateur)* T7 — Essais sur le Pixel ([fiche](../research/2026-10-23-essais-phase12/essais.md)) *(2026-10-23 : toute la fiche réussie selon l'utilisateur, sur l'APK de la phase 12)*
+- [x] *(utilisateur)* T7 — Essais sur le Pixel ([fiche](docs/superpowers/research/2026-10-23-essais-phase12/essais.md)) *(2026-10-23 : toute la fiche réussie selon l'utilisateur, sur l'APK de la phase 12)*
 - [x] Relecture finale de toute la branche *(1 point important corrigé : pincement à deux doigts ; JVM 350 tests)*
 - [x] Fusion `feature/lecteur-video` → `develop`
 - [x] Version `v1.5.0`
 
-### Phase 13 — Connexions SSH : terminal, clés, tunnels ([plan](2026-10-23-phase13-ssh.md))
+## Phase 13 — Connexions SSH : terminal, clés, tunnels ([plan](docs/superpowers/plans/2026-10-23-phase13-ssh.md))
 - [x] Plan de la phase 13 écrit *(demande du 2026-10-23 ; spec § 21)*
 - [x] T1 — Connexions SSH fiables et expliquées : messages précis, Tester la connexion, keyboard-interactive, `mawena.cloud:2244` *(connexion à mawena.cloud rétablie avant la phase)*
 - [x] T2 — Sessions de terminal (Kotlin) : PTY xterm, sortie par lots, 8 sessions *(MINA : 12 tests, dont 5 Mo de sortie en lots bornés)*
@@ -375,12 +374,12 @@ dans le même commit que le travail.
 - [x] T10 — Tunnels (redirection de port locale)
 - [x] T11 — Documentation
 - [x] T12 — Essais instrumentés sur le Pixel *(5/5 : mot de passe, keyboard-interactive, clé Ed25519 générée et installée, tunnel, service 2 min)*
-- [x] *(utilisateur)* T13 — Essais sur le Pixel *(2026-10-24 : 35 points sur 38 faits par adb, essai jugé bon par l'utilisateur ; 5 défauts trouvés et corrigés : premier terminal depuis l'accueil, copie et affichage après `clear` (xterm), titres des sessions, message de port de tunnel ; pincement, couleurs à l'œil et journal d'un échec laissés à l'utilisateur ; [fiche](../research/2026-10-24-essais-phase13/essais.md))*
+- [x] *(utilisateur)* T13 — Essais sur le Pixel *(2026-10-24 : 35 points sur 38 faits par adb, essai jugé bon par l'utilisateur ; 5 défauts trouvés et corrigés : premier terminal depuis l'accueil, copie et affichage après `clear` (xterm), titres des sessions, message de port de tunnel ; pincement, couleurs à l'œil et journal d'un échec laissés à l'utilisateur ; [fiche](docs/superpowers/research/2026-10-24-essais-phase13/essais.md))*
 - [x] Relecture finale de toute la branche *(3 constats importants corrigés, 7 mineurs notés)*
 - [x] Fusion `feature/ssh` → `develop`
 - [x] Version `v1.6.0`
 
-### Phase 14 — Chiffrement de fichiers, de dossiers et coffres ([plan](2026-10-23-phase14-chiffrement.md))
+## Phase 14 — Chiffrement de fichiers, de dossiers et coffres ([plan](docs/superpowers/plans/2026-10-23-phase14-chiffrement.md))
 - [x] Plan de la phase 14 écrit *(demande du 2026-10-23 ; spec § 22)*
 - [x] T1 — Moteur : scrypt et format age (chiffrement en flux, lecture à accès aléatoire, juge Python) *(scrypt de Tarsnap copié sans modification, vecteurs RFC 7914 et C2SP/CCTV, juge agejuge.py ; ctest 46/46 ; essais sur le Pixel en T15)*
 - [x] T2 — Moteur : ZIP chiffré AES-256 et archives ZIP protégées par mot de passe (libarchive sur mbedTLS) *(juge zipaesjuge.py ; ctest 47/47 ; tests natifs verts sur le Pixel)*
@@ -402,7 +401,7 @@ dans le même commit que le travail.
 - [x] Fusion `feature/chiffrement` → `develop` *(2026-10-25, commit 493d989)*
 - [x] Version `v1.7.0`
 
-### Phase 15 — Intégration IA : serveurs auto-hébergés, chat, automatisations ([plan](2026-10-24-phase15-ia.md))
+## Phase 15 — Intégration IA : serveurs auto-hébergés, chat, automatisations ([plan](docs/superpowers/plans/2026-10-24-phase15-ia.md))
 - [x] Plan de la phase 15 écrit *(demande du 2026-10-24 ; spec § 23 à § 25 ; phase 15, puis 17, puis 15 depuis le 2026-10-25 ; jamais avant la validation de la phase 14 ; serveur réel : atelier.mawena.cloud)*
 - [x] T1 — Contrat d'API (compatible OpenAI) et serveur d'essai
 - [x] T2 — Couche réseau `AiProvider` compatible OpenAI, lecture du flux SSE, erreurs traduites *(MockWebServer)*
@@ -414,14 +413,14 @@ dans le même commit que le travail.
 - [x] T8 — Automatisations : modèles de prompt à variables, lancement manuel ou planifié (WorkManager), historique *(TemplateTest 9, AutomationsTest 24 ; WorkManager 2.10.1 ; AutomationWorkerInstrumentedTest écrit, passage sur le Pixel en T12 ; 723 tests Flutter, 595 Kotlin)*
 - [x] T9 — Écrans des automatisations *(automations_test 11 ; liste, fiche et historique, formulaire à variables détectées, exécution suivie en direct ; entrée « Automatisations » sur l'accueil ; 778 tests Flutter, 595 Kotlin)*
 - [x] T10 — Certificats auto-signés de confiance, conversations masquées dans les captures *(TrustedCertsTest 8 ; http:// permis par la configuration de sécurité réseau, absente jusque-là ; règle de source noLogsInAiCode ; 782 tests Flutter, 604 Kotlin)*
-- [x] T11 — Documentation *(README : intégration IA, limites, sécurité, serveur d'essai, licences d'OkHttp, Room, WorkManager et markdown ; aide : trois questions ; [fiche d'essai](../research/2026-10-25-essais-phase15/essais.md))*
-- [x] T12 — Essais instrumentés sur le Pixel *(12/12 : test de connexion, 2 000 morceaux sans perte ni doublon, arrêt, erreur au milieu du flux, 401 non relancé, délai, base Room, WorkManager planifié puis annulé ; ni clé ni contenu dans logcat ; [journal](../research/2026-10-25-essais-phase15/instrumentes-20261025-2024.txt))*
+- [x] T11 — Documentation *(README : intégration IA, limites, sécurité, serveur d'essai, licences d'OkHttp, Room, WorkManager et markdown ; aide : trois questions ; [fiche d'essai](docs/superpowers/research/2026-10-25-essais-phase15/essais.md))*
+- [x] T12 — Essais instrumentés sur le Pixel *(12/12 : test de connexion, 2 000 morceaux sans perte ni doublon, arrêt, erreur au milieu du flux, 401 non relancé, délai, base Room, WorkManager planifié puis annulé ; ni clé ni contenu dans logcat ; [journal](docs/superpowers/research/2026-10-25-essais-phase15/instrumentes-20261025-2024.txt))*
 - [x] *(utilisateur)* T13 — Essais sur le Pixel *(fiche : 33 lignes réussies, le 2026-10-27 ; défaut trouvé et corrigé : automatisations planifiées bloquées sur un Wi-Fi sans Internet (46ade42) ; lignes du chat avec Atelier faites par l'utilisateur)*
 - [x] Relecture finale de toute la branche *(1 point critique et 1 important corrigés, 3 mineurs remontés à important et corrigés, plus le plantage au démarrage signalé pendant les essais ; chacun avec son test ; 784 tests Flutter, 606 JVM, 14 instrumentés)*
 - [x] Fusion `feature/ia` → `develop` *(2026-10-27, à la demande de l'utilisateur, avant ses essais sur le Pixel ; branche supprimée ; version à publier après les essais)*
 - [x] Version `v1.8.0` *(2026-10-27 ; branche `release/1.8.0` partie de develop avant la fusion de l'analyseur, correctif 46ade42 reporté)*
 
-### Phase 16 — Analyseur de stockage, comme celui d'Ubuntu ([plan](2026-10-25-phase16-analyseur.md))
+## Phase 16 — Analyseur de stockage, comme celui d'Ubuntu ([plan](docs/superpowers/plans/2026-10-25-phase16-analyseur.md))
 - [x] Plan de la phase 16 écrit *(demande du 2026-10-25 ; spec § 26)*
 - [x] T1 — Barre de navigation entre les modules (Fichiers, Coffres, Distants, IA ; l'Analyseur y entre en T10), rail sur grand écran *(demande du 2026-10-26, Coffres demandé le 2026-10-27 ; spec § 27 ; démarrage sur le Pixel le 2026-10-27 : cinq modules affichés, sans plantage)*
 - [x] T2 — Moteur : place allouée, inode et liens physiques dans la liste d'un dossier (ext4, FAT, exFAT, NTFS) *(test_fs_alloc 8 cas jugés par debugfs, fatjuge.py et ntfsjuge.py ; 50/50 tests natifs sur PC ; passage sur le Pixel en attente)*
@@ -433,7 +432,7 @@ dans le même commit que le travail.
 - [x] T8 — Graphiques à l'écran : toucher pour entrer, glisser pour lire, appui long pour le menu, TalkBack *(analysis_chart_test 11 ; 853 tests Flutter)*
 - [x] T9 — Écran de l'analyse : arbre synchronisé, fil d'Ariane, profondeur, actions (explorateur, chemin, propriétés, corbeille) *(analyzer_screen_test 17 ; dialogue de suppression partagé avec l'explorateur ; images de référence analyzer_light et analyzer_dark ; 892 tests Flutter)*
 - [x] T10 — Accueil de l'analyseur (module de la barre), points d'entrée, emplacements exclus ; retrait de l'analyse de la phase 9 *(analyzer_home_test 10 ; module Analyseur troisième de la barre, après Coffres ; Réglages → Analyseur de stockage → Emplacements exclus ; analyse de l'espace de la phase 9 retirée (Pigeon, Kotlin, Dart) ; 902 tests Flutter, 664 JVM)*
-- [x] T11 — Documentation *(README : analyseur de stockage, barre de navigation, renvois aux modules, limites, commandes de `test_fs_alloc` et des juges ; aide : deux questions ; [fiche d'essai](../research/2026-10-27-essais-phase16/essais.md) ; 902 tests Flutter)*
+- [x] T11 — Documentation *(README : analyseur de stockage, barre de navigation, renvois aux modules, limites, commandes de `test_fs_alloc` et des juges ; aide : deux questions ; [fiche d'essai](docs/superpowers/research/2026-10-27-essais-phase16/essais.md) ; 902 tests Flutter)*
 - [x] Essais Pixel reportés (téléphone non joignable le 2026-10-27) : démarrage de T1, tests natifs de T2 *(faits le 2026-10-27 l'après-midi : démarrage et cinq modules ; 23 suites natives OK sur le Pixel)*
 - [x] T12 — Essais instrumentés sur le Pixel *(AnalyzerInstrumentedTest 5/5 : stockage partagé entier en 0,5 s (4 105 fichiers, 7,1 Go vus sur 42,8 Go occupés), 50 000 fichiers en 1,2 s pour +20 Mio Java, image ext4 égale au manifeste ; Android/data monté à part corrigé ; 666 tests JVM)*
 - [x] *(utilisateur)* T13 — Essais sur le Pixel (comparaison avec Baobab sous Ubuntu) *(fiche : 41 lignes réussies, le 2026-10-27, disque USB, Baobab et TalkBack faits par l'utilisateur ; quatre défauts trouvés et corrigés, chacun avec son test : rail invisible pour TalkBack en paysage, Réanalyser qui doublait l'analyse, propriétés sans la place sur le disque, onglet coupé à 200 %)*
@@ -441,7 +440,7 @@ dans le même commit que le travail.
 - [x] Fusion `feature/analyseur` → `develop` *(2026-10-27, à la demande de l'utilisateur, avant ses essais sur le Pixel ; branche supprimée ; version à publier après les essais)*
 - [x] Version `v1.9.0` *(2026-10-27)*
 
-### Phase 17 — Onglets dans le module Fichiers ([plan](2026-11-12-phase17-onglets.md))
+## Phase 17 — Onglets dans le module Fichiers ([plan](docs/superpowers/plans/2026-11-12-phase17-onglets.md))
 - [x] Plan de la phase 17 écrit *(demande du 2026-11-12 ; spec § 29 ; commencée aussitôt, décisions du planificateur à valider aux essais : 8 onglets au plus, barre dès deux onglets, onglets gardés le temps de la session)*
 - [x] T1 — Onglets du module Fichiers : ouvrir, fermer, onglet affiché, retour à l'onglet d'avant, 8 au plus *(files_tabs_test 10 ; emplacement signalé par les explorateurs, prévenu après l'image en cours ; 914 tests Flutter)*
 - [x] T2 — Coquille : une pile de pages par onglet, Retour et barre de navigation, ouverture dans un nouvel onglet *(file_tabs_test 8 ; un navigateur et un HeroController par onglet, oubliés à la fermeture ; module_shell_test inchangé ; 922 tests Flutter)*
@@ -453,7 +452,7 @@ dans le même commit que le travail.
 - [ ] Fusion `feature/onglets` → `develop`
 - [ ] Version `v1.10.0`
 
-### Phase 18 — Gestion des partitions, comme GParted ([plan](2026-10-27-phase17-partitions.md))
+## Phase 18 — Gestion des partitions, comme GParted ([plan](docs/superpowers/plans/2026-10-27-phase17-partitions.md))
 - [x] Plan de la phase 17 écrit *(demande du 2026-10-22 ; spec § 17, § 24, § 25 et § 26 ; phase 12, puis 13, 14, 15, 16, 17 et 15, jusqu'au 2026-10-25, puis 16, puis 17 du 2026-10-25 au 2026-11-12, puis 18 (spec § 29) ; plan du 2026-10-27, décisions du planificateur à valider : pas de déplacement, FAT32 et exFAT non redimensionnés, MBR étendu en étiquette seulement)*
 - [x] T1 — Moteur : table de partitions modifiable (GPT et MBR gardés tels quels hors changement, nouvelle table, espaces libres) *(test_part_layout 11 cas jugés par sfdisk et sgdisk, coupure à chaque écriture ; table de la phase 8 écrite par fl_pt_store ; 52/52 tests natifs hors lents, ASan/UBSan propres)*
 - [x] T2 — Moteur : créer, supprimer, formater une partition ; taille au formatage ; place occupée *(test_partops 9 cas jugés par fsck.fat, fsck.exfat, e2fsck, ntfsfix, cryptsetup et sfdisk ; formatage d'une tranche partagé avec la phase 8 ; 52/52 tests natifs, 902 Flutter, 664 JVM ; vérification par le noyau à lancer par l'utilisateur (sudo))*
@@ -471,7 +470,7 @@ dans le même commit que le travail.
 - [ ] Fusion `feature/partitions` → `develop`
 - [ ] Version `v1.11.0`
 
-### Phase 19 — Vérification et réparation des disques
+## Phase 19 — Vérification et réparation des disques
 - [ ] Plan de la phase 18 écrit *(demande du 2026-10-22 ; spec § 16, § 25 et § 26 ; phase 11, puis 12, 13, 14, 15 et 16, jusqu'au 2026-10-25, puis 17, puis 18 du 2026-10-25 au 2026-11-12, puis 19 (spec § 29))*
 - [ ] Vérification en lecture seule avec rapport, pour chaque système de fichiers
 - [ ] Réparation ext4 par e2fsck (e2fsprogs, sur l'accès USB du moteur)
@@ -480,7 +479,7 @@ dans le même commit que le travail.
 - [ ] LUKS : vérification des deux en-têtes, sauvegarde et restauration de l'en-tête
 - [ ] Version `v1.12.0`
 
-### Phase 20 — Voix de narration : sa propre voix clonée, avec consentement, pour des fichiers audio
+## Phase 20 — Voix de narration : sa propre voix clonée, avec consentement, pour des fichiers audio
 - [ ] Plan de la phase 19 écrit *(demande du 2026-10-31 ; spec § 28 ; phase 19 jusqu'au 2026-11-12, puis 20 (spec § 29) ; après la phase 19 ; transformation en direct (appels, notes vocales) et clonage depuis un fichier importé exclus, décision du 2026-10-31)*
 - [ ] Recherche : modèle de synthèse du serveur (Chatterbox Multilingual, XTTS-v2 ou autre : français, licence, filigrane, temps de génération sur le VPS)
 - [ ] Contrat d'API : routes `/v1/voices` et `/v1/audio/speech`, serveur d'essai et `contrat_test.py` étendus

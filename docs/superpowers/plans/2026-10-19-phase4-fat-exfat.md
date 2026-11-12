@@ -41,7 +41,7 @@ réouverture et ouverte en lecture seule, jamais réécrite à l'aveugle.
   - Les commits portent l'identité git de l'utilisateur, avec un message en français (Conventional
     Commits) et **sans aucune attribution à Claude**.
   - Un commit par tâche, plus les commits de correction.
-  - On coche la tâche dans la feuille de route (`docs/superpowers/plans/2026-10-17-fluluks-feuille-de-route.md`,
+  - On coche la tâche dans la feuille de route (`ROADMAP.md`,
     section Phase 4) **dans le même commit**.
 - **Ne jamais corrompre le disque** (anti-objectif n° 1). En cas de doute, le volume passe en lecture
   seule, avec une raison affichée. Aucune tâche ne relâche une règle du § 4.2.
