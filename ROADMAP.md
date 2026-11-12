@@ -444,7 +444,7 @@ dans le même commit que le travail.
 - [x] Plan de la phase 17 écrit *(demande du 2026-11-12 ; spec § 29 ; commencée aussitôt, décisions du planificateur à valider aux essais : 8 onglets au plus, barre dès deux onglets, onglets gardés le temps de la session)*
 - [x] T1 — Onglets du module Fichiers : ouvrir, fermer, onglet affiché, retour à l'onglet d'avant, 8 au plus *(files_tabs_test 10 ; emplacement signalé par les explorateurs, prévenu après l'image en cours ; 914 tests Flutter)*
 - [x] T2 — Coquille : une pile de pages par onglet, Retour et barre de navigation, ouverture dans un nouvel onglet *(file_tabs_test 8 ; un navigateur et un HeroController par onglet, oubliés à la fermeture ; module_shell_test inchangé ; 922 tests Flutter)*
-- [ ] T3 — Barre d'onglets : icône et nom du dossier ouvert, croix, +, appui long, TalkBack, texte à 200 %, images de référence
+- [x] T3 — Barre d'onglets : icône et nom du dossier ouvert, croix, +, appui long, TalkBack, texte à 200 %, images de référence *(file_tabs_test 16 ; pages des onglets dans leur propre conteneur sémantique, sinon la barrière des pages cachait la barre à TalkBack ; onglet affiché centré comme un TabBar défilant ; images file_tabs_light et file_tabs_dark ; banc d'accessibilité ; 942 tests Flutter)*
 - [ ] T4 — Points d'entrée : menu d'un dossier, menu de l'explorateur, résultats de recherche ; stockage qui disparaît
 - [ ] T5 — Documentation
 - [ ] *(utilisateur)* T6 — Essais sur le Pixel

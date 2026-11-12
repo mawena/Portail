@@ -4,6 +4,7 @@ import 'package:flutter/services.dart';
 import '../analyzer/analyzer_home_screen.dart';
 import '../bridge/fluluks_api.g.dart';
 import '../state/app_state.dart';
+import '../state/files_tabs.dart';
 import '../state/prefs.dart';
 import '../file_types.dart';
 import '../state/sorting.dart';
@@ -27,6 +28,7 @@ import '../widgets/thumb.dart';
 import '../widgets/unlock_dialog.dart';
 import 'batch_rename_screen.dart';
 import 'encrypt_sheet.dart';
+import 'files_tab_scope.dart';
 import 'module_shell.dart';
 import 'search_screen.dart';
 import 'trash_screen.dart';
@@ -112,9 +114,15 @@ class _ExplorerScreenState extends State<ExplorerScreen> {
   /// Coffre parcouru avec le réglage « Masquer les coffres… » : l'écran est masqué tant qu'il est là.
   bool _secure = false;
 
+  /// Onglet de Fichiers qui contient l'explorateur (phase 17) et le dossier qui lui est signalé, pour son nom.
+  FilesTabScope? _tab;
+  TabPlace? _place;
+
   @override
   void initState() {
     super.initState();
+    _tab = FilesTabScope.maybeOf(context);
+    _place = _tab?.tabs.enter(_tab!.tab, widget.sourceId, _path);
     if (_source?.kind == 'vault' && state.hideVaults) {
       _secure = true;
       state.holdSecure();
@@ -129,6 +137,7 @@ class _ExplorerScreenState extends State<ExplorerScreen> {
     _thumbs.dispose();
     state.removeListener(_onState);
     if (_secure) state.releaseSecure();
+    if (_place case final p?) _tab!.tabs.leave(_tab!.tab, p);
     super.dispose();
   }
 
@@ -189,6 +198,7 @@ class _ExplorerScreenState extends State<ExplorerScreen> {
   }
 
   void _go(String path) {
+    if (_place case final p?) _tab!.tabs.moved(p, path);
     setState(() {
       _path = path;
       _selected.clear();

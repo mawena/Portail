@@ -13,6 +13,7 @@ import '../strings_fr.dart';
 import '../ui/feedback.dart';
 import '../ui/tokens.dart';
 import '../widgets/bottom_dock.dart';
+import '../widgets/file_tab_bar.dart';
 import 'explorer_screen.dart';
 import 'files_tab_scope.dart';
 import 'home_screen.dart';
@@ -284,8 +285,27 @@ class ModuleShellState extends State<ModuleShell> with SingleTickerProviderState
     );
   }
 
-  /// Module Fichiers : une pile par onglet, depuis l'accueil (et le dossier de départ de l'onglet s'il en a un).
+  /// Module Fichiers : une pile par onglet, depuis l'accueil (et le dossier de départ de l'onglet s'il en a un) ; la
+  /// barre d'onglets au-dessus dès deux onglets, qui prend alors la marge du haut (barre d'état).
   Widget _files() {
+    final strip = tabs.tabs.length > 1;
+    return Column(children: [
+      if (strip) FileTabBar(key: const ValueKey('tabBar'), state: _state, tabs: tabs, onNew: openInNewTab),
+      Expanded(
+        key: const ValueKey('tabPages'),
+        // Conteneur sémantique : la barrière des pages (BlockSemantics) cacherait sinon à TalkBack la barre d'onglets,
+        // peinte avant elle. Contexte de l'intérieur : la marge de gauche déjà retirée à côté du rail reste retirée.
+        child: Semantics(
+          container: true,
+          child: Builder(
+            builder: (context) => MediaQuery.removePadding(context: context, removeTop: strip, child: _tabPages()),
+          ),
+        ),
+      ),
+    ]);
+  }
+
+  Widget _tabPages() {
     return Stack(fit: StackFit.expand, children: [
       for (final t in tabs.tabs)
         _hidden(

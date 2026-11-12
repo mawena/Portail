@@ -11,6 +11,7 @@ import 'package:fluluks/src/screens/vaults_home_screen.dart';
 import 'package:fluluks/src/state/app_state.dart';
 import 'package:fluluks/src/strings_fr.dart';
 import 'package:fluluks/src/ui/root.dart';
+import 'package:fluluks/src/widgets/file_tab_bar.dart';
 
 import 'demo_data.dart';
 import 'fake_host_api.dart';
@@ -200,6 +201,157 @@ void main() {
       expect(find.byType(ExplorerScreen, skipOffstage: false), findsNothing);
       expect(shown(HomeScreen), findsOneWidget);
       expect(SchedulerBinding.instance.transientCallbackCount, 0);
+    });
+  });
+
+  group('T3 — barre d’onglets', () {
+    final bar = find.byType(FileTabBar);
+    Finder chip(String title) => find.descendant(of: bar, matching: find.text(title));
+
+    testWidgets('noBarWithOneTab', (t) async {
+      await pump(t, tabsApi());
+      await openPhone(t);
+      expect(bar, findsNothing);
+    });
+
+    testWidgets('barAboveTitleWithTwoTabs', (t) async {
+      await pump(t, tabsApi());
+      await openPhone(t);
+      await shell(t).openInNewTab(sourceId: 'v1', path: '/Films');
+      await t.pumpAndSettle();
+      expect(bar, findsOneWidget);
+      final appBar = find.byType(AppBar, skipOffstage: true).last;
+      expect(t.getRect(bar).bottom, lessThanOrEqualTo(t.getRect(appBar).top + 0.5));
+      // la barre prend la marge du haut (barre d'état) : la barre de titre ne la reprend pas
+      expect(t.getRect(bar).top, 0);
+    });
+
+    testWidgets('titlesFollowTheShownFolder', (t) async {
+      await pump(t, tabsApi());
+      await openPhone(t);
+      await shell(t).openInNewTab();
+      await t.pumpAndSettle();
+      expect(chip('Téléphone'), findsOneWidget); // racine du stockage : son nom
+      expect(chip(Fr.moduleFiles), findsOneWidget); // accueil
+      // l'onglet de l'accueil ouvre le disque, puis un dossier
+      openExplorer(t.element(shown(HomeScreen)), shell(t).widget.state, 'v1');
+      await t.pumpAndSettle();
+      expect(chip('Données'), findsOneWidget);
+      await t.tap(find.text('Films'));
+      await t.pumpAndSettle();
+      expect(chip('Films'), findsOneWidget);
+      expect(chip('Données'), findsNothing);
+      // retour au dossier parent
+      await back(t);
+      expect(chip('Données'), findsOneWidget);
+    });
+
+    testWidgets('titleBackToDiskFolderAfterVaultLeft', (t) async {
+      final api = tabsApi();
+      await pump(t, api);
+      await openPhone(t);
+      await shell(t).openInNewTab(sourceId: 'v1', path: '/Films');
+      await t.pumpAndSettle();
+      // un coffre ouvert dans cet onglet, par-dessus l'explorateur du disque
+      api.sources = [...api.sources, SourceMsg(id: 'vault:c', stableKey: 'vault:c', kind: 'vault', label: 'Coffre',
+          totalBytes: 1, freeBytes: 1, readOnly: false, roReason: '', encrypted: true)];
+      api.dirs['vault:c'] = {'/': [_f('/secret.txt')]};
+      final state = shell(t).widget.state;
+      await state.refreshSources();
+      await t.pumpAndSettle();
+      openExplorer(t.element(shown(ExplorerScreen).last), state, 'vault:c'); // rendu à la fermeture de la page
+      await t.pumpAndSettle();
+      expect(chip('Coffre'), findsOneWidget);
+      await back(t);
+      expect(chip('Films'), findsOneWidget);
+    });
+
+    testWidgets('tapCloseAndPlus', (t) async {
+      await pump(t, tabsApi());
+      await openPhone(t);
+      await shell(t).openInNewTab(sourceId: 'v1', path: '/Films');
+      await t.pumpAndSettle();
+      await t.tap(chip('Téléphone'));
+      await t.pumpAndSettle();
+      expect(shell(t).tabs.activeIndex, 0);
+      expect(find.text('a.txt'), findsOneWidget);
+      await t.tap(find.byTooltip(Fr.closeTabNamed('Films')));
+      await t.pumpAndSettle();
+      expect(shell(t).tabs.tabs, hasLength(1));
+      expect(bar, findsNothing);
+      await shell(t).openInNewTab(sourceId: 'v1', path: '/Films');
+      await t.pumpAndSettle();
+      await t.tap(find.byTooltip(Fr.newTab));
+      await t.pumpAndSettle();
+      expect(shell(t).tabs.tabs, hasLength(3));
+      expect(shown(HomeScreen), findsOneWidget);
+      for (var i = 3; i < 8; i++) {
+        await t.tap(find.byTooltip(Fr.newTab));
+        await t.pumpAndSettle();
+      }
+      final plus = find.ancestor(of: find.byIcon(Icons.add_rounded), matching: find.byType(IconButton));
+      expect(t.widget<IconButton>(plus.first).onPressed, isNull);
+      expect(find.byTooltip(Fr.tabsFull), findsOneWidget);
+    });
+
+    testWidgets('longPressMenu', (t) async {
+      await pump(t, tabsApi());
+      await openPhone(t);
+      await shell(t).openInNewTab(sourceId: 'v1', path: '/Films');
+      await shell(t).openInNewTab();
+      await t.pumpAndSettle();
+      await t.longPress(chip('Films'));
+      await t.pumpAndSettle();
+      await t.tap(find.text(Fr.closeOtherTabs));
+      await t.pumpAndSettle();
+      expect(shell(t).tabs.tabs, hasLength(1));
+      expect(shownPath(t), '/Films');
+      await shell(t).openInNewTab();
+      await t.pumpAndSettle();
+      await t.longPress(chip('Films'));
+      await t.pumpAndSettle();
+      await t.tap(find.text(Fr.closeTab));
+      await t.pumpAndSettle();
+      expect(shell(t).tabs.tabs, hasLength(1));
+      expect(shown(HomeScreen), findsOneWidget);
+    });
+
+    testWidgets('talkBackLabelsAndTargets', (t) async {
+      final h = t.ensureSemantics();
+      await pump(t, tabsApi());
+      await openPhone(t);
+      await shell(t).openInNewTab(sourceId: 'v1', path: '/Films');
+      await shell(t).openInNewTab();
+      await t.pumpAndSettle();
+      shell(t).tabs.activate(shell(t).tabs.tabs[1]);
+      await t.pumpAndSettle();
+      final films = find.bySemanticsLabel(Fr.tabLabel(2, 3, 'Films'));
+      expect(films, findsOneWidget);
+      expect(
+          t.getSemantics(films),
+          isSemantics(
+              label: Fr.tabLabel(2, 3, 'Films'), isSelected: true, isButton: true, hasTapAction: true, hasLongPressAction: true));
+      final phone = Fr.tabLabel(1, 3, 'Téléphone');
+      expect(t.getSemantics(find.bySemanticsLabel(phone)), isSemantics(label: phone, isSelected: false, isButton: true));
+      // croix : bouton lu par son infobulle
+      final close = find.byTooltip(Fr.closeTabNamed('Films'));
+      expect(close, findsOneWidget);
+      expect(t.getSemantics(close),
+          isSemantics(tooltip: Fr.closeTabNamed('Films'), isButton: true, hasTapAction: true));
+      await expectLater(t, meetsGuideline(androidTapTargetGuideline));
+      await expectLater(t, meetsGuideline(labeledTapTargetGuideline));
+      h.dispose();
+    });
+
+    testWidgets('text200PercentFits', (t) async {
+      await pump(t, tabsApi(), textScale: 2);
+      // à 200 %, la tuile du téléphone sort de l'écran de l'accueil : onglets ouverts directement
+      await shell(t).openInNewTab(sourceId: 'phone');
+      await shell(t).openInNewTab(sourceId: 'v1', path: '/Films');
+      await shell(t).openInNewTab();
+      await t.pumpAndSettle();
+      expect(t.takeException(), isNull);
+      expect(bar, findsOneWidget);
     });
   });
 }

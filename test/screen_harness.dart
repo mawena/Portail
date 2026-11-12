@@ -49,6 +49,7 @@ const screens = [
   'automations', 'automationForm', 'automationRuns', 'automationRun', //
   'remoteHome', 'aiHome', // racines des modules Distants et IA (phase 16)
   'analyzer', 'analyzerTreemap', // écran d'une analyse (phase 16)
+  'fileTabs', // onglets du module Fichiers (phase 17)
 ];
 
 /// Pont et état du dernier [pumpScreen] (pour les tests qui agissent ensuite sur l'écran).
@@ -206,7 +207,7 @@ Future<void> pumpScreen(
     'automationRun' => AutomationRunScreen(state: state, runId: 1),
     'encrypt' => EncryptSheet(state: state, sourceId: 'phone', paths: const ['/notes-1.txt', '/Documents'], dir: '/'),
     'vaultCreate' => VaultCreateScreen(state: state, sourceId: 'phone', dir: '/Documents'),
-    'unlock' || 'nowPlaying' || 'decrypt' || 'remoteHome' || 'aiHome' || 'analyzerHome' => null,
+    'unlock' || 'nowPlaying' || 'decrypt' || 'remoteHome' || 'aiHome' || 'analyzerHome' || 'fileTabs' => null,
     _ => throw ArgumentError.value(screen, 'screen'),
   };
   final nav = t.state<NavigatorState>(find.byType(Navigator).first);
@@ -232,6 +233,13 @@ Future<void> pumpScreen(
       'aiHome' => PortailModule.ai,
       _ => PortailModule.analyzer,
     });
+  } else if (screen == 'fileTabs') {
+    // trois onglets : l'accueil, DCIM du téléphone (affiché) et la racine du disque
+    final shell = t.state<ModuleShellState>(find.byType(ModuleShell));
+    await shell.openInNewTab(sourceId: 'phone', path: '/DCIM');
+    await shell.openInNewTab(sourceId: 'v1');
+    await t.pumpAndSettle();
+    shell.tabs.activate(shell.tabs.tabs[1]);
   } else if (screen == 'homeVaults') {
     // racine du module Coffres (phase 16)
     t.state<ModuleShellState>(find.byType(ModuleShell)).select(PortailModule.vaults);

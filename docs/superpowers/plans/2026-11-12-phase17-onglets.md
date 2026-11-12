@@ -132,17 +132,17 @@ Aucun code Kotlin, natif ni Pigeon.
   `Fr.newTab`, `Fr.openInNewTab`, `Fr.openFolderInNewTab`, `Fr.closeTab`, `Fr.closeOtherTabs`,
   `Fr.closeTabNamed(String)`, `Fr.tabLabel(int i, int n, String name)`, `Fr.tabsFull`.
 
-- [ ] **Étape 1 : tests** : un seul onglet, pas de barre ; deux onglets, barre au-dessus de la barre de titre ; libellé
+- [x] **Étape 1 : tests** : un seul onglet, pas de barre ; deux onglets, barre au-dessus de la barre de titre ; libellé
   = nom du dossier, nom du stockage à sa racine, « Fichiers » à l'accueil, suit la navigation dans l'explorateur et
   revient au dossier du disque après la fermeture d'un coffre ouvert dedans ; toucher un onglet l'affiche ; croix ;
   **+** ouvre l'accueil, grisé à 8 ; appui long : Fermer l'onglet, Fermer les autres onglets ; TalkBack « Onglet 2
   sur 3, Films », sélectionné ; croix « Fermer l'onglet Films » ; cibles ≥ 48 dp ; texte à 200 % sans débordement ;
   images de référence en clair et en sombre ; chaînes au banc typographique.
-- [ ] **Étape 2 : les voir échouer.**
-- [ ] **Étape 3 : `FileTabBar`** (liste horizontale défilante, l'onglet affiché ramené en vue), signalement de
+- [x] **Étape 2 : les voir échouer.**
+- [x] **Étape 3 : `FileTabBar`** (liste horizontale défilante, l'onglet affiché ramené en vue), signalement de
   l'emplacement par l'explorateur.
-- [ ] **Étape 4 : les voir passer**, images de référence générées puis relues, suite entière.
-- [ ] **Étape 5 : commit** `feat(onglets): barre d'onglets du module Fichiers`.
+- [x] **Étape 4 : les voir passer**, images de référence générées puis relues, suite entière.
+- [x] **Étape 5 : commit** `feat(onglets): barre d'onglets du module Fichiers`.
 
 ### Task 4 : points d'entrée et stockage qui disparaît
 
