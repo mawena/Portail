@@ -153,23 +153,23 @@ Aucun code Kotlin, natif ni Pigeon.
 **Interfaces :**
 - Consumes : `ModuleShellState.openInNewTab`, `isShown` (T2), chaînes de T3.
 
-- [ ] **Étape 1 : tests** : menu ⋮ d'un dossier → « Ouvrir dans un nouvel onglet » (absent pour un fichier et hors de
+- [x] **Étape 1 : tests** : menu ⋮ d'un dossier → « Ouvrir dans un nouvel onglet » (absent pour un fichier et hors de
   la coquille) ; menu de l'explorateur → « Nouvel onglet » (accueil) ; feuille d'un résultat de recherche → dossier
   ouvert dans un nouvel onglet (le dossier qui contient un fichier) ; deux onglets sur le même disque, disque retiré →
   les deux à leur accueil, un seul message ; visionneuse ouverte depuis l'onglet affiché fermée, pas celle d'un autre
   module.
-- [ ] **Étape 2 : les voir échouer.**
-- [ ] **Étape 3 : actions et `_onState`** : chaque explorateur dépile son propre navigateur ; le message reste unique
+- [x] **Étape 2 : les voir échouer.**
+- [x] **Étape 3 : actions et `_onState`** : chaque explorateur dépile son propre navigateur ; le message reste unique
   (`takeClosedNotice`) ; la visionneuse n'est fermée que si `isShown(context)`.
-- [ ] **Étape 4 : les voir passer**, suite entière.
-- [ ] **Étape 5 : commit** `feat(onglets): ouvrir un dossier dans un nouvel onglet`.
+- [x] **Étape 4 : les voir passer**, suite entière.
+- [x] **Étape 5 : commit** `feat(onglets): ouvrir un dossier dans un nouvel onglet`.
 
 ### Task 5 : documentation
 
-- [ ] README : section « Onglets (nouveau en 1.10.0) », état actuel ; aide : une question ; CHANGELOG (section 1.10.0
+- [x] README : section « Onglets (nouveau en 1.10.0) », état actuel ; aide : une question ; CHANGELOG (section 1.10.0
   à la version) ; fiche d'essai `docs/superpowers/research/2026-11-12-essais-phase17/essais.md`, copiée sur le
   téléphone.
-- [ ] Commit `docs(onglets): README, aide et fiche d'essai de la phase 17`.
+- [x] Commit `docs(onglets): README, aide et fiche d'essai de la phase 17`.
 
 ### Task 6 *(utilisateur)* : essais sur le Pixel
 

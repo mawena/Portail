@@ -584,6 +584,13 @@ class Fr {
           "touchés s'ouvrent dans une autre application."
     ),
     (
+      'Ouvrir plusieurs dossiers à la fois',
+      "Dans l'explorateur, le menu ⋮ d'un dossier propose Ouvrir dans un nouvel onglet ; Nouvel onglet, dans le menu "
+          "de l'explorateur, ouvre l'accueil de Fichiers. Les onglets s'affichent en haut de l'écran : touchez-en un "
+          "pour y passer, sa croix le ferme. Pour copier d'un dossier à l'autre, copiez dans un onglet, puis Coller ici "
+          "dans l'autre."
+    ),
+    (
       'La corbeille',
       'Supprimer met les éléments dans la corbeille du stockage pendant 30 jours, et Supprimer définitivement reste '
           "proposé. La corbeille s'ouvre depuis la carte du stockage ou le menu de l'explorateur : Restaurer, "

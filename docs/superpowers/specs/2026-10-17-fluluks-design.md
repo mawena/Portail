@@ -810,7 +810,8 @@ valider aux essais ; voir le plan de la phase 17.)*
 - **Ouvrir un onglet** : « Ouvrir dans un nouvel onglet » dans le menu ⋮ d'un dossier (explorateur, résultats de
   recherche), « Nouvel onglet » dans le menu de l'explorateur et le bouton **+** de la barre d'onglets, qui ouvrent
   l'accueil de Fichiers. Le nouvel onglet devient l'onglet affiché ; depuis le module Coffres, l'onglet s'ouvre dans
-  Fichiers, qui passe à l'écran. **8 onglets au plus** ; au-delà, l'action est grisée et un message l'explique.
+  Fichiers, qui passe à l'écran. **8 onglets au plus** ; au-delà, **+** est grisé (son infobulle l'explique) et les
+  autres actions affichent un message qui l'explique.
 - **Barre d'onglets** : en haut du module Fichiers, au-dessus de la barre de titre, dès **deux onglets** ouverts (un
   seul onglet : aucune place prise, l'écran reste celui d'aujourd'hui). Chaque onglet montre l'icône de son stockage et
   le nom du dossier ouvert (le nom du stockage à sa racine, « Fichiers » sur l'accueil), et une croix pour le fermer.
