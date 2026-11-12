@@ -89,6 +89,9 @@ class ModuleShellState extends State<ModuleShell> with SingleTickerProviderState
   List<int> _tabIds = const [];
   int _activeTab = -1;
 
+  /// Onglets ramenés à leur accueil par [resetTab] : leur dossier de départ n'est plus rouvert.
+  final _bare = <int>{};
+
   /// Modules déjà montrés : leur pile est construite au premier passage, puis gardée.
   final _built = {PortailModule.files};
   PortailModule _current = PortailModule.files;
@@ -135,6 +138,17 @@ class ModuleShellState extends State<ModuleShell> with SingleTickerProviderState
       return;
     }
     select(PortailModule.files);
+  }
+
+  /// Ramène l'onglet [t] à son accueil d'un coup, avec une pile neuve : un onglet masqué n'anime pas le retrait de ses
+  /// pages, qui resteraient jusqu'à son retour à l'écran (stockage disparu).
+  void resetTab(FileTab t) {
+    if (!tabs.tabs.contains(t)) return;
+    _bare.add(t.id);
+    _tabNavs.remove(t.id);
+    final h = _tabHeroes.remove(t.id);
+    if (h != null) WidgetsBinding.instance.addPostFrameCallback((_) => h.dispose());
+    setState(() {});
   }
 
   @override
@@ -189,6 +203,7 @@ class ModuleShellState extends State<ModuleShell> with SingleTickerProviderState
     _tabIds = ids;
     _activeTab = active;
     _tabNavs.removeWhere((id, _) => !ids.contains(id));
+    _bare.removeWhere((id) => !ids.contains(id));
     for (final id in _tabHeroes.keys.where((id) => !ids.contains(id)).toList()) {
       final h = _tabHeroes.remove(id)!;
       // après l'image : son navigateur quitte l'arbre d'abord
@@ -261,11 +276,15 @@ class ModuleShellState extends State<ModuleShell> with SingleTickerProviderState
         PortailModule.ai => AiHomeScreen(state: _state),
       };
 
-  /// Module ou onglet masqué : gardé, mais ni dessiné, ni touché, ni lu par TalkBack, ni animé.
+  /// Module ou onglet masqué : gardé, mais ni dessiné, ni touché, ni lu par TalkBack, ni animé ; ses `Hero` (ceux du
+  /// message en bas de ses pages compris) restent hors des transitions des pages à l'écran.
   static Widget _hidden({Key? key, required bool shown, required Widget child}) => Offstage(
         key: key,
         offstage: !shown,
-        child: TickerMode(enabled: shown, child: ExcludeFocus(excluding: !shown, child: child)),
+        child: TickerMode(
+          enabled: shown,
+          child: HeroMode(enabled: shown, child: ExcludeFocus(excluding: !shown, child: child)),
+        ),
       );
 
   Widget _module(PortailModule m) {
@@ -320,7 +339,7 @@ class ModuleShellState extends State<ModuleShell> with SingleTickerProviderState
                 key: _tabNavs.putIfAbsent(t.id, GlobalKey<NavigatorState>.new),
                 onGenerateInitialRoutes: (_, __) => [
                   MaterialPageRoute<void>(builder: (_) => _root(PortailModule.files)),
-                  if (t.initial case final at?)
+                  if (t.initial case final at? when !_bare.contains(t.id))
                     MaterialPageRoute<void>(
                         builder: (_) => ExplorerScreen(state: _state, sourceId: at.sourceId, path: at.path)),
                 ],

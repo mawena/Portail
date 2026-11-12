@@ -6,6 +6,7 @@ import 'package:fluluks/src/app.dart';
 import 'package:fluluks/src/bridge/fluluks_api.g.dart';
 import 'package:fluluks/src/screens/explorer_screen.dart';
 import 'package:fluluks/src/screens/home_screen.dart';
+import 'package:fluluks/src/screens/image_viewer_screen.dart';
 import 'package:fluluks/src/screens/module_shell.dart';
 import 'package:fluluks/src/screens/vaults_home_screen.dart';
 import 'package:fluluks/src/state/app_state.dart';
@@ -15,6 +16,7 @@ import 'package:fluluks/src/widgets/file_tab_bar.dart';
 
 import 'demo_data.dart';
 import 'fake_host_api.dart';
+import 'image_viewer_test.dart' show png;
 
 EntryMsg _d(String path) => EntryMsg(name: path.split('/').last, path: path, type: 'dir', size: 0, mtime: 1700000000);
 EntryMsg _f(String path) => EntryMsg(name: path.split('/').last, path: path, type: 'file', size: 1000, mtime: 1700000000);
@@ -352,6 +354,122 @@ void main() {
       await t.pumpAndSettle();
       expect(t.takeException(), isNull);
       expect(bar, findsOneWidget);
+    });
+  });
+
+  group('T4 — points d’entrée et stockage qui disparaît', () {
+    Future<void> itemMenu(WidgetTester t, String name) async {
+      await t.tap(find.bySemanticsLabel(Fr.actionsOf(name)));
+      await t.pumpAndSettle();
+    }
+
+    testWidgets('folderMenuOpensInNewTab', (t) async {
+      final h = t.ensureSemantics();
+      await pump(t, tabsApi());
+      await openPhone(t);
+      await itemMenu(t, 'a.txt'); // un fichier : pas d'onglet
+      expect(find.widgetWithText(ListTile, Fr.openInNewTab), findsNothing);
+      await back(t);
+      await itemMenu(t, 'DCIM');
+      await t.tap(find.widgetWithText(ListTile, Fr.openInNewTab));
+      await t.pumpAndSettle();
+      expect(shell(t).tabs.tabs, hasLength(2));
+      expect(shell(t).tabs.activeIndex, 1);
+      expect(shownExplorer(t).sourceId, 'phone');
+      expect(shownPath(t), '/DCIM');
+      h.dispose();
+    });
+
+    testWidgets('explorerMenuNewTabOpensHome', (t) async {
+      await pump(t, tabsApi());
+      await openPhone(t);
+      await t.tap(find.byTooltip(Fr.sortBy).last);
+      await t.pumpAndSettle();
+      await t.tap(find.text(Fr.newTab).last);
+      await t.pumpAndSettle();
+      expect(shell(t).tabs.tabs, hasLength(2));
+      expect(shown(HomeScreen), findsOneWidget);
+    });
+
+    testWidgets('noTabActionsOutsideTheShell', (t) async {
+      final api = tabsApi();
+      final state = AppState(api);
+      await state.refresh();
+      await t.pumpWidget(MaterialApp(home: ExplorerScreen(state: state, sourceId: 'phone')));
+      await t.pumpAndSettle();
+      final h = t.ensureSemantics();
+      await t.tap(find.bySemanticsLabel(Fr.actionsOf('DCIM')));
+      await t.pumpAndSettle();
+      expect(find.widgetWithText(ListTile, Fr.openInNewTab), findsNothing);
+      h.dispose();
+    });
+
+    testWidgets('searchResultOpensInNewTab', (t) async {
+      final api = tabsApi()
+        ..searchResult = ((q) => SearchResultMsg(entries: [_d('/DCIM'), _f('/Download/doc.pdf')], truncated: false));
+      final state = await pump(t, api);
+      await openPhone(t);
+      await t.tap(find.byTooltip(Fr.search).last);
+      await t.pumpAndSettle();
+      await t.enterText(find.byType(TextField), 'd');
+      await t.pumpAndSettle(const Duration(seconds: 1));
+      final h = t.ensureSemantics();
+      // un dossier trouvé : lui-même
+      await t.tap(find.bySemanticsLabel(Fr.actionsOf('DCIM')));
+      await t.pumpAndSettle();
+      await t.tap(find.widgetWithText(ListTile, Fr.openInNewTab));
+      await t.pumpAndSettle();
+      expect(shell(t).tabs.tabs, hasLength(2));
+      expect(shownPath(t), '/DCIM');
+      // un fichier trouvé : le dossier qui le contient
+      shell(t).tabs.activate(shell(t).tabs.tabs.first);
+      await t.pumpAndSettle();
+      await t.tap(find.bySemanticsLabel(Fr.actionsOf('doc.pdf')));
+      await t.pumpAndSettle();
+      await t.tap(find.widgetWithText(ListTile, Fr.openFolderInNewTab));
+      await t.pumpAndSettle();
+      expect(shell(t).tabs.tabs, hasLength(3));
+      expect(shownPath(t), '/Download');
+      expect(state.sourceById('phone'), isNotNull);
+      h.dispose();
+    });
+
+    testWidgets('vanishedStorageSendsEveryTabHome', (t) async {
+      final api = tabsApi();
+      final state = await pump(t, api);
+      await shell(t).openInNewTab(sourceId: 'v1', path: '/Films');
+      await t.pumpAndSettle();
+      await shell(t).openInNewTab(sourceId: 'v1');
+      await t.pumpAndSettle();
+      await shell(t).openInNewTab(sourceId: 'phone', path: '/DCIM');
+      await t.pumpAndSettle();
+      shell(t).tabs.activate(shell(t).tabs.tabs[1]);
+      await t.pumpAndSettle();
+      api.sources = api.sources.where((s) => s.id != 'v1').toList(); // disque débranché
+      await state.refreshSources();
+      await t.pumpAndSettle();
+      expect(find.text(Fr.volumeClosed), findsOneWidget); // un seul message
+      // plus aucun explorateur du disque, dans aucun onglet
+      final left = t.widgetList<ExplorerScreen>(find.byType(ExplorerScreen, skipOffstage: false));
+      expect(left.map((e) => e.sourceId), ['phone']);
+      expect(shown(HomeScreen), findsOneWidget);
+      expect(shell(t).tabs.tabs, hasLength(4));
+    });
+
+    testWidgets('vanishedStorageClosesViewerOnlyFromShownTab', (t) async {
+      final api = tabsApi()..images['/Films/affiche.jpg'] = png;
+      api.dirs['v1']!['/Films'] = [_f('/Films/film.mkv'), _f('/Films/affiche.jpg')];
+      final state = await pump(t, api);
+      await shell(t).openInNewTab(sourceId: 'v1', path: '/Films');
+      await t.pumpAndSettle();
+      await t.tap(find.text('affiche.jpg'));
+      await t.pumpAndSettle();
+      expect(find.byType(ImageViewerScreen), findsOneWidget);
+      api.sources = api.sources.where((s) => s.id != 'v1').toList();
+      await state.refreshSources();
+      await t.pumpAndSettle();
+      expect(find.byType(ImageViewerScreen), findsNothing);
+      expect(shown(HomeScreen), findsOneWidget);
     });
   });
 }

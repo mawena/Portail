@@ -148,15 +148,22 @@ class _ExplorerScreenState extends State<ExplorerScreen> {
       // qui garde un texte non enregistré
       if (state.editorHolding) return;
       _closed = true;
-      if (!state.takeClosedNotice(widget.sourceId)) return; // un autre explorateur s'en est chargé
-      // message sur le ScaffoldMessenger de l'application : il reste affiché sur l'accueil
-      showMessage(context, Fr.volumeClosed);
-      // pages plein écran ouvertes d'ici (visionneuse) comprises, si le module de cet explorateur est à l'écran
+      // message sur le ScaffoldMessenger de l'application, qui reste affiché sur l'accueil : une fois pour tous les
+      // explorateurs du stockage
+      if (state.takeClosedNotice(widget.sourceId)) showMessage(context, Fr.volumeClosed);
+      // pages plein écran ouvertes d'ici (visionneuse) comprises, si cet explorateur est à l'écran (son module et,
+      // dans Fichiers, son onglet)
       final shell = ModuleShell.maybeOf(context);
-      if (shell == null || shell.current == shell.moduleOf(context)) {
+      if (shell == null || shell.isShown(context)) {
         Navigator.of(context, rootNavigator: true).popUntil((r) => r.isFirst);
       }
-      Navigator.of(context).popUntil((r) => r.isFirst);
+      // chaque explorateur ramène sa propre pile à son accueil : un onglet de Fichiers chacun (phase 17) ; un onglet
+      // masqué repart d'une pile neuve, ses retraits ne s'animant pas
+      if (shell != null && _tab != null && !shell.isShown(context)) {
+        shell.resetTab(_tab!.tab);
+      } else {
+        Navigator.of(context).popUntil((r) => r.isFirst);
+      }
       return;
     }
     if (state.viewPrefs.showHidden != _lastHidden) {
@@ -553,7 +560,9 @@ class _ExplorerScreenState extends State<ExplorerScreen> {
     final file = e.type == 'file';
     final ro = _readOnly;
     final encrypted = file && isEncryptedName(e.name);
+    final shell = ModuleShell.maybeOf(context);
     final a = await showActionSheet<String>(context, title: e.name, actions: [
+      if (!file && shell != null) const SheetAction('tab', Icons.tab_rounded, Fr.openInNewTab),
       SheetAction('openWith', Icons.open_in_new_rounded, Fr.openWith, enabled: file),
       SheetAction('share', Icons.share_rounded, Fr.share, enabled: file),
       const SheetAction('copy', Icons.copy_rounded, Fr.copy),
@@ -572,6 +581,8 @@ class _ExplorerScreenState extends State<ExplorerScreen> {
     if (!mounted || a == null) return;
     final one = [e.path];
     switch (a) {
+      case 'tab':
+        await shell?.openInNewTab(sourceId: widget.sourceId, path: e.path);
       case 'openWith':
         await _run(() => state.api.openWith(widget.sourceId, e.path));
       case 'share':
@@ -649,6 +660,7 @@ class _ExplorerScreenState extends State<ExplorerScreen> {
     final v = state.viewPrefs;
     final fav = state.favoriteFor(widget.sourceId, _path);
     final label = _source?.label ?? '';
+    final shell = ModuleShell.maybeOf(context);
     return AppBar(
       // le nom du stockage ; le dossier ouvert est dans le fil d'Ariane
       title: Text(label),
@@ -680,6 +692,7 @@ class _ExplorerScreenState extends State<ExplorerScreen> {
             'trash' => openTrash(context, state, widget.sourceId),
             'analyze' => analyzeLocation(context, state, widget.sourceId, _path),
             'terminal' => openTerminal(context, state, _sshServer!, startDir: _path),
+            'newTab' => shell?.openInNewTab(),
             _ => _setPrefs(showHidden: !v.showHidden),
           },
           itemBuilder: (_) => [
@@ -702,6 +715,11 @@ class _ExplorerScreenState extends State<ExplorerScreen> {
             if (_sshServer != null) ...[
               const PopupMenuDivider(),
               const PopupMenuItem(value: 'terminal', child: Text(Fr.openTerminalHere)),
+            ],
+            // onglets du module Fichiers (phase 17) : l'accueil de Fichiers dans un nouvel onglet
+            if (shell != null) ...[
+              const PopupMenuDivider(),
+              const PopupMenuItem(value: 'newTab', child: Text(Fr.newTab)),
             ],
           ],
         ),

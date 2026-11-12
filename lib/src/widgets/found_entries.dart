@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 import '../screens/explorer_screen.dart';
+import '../screens/module_shell.dart';
 import '../state/app_state.dart';
 import '../strings_fr.dart';
 import '../ui/feedback.dart';
@@ -33,12 +34,15 @@ Future<void> openFoundEntry(BuildContext context, AppState state, EntryItem item
   }
 }
 
-/// Feuille d'un élément trouvé : Ouvrir le dossier (celui qui le contient), Ouvrir avec…, Partager, Propriétés.
+/// Feuille d'un élément trouvé : Ouvrir le dossier (celui qui le contient), dans un nouvel onglet de Fichiers (le
+/// dossier trouvé lui-même, ou celui qui contient le fichier), Ouvrir avec…, Partager, Propriétés.
 Future<void> showFoundEntrySheet(BuildContext context, AppState state, EntryItem item) async {
   final e = item.entry;
   final file = e.type == 'file';
+  final shell = ModuleShell.maybeOf(context);
   final a = await showActionSheet<String>(context, title: e.name, actions: [
     const SheetAction('folder', Icons.folder_open_rounded, Fr.openFolder),
+    if (shell != null) SheetAction('tab', Icons.tab_rounded, file ? Fr.openFolderInNewTab : Fr.openInNewTab),
     SheetAction('openWith', Icons.open_in_new_rounded, Fr.openWith, enabled: file),
     SheetAction('share', Icons.share_rounded, Fr.share, enabled: file),
     const SheetAction('properties', Icons.info_outline_rounded, Fr.properties),
@@ -48,6 +52,8 @@ Future<void> showFoundEntrySheet(BuildContext context, AppState state, EntryItem
     switch (a) {
       case 'folder':
         await openExplorer(context, state, item.sourceId, path: parentOf(e.path));
+      case 'tab':
+        await shell?.openInNewTab(sourceId: item.sourceId, path: file ? parentOf(e.path) : e.path);
       case 'openWith':
         await state.api.openWith(item.sourceId, e.path);
       case 'share':
