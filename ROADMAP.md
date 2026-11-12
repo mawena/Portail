@@ -447,7 +447,7 @@ dans le même commit que le travail.
 - [x] T3 — Barre d'onglets : icône et nom du dossier ouvert, croix, +, appui long, TalkBack, texte à 200 %, images de référence *(file_tabs_test 16 ; pages des onglets dans leur propre conteneur sémantique, sinon la barrière des pages cachait la barre à TalkBack ; onglet affiché centré comme un TabBar défilant ; images file_tabs_light et file_tabs_dark ; banc d'accessibilité ; 942 tests Flutter)*
 - [x] T4 — Points d'entrée : menu d'un dossier, menu de l'explorateur, résultats de recherche ; stockage qui disparaît *(file_tabs_test 22 ; chaque explorateur ramène sa propre pile, un seul message ; un onglet masqué repart d'une pile neuve, ses retraits ne s'animant pas ; HeroMode coupé dans les modules et onglets masqués : le message en bas des pages faisait deux Hero de même nom ; 948 tests Flutter)*
 - [x] T5 — Documentation *(README : section Onglets ; aide : « Ouvrir plusieurs dossiers à la fois » ; [fiche d'essai](docs/superpowers/research/2026-11-12-essais-phase17/essais.md) ; 948 tests Flutter)*
-- [ ] *(utilisateur)* T6 — Essais sur le Pixel
+- [x] *(utilisateur)* T6 — Essais sur le Pixel *(2026-11-12 : toute la fiche réussie sur le Pixel 4 XL)*
 - [ ] Relecture finale de toute la branche
 - [ ] Fusion `feature/onglets` → `develop`
 - [ ] Version `v1.10.0`

@@ -173,7 +173,7 @@ Aucun code Kotlin, natif ni Pigeon.
 
 ### Task 6 *(utilisateur)* : essais sur le Pixel
 
-- [ ] APK installé (sauvegarde de l'APK en place d'abord), fiche suivie : copie d'un dossier du téléphone vers un
+- [x] APK installé (sauvegarde de l'APK en place d'abord), fiche suivie : copie d'un dossier du téléphone vers un
   disque USB par deux onglets, coffre ouvert dans un onglet, débranchement avec deux onglets sur le disque, TalkBack,
   texte à 200 %, paysage (rail).
 
