@@ -450,7 +450,7 @@ dans le même commit que le travail.
 - [x] *(utilisateur)* T6 — Essais sur le Pixel *(2026-11-12 : toute la fiche réussie sur le Pixel 4 XL)*
 - [x] Relecture finale de toute la branche *(rien de critique ; corrigé : après un déplacement vers un autre onglet, l'onglet d'origine montrait encore les fichiers déplacés, et un même dossier ouvert dans deux onglets ne suivait pas les changements faits dans l'autre ; la barre d'onglets donne aussi le style de la barre d'état ; 951 tests Flutter)*
 - [x] Fusion `feature/onglets` → `develop` *(2026-11-12)*
-- [ ] Version `v1.10.0`
+- [x] Version `v1.10.0` *(2026-11-12)*
 
 ## Phase 18 — Gestion des partitions, comme GParted ([plan](docs/superpowers/plans/2026-10-27-phase17-partitions.md))
 - [x] Plan de la phase 17 écrit *(demande du 2026-10-22 ; spec § 17, § 24, § 25 et § 26 ; phase 12, puis 13, 14, 15, 16, 17 et 15, jusqu'au 2026-10-25, puis 16, puis 17 du 2026-10-25 au 2026-11-12, puis 18 (spec § 29) ; plan du 2026-10-27, décisions du planificateur à valider : pas de déplacement, FAT32 et exFAT non redimensionnés, MBR étendu en étiquette seulement)*

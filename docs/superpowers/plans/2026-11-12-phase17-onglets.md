@@ -180,7 +180,7 @@ Aucun code Kotlin, natif ni Pigeon.
 ### Fin de phase
 
 - [x] Relecture finale de toute la branche.
-- [ ] Fusion `feature/onglets` → `develop`, puis `release/1.10.0` (pubspec `1.10.0+18`), `main`, étiquette signée
+- [x] Fusion `feature/onglets` → `develop`, puis `release/1.10.0` (pubspec `1.10.0+18`), `main`, étiquette signée
   `v1.10.0`, push de `main`, `develop` et des étiquettes, release GitHub avec l'APK et son `.sha256`.
 
 ## Décisions du planificateur
