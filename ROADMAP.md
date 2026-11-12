@@ -449,7 +449,7 @@ dans le même commit que le travail.
 - [x] T5 — Documentation *(README : section Onglets ; aide : « Ouvrir plusieurs dossiers à la fois » ; [fiche d'essai](docs/superpowers/research/2026-11-12-essais-phase17/essais.md) ; 948 tests Flutter)*
 - [x] *(utilisateur)* T6 — Essais sur le Pixel *(2026-11-12 : toute la fiche réussie sur le Pixel 4 XL)*
 - [x] Relecture finale de toute la branche *(rien de critique ; corrigé : après un déplacement vers un autre onglet, l'onglet d'origine montrait encore les fichiers déplacés, et un même dossier ouvert dans deux onglets ne suivait pas les changements faits dans l'autre ; la barre d'onglets donne aussi le style de la barre d'état ; 951 tests Flutter)*
-- [ ] Fusion `feature/onglets` → `develop`
+- [x] Fusion `feature/onglets` → `develop` *(2026-11-12)*
 - [ ] Version `v1.10.0`
 
 ## Phase 18 — Gestion des partitions, comme GParted ([plan](docs/superpowers/plans/2026-10-27-phase17-partitions.md))
