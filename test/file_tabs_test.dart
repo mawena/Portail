@@ -472,4 +472,80 @@ void main() {
       expect(shown(HomeScreen), findsOneWidget);
     });
   });
+
+  group('Relecture finale', () {
+    TransferMsg moved({required bool finished}) => TransferMsg(
+        badPassword: false, kind: 'move', move: true, currentName: 'doc.pdf', fileIndex: 1, fileCount: 1,
+        doneBytes: finished ? 1000 : 500, totalBytes: 1000, finished: finished, cancelled: false, error: null,
+        elapsedMs: 0);
+
+    testWidgets('movedFilesLeaveSourceTab', (t) async {
+      final api = tabsApi();
+      final state = await pump(t, api);
+      await shell(t).openInNewTab(sourceId: 'phone', path: '/Download');
+      await t.pumpAndSettle();
+      expect(find.text('doc.pdf'), findsOneWidget);
+      await shell(t).openInNewTab(sourceId: 'v1', path: '/Films');
+      await t.pumpAndSettle();
+      // Couper dans l'onglet de Download, Coller ici dans celui de Films
+      await state.startTransfer('phone', ['/Download/doc.pdf'], 'v1', '/Films', move: true);
+      state.onTransferChanged(moved(finished: false));
+      await t.pump();
+      api.dirs['phone']!['/Download'] = [];
+      api.dirs['v1']!['/Films'] = [_f('/Films/film.mkv'), _f('/Films/doc.pdf')];
+      state.onTransferChanged(moved(finished: true));
+      await t.pumpAndSettle();
+      shell(t).tabs.activate(shell(t).tabs.tabs[1]);
+      await t.pumpAndSettle();
+      expect(shownPath(t), '/Download');
+      expect(find.text('doc.pdf'), findsNothing); // parti de l'onglet d'origine, sans le tirer pour actualiser
+      await t.pump(const Duration(seconds: 5)); // fin du message « terminé »
+    });
+
+    testWidgets('sameFolderInTwoTabsFollowsChanges', (t) async {
+      final api = tabsApi();
+      await pump(t, api);
+      await shell(t).openInNewTab(sourceId: 'phone', path: '/Download');
+      await t.pumpAndSettle();
+      await shell(t).openInNewTab(sourceId: 'phone', path: '/Download');
+      await t.pumpAndSettle();
+      // Nouveau dossier dans l'onglet affiché
+      await t.tap(find.byType(FloatingActionButton));
+      await t.pumpAndSettle();
+      await t.tap(find.text(Fr.newFolder));
+      await t.pumpAndSettle();
+      await t.enterText(find.byType(TextField), 'Vacances');
+      await t.pump();
+      api.dirs['phone']!['/Download'] = [_d('/Download/Vacances'), _f('/Download/doc.pdf')];
+      await t.tap(find.text('OK'));
+      await t.pumpAndSettle();
+      expect(find.text('Vacances'), findsOneWidget);
+      final loads = api.calls.where((c) => c == 'listDir phone /Download false').length;
+      // l'autre onglet sur le même dossier le montre aussi
+      shell(t).tabs.activate(shell(t).tabs.tabs[1]);
+      await t.pumpAndSettle();
+      expect(find.text('Vacances'), findsOneWidget);
+      expect(api.calls.where((c) => c == 'listDir phone /Download false').length, loads); // une seule fois chacun
+    });
+
+    testWidgets('tabBarSetsStatusBarStyle', (t) async {
+      addTearDown(t.platformDispatcher.clearPlatformBrightnessTestValue);
+      await pump(t, tabsApi());
+      await shell(t).openInNewTab();
+      await t.pumpAndSettle();
+      SystemUiOverlayStyle? style() => t
+          .widgetList<AnnotatedRegion<SystemUiOverlayStyle>>(find.descendant(
+              of: find.byType(FileTabBar),
+              matching: find.byWidgetPredicate((w) => w is AnnotatedRegion<SystemUiOverlayStyle>)))
+          .firstOrNull
+          ?.value;
+      Brightness theme() => Theme.of(t.element(find.byType(FileTabBar))).brightness;
+      // la barre d'onglets couvre la barre d'état : c'est elle qui en donne les icônes, claires ou sombres
+      expect(style()?.statusBarIconBrightness, theme() == Brightness.light ? Brightness.dark : Brightness.light);
+      t.platformDispatcher.platformBrightnessTestValue =
+          theme() == Brightness.light ? Brightness.dark : Brightness.light;
+      await t.pumpAndSettle();
+      expect(style()?.statusBarIconBrightness, theme() == Brightness.light ? Brightness.dark : Brightness.light);
+    });
+  });
 }

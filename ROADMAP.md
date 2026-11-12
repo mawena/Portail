@@ -448,7 +448,7 @@ dans le même commit que le travail.
 - [x] T4 — Points d'entrée : menu d'un dossier, menu de l'explorateur, résultats de recherche ; stockage qui disparaît *(file_tabs_test 22 ; chaque explorateur ramène sa propre pile, un seul message ; un onglet masqué repart d'une pile neuve, ses retraits ne s'animant pas ; HeroMode coupé dans les modules et onglets masqués : le message en bas des pages faisait deux Hero de même nom ; 948 tests Flutter)*
 - [x] T5 — Documentation *(README : section Onglets ; aide : « Ouvrir plusieurs dossiers à la fois » ; [fiche d'essai](docs/superpowers/research/2026-11-12-essais-phase17/essais.md) ; 948 tests Flutter)*
 - [x] *(utilisateur)* T6 — Essais sur le Pixel *(2026-11-12 : toute la fiche réussie sur le Pixel 4 XL)*
-- [ ] Relecture finale de toute la branche
+- [x] Relecture finale de toute la branche *(rien de critique ; corrigé : après un déplacement vers un autre onglet, l'onglet d'origine montrait encore les fichiers déplacés, et un même dossier ouvert dans deux onglets ne suivait pas les changements faits dans l'autre ; la barre d'onglets donne aussi le style de la barre d'état ; 951 tests Flutter)*
 - [ ] Fusion `feature/onglets` → `develop`
 - [ ] Version `v1.10.0`
 

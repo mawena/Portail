@@ -77,6 +77,7 @@ class _ExplorerScreenState extends State<ExplorerScreen> {
   bool _lastHidden = false;
   int _lastFileIndex = -1;
   bool _lastFinished = false;
+  int _dirSeen = 0; // changements du dossier affiché déjà chargés (AppState.dirVersion)
 
   AppState get state => widget.state;
 
@@ -178,12 +179,22 @@ class _ExplorerScreenState extends State<ExplorerScreen> {
         _load(quiet: true);
       }
     }
+    // dossier changé ailleurs : dans un autre onglet, ou origine d'un déplacement qui vient de finir
+    if (state.dirVersion(widget.sourceId, _path) != _dirSeen) _load(quiet: true);
     setState(() {});
+  }
+
+  /// Ce dossier a changé ici : il se recharge, et avec lui chaque autre explorateur qui l'affiche (un autre onglet).
+  Future<void> _changedHere() {
+    _dirSeen = state.dirVersion(widget.sourceId, _path) + 1; // celui-ci se recharge ci-dessous, une seule fois
+    state.dirChanged(widget.sourceId, _path);
+    return _load(quiet: true);
   }
 
   Future<void> _load({bool quiet = false}) async {
     final path = _path;
     if (!mounted) return;
+    _dirSeen = state.dirVersion(widget.sourceId, path);
     setState(() => quiet ? _refreshing = true : _loading = true);
     try {
       final l = await state.api.listDir(widget.sourceId, path, state.viewPrefs.showHidden);
@@ -299,7 +310,7 @@ class _ExplorerScreenState extends State<ExplorerScreen> {
         await _newFolder();
       case 'vault':
         await openVaultCreate(context, state, sourceId: widget.sourceId, dir: _path);
-        if (mounted) _load(quiet: true);
+        if (mounted) _changedHere();
     }
   }
 
@@ -390,7 +401,7 @@ class _ExplorerScreenState extends State<ExplorerScreen> {
     );
     if (ok == true && mounted) {
       showMessage(context, Fr.passwordChanged, kind: MessageKind.success);
-      _load(quiet: true);
+      _changedHere();
     }
   }
 
@@ -429,7 +440,7 @@ class _ExplorerScreenState extends State<ExplorerScreen> {
     if (name == null || name.isEmpty) return;
     await _run(() async {
       await state.api.createFolder(widget.sourceId, _path, name);
-      await _load(quiet: true);
+      await _changedHere();
     });
   }
 
@@ -439,7 +450,7 @@ class _ExplorerScreenState extends State<ExplorerScreen> {
     await _run(() async {
       await state.api.rename(widget.sourceId, path, name);
       setState(_selected.clear);
-      await _load(quiet: true);
+      await _changedHere();
     });
   }
 
@@ -473,7 +484,7 @@ class _ExplorerScreenState extends State<ExplorerScreen> {
     await _run(() async {
       await state.api.deleteEntries(widget.sourceId, paths, permanent);
       if (mounted) setState(_selected.clear);
-      await _load(quiet: true);
+      await _changedHere();
       if (!permanent && mounted) {
         showMessage(context, Fr.movedToTrash(paths.length),
             actionLabel: Fr.undo, onAction: () => _undoTrash(paths, start));
@@ -491,7 +502,7 @@ class _ExplorerScreenState extends State<ExplorerScreen> {
             if (paths.contains(t.originalPath) && t.deletedAt >= since) t.id,
         ];
         if (ids.isNotEmpty) await state.api.restoreTrash(widget.sourceId, ids);
-        await _load(quiet: true);
+        await _changedHere();
       });
 
   void _toClipboard(List<String> paths, {required bool move}) {
@@ -519,7 +530,7 @@ class _ExplorerScreenState extends State<ExplorerScreen> {
     ));
     if (done != true || !mounted) return;
     setState(_selected.clear);
-    await _load(quiet: true);
+    await _changedHere();
   }
 
   /// Propriétés de l'élément sélectionné (la sélection est quittée).

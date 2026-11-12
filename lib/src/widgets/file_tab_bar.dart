@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 import '../screens/explorer_screen.dart' show nameOf;
 import '../state/app_state.dart';
@@ -69,47 +70,54 @@ class _FileTabBarState extends State<FileTabBar> {
 
   @override
   Widget build(BuildContext context) {
-    final scheme = Theme.of(context).colorScheme;
-    return ListenableBuilder(
-      listenable: Listenable.merge([_tabs, widget.state]),
-      builder: (context, _) {
-        final all = _tabs.tabs;
-        _keys.removeWhere((id, _) => !all.any((t) => t.id == id));
-        _reveal();
-        return Material(
-          color: scheme.surfaceContainer,
-          child: SafeArea(
-            bottom: false,
-            child: Row(children: [
-              Expanded(
-                child: SingleChildScrollView(
-                  scrollDirection: Axis.horizontal,
-                  padding: const EdgeInsets.symmetric(horizontal: Space.xs),
-                  child: Row(children: [
-                    for (final (i, t) in all.indexed)
-                      _FileTabChip(
-                        key: _keys.putIfAbsent(t.id, GlobalKey.new),
-                        title: fileTabTitle(widget.state, t),
-                        icon: _icon(widget.state, t),
-                        index: i,
-                        count: all.length,
-                        selected: t == _tabs.active,
-                        onTap: () => _tabs.activate(t),
-                        onClose: () => _tabs.close(t),
-                        onMenu: () => _menu(t),
-                      ),
-                  ]),
+    final theme = Theme.of(context);
+    final scheme = theme.colorScheme;
+    // la barre couvre la barre d'état, à la place de la barre d'application : c'est elle qui en donne les icônes,
+    // claires ou sombres selon le thème
+    return AnnotatedRegion<SystemUiOverlayStyle>(
+      value: theme.appBarTheme.systemOverlayStyle ??
+          (theme.brightness == Brightness.light ? SystemUiOverlayStyle.dark : SystemUiOverlayStyle.light),
+      child: ListenableBuilder(
+        listenable: Listenable.merge([_tabs, widget.state]),
+        builder: (context, _) {
+          final all = _tabs.tabs;
+          _keys.removeWhere((id, _) => !all.any((t) => t.id == id));
+          _reveal();
+          return Material(
+            color: scheme.surfaceContainer,
+            child: SafeArea(
+              bottom: false,
+              child: Row(children: [
+                Expanded(
+                  child: SingleChildScrollView(
+                    scrollDirection: Axis.horizontal,
+                    padding: const EdgeInsets.symmetric(horizontal: Space.xs),
+                    child: Row(children: [
+                      for (final (i, t) in all.indexed)
+                        _FileTabChip(
+                          key: _keys.putIfAbsent(t.id, GlobalKey.new),
+                          title: fileTabTitle(widget.state, t),
+                          icon: _icon(widget.state, t),
+                          index: i,
+                          count: all.length,
+                          selected: t == _tabs.active,
+                          onTap: () => _tabs.activate(t),
+                          onClose: () => _tabs.close(t),
+                          onMenu: () => _menu(t),
+                        ),
+                    ]),
+                  ),
                 ),
-              ),
-              IconButton(
-                tooltip: _tabs.canOpen ? Fr.newTab : Fr.tabsFull,
-                icon: const Icon(Icons.add_rounded),
-                onPressed: _tabs.canOpen ? widget.onNew : null,
-              ),
-            ]),
-          ),
-        );
-      },
+                IconButton(
+                  tooltip: _tabs.canOpen ? Fr.newTab : Fr.tabsFull,
+                  icon: const Icon(Icons.add_rounded),
+                  onPressed: _tabs.canOpen ? widget.onNew : null,
+                ),
+              ]),
+            ),
+          );
+        },
+      ),
     );
   }
 }

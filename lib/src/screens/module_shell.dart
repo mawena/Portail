@@ -337,7 +337,7 @@ class ModuleShellState extends State<ModuleShell> with SingleTickerProviderState
               controller: _tabHeroes.putIfAbsent(t.id, MaterialApp.createMaterialHeroController),
               child: Navigator(
                 key: _tabNavs.putIfAbsent(t.id, GlobalKey<NavigatorState>.new),
-                onGenerateInitialRoutes: (_, __) => [
+                onGenerateInitialRoutes: (_, _) => [
                   MaterialPageRoute<void>(builder: (_) => _root(PortailModule.files)),
                   if (t.initial case final at? when !_bare.contains(t.id))
                     MaterialPageRoute<void>(
