@@ -1,5 +1,6 @@
 import 'dart:math' as math;
 
+import 'package:flutter/foundation.dart' show listEquals;
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter/services.dart';
@@ -7,9 +8,13 @@ import 'package:flutter/services.dart';
 import '../ai/ai_home_screen.dart';
 import '../analyzer/analyzer_home_screen.dart';
 import '../state/app_state.dart';
+import '../state/files_tabs.dart';
 import '../strings_fr.dart';
+import '../ui/feedback.dart';
 import '../ui/tokens.dart';
 import '../widgets/bottom_dock.dart';
+import 'explorer_screen.dart';
+import 'files_tab_scope.dart';
 import 'home_screen.dart';
 import 'remote_home_screen.dart';
 import 'settings_screen.dart';
@@ -43,6 +48,9 @@ List<Widget> moduleActions(BuildContext context, AppState state) => [
 /// à Fichiers, puis laisse Android fermer Portail. Les pages plein écran (visionneuses, éditeur, terminal,
 /// conversation, lecture en cours) s'ouvrent sur le navigateur de l'application, au-dessus de la barre. Le dock du
 /// cadre (lecteur réduit, opération en cours) se pose au-dessus de la barre.
+///
+/// Le module Fichiers a des onglets (phase 17, spec § 29) : une pile de pages par onglet, chacune depuis l'accueil de
+/// Fichiers ; Retour à l'accueil d'un onglet parmi plusieurs le ferme.
 class ModuleShell extends StatefulWidget {
   const ModuleShell({super.key, required this.state});
 
@@ -60,8 +68,25 @@ class ModuleShell extends StatefulWidget {
 class ModuleShellState extends State<ModuleShell> with SingleTickerProviderStateMixin {
   AppState get _state => widget.state;
 
-  final _navigators = {for (final m in PortailModule.values) m: GlobalKey<NavigatorState>()};
-  final _heroes = {for (final m in PortailModule.values) m: MaterialApp.createMaterialHeroController()};
+  /// Piles des modules autres que Fichiers, qui en a une par onglet.
+  final _navigators = {
+    for (final m in PortailModule.values)
+      if (m != PortailModule.files) m: GlobalKey<NavigatorState>()
+  };
+  final _heroes = {
+    for (final m in PortailModule.values)
+      if (m != PortailModule.files) m: MaterialApp.createMaterialHeroController()
+  };
+
+  /// Onglets du module Fichiers, le temps de la session.
+  final tabs = FilesTabs();
+  final _tabNavs = <int, GlobalKey<NavigatorState>>{};
+  final _tabHeroes = <int, HeroController>{};
+
+  /// Onglets et onglet affiché au dernier changement : les dossiers signalés par les explorateurs ne reconstruisent
+  /// que la barre d'onglets.
+  List<int> _tabIds = const [];
+  int _activeTab = -1;
 
   /// Modules déjà montrés : leur pile est construite au premier passage, puis gardée.
   final _built = {PortailModule.files};
@@ -78,19 +103,46 @@ class ModuleShellState extends State<ModuleShell> with SingleTickerProviderState
 
   PortailModule get current => _current;
 
+  /// Pile du module [m] à l'écran : celle de l'onglet affiché pour Fichiers.
+  NavigatorState? _navigator(PortailModule m) =>
+      m == PortailModule.files ? _tabNavs[tabs.active.id]?.currentState : _navigators[m]!.currentState;
+
   /// Module dont la pile contient [context] ; null pour une page plein écran (navigateur de l'application).
   PortailModule? moduleOf(BuildContext context) {
     final nav = Navigator.maybeOf(context);
-    for (final m in PortailModule.values) {
-      if (_navigators[m]!.currentState == nav) return m;
+    if (nav == null) return null;
+    if (_tabNavs.values.any((k) => k.currentState == nav)) return PortailModule.files;
+    for (final MapEntry(key: m, value: k) in _navigators.entries) {
+      if (k.currentState == nav) return m;
     }
     return null;
+  }
+
+  /// Vrai si la page de [context] est à l'écran : dans le module affiché et, pour Fichiers, dans l'onglet affiché.
+  bool isShown(BuildContext context) {
+    final m = moduleOf(context);
+    if (m == null || m != _current) return false;
+    return m != PortailModule.files || Navigator.maybeOf(context) == _navigator(m);
+  }
+
+  /// Ouvre un onglet de Fichiers sur [path] de [sourceId] (sur l'accueil de Fichiers sans [sourceId]) et le montre ;
+  /// au-delà de [FilesTabs.max] onglets, un message l'explique.
+  Future<void> openInNewTab({String? sourceId, String path = '/'}) async {
+    final t = tabs.open(at: sourceId == null ? null : TabPlace(sourceId, path));
+    if (t == null) {
+      showMessage(context, Fr.tabsFull);
+      return;
+    }
+    select(PortailModule.files);
   }
 
   @override
   void initState() {
     super.initState();
     _state.addListener(_stateChanged);
+    tabs.addListener(_tabsChanged);
+    _tabIds = [for (final t in tabs.tabs) t.id];
+    _activeTab = tabs.active.id;
   }
 
   @override
@@ -118,11 +170,30 @@ class ModuleShellState extends State<ModuleShell> with SingleTickerProviderState
     _slot
       ?..removeListener(_dockChanged)
       ..embedded = false;
-    for (final h in _heroes.values) {
+    for (final h in [..._heroes.values, ..._tabHeroes.values]) {
       h.dispose();
     }
+    tabs
+      ..removeListener(_tabsChanged)
+      ..dispose();
     _fade.dispose();
     super.dispose();
+  }
+
+  /// Onglet ouvert, fermé ou affiché : la pile d'un onglet fermé est oubliée.
+  void _tabsChanged() {
+    final ids = [for (final t in tabs.tabs) t.id];
+    final active = tabs.active.id;
+    if (active == _activeTab && listEquals(ids, _tabIds)) return;
+    _tabIds = ids;
+    _activeTab = active;
+    _tabNavs.removeWhere((id, _) => !ids.contains(id));
+    for (final id in _tabHeroes.keys.where((id) => !ids.contains(id)).toList()) {
+      final h = _tabHeroes.remove(id)!;
+      // après l'image : son navigateur quitte l'arbre d'abord
+      WidgetsBinding.instance.addPostFrameCallback((_) => h.dispose());
+    }
+    if (mounted) setState(() {});
   }
 
   void _coverChanged(AnimationStatus status) => _slot?.embedded = status.isDismissed;
@@ -150,25 +221,30 @@ class ModuleShellState extends State<ModuleShell> with SingleTickerProviderState
       ..forward(from: 0);
   }
 
-  /// Choisit le module [m], puis empile [route] sur sa pile.
+  /// Choisit le module [m], puis empile [route] sur sa pile (celle de l'onglet affiché pour Fichiers).
   Future<T?> push<T extends Object?>(PortailModule m, Route<T> route) async {
     select(m);
-    if (_navigators[m]!.currentState == null) await WidgetsBinding.instance.endOfFrame;
-    return _navigators[m]!.currentState!.push(route);
+    if (_navigator(m) == null) await WidgetsBinding.instance.endOfFrame;
+    return _navigator(m)!.push(route);
   }
 
   void _tap(int i) {
     final m = PortailModule.values[i];
     if (m == _current) {
-      _navigators[m]!.currentState?.popUntil((r) => r.isFirst);
+      _navigator(m)?.popUntil((r) => r.isFirst);
     } else {
       select(m);
     }
   }
 
   Future<void> _back() async {
-    final nav = _navigators[_current]!.currentState;
+    final nav = _navigator(_current);
     if (nav != null && await nav.maybePop()) return;
+    if (_current == PortailModule.files && tabs.tabs.length > 1) {
+      // accueil d'un onglet parmi plusieurs : il se ferme, l'onglet d'avant revient
+      tabs.close(tabs.active);
+      return;
+    }
     if (_current != PortailModule.files) {
       select(PortailModule.files);
       return;
@@ -184,27 +260,57 @@ class ModuleShellState extends State<ModuleShell> with SingleTickerProviderState
         PortailModule.ai => AiHomeScreen(state: _state),
       };
 
+  /// Module ou onglet masqué : gardé, mais ni dessiné, ni touché, ni lu par TalkBack, ni animé.
+  static Widget _hidden({Key? key, required bool shown, required Widget child}) => Offstage(
+        key: key,
+        offstage: !shown,
+        child: TickerMode(enabled: shown, child: ExcludeFocus(excluding: !shown, child: child)),
+      );
+
   Widget _module(PortailModule m) {
     if (!_built.contains(m)) return const SizedBox.shrink();
-    // module masqué : gardé, mais ni dessiné, ni touché, ni lu par TalkBack, ni animé
-    final shown = m == _current;
-    return Offstage(
-      offstage: !shown,
-      child: TickerMode(
-        enabled: shown,
-        child: ExcludeFocus(
-          excluding: !shown,
-          child: HeroControllerScope(
-            controller: _heroes[m]!,
-            child: Navigator(
-              key: _navigators[m],
-              onGenerateRoute: (settings) =>
-                  MaterialPageRoute<void>(settings: settings, builder: (_) => _root(m)),
+    return _hidden(
+      shown: m == _current,
+      child: m == PortailModule.files
+          ? _files()
+          : HeroControllerScope(
+              controller: _heroes[m]!,
+              child: Navigator(
+                key: _navigators[m],
+                onGenerateRoute: (settings) =>
+                    MaterialPageRoute<void>(settings: settings, builder: (_) => _root(m)),
+              ),
+            ),
+    );
+  }
+
+  /// Module Fichiers : une pile par onglet, depuis l'accueil (et le dossier de départ de l'onglet s'il en a un).
+  Widget _files() {
+    return Stack(fit: StackFit.expand, children: [
+      for (final t in tabs.tabs)
+        _hidden(
+          key: ValueKey(t.id),
+          shown: t == tabs.active,
+          child: FilesTabScope(
+            tabs: tabs,
+            tab: t,
+            child: HeroControllerScope(
+              controller: _tabHeroes.putIfAbsent(t.id, MaterialApp.createMaterialHeroController),
+              child: Navigator(
+                key: _tabNavs.putIfAbsent(t.id, GlobalKey<NavigatorState>.new),
+                onGenerateInitialRoutes: (_, __) => [
+                  MaterialPageRoute<void>(builder: (_) => _root(PortailModule.files)),
+                  if (t.initial case final at?)
+                    MaterialPageRoute<void>(
+                        builder: (_) => ExplorerScreen(state: _state, sourceId: at.sourceId, path: at.path)),
+                ],
+                onGenerateRoute: (settings) =>
+                    MaterialPageRoute<void>(settings: settings, builder: (_) => _root(PortailModule.files)),
+              ),
             ),
           ),
         ),
-      ),
-    );
+    ]);
   }
 
   /// Une analyse pour l'Analyseur, une session SSH (et ses tunnels) pour Distants, une réponse ou une automatisation

@@ -104,18 +104,18 @@ Aucun code Kotlin, natif ni Pigeon.
     module à l'écran et, pour Fichiers, dans l'onglet affiché).
   - `FilesTabScope.maybeOf(BuildContext) → FilesTabScope?` avec `tab` et `tabs`, lisible depuis `initState`.
 
-- [ ] **Étape 1 : tests** (`file_tabs_test.dart`, appli entière comme `module_shell_test.dart`) : `openInNewTab` du
+- [x] **Étape 1 : tests** (`file_tabs_test.dart`, appli entière comme `module_shell_test.dart`) : `openInNewTab` du
   disque `/Films` → deuxième onglet affiché sur l'explorateur de `/Films`, le premier garde son dossier et sa
   sélection ; Retour à l'accueil d'un onglet parmi deux le ferme et montre l'autre ; Retour au dernier onglet garde le
   § 27 ; toucher Fichiers ramène l'onglet affiché à son accueil sans toucher l'autre ; onglet masqué hors de l'arbre
   sémantique et sans `Ticker` actif ; depuis Coffres, `openInNewTab` montre Fichiers ; neuvième onglet refusé avec le
   message.
-- [ ] **Étape 2 : les voir échouer.**
-- [ ] **Étape 3 : un `Navigator` par onglet** (clés et `HeroController` par identifiant d'onglet, oubliés à la
+- [x] **Étape 2 : les voir échouer.**
+- [x] **Étape 3 : un `Navigator` par onglet** (clés et `HeroController` par identifiant d'onglet, oubliés à la
   fermeture ; `onGenerateInitialRoutes` : accueil, puis l'explorateur de `initial` s'il y en a un) ; `push`, `_tap`,
   `_back`, `moduleOf`, `isShown`.
-- [ ] **Étape 4 : les voir passer**, puis la suite entière (`module_shell_test.dart` inchangé).
-- [ ] **Étape 5 : commit** `feat(onglets): une pile de pages par onglet dans le module Fichiers`.
+- [x] **Étape 4 : les voir passer**, puis la suite entière (`module_shell_test.dart` inchangé).
+- [x] **Étape 5 : commit** `feat(onglets): une pile de pages par onglet dans le module Fichiers`.
 
 ### Task 3 : barre d'onglets
 

@@ -1028,6 +1028,16 @@ class Fr {
   static const moduleAi = 'IA';
 
   static String moduleBusy(String module) => '$module, activité en cours';
+
+  // Onglets du module Fichiers (phase 17)
+  static const newTab = 'Nouvel onglet';
+  static const openInNewTab = 'Ouvrir dans un nouvel onglet';
+  static const openFolderInNewTab = 'Ouvrir le dossier dans un nouvel onglet';
+  static const closeTab = "Fermer l'onglet";
+  static const closeOtherTabs = 'Fermer les autres onglets';
+  static String closeTabNamed(String name) => "Fermer l'onglet $name";
+  static String tabLabel(int i, int n, String name) => 'Onglet $i sur $n, $name';
+  static const tabsFull = 'Huit onglets au plus : fermez-en un pour en ouvrir un autre.';
   static const remoteNoServers = 'Aucun serveur';
   static const vaultsNoneTitle = 'Aucun coffre';
   static const sectionSsh = 'SSH';

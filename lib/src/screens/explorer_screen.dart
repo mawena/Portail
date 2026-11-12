@@ -77,6 +77,10 @@ class _ExplorerScreenState extends State<ExplorerScreen> {
   bool _lastFinished = false;
 
   AppState get state => widget.state;
+
+  /// Dossier ouvert (pour les tests).
+  @visibleForTesting
+  String get currentPath => _path;
   SourceMsg? get _source => state.sourceById(widget.sourceId);
   bool get _readOnly => _source?.readOnly ?? true;
 
