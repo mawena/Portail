@@ -6,9 +6,10 @@ porte une étiquette `vX.Y.Z` sur `main`. Le détail de chaque phase est dans la
 
 ## À venir
 
-- **1.10.0** : gestion des partitions (créer, supprimer, redimensionner).
-- **1.11.0** : vérification et réparation des disques.
-- **1.12.0** : voix de narration (sa propre voix clonée avec consentement vérifié, fichiers audio marqués comme synthétiques).
+- **1.10.0** : onglets dans le module Fichiers, pour ouvrir plusieurs dossiers à la fois.
+- **1.11.0** : gestion des partitions (créer, supprimer, redimensionner).
+- **1.12.0** : vérification et réparation des disques.
+- **1.13.0** : voix de narration (sa propre voix clonée avec consentement vérifié, fichiers audio marqués comme synthétiques).
 
 ## 1.9.0 — 2026-10-27
 

@@ -441,8 +441,20 @@ dans le même commit que le travail.
 - [x] Fusion `feature/analyseur` → `develop` *(2026-10-27, à la demande de l'utilisateur, avant ses essais sur le Pixel ; branche supprimée ; version à publier après les essais)*
 - [x] Version `v1.9.0` *(2026-10-27)*
 
-### Phase 17 — Gestion des partitions, comme GParted ([plan](2026-10-27-phase17-partitions.md))
-- [x] Plan de la phase 17 écrit *(demande du 2026-10-22 ; spec § 17, § 24, § 25 et § 26 ; phase 12, puis 13, 14, 15, 16, 17 et 15, jusqu'au 2026-10-25, puis 16, puis 17 depuis le 2026-10-25 ; plan du 2026-10-27, décisions du planificateur à valider : pas de déplacement, FAT32 et exFAT non redimensionnés, MBR étendu en étiquette seulement)*
+### Phase 17 — Onglets dans le module Fichiers ([plan](2026-11-12-phase17-onglets.md))
+- [x] Plan de la phase 17 écrit *(demande du 2026-11-12 ; spec § 29 ; commencée aussitôt, décisions du planificateur à valider aux essais : 8 onglets au plus, barre dès deux onglets, onglets gardés le temps de la session)*
+- [ ] T1 — Onglets du module Fichiers : ouvrir, fermer, onglet affiché, retour à l'onglet d'avant, 8 au plus
+- [ ] T2 — Coquille : une pile de pages par onglet, Retour et barre de navigation, ouverture dans un nouvel onglet
+- [ ] T3 — Barre d'onglets : icône et nom du dossier ouvert, croix, +, appui long, TalkBack, texte à 200 %, images de référence
+- [ ] T4 — Points d'entrée : menu d'un dossier, menu de l'explorateur, résultats de recherche ; stockage qui disparaît
+- [ ] T5 — Documentation
+- [ ] *(utilisateur)* T6 — Essais sur le Pixel
+- [ ] Relecture finale de toute la branche
+- [ ] Fusion `feature/onglets` → `develop`
+- [ ] Version `v1.10.0`
+
+### Phase 18 — Gestion des partitions, comme GParted ([plan](2026-10-27-phase17-partitions.md))
+- [x] Plan de la phase 17 écrit *(demande du 2026-10-22 ; spec § 17, § 24, § 25 et § 26 ; phase 12, puis 13, 14, 15, 16, 17 et 15, jusqu'au 2026-10-25, puis 16, puis 17 du 2026-10-25 au 2026-11-12, puis 18 (spec § 29) ; plan du 2026-10-27, décisions du planificateur à valider : pas de déplacement, FAT32 et exFAT non redimensionnés, MBR étendu en étiquette seulement)*
 - [x] T1 — Moteur : table de partitions modifiable (GPT et MBR gardés tels quels hors changement, nouvelle table, espaces libres) *(test_part_layout 11 cas jugés par sfdisk et sgdisk, coupure à chaque écriture ; table de la phase 8 écrite par fl_pt_store ; 52/52 tests natifs hors lents, ASan/UBSan propres)*
 - [x] T2 — Moteur : créer, supprimer, formater une partition ; taille au formatage ; place occupée *(test_partops 9 cas jugés par fsck.fat, fsck.exfat, e2fsck, ntfsfix, cryptsetup et sfdisk ; formatage d'une tranche partagé avec la phase 8 ; 52/52 tests natifs, 902 Flutter, 664 JVM ; vérification par le noyau à lancer par l'utilisateur (sudo))*
 - [ ] T3 — e2fsprogs dans le moteur : vérification en lecture seule (`e2fsck -fn`) et redimensionnement d'ext4 (`resize2fs`)
@@ -457,19 +469,19 @@ dans le même commit que le travail.
 - [ ] *(utilisateur)* T12 — Essais sur le Pixel avec une clé USB sacrifiée
 - [ ] Relecture finale de toute la branche
 - [ ] Fusion `feature/partitions` → `develop`
-- [ ] Version `v1.10.0`
+- [ ] Version `v1.11.0`
 
-### Phase 18 — Vérification et réparation des disques
-- [ ] Plan de la phase 18 écrit *(demande du 2026-10-22 ; spec § 16, § 25 et § 26 ; phase 11, puis 12, 13, 14, 15 et 16, jusqu'au 2026-10-25, puis 17, puis 18 depuis le 2026-10-25)*
+### Phase 19 — Vérification et réparation des disques
+- [ ] Plan de la phase 18 écrit *(demande du 2026-10-22 ; spec § 16, § 25 et § 26 ; phase 11, puis 12, 13, 14, 15 et 16, jusqu'au 2026-10-25, puis 17, puis 18 du 2026-10-25 au 2026-11-12, puis 19 (spec § 29))*
 - [ ] Vérification en lecture seule avec rapport, pour chaque système de fichiers
 - [ ] Réparation ext4 par e2fsck (e2fsprogs, sur l'accès USB du moteur)
 - [ ] Réparation NTFS par ntfsfix (ntfs-3g)
 - [ ] Réparation FAT32 et exFAT par fsck.fat et fsck.exfat
 - [ ] LUKS : vérification des deux en-têtes, sauvegarde et restauration de l'en-tête
-- [ ] Version `v1.11.0`
+- [ ] Version `v1.12.0`
 
-### Phase 19 — Voix de narration : sa propre voix clonée, avec consentement, pour des fichiers audio
-- [ ] Plan de la phase 19 écrit *(demande du 2026-10-31 ; spec § 28 ; après la phase 18 ; transformation en direct (appels, notes vocales) et clonage depuis un fichier importé exclus, décision du 2026-10-31)*
+### Phase 20 — Voix de narration : sa propre voix clonée, avec consentement, pour des fichiers audio
+- [ ] Plan de la phase 19 écrit *(demande du 2026-10-31 ; spec § 28 ; phase 19 jusqu'au 2026-11-12, puis 20 (spec § 29) ; après la phase 19 ; transformation en direct (appels, notes vocales) et clonage depuis un fichier importé exclus, décision du 2026-10-31)*
 - [ ] Recherche : modèle de synthèse du serveur (Chatterbox Multilingual, XTTS-v2 ou autre : français, licence, filigrane, temps de génération sur le VPS)
 - [ ] Contrat d'API : routes `/v1/voices` et `/v1/audio/speech`, serveur d'essai et `contrat_test.py` étendus
 - [ ] Couche réseau : voix (création avec consentement, liste, suppression) et génération *(MockWebServer)*
@@ -482,7 +494,7 @@ dans le même commit que le travail.
 - [ ] *(utilisateur)* Essais sur le Pixel avec le serveur maison
 - [ ] Relecture finale de toute la branche
 - [ ] Fusion `feature/voix-narration` → `develop`
-- [ ] Version `v1.12.0`
+- [ ] Version `v1.13.0`
 ---
 
 ## Principes

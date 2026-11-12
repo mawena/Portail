@@ -741,9 +741,10 @@ Le dépôt suit git flow :
 | 14 | Chiffrement de fichiers et de dossiers, coffres de fichiers, chacun avec son mot de passe | **v1.7.0** |
 | 15 | Intégration IA : serveurs auto-hébergés compatibles OpenAI, chat en flux, automatisations | **v1.8.0** |
 | 16 | Analyseur de stockage comme celui d'Ubuntu (Baobab) : place réelle, anneaux et carte proportionnelle, arbre, corbeille | **v1.9.0** |
-| 17 | Gestion des partitions comme GParted : taille au formatage, créer, supprimer, redimensionner | v1.10.0 |
-| 18 | Vérification et réparation des disques : e2fsck, ntfsfix, fsck.fat, fsck.exfat, en-têtes LUKS | v1.11.0 |
-| 19 | Voix de narration : sa propre voix clonée avec consentement vérifié, pour générer des fichiers audio marqués comme synthétiques (pas d'usage en direct) | v1.12.0 |
+| 17 | Onglets dans le module Fichiers : plusieurs dossiers ouverts à la fois | v1.10.0 |
+| 18 | Gestion des partitions comme GParted : taille au formatage, créer, supprimer, redimensionner | v1.11.0 |
+| 19 | Vérification et réparation des disques : e2fsck, ntfsfix, fsck.fat, fsck.exfat, en-têtes LUKS | v1.12.0 |
+| 20 | Voix de narration : sa propre voix clonée avec consentement vérifié, pour générer des fichiers audio marqués comme synthétiques (pas d'usage en direct) | v1.13.0 |
 
 Suivi détaillé, étape par étape : [docs/superpowers/plans/2026-10-17-fluluks-feuille-de-route.md](docs/superpowers/plans/2026-10-17-fluluks-feuille-de-route.md).
 Conception : [docs/superpowers/specs/2026-10-17-fluluks-design.md](docs/superpowers/specs/2026-10-17-fluluks-design.md).

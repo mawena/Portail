@@ -111,7 +111,7 @@ data: [DONE]
 
 Prévue dans l'interface de Portail pour une recherche sémantique future ; aucun écran ne s'en sert en v1.8.0.
 
-## Voix de narration (facultatives, à partir de la v1.12.0)
+## Voix de narration (facultatives, à partir de la v1.13.0)
 
 Extension maison, hors API d'OpenAI sauf `POST /v1/audio/speech`. Un serveur qui ne les a pas (404) masque le module
 « Voix » de Portail. Conception : § 28 de la spec. **Exclu par décision** : toute transformation de voix en direct et
