@@ -26,6 +26,25 @@ LUKS2/ext4 qu'on utilise sous Ubuntu. Aucune application existante ne le permett
 
 ## Ce que fait la version 1.9.0
 
+### Onglets (nouveau en 1.10.0)
+
+Le module **Fichiers** ouvre plusieurs dossiers à la fois, dans des **onglets**, comme un navigateur.
+
+- **Ouvrir un onglet** : **Ouvrir dans un nouvel onglet** dans le menu ⋮ d'un dossier (explorateur, résultats de
+  recherche ; pour un fichier trouvé, **Ouvrir le dossier dans un nouvel onglet**), **Nouvel onglet** dans le menu de
+  l'explorateur, ou **+** dans la barre d'onglets, qui ouvrent l'accueil de Fichiers. Depuis le module Coffres, l'onglet
+  s'ouvre dans Fichiers. Huit onglets au plus.
+- **Barre d'onglets** : en haut, dès deux onglets ; chaque onglet montre l'icône du stockage et le nom du dossier
+  ouvert (le nom du stockage à sa racine, « Fichiers » sur l'accueil), avec une croix. Toucher un onglet l'affiche ;
+  appui long : **Fermer l'onglet**, **Fermer les autres onglets**.
+- **Chaque onglet garde sa place** : son dossier, sa sélection, sa position dans la liste, et ce qu'on y a ouvert (un
+  coffre, une recherche). Retour remonte dans l'onglet ; à son accueil, Retour ferme l'onglet et montre celui d'avant.
+  Toucher **Fichiers** dans la barre du bas ramène l'onglet affiché à l'accueil.
+- **D'un dossier à l'autre** : le presse-papiers est commun aux onglets : **Copier** ou **Couper** dans l'un, **Coller
+  ici** dans l'autre.
+- Un disque débranché ou un coffre fermé ramène à l'accueil chaque onglet qui l'affichait, avec un seul message. Les
+  onglets durent le temps de la session : ils ne sont pas rouverts au démarrage suivant.
+
 ### Analyseur de stockage (nouveau en 1.9.0)
 
 Comme l'analyseur de disques d'Ubuntu (Baobab), le module **Analyseur** montre ce qui occupe la place, dossier par
@@ -741,11 +760,12 @@ Le dépôt suit git flow :
 | 14 | Chiffrement de fichiers et de dossiers, coffres de fichiers, chacun avec son mot de passe | **v1.7.0** |
 | 15 | Intégration IA : serveurs auto-hébergés compatibles OpenAI, chat en flux, automatisations | **v1.8.0** |
 | 16 | Analyseur de stockage comme celui d'Ubuntu (Baobab) : place réelle, anneaux et carte proportionnelle, arbre, corbeille | **v1.9.0** |
-| 17 | Gestion des partitions comme GParted : taille au formatage, créer, supprimer, redimensionner | v1.10.0 |
-| 18 | Vérification et réparation des disques : e2fsck, ntfsfix, fsck.fat, fsck.exfat, en-têtes LUKS | v1.11.0 |
-| 19 | Voix de narration : sa propre voix clonée avec consentement vérifié, pour générer des fichiers audio marqués comme synthétiques (pas d'usage en direct) | v1.12.0 |
+| 17 | Onglets dans le module Fichiers : plusieurs dossiers ouverts à la fois | v1.10.0 |
+| 18 | Gestion des partitions comme GParted : taille au formatage, créer, supprimer, redimensionner | v1.11.0 |
+| 19 | Vérification et réparation des disques : e2fsck, ntfsfix, fsck.fat, fsck.exfat, en-têtes LUKS | v1.12.0 |
+| 20 | Voix de narration : sa propre voix clonée avec consentement vérifié, pour générer des fichiers audio marqués comme synthétiques (pas d'usage en direct) | v1.13.0 |
 
-Suivi détaillé, étape par étape : [docs/superpowers/plans/2026-10-17-fluluks-feuille-de-route.md](docs/superpowers/plans/2026-10-17-fluluks-feuille-de-route.md).
+Suivi détaillé, étape par étape : [ROADMAP.md](ROADMAP.md).
 Conception : [docs/superpowers/specs/2026-10-17-fluluks-design.md](docs/superpowers/specs/2026-10-17-fluluks-design.md).
 
 Historique des versions : [CHANGELOG.md](CHANGELOG.md). Pour contribuer : [CONTRIBUTING.md](CONTRIBUTING.md) et

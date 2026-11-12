@@ -25,7 +25,7 @@ rapide.
 
 **Spec :** [docs/superpowers/specs/2026-10-17-fluluks-design.md](../specs/2026-10-17-fluluks-design.md) (§ 3, § 4, § 5, § 6 étape 4)
 
-**Suivi :** cocher la tâche dans [la feuille de route](2026-10-17-fluluks-feuille-de-route.md) dans le
+**Suivi :** cocher la tâche dans [la feuille de route](../../../ROADMAP.md) dans le
 commit de fin de chaque tâche.
 
 ## Global Constraints
@@ -123,7 +123,7 @@ flutter install -d 192.168.0.104:5555
 
 ### Task 1 : Environnement Android
 
-**Files :** Modify `docs/superpowers/plans/2026-10-17-fluluks-feuille-de-route.md` (case T1). Rien d'autre
+**Files :** Modify `ROADMAP.md` (case T1). Rien d'autre
 dans le dépôt.
 
 - [ ] **Step 1 : vérifier l'espace.** `df -h /` doit montrer ≥ 10 Gio libres. Sinon, **STOP** et

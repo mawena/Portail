@@ -35,7 +35,7 @@ banc d'essai `harness.c` et le correctif de 2 lignes déjà vérifié (`csum_fix
 - Branche `feature/ext4-ecriture` depuis `develop`. Les commits portent l'identité git de
   l'utilisateur, avec un message en français et **sans aucune attribution à Claude**. Un commit par
   tâche, plus les commits de correction. On coche la tâche dans la feuille de route
-  (`docs/superpowers/plans/2026-10-17-fluluks-feuille-de-route.md`, section Phase 3) **dans le même
+  (`ROADMAP.md`, section Phase 3) **dans le même
   commit**.
 - Anti-objectif n° 1 de la spec : **ne jamais corrompre le disque**. En cas de doute, le volume passe
   **en lecture seule**, avec une raison affichée. Aucune tâche ne relâche une règle du § 4.2.

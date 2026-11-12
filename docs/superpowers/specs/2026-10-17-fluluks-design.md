@@ -791,3 +791,40 @@ essais.)*
 - **Confidentialité** : échantillons et consentements ne quittent le téléphone que vers le serveur choisi, en
   `https://` obligatoire pour cette fonction (refus en `http://` hors réseau local) ; rien n'est gardé sur le téléphone
   une fois la voix créée.
+
+## 29. Évolution du 2026-11-12 : onglets dans le module Fichiers (phase 17)
+
+Demande de l'utilisateur : « un système d'onglet pour ouvrir plusieurs dossiers à la fois », en **phase 17**
+(**v1.10.0**), commencée aussitôt. Les phases suivantes descendent d'un rang : la gestion des partitions (§ 17, § 24
+à § 26 ; T1 et T2 déjà faites sur `feature/partitions`) devient la **phase 18** (**v1.11.0**), la vérification et la
+réparation des disques (§ 16) la **phase 19** (**v1.12.0**), la voix de narration (§ 28) la **phase 20**
+(**v1.13.0**). Le contenu de ces phases ne change pas.
+*(Comportements et valeurs : décisions du planificateur, l'utilisateur ayant demandé de commencer tout de suite, à
+valider aux essais ; voir le plan de la phase 17.)*
+
+- **Ce qu'est un onglet** : comme dans un navigateur, chaque onglet du module **Fichiers** a sa propre pile de pages,
+  depuis l'accueil de Fichiers (stockages, disques, favoris) jusqu'au dossier ouvert, avec sa sélection et sa
+  position dans la liste. Passer d'un onglet à l'autre est immédiat et ne recharge rien. Le presse-papiers reste
+  commun : copier dans un onglet, puis « Coller ici » dans un autre, est le moyen de passer des fichiers d'un dossier à
+  l'autre.
+- **Ouvrir un onglet** : « Ouvrir dans un nouvel onglet » dans le menu ⋮ d'un dossier (explorateur, résultats de
+  recherche), « Nouvel onglet » dans le menu de l'explorateur et le bouton **+** de la barre d'onglets, qui ouvrent
+  l'accueil de Fichiers. Le nouvel onglet devient l'onglet affiché ; depuis le module Coffres, l'onglet s'ouvre dans
+  Fichiers, qui passe à l'écran. **8 onglets au plus** ; au-delà, **+** est grisé (son infobulle l'explique) et les
+  autres actions affichent un message qui l'explique.
+- **Barre d'onglets** : en haut du module Fichiers, au-dessus de la barre de titre, dès **deux onglets** ouverts (un
+  seul onglet : aucune place prise, l'écran reste celui d'aujourd'hui). Chaque onglet montre l'icône de son stockage et
+  le nom du dossier ouvert (le nom du stockage à sa racine, « Fichiers » sur l'accueil), et une croix pour le fermer.
+  Elle défile quand les onglets ne tiennent pas. Appui long sur un onglet : Fermer l'onglet, Fermer les autres onglets.
+- **Fermer et Retour** : fermer l'onglet affiché montre celui qui l'était juste avant. Retour remonte dans l'onglet ;
+  à l'accueil d'un onglet, s'il en reste d'autres, Retour ferme cet onglet ; au dernier onglet, Retour garde le
+  comportement du § 27. Toucher Fichiers dans la barre de navigation ramène l'onglet affiché à son accueil.
+- **Stockage qui disparaît** (disque débranché, coffre fermé, carte retirée) : chaque onglet qui l'affichait revient à
+  son accueil, avec un seul message, comme aujourd'hui pour l'explorateur.
+- **Durée de vie** : les onglets durent le temps de la session de Portail ; ils ne sont pas rouverts au démarrage
+  suivant (un disque ou un coffre demanderait de toute façon d'être rebranché ou déverrouillé).
+- **Accessibilité** : chaque onglet est lu par TalkBack « Onglet 2 sur 3, Téléchargements », sélectionné ou non ;
+  croix lue « Fermer l'onglet Téléchargements » ; cibles de 48 dp ; libellés coupés par des points de suspension
+  jusqu'à 200 % de texte ; barre ajoutée au banc d'accessibilité et aux images de référence en clair et en sombre.
+- **Hors périmètre** : glisser des fichiers d'un onglet à l'autre, réordonner les onglets, deux dossiers côte à côte
+  sur grand écran, raccourcis clavier, onglets dans les autres modules.

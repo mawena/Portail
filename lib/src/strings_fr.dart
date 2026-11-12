@@ -584,6 +584,13 @@ class Fr {
           "touchés s'ouvrent dans une autre application."
     ),
     (
+      'Ouvrir plusieurs dossiers à la fois',
+      "Dans l'explorateur, le menu ⋮ d'un dossier propose Ouvrir dans un nouvel onglet ; Nouvel onglet, dans le menu "
+          "de l'explorateur, ouvre l'accueil de Fichiers. Les onglets s'affichent en haut de l'écran : touchez-en un "
+          "pour y passer, sa croix le ferme. Pour copier d'un dossier à l'autre, copiez dans un onglet, puis Coller ici "
+          "dans l'autre."
+    ),
+    (
       'La corbeille',
       'Supprimer met les éléments dans la corbeille du stockage pendant 30 jours, et Supprimer définitivement reste '
           "proposé. La corbeille s'ouvre depuis la carte du stockage ou le menu de l'explorateur : Restaurer, "
@@ -1028,6 +1035,16 @@ class Fr {
   static const moduleAi = 'IA';
 
   static String moduleBusy(String module) => '$module, activité en cours';
+
+  // Onglets du module Fichiers (phase 17)
+  static const newTab = 'Nouvel onglet';
+  static const openInNewTab = 'Ouvrir dans un nouvel onglet';
+  static const openFolderInNewTab = 'Ouvrir le dossier dans un nouvel onglet';
+  static const closeTab = "Fermer l'onglet";
+  static const closeOtherTabs = 'Fermer les autres onglets';
+  static String closeTabNamed(String name) => "Fermer l'onglet $name";
+  static String tabLabel(int i, int n, String name) => 'Onglet $i sur $n, $name';
+  static const tabsFull = 'Huit onglets au plus : fermez-en un pour en ouvrir un autre.';
   static const remoteNoServers = 'Aucun serveur';
   static const vaultsNoneTitle = 'Aucun coffre';
   static const sectionSsh = 'SSH';

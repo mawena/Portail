@@ -33,6 +33,7 @@ import 'package:fluluks/src/screens/vaults_home_screen.dart';
 import 'package:fluluks/src/screens/welcome_screen.dart';
 import 'package:fluluks/src/terminal/terminal_screen.dart';
 import 'package:fluluks/src/terminal/tunnels_screen.dart';
+import 'package:fluluks/src/widgets/file_tab_bar.dart';
 import 'package:fluluks/src/widgets/mini_player.dart';
 import 'package:fluluks/src/widgets/decrypt_dialog.dart';
 import 'package:fluluks/src/widgets/unlock_dialog.dart';
@@ -54,6 +55,7 @@ void main() {
     'automations': AutomationsScreen, 'automationForm': AutomationForm, 'automationRuns': AutomationRunsScreen,
     'automationRun': AutomationRunScreen, 'remoteHome': RemoteHomeScreen, 'aiHome': AiHomeScreen,
     'analyzer': AnalyzerScreen, 'analyzerTreemap': AnalyzerScreen,
+    'fileTabs': FileTabBar, // onglets du module Fichiers (phase 17)
   };
   testWidgets('harnessShowsEachScreen', (t) async {
     for (final screen in screens) {

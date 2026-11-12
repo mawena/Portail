@@ -107,12 +107,13 @@ void main() {
     addTearDown(tester.view.reset);
     await pumpApp(tester, FakeHostApi());
     await homeMenu(tester, Fr.help);
-    expect(find.byType(ExpansionTile), findsNWidgets(18));
+    expect(find.byType(ExpansionTile), findsNWidgets(19));
     final titles = [
       'Ouvrir un disque chiffré',
       'Pourquoi mon disque s\'ouvre en lecture seule ?',
       'Débrancher sans risque',
       "Voir le disque dans d'autres applications",
+      'Ouvrir plusieurs dossiers à la fois',
       'La corbeille',
       'Le verrouillage automatique',
       'Les dossiers distants (FTP, SFTP)',
