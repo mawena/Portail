@@ -78,15 +78,15 @@ Aucun code Kotlin, natif ni Pigeon.
   - `enter` et `leave` sont appelés depuis `initState` et `dispose` : ils préviennent les auditeurs après l'image en
     cours (microtâche), jamais pendant la construction.
 
-- [ ] **Étape 1 : tests** — `files_tabs_test.dart` : un onglet au départ, affiché ; `open` ajoute à la fin et affiche ;
+- [x] **Étape 1 : tests** — `files_tabs_test.dart` : un onglet au départ, affiché ; `open` ajoute à la fin et affiche ;
   `close` de l'affiché montre le précédent affiché (ouvrir A, B, C ; afficher A ; fermer A → C ; fermer C → B) ;
   `close` du dernier sans effet ; 8 au plus (`open` rend null, `canOpen` faux) ; `closeOthers` ; `enter`/`moved`/
   `leave` donnent `place` (pile : disque puis coffre, quitter le coffre rend le disque) ; auditeurs prévenus après
   `pump` pour `enter`/`leave`, aussitôt pour `open`/`close`/`moved`.
-- [ ] **Étape 2 : les voir échouer** — `flutter test test/files_tabs_test.dart` : fichier introuvable.
-- [ ] **Étape 3 : `FilesTabs`.**
-- [ ] **Étape 4 : les voir passer**, puis la suite entière.
-- [ ] **Étape 5 : commit** `feat(onglets): modèle des onglets du module Fichiers`.
+- [x] **Étape 2 : les voir échouer** — `flutter test test/files_tabs_test.dart` : fichier introuvable.
+- [x] **Étape 3 : `FilesTabs`.**
+- [x] **Étape 4 : les voir passer**, puis la suite entière.
+- [x] **Étape 5 : commit** `feat(onglets): modèle des onglets du module Fichiers`.
 
 ### Task 2 : coquille, une pile de pages par onglet
 
