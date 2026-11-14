@@ -740,3 +740,91 @@ de stockage (§ 26) y prend sa place au lieu d'un bouton de l'accueil.
   automatisation de l'IA).
 - **Grand écran et accessibilité** : rail à gauche sur une tablette ou un téléphone en paysage ; libellés toujours
   écrits, lus par TalkBack, texte jusqu'à 200 % ; écrans ajoutés au banc d'accessibilité.
+
+## 28. Évolution du 2026-10-31 : voix de narration (phase 19)
+
+Demande de l'utilisateur : un module de **clonage de voix** où l'on ajoute des personnes puis leur fait dire un texte,
+utilisable aussi **en direct** pendant les appels, les notes vocales et les autres enregistrements. Après échange, le
+périmètre retenu est une **voix de narration** : chacun clone **sa propre voix**, avec un consentement vérifié, pour
+produire des **fichiers audio** (narration de vidéos et de documents de formation). Une **phase 19** (**v1.12.0**)
+l'ajoute au module **IA**, après la réparation des disques (phase 18).
+*(Écrans, formats et valeurs marqués « proposition du planificateur » : décisions du planificateur, à valider aux
+essais.)*
+
+- **Hors périmètre, décision du 2026-10-31** : pas de transformation de la voix **en direct** (appels, notes vocales,
+  enregistrements d'autres applications), même avec l'accord de la personne clonée. Le risque vise surtout
+  l'**interlocuteur**, qui croit parler à la personne : c'est le procédé des fraudes au faux dirigeant et des faux
+  appels de conseiller. Pas de clonage à partir d'un fichier audio importé (la voix d'un tiers récupérée ailleurs).
+  Ces deux points ne doivent pas être réintroduits par une phase ultérieure sans nouvelle décision écrite ici.
+- **Personnes** : une fiche par voix (nom affiché, date de création, serveur IA qui la porte, état). Plusieurs personnes
+  possibles sur un même téléphone, chacune enregistrée **en personne, sur ce téléphone**.
+- **Consentement vérifié, à l'enregistrement** :
+  - l'écran affiche le texte de consentement (« Je, [nom], accepte que ma voix soit clonée par Portail pour générer
+    des narrations. Code : [6 chiffres], le [date] ») avec un **code aléatoire** tiré à l'instant : un enregistrement
+    préparé à l'avance ne peut pas le contenir ;
+  - la personne le lit, puis lit un texte d'échantillon (environ 1 min) dans la **même session** ; enregistrement par
+    le micro du téléphone uniquement, **aucun import de fichier** ;
+  - contrôle de qualité avant l'envoi (volume, saturation, bruit de fond), avec un conseil en français si c'est
+    insuffisant ;
+  - le serveur conserve l'enregistrement du consentement, son texte, le code et l'horodatage avec la voix ;
+    *(proposition du planificateur)* il retranscrit le consentement (Whisper) et refuse la voix si le code ou le nom
+    n'y figurent pas.
+- **Retrait** : supprimer une voix la retire du serveur (échantillon, consentement, empreinte vocale) et du téléphone.
+  Les fichiers déjà générés restent, marqués comme synthétiques.
+- **Générer une narration** : texte saisi ou fichier `.txt`/`.md` choisi dans le gestionnaire, voix, vitesse
+  (0,8 à 1,2) ; génération en arrière-plan (WorkManager) avec progression, résultat **MP3** ou **WAV** écrit dans le
+  dossier choisi (téléphone, carte SD, disque USB, coffre ouvert). Écoute dans le lecteur de musique de Portail.
+- **Marquage des fichiers générés** : suffixe `-voix-synthese` dans le nom ; métadonnée de commentaire
+  « Voix de synthèse générée par Portail » (ID3 pour le MP3, `INFO` pour le WAV) ; filigrane inaudible si le modèle du
+  serveur en pose un (cas de Chatterbox, ci-dessous). Ces marques ne sont pas désactivables.
+- **Journal local** des générations : date, voix, début du texte, fichier produit ; base Room privée, jamais dans un
+  journal système ni un rapport d'erreur (comme les conversations, § 23).
+- **Serveur** : extension du contrat d'API des serveurs IA ([contrat](../../ia/contrat-api.md), routes `/v1/voices` et
+  `/v1/audio/speech`), servie par le serveur maison (`atelier.mawena.cloud`). Modèle de synthèse
+  *(proposition du planificateur, à vérifier par une recherche en début de phase)* : **Chatterbox Multilingual**
+  (Resemble AI, licence MIT, français, filigrane PerTh intégré) de préférence ; **XTTS-v2** (Coqui) seulement pour un
+  usage non commercial (licence CPML). Rien n'est généré sur le téléphone. Un serveur qui n'a pas ces routes masque le
+  module dans Portail.
+- **Tests** : routes simulées par `MockWebServer` (création d'une voix avec consentement, 422 si le consentement est
+  refusé, génération, suppression) ; serveur d'essai Python étendu (`tools/ia/serveur-essai.py`) avec une synthèse
+  factice (sinusoïde) ; règle de source : aucun échantillon ni texte de narration dans les journaux.
+- **Confidentialité** : échantillons et consentements ne quittent le téléphone que vers le serveur choisi, en
+  `https://` obligatoire pour cette fonction (refus en `http://` hors réseau local) ; rien n'est gardé sur le téléphone
+  une fois la voix créée.
+
+## 29. Évolution du 2026-11-12 : onglets dans le module Fichiers (phase 17)
+
+Demande de l'utilisateur : « un système d'onglet pour ouvrir plusieurs dossiers à la fois », en **phase 17**
+(**v1.10.0**), commencée aussitôt. Les phases suivantes descendent d'un rang : la gestion des partitions (§ 17, § 24
+à § 26 ; T1 et T2 déjà faites sur `feature/partitions`) devient la **phase 18** (**v1.11.0**), la vérification et la
+réparation des disques (§ 16) la **phase 19** (**v1.12.0**), la voix de narration (§ 28) la **phase 20**
+(**v1.13.0**). Le contenu de ces phases ne change pas.
+*(Comportements et valeurs : décisions du planificateur, l'utilisateur ayant demandé de commencer tout de suite, à
+valider aux essais ; voir le plan de la phase 17.)*
+
+- **Ce qu'est un onglet** : comme dans un navigateur, chaque onglet du module **Fichiers** a sa propre pile de pages,
+  depuis l'accueil de Fichiers (stockages, disques, favoris) jusqu'au dossier ouvert, avec sa sélection et sa
+  position dans la liste. Passer d'un onglet à l'autre est immédiat et ne recharge rien. Le presse-papiers reste
+  commun : copier dans un onglet, puis « Coller ici » dans un autre, est le moyen de passer des fichiers d'un dossier à
+  l'autre.
+- **Ouvrir un onglet** : « Ouvrir dans un nouvel onglet » dans le menu ⋮ d'un dossier (explorateur, résultats de
+  recherche), « Nouvel onglet » dans le menu de l'explorateur et le bouton **+** de la barre d'onglets, qui ouvrent
+  l'accueil de Fichiers. Le nouvel onglet devient l'onglet affiché ; depuis le module Coffres, l'onglet s'ouvre dans
+  Fichiers, qui passe à l'écran. **8 onglets au plus** ; au-delà, **+** est grisé (son infobulle l'explique) et les
+  autres actions affichent un message qui l'explique.
+- **Barre d'onglets** : en haut du module Fichiers, au-dessus de la barre de titre, dès **deux onglets** ouverts (un
+  seul onglet : aucune place prise, l'écran reste celui d'aujourd'hui). Chaque onglet montre l'icône de son stockage et
+  le nom du dossier ouvert (le nom du stockage à sa racine, « Fichiers » sur l'accueil), et une croix pour le fermer.
+  Elle défile quand les onglets ne tiennent pas. Appui long sur un onglet : Fermer l'onglet, Fermer les autres onglets.
+- **Fermer et Retour** : fermer l'onglet affiché montre celui qui l'était juste avant. Retour remonte dans l'onglet ;
+  à l'accueil d'un onglet, s'il en reste d'autres, Retour ferme cet onglet ; au dernier onglet, Retour garde le
+  comportement du § 27. Toucher Fichiers dans la barre de navigation ramène l'onglet affiché à son accueil.
+- **Stockage qui disparaît** (disque débranché, coffre fermé, carte retirée) : chaque onglet qui l'affichait revient à
+  son accueil, avec un seul message, comme aujourd'hui pour l'explorateur.
+- **Durée de vie** : les onglets durent le temps de la session de Portail ; ils ne sont pas rouverts au démarrage
+  suivant (un disque ou un coffre demanderait de toute façon d'être rebranché ou déverrouillé).
+- **Accessibilité** : chaque onglet est lu par TalkBack « Onglet 2 sur 3, Téléchargements », sélectionné ou non ;
+  croix lue « Fermer l'onglet Téléchargements » ; cibles de 48 dp ; libellés coupés par des points de suspension
+  jusqu'à 200 % de texte ; barre ajoutée au banc d'accessibilité et aux images de référence en clair et en sombre.
+- **Hors périmètre** : glisser des fichiers d'un onglet à l'autre, réordonner les onglets, deux dossiers côte à côte
+  sur grand écran, raccourcis clavier, onglets dans les autres modules.

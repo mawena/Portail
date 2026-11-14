@@ -35,6 +35,9 @@ void main() {
     // écran d'une analyse (phase 16) : anneaux en clair, carte proportionnelle en sombre
     'analyzer_light': ('analyzer', Brightness.light),
     'analyzer_dark': ('analyzerTreemap', Brightness.dark),
+    // barre d'onglets du module Fichiers (phase 17)
+    'file_tabs_light': ('fileTabs', Brightness.light),
+    'file_tabs_dark': ('fileTabs', Brightness.dark),
   };
   for (final MapEntry(key: name, value: (screen, b)) in cases.entries) {
     testWidgets(name, (t) async {

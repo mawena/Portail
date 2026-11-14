@@ -59,6 +59,15 @@ class AppState extends ChangeNotifier implements FluLuksEventsApi {
   final _closedNoticed = <String>{}; // stockages disparus dont la fermeture a déjà été annoncée
   (String, String)? _transferDestination;
 
+  /// Dossiers d'où la dernière opération lancée retire des éléments (déplacement, chiffrement qui supprime
+  /// l'original) : ils changent quand elle se termine.
+  Set<(String, String)> _transferSources = const {};
+
+  /// Changements signalés par dossier (source, dossier) : chaque explorateur qui en affiche un se recharge quand son
+  /// compte change (phase 17 : le dossier d'origine d'un déplacement vers un autre onglet, un même dossier ouvert
+  /// dans deux onglets).
+  final _dirVersions = <(String, String), int>{};
+
   /// Vues déchiffrées ouvertes (phase 14) et le stockage de leur fichier chiffré.
   final _decrypted = <String, (SourceMsg, String)>{};
 
@@ -137,6 +146,22 @@ class AppState extends ChangeNotifier implements FluLuksEventsApi {
 
   /// Copie ou déplacement en cours, ou le dernier terminé ; null si aucun.
   TransferMsg? get transfer => _transfer;
+
+  /// Nombre de changements signalés dans [dir] de [sourceId] (voir [dirChanged]).
+  int dirVersion(String sourceId, String dir) => _dirVersions[(sourceId, dir)] ?? 0;
+
+  /// Le contenu de [dir] de [sourceId] a changé : les explorateurs qui l'affichent se rechargent, dans tous les
+  /// onglets.
+  void dirChanged(String sourceId, String dir) {
+    _bumpDir((sourceId, dir));
+    notifyListeners();
+  }
+
+  void _bumpDir((String, String) d) => _dirVersions.update(d, (v) => v + 1, ifAbsent: () => 1);
+
+  static Set<(String, String)> _parentsOf(String sourceId, List<String> paths) => {
+        for (final p in paths) (sourceId, p.lastIndexOf('/') <= 0 ? '/' : p.substring(0, p.lastIndexOf('/'))),
+      };
 
   /// Pourcentage du formatage en cours (null sinon).
   int? get formatProgress => _formatProgress;
@@ -424,7 +449,12 @@ class AppState extends ChangeNotifier implements FluLuksEventsApi {
 
   @override
   void onTransferChanged(TransferMsg? transfer) {
+    final ended = transfer?.finished == true && _transfer?.finished != true;
     _transfer = transfer;
+    if (ended) {
+      _transferSources.forEach(_bumpDir); // les éléments déplacés ont quitté leur dossier d'origine
+      _transferSources = const {};
+    }
     notifyListeners();
   }
 
@@ -432,6 +462,7 @@ class AppState extends ChangeNotifier implements FluLuksEventsApi {
       _guard(() async {
         await api.startTransfer(srcId, paths, dstId, dstDir, move);
         _transferDestination = (dstId, dstDir);
+        _transferSources = move ? _parentsOf(srcId, paths) : const {};
       });
 
   /// Compresse [paths] dans le ZIP [name] sous [dstDir] du même stockage.
@@ -461,6 +492,7 @@ class AppState extends ChangeNotifier implements FluLuksEventsApi {
       _guard(() async {
         await api.startEncrypt(srcId, paths, dstId, dstDir, format, together, name, deleteOriginal, password);
         _transferDestination = (dstId, dstDir);
+        _transferSources = deleteOriginal ? _parentsOf(srcId, paths) : const {};
         _lastEncrypt = (dstId: dstId, dstDir: dstDir, format: format, single: together || paths.length == 1);
       });
 

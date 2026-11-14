@@ -1,5 +1,9 @@
 # Portail — Phase 17 : gestion des partitions, comme GParted — Plan d'implémentation
 
+> **Renumérotation du 2026-11-12 (spec § 29)** : cette phase devient la **phase 18**, version **v1.11.0** (pubspec
+> `1.11.0+19`), après les onglets (phase 17, v1.10.0) ; la réparation devient la phase 19. Le reste du plan garde ses
+> numéros d'origine.
+
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
 **Goal :** Portail gère les partitions d'un disque USB à la manière de GParted : vue du disque à l'échelle (partitions,

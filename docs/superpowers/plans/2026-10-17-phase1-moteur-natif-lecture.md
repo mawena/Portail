@@ -16,7 +16,7 @@ phc-winner-argon2 20190702, cJSON v1.7.18, lwext4 `58bcf89` (master du 2022-09-2
 
 **Spec :** [docs/superpowers/specs/2026-10-17-fluluks-design.md](../specs/2026-10-17-fluluks-design.md)
 
-**Suivi :** cocher la tâche dans [la feuille de route](2026-10-17-fluluks-feuille-de-route.md) à la fin
+**Suivi :** cocher la tâche dans [la feuille de route](../../../ROADMAP.md) à la fin
 de chaque tâche, dans le même commit.
 
 ## Global Constraints

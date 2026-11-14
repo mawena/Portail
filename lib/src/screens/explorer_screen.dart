@@ -4,6 +4,7 @@ import 'package:flutter/services.dart';
 import '../analyzer/analyzer_home_screen.dart';
 import '../bridge/fluluks_api.g.dart';
 import '../state/app_state.dart';
+import '../state/files_tabs.dart';
 import '../state/prefs.dart';
 import '../file_types.dart';
 import '../state/sorting.dart';
@@ -27,6 +28,7 @@ import '../widgets/thumb.dart';
 import '../widgets/unlock_dialog.dart';
 import 'batch_rename_screen.dart';
 import 'encrypt_sheet.dart';
+import 'files_tab_scope.dart';
 import 'module_shell.dart';
 import 'search_screen.dart';
 import 'trash_screen.dart';
@@ -75,8 +77,13 @@ class _ExplorerScreenState extends State<ExplorerScreen> {
   bool _lastHidden = false;
   int _lastFileIndex = -1;
   bool _lastFinished = false;
+  int _dirSeen = 0; // changements du dossier affiché déjà chargés (AppState.dirVersion)
 
   AppState get state => widget.state;
+
+  /// Dossier ouvert (pour les tests).
+  @visibleForTesting
+  String get currentPath => _path;
   SourceMsg? get _source => state.sourceById(widget.sourceId);
   bool get _readOnly => _source?.readOnly ?? true;
 
@@ -108,9 +115,15 @@ class _ExplorerScreenState extends State<ExplorerScreen> {
   /// Coffre parcouru avec le réglage « Masquer les coffres… » : l'écran est masqué tant qu'il est là.
   bool _secure = false;
 
+  /// Onglet de Fichiers qui contient l'explorateur (phase 17) et le dossier qui lui est signalé, pour son nom.
+  FilesTabScope? _tab;
+  TabPlace? _place;
+
   @override
   void initState() {
     super.initState();
+    _tab = FilesTabScope.maybeOf(context);
+    _place = _tab?.tabs.enter(_tab!.tab, widget.sourceId, _path);
     if (_source?.kind == 'vault' && state.hideVaults) {
       _secure = true;
       state.holdSecure();
@@ -125,6 +138,7 @@ class _ExplorerScreenState extends State<ExplorerScreen> {
     _thumbs.dispose();
     state.removeListener(_onState);
     if (_secure) state.releaseSecure();
+    if (_place case final p?) _tab!.tabs.leave(_tab!.tab, p);
     super.dispose();
   }
 
@@ -135,15 +149,22 @@ class _ExplorerScreenState extends State<ExplorerScreen> {
       // qui garde un texte non enregistré
       if (state.editorHolding) return;
       _closed = true;
-      if (!state.takeClosedNotice(widget.sourceId)) return; // un autre explorateur s'en est chargé
-      // message sur le ScaffoldMessenger de l'application : il reste affiché sur l'accueil
-      showMessage(context, Fr.volumeClosed);
-      // pages plein écran ouvertes d'ici (visionneuse) comprises, si le module de cet explorateur est à l'écran
+      // message sur le ScaffoldMessenger de l'application, qui reste affiché sur l'accueil : une fois pour tous les
+      // explorateurs du stockage
+      if (state.takeClosedNotice(widget.sourceId)) showMessage(context, Fr.volumeClosed);
+      // pages plein écran ouvertes d'ici (visionneuse) comprises, si cet explorateur est à l'écran (son module et,
+      // dans Fichiers, son onglet)
       final shell = ModuleShell.maybeOf(context);
-      if (shell == null || shell.current == shell.moduleOf(context)) {
+      if (shell == null || shell.isShown(context)) {
         Navigator.of(context, rootNavigator: true).popUntil((r) => r.isFirst);
       }
-      Navigator.of(context).popUntil((r) => r.isFirst);
+      // chaque explorateur ramène sa propre pile à son accueil : un onglet de Fichiers chacun (phase 17) ; un onglet
+      // masqué repart d'une pile neuve, ses retraits ne s'animant pas
+      if (shell != null && _tab != null && !shell.isShown(context)) {
+        shell.resetTab(_tab!.tab);
+      } else {
+        Navigator.of(context).popUntil((r) => r.isFirst);
+      }
       return;
     }
     if (state.viewPrefs.showHidden != _lastHidden) {
@@ -158,12 +179,22 @@ class _ExplorerScreenState extends State<ExplorerScreen> {
         _load(quiet: true);
       }
     }
+    // dossier changé ailleurs : dans un autre onglet, ou origine d'un déplacement qui vient de finir
+    if (state.dirVersion(widget.sourceId, _path) != _dirSeen) _load(quiet: true);
     setState(() {});
+  }
+
+  /// Ce dossier a changé ici : il se recharge, et avec lui chaque autre explorateur qui l'affiche (un autre onglet).
+  Future<void> _changedHere() {
+    _dirSeen = state.dirVersion(widget.sourceId, _path) + 1; // celui-ci se recharge ci-dessous, une seule fois
+    state.dirChanged(widget.sourceId, _path);
+    return _load(quiet: true);
   }
 
   Future<void> _load({bool quiet = false}) async {
     final path = _path;
     if (!mounted) return;
+    _dirSeen = state.dirVersion(widget.sourceId, path);
     setState(() => quiet ? _refreshing = true : _loading = true);
     try {
       final l = await state.api.listDir(widget.sourceId, path, state.viewPrefs.showHidden);
@@ -185,6 +216,7 @@ class _ExplorerScreenState extends State<ExplorerScreen> {
   }
 
   void _go(String path) {
+    if (_place case final p?) _tab!.tabs.moved(p, path);
     setState(() {
       _path = path;
       _selected.clear();
@@ -278,7 +310,7 @@ class _ExplorerScreenState extends State<ExplorerScreen> {
         await _newFolder();
       case 'vault':
         await openVaultCreate(context, state, sourceId: widget.sourceId, dir: _path);
-        if (mounted) _load(quiet: true);
+        if (mounted) _changedHere();
     }
   }
 
@@ -369,7 +401,7 @@ class _ExplorerScreenState extends State<ExplorerScreen> {
     );
     if (ok == true && mounted) {
       showMessage(context, Fr.passwordChanged, kind: MessageKind.success);
-      _load(quiet: true);
+      _changedHere();
     }
   }
 
@@ -408,7 +440,7 @@ class _ExplorerScreenState extends State<ExplorerScreen> {
     if (name == null || name.isEmpty) return;
     await _run(() async {
       await state.api.createFolder(widget.sourceId, _path, name);
-      await _load(quiet: true);
+      await _changedHere();
     });
   }
 
@@ -418,7 +450,7 @@ class _ExplorerScreenState extends State<ExplorerScreen> {
     await _run(() async {
       await state.api.rename(widget.sourceId, path, name);
       setState(_selected.clear);
-      await _load(quiet: true);
+      await _changedHere();
     });
   }
 
@@ -452,7 +484,7 @@ class _ExplorerScreenState extends State<ExplorerScreen> {
     await _run(() async {
       await state.api.deleteEntries(widget.sourceId, paths, permanent);
       if (mounted) setState(_selected.clear);
-      await _load(quiet: true);
+      await _changedHere();
       if (!permanent && mounted) {
         showMessage(context, Fr.movedToTrash(paths.length),
             actionLabel: Fr.undo, onAction: () => _undoTrash(paths, start));
@@ -470,7 +502,7 @@ class _ExplorerScreenState extends State<ExplorerScreen> {
             if (paths.contains(t.originalPath) && t.deletedAt >= since) t.id,
         ];
         if (ids.isNotEmpty) await state.api.restoreTrash(widget.sourceId, ids);
-        await _load(quiet: true);
+        await _changedHere();
       });
 
   void _toClipboard(List<String> paths, {required bool move}) {
@@ -498,7 +530,7 @@ class _ExplorerScreenState extends State<ExplorerScreen> {
     ));
     if (done != true || !mounted) return;
     setState(_selected.clear);
-    await _load(quiet: true);
+    await _changedHere();
   }
 
   /// Propriétés de l'élément sélectionné (la sélection est quittée).
@@ -539,7 +571,9 @@ class _ExplorerScreenState extends State<ExplorerScreen> {
     final file = e.type == 'file';
     final ro = _readOnly;
     final encrypted = file && isEncryptedName(e.name);
+    final shell = ModuleShell.maybeOf(context);
     final a = await showActionSheet<String>(context, title: e.name, actions: [
+      if (!file && shell != null) const SheetAction('tab', Icons.tab_rounded, Fr.openInNewTab),
       SheetAction('openWith', Icons.open_in_new_rounded, Fr.openWith, enabled: file),
       SheetAction('share', Icons.share_rounded, Fr.share, enabled: file),
       const SheetAction('copy', Icons.copy_rounded, Fr.copy),
@@ -558,6 +592,8 @@ class _ExplorerScreenState extends State<ExplorerScreen> {
     if (!mounted || a == null) return;
     final one = [e.path];
     switch (a) {
+      case 'tab':
+        await shell?.openInNewTab(sourceId: widget.sourceId, path: e.path);
       case 'openWith':
         await _run(() => state.api.openWith(widget.sourceId, e.path));
       case 'share':
@@ -635,6 +671,7 @@ class _ExplorerScreenState extends State<ExplorerScreen> {
     final v = state.viewPrefs;
     final fav = state.favoriteFor(widget.sourceId, _path);
     final label = _source?.label ?? '';
+    final shell = ModuleShell.maybeOf(context);
     return AppBar(
       // le nom du stockage ; le dossier ouvert est dans le fil d'Ariane
       title: Text(label),
@@ -666,6 +703,7 @@ class _ExplorerScreenState extends State<ExplorerScreen> {
             'trash' => openTrash(context, state, widget.sourceId),
             'analyze' => analyzeLocation(context, state, widget.sourceId, _path),
             'terminal' => openTerminal(context, state, _sshServer!, startDir: _path),
+            'newTab' => shell?.openInNewTab(),
             _ => _setPrefs(showHidden: !v.showHidden),
           },
           itemBuilder: (_) => [
@@ -688,6 +726,11 @@ class _ExplorerScreenState extends State<ExplorerScreen> {
             if (_sshServer != null) ...[
               const PopupMenuDivider(),
               const PopupMenuItem(value: 'terminal', child: Text(Fr.openTerminalHere)),
+            ],
+            // onglets du module Fichiers (phase 17) : l'accueil de Fichiers dans un nouvel onglet
+            if (shell != null) ...[
+              const PopupMenuDivider(),
+              const PopupMenuItem(value: 'newTab', child: Text(Fr.newTab)),
             ],
           ],
         ),
