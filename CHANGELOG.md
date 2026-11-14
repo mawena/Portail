@@ -6,10 +6,22 @@ porte une étiquette `vX.Y.Z` sur `main`. Le détail de chaque phase est dans la
 
 ## À venir
 
-- **1.10.0** : onglets dans le module Fichiers, pour ouvrir plusieurs dossiers à la fois.
 - **1.11.0** : gestion des partitions (créer, supprimer, redimensionner).
 - **1.12.0** : vérification et réparation des disques.
 - **1.13.0** : voix de narration (sa propre voix clonée avec consentement vérifié, fichiers audio marqués comme synthétiques).
+
+## 1.10.0 — 2026-11-12
+
+### Ajouté
+
+- Onglets dans le module Fichiers : plusieurs dossiers ouverts à la fois, huit au plus. Chaque onglet garde son
+  dossier, sa sélection, sa position dans la liste et ce qu'on y a ouvert (un coffre, une recherche).
+- Ouvrir dans un nouvel onglet depuis le menu d'un dossier, le menu de l'explorateur, les résultats de recherche et le
+  module Coffres ; barre d'onglets dès deux onglets, avec l'icône du stockage, le nom du dossier, une croix, **+** et un
+  appui long pour fermer l'onglet ou les autres.
+- Retour remonte dans l'onglet, puis le ferme à son accueil et montre celui d'avant ; le presse-papiers est commun aux
+  onglets (copier ou couper dans l'un, coller dans l'autre).
+- Un disque débranché ou un coffre fermé ramène à son accueil chaque onglet qui l'affichait, avec un seul message.
 
 ## 1.9.0 — 2026-10-27
 
