@@ -271,3 +271,5 @@ target_compile_definitions(fl_libarchive PRIVATE HAVE_CONFIG_H _GNU_SOURCE _FILE
 target_link_libraries(fl_libarchive PUBLIC fl_lzma ZLIB::ZLIB fl_mbedcrypto)
 set_target_properties(fl_libarchive PROPERTIES C_EXTENSIONS ON)
 target_compile_options(fl_libarchive PRIVATE -w -fno-builtin-memset)
+
+include(${CMAKE_CURRENT_LIST_DIR}/e2fsprogs.cmake)

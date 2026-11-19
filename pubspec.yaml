@@ -69,6 +69,8 @@ flutter:
     - assets/licenses/
     - native/third_party/lwext4/LICENSE
     - native/third_party/ntfs-3g/COPYING
+    - native/third_party/e2fsprogs/NOTICE
+    - native/third_party/e2fsprogs/lib/uuid/COPYING
     - native/third_party/fatfs/LICENSE.txt
     - native/third_party/libarchive/COPYING
     - native/third_party/xz/COPYING

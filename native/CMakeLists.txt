@@ -34,6 +34,12 @@ set(FL_SOURCES
   src/part/layout_write.c
   src/partops/create.c
   src/partops/usage.c
+  src/partops/e2fs.c
+  src/partops/tool_run.c
+  src/partops/ntfs.c
+  src/partops/ntfs_tool.c
+  src/partops/ntfsresize_tool.c
+  src/partops/ntfsfix_tool.c
   src/probe/probe.c
   src/crypto/fl_crypto.c
   src/crypto/sector_cipher.c
@@ -53,6 +59,7 @@ set(FL_SOURCES
   src/fs/fat_glue.c
   src/fs/ntfs_dev.c
   src/fs/ntfs_glue.c
+  src/fs/e2fs_io.c
   src/usb/bot.c
   src/usb/scsi.c
   src/usb/usb_bdev.c
@@ -78,7 +85,13 @@ endif()
 add_library(fluluks STATIC ${FL_SOURCES})
 target_include_directories(fluluks PUBLIC include PRIVATE src)
 target_compile_options(fluluks PRIVATE -Wall -Wextra -Werror)
-target_link_libraries(fluluks PUBLIC fl_mbedcrypto fl_scrypt fl_argon2 fl_cjson fl_lwext4 fl_fatfs fl_mkntfs fl_ntfs3g fl_libarchive Threads::Threads)
+# Phase 18 : src/partops/e2fs.c appelle resize2fs (resize2fs.h).
+target_include_directories(fluluks SYSTEM PRIVATE ${E2FS_DIR}/resize)
+# Phase 18 : ntfsresize.c et ntfsfix.c d'amont inclus tels quels par leurs pilotes (src/partops/ntfs_tool.h).
+set_source_files_properties(src/partops/ntfsresize_tool.c src/partops/ntfsfix_tool.c PROPERTIES
+  COMPILE_OPTIONS "-w" COMPILE_DEFINITIONS "HAVE_GETOPT_H;HAVE_LIBGEN_H;_FILE_OFFSET_BITS=64"
+  INCLUDE_DIRECTORIES "${NTFS3G_DIR}/ntfsprogs;${NTFS3G_DIR}/include/ntfs-3g")
+target_link_libraries(fluluks PUBLIC fl_mbedcrypto fl_scrypt fl_argon2 fl_cjson fl_lwext4 fl_fatfs fl_mkntfs fl_ntfs3g fl_libarchive fl_e2fsprogs Threads::Threads)
 # Cycle voulu entre bibliothèques statiques : scrypt_glue.c (fl_scrypt) efface par fl_memzero (fluluks).
 target_link_libraries(fl_scrypt PRIVATE fluluks)
 if(ANDROID)
@@ -185,6 +198,16 @@ if(FL_TESTS)
   fl_add_test(test_partops)
   target_link_libraries(test_partops PRIVATE fl_testsupport)
   set_tests_properties(test_partops PROPERTIES TIMEOUT 900)
+  # Phase 18 : e2fsprogs dans le moteur (juges e2fsck, resize2fs, debugfs, dumpe2fs et blkid du PC).
+  fl_add_test(test_e2fs)
+  target_link_libraries(test_e2fs PRIVATE fl_testsupport)
+  set_tests_properties(test_e2fs PROPERTIES TIMEOUT 900)
+  # Phase 18 : ntfsresize et ntfsfix -n dans le moteur (juges ntfsfix, ntfsresize, ntfslabel, ntfsjuge.py).
+  fl_add_test(test_ntfsresize)
+  target_link_libraries(test_ntfsresize PRIVATE fl_testsupport)
+  set_tests_properties(test_ntfsresize PROPERTIES TIMEOUT 900
+    ENVIRONMENT "FL_FIXTURES=${CMAKE_BINARY_DIR}/fixtures;NTFS_REMPLIR=$<TARGET_FILE:ntfs-remplir>")
+  add_dependencies(test_ntfsresize ntfs-remplir)
   fl_add_test(test_format_fat)
   target_link_libraries(test_format_fat PRIVATE fl_testsupport)
   fl_add_test(test_format_ext4)

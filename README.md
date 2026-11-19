@@ -634,6 +634,10 @@ Bibliothèques utilisées :
   `native/third_party/PATCHES.md`).
 - [ntfs-3g](https://github.com/tuxera/ntfs-3g) 2022.10.3 : libntfs-3g pour NTFS, et `mkntfs`, appelé
   comme une bibliothèque, pour le formatage. Corrigé par `native/third_party/patches/ntfs-3g/`.
+- [e2fsprogs](https://e2fsprogs.sourceforge.net/) 1.47.3 : `e2fsck` (vérification en lecture seule) et
+  `resize2fs` (agrandir ou réduire un ext4), appelés comme une bibliothèque. Copié tel quel dans
+  `native/third_party/e2fsprogs/`, sans correctif (voir `native/third_party/PATCHES.md`). libext2fs et
+  libe2p sous LGPL 2, e2fsck et resize2fs sous GPL 2, libcom_err (MIT) et libuuid (BSD).
 - [libarchive](https://www.libarchive.org/) 3.8.10 : lecture des ZIP, 7z, RAR, TAR, GZ et XZ, écriture des
   ZIP ; avec liblzma de [XZ Utils](https://tukaani.org/xz/) 5.8.4 pour le format xz. Copiés dans
   `native/third_party/libarchive/` et `native/third_party/xz/`, sans correctif (voir

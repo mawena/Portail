@@ -9,6 +9,7 @@ import 'strings_fr.dart';
 const portailLibraries = <(String, List<String>)>[
   ('lwext4', ['native/third_party/lwext4/LICENSE']),
   ('ntfs-3g', ['native/third_party/ntfs-3g/COPYING']),
+  ('e2fsprogs', ['native/third_party/e2fsprogs/NOTICE', 'native/third_party/e2fsprogs/lib/uuid/COPYING']),
   ('FatFs', ['native/third_party/fatfs/LICENSE.txt']),
   ('libarchive', ['native/third_party/libarchive/COPYING']),
   ('XZ Utils', ['native/third_party/xz/COPYING', 'native/third_party/xz/COPYING.0BSD']),

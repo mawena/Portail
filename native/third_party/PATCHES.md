@@ -520,6 +520,23 @@ formatage dans le même processus : use-after-free vu par ASan). Appelé par `fl
 (`native/src/fs/ntfs_glue.c`), sous le verrou global ; jugé par `test_format_ntfs` (`ntfsfix -n`,
 `ntfsjuge.py check`, `ntfslabel`).
 
+### ntfsresize et ntfsfix (phase 18), sans correctif
+
+- `ntfsprogs/ntfsresize.c` et `ntfsprogs/ntfsfix.c` copiés tels quels de la même archive (SHA-256 vérifié le
+  2026-11-19). Pas de correctif : chacun est inclus par un pilote du moteur (`native/src/partops/ntfsresize_tool.c`,
+  `ntfsfix_tool.c`), après `native/src/partops/ntfs_tool_prelude.h` qui détourne par macros ce que l'outil
+  appelle : `exit()` revient au moteur par `longjmp`, `stdout`/`stderr`/`printf`… écrivent dans le rapport,
+  `ntfs_mount`, `ntfs_umount`, `ntfs_device_alloc`, `ntfs_device_free`, `ntfs_volume_startup` passent par le
+  volume du moteur (`native/src/partops/ntfs_tool.c`, qui suit tout ce qui est ouvert et le rend à la fin, même
+  après un `exit()`), `ntfs_check_if_mounted` rend « non monté » (le moteur refuse en amont un disque dont un
+  volume est ouvert), le journal de libntfs-3g va au rapport le temps de l'appel. Les pilotes reprennent le
+  déroulé des `main` d'amont : `ntfsresize --info` et `--size` sans question (un volume marqué à vérifier est
+  refusé, comme sans `-f`), `ntfsfix -n` (rien n'est écrit).
+- Défaut d'amont contourné : `lookup_data_attr` de ntfsresize ouvre un inode sans jamais le refermer ; le pilote
+  suit les inodes ouverts par l'outil et les rend sans écriture avant le démontage.
+- Comme `ntfsresize`, un redimensionnement laisse le volume marqué à vérifier par Windows (chkdsk au prochain
+  démarrage).
+
 ## Protections côté FluLuks pour libntfs-3g (sans correctif)
 
 `native/src/fs/ntfs_glue.c` et `native/src/fs/ntfs_dev.c` font ce que libntfs-3g ne fait pas :
@@ -547,6 +564,42 @@ formatage dans le même processus : use-after-free vu par ASan). Appelé par `fl
 - **Cache d'écriture** dans `ntfs_dev.c` : écritures alignées de 64 Kio ou plus regroupées par 4 Mio, autres
   écritures et petites lectures gardées dans une table de secteurs (4 Mio au plus), vidée au sync. Une
   copie de 32 Mio passe de 1 852 écritures et 1 042 lectures à 19 écritures.
+
+## e2fsprogs (phase 18)
+
+- Amont : e2fsprogs 1.47.3 (Theodore Ts'o), archive
+  `https://mirrors.edge.kernel.org/pub/linux/kernel/people/tytso/e2fsprogs/v1.47.3/e2fsprogs-1.47.3.tar.xz`,
+  SHA-256 `857e6ef800feaa2bb4578fbc810214be5d3c88b072ea53c5384733a965737329` (2026-11-19 ; signature
+  `e2fsprogs-1.47.3.tar.sign` de la clé `2B69B954DBFE0879288137C9F2F95956950D81A3`, non vérifiée sur le VPS :
+  clé publique absente, à vérifier sur le PC par `gpg --verify`). Licences (`native/third_party/e2fsprogs/NOTICE`) :
+  GPL 2 pour e2fsck et resize2fs, LGPL 2 pour libext2fs et libe2p, MIT pour libcom_err, BSD pour libuuid
+  (`lib/uuid/COPYING`).
+- Copiés tels quels dans `native/third_party/e2fsprogs/` : `lib/ext2fs`, `lib/et`, `lib/e2p`, `lib/support`,
+  `lib/uuid` (sources, en-têtes, `.et`, `.in`, `.awk`), `lib/blkid/blkid.h.in`, `lib/config.h.in`,
+  `lib/dirpaths.h.in`, `e2fsck/`, `resize/`, `util/android_config.h`, `util/android_types.h`,
+  `util/gen-android-files`, `NOTICE`, `README`, `version.h`. Seuls les fichiers listés dans
+  `native/cmake/e2fsprogs.cmake` sont compilés (ceux d'AOSP, plus `getenv.c` et `orphan.c` ; ni `unix_io.c`,
+  ni `sigcatcher.c`, ni libblkid, ni libsparse).
+- Pas de `configure` : `native/cmake/e2fsprogs/` contient la configuration et ce que l'amont génère, fait comme
+  `util/gen-android-files` : `config.h` (d'après `util/android_config.h`, sans libsparse, sans `<signal.h>`,
+  sans fils d'exécution ; aucun `e2fsck.conf` lu), `dirpaths.h`, `ext2fs/ext2_err.[ch]` et
+  `support/prof_err.[ch]` (`lib/et/et_[ch].awk`), `ext2fs/crc32c_table.h` (`gen_crc32ctable`),
+  `ext2fs/ext2_types.h`, `blkid/blkid_types.h`, `uuid/uuid_types.h` (`util/android_types.h`), `blkid/blkid.h`
+  et `uuid/uuid.h` (copies des `.in`).
+- **Aucun correctif** : e2fsck et resize2fs deviennent une bibliothèque par des macros de compilation et
+  `native/cmake/e2fsprogs/fl_e2fs_glue.[ch]`, inclus de force dans chaque fichier d'e2fsprogs :
+  `exit()` revient au moteur par `longjmp` (le contexte d'e2fsck et ses systèmes de fichiers ouverts sont
+  libérés) ; `stdout`, `stderr`, `printf`, `vprintf`, `puts`, `putchar` écrivent dans le rapport de l'appel
+  en cours ; `unix_io_manager` devient l'accès au disque du moteur (`native/src/fs/e2fs_io.c`) ;
+  `ext2fs_get_device_size2` rend la taille du volume ; le `main` d'e2fsck devient `fl_e2fsck_main`, son
+  `check_plausibility` ne cherche plus de fichier du nom du volume ; `init_resource_track` et
+  `print_resource_track` de resize2fs sont renommés (doublons de ceux d'e2fsck). libblkid est remplacée par
+  cinq fonctions (nom simple seulement, pas de journal externe). resize2fs est appelé par `resize_fs()` et
+  `calculate_minimum_resize_size()`, avec les contrôles de son `main.c` repris dans
+  `native/src/partops/e2fs.c` (sauf la date du dernier e2fsck : la vérification du moteur est en lecture
+  seule et précède chaque redimensionnement).
+- Un seul appel à la fois (verrou), sur un fil à pile de 8 Mio. Compilé avec `-w`, en gnu11, `_GNU_SOURCE`,
+  `_FILE_OFFSET_BITS=64`.
 
 ## libarchive (phase 9)
 
