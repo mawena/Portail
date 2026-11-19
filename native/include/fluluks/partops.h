@@ -92,6 +92,29 @@ int fl_ntfs_resize(fl_bdev *vol, uint64_t new_bytes, fl_progress_fn cb, void *ar
 /* Étiquette (règles du formatage : 32 caractères), comme ntfslabel. */
 int fl_ntfs_set_label(fl_bdev *vol, const char *label);
 
+/* --- redimensionner une partition (phase 18) ------------------------------------------------------------ */
+
+typedef struct {
+  fl_content content;   /* du système de fichiers (dans LUKS s'il y en a un) */
+  bool resizable;       /* faux : `why` dit pourquoi, en français */
+  const char *why;
+  uint64_t min_bytes;   /* bornes de la nouvelle taille de partition, multiples d'un Mio sauf la taille */
+  uint64_t max_bytes;   /* actuelle ; max : fin de l'espace libre qui suit */
+  fl_check_report check;/* vérification en lecture seule ; non propre : rien n'est permis */
+} fl_resize_info;
+
+/* Vérifie le système de fichiers (e2fsck -fn, ntfsfix -n) et donne les bornes. Chiffrée : phrase exigée
+ * (FL_EBADPASS). FAT12/16/32, exFAT, partition logique et autres contenus : resizable faux. FL_ECHANGED si
+ * `index` n'est plus au début attendu. */
+int fl_part_resize_info(fl_bdev *disk, uint32_t index, uint64_t expect_first_lba, const void *pass, size_t passlen,
+                        fl_resize_info *out);
+/* Porte la partition à `new_count` secteurs (multiple d'un Mio), son début ne bouge pas. Refait la
+ * vérification (FL_ECORRUPT si elle n'est pas propre) et les bornes (FL_EINVAL hors de min..max), puis :
+ * agrandir = table, segment LUKS2 fixe, système de fichiers ; réduire = système de fichiers, segment, table.
+ * FL_ENOTSUP si le contenu ne se redimensionne pas. */
+int fl_part_resize(fl_bdev *disk, uint32_t index, uint64_t expect_first_lba, uint64_t new_count, const void *pass,
+                   size_t passlen, fl_progress_fn cb, void *arg);
+
 #ifdef __cplusplus
 }
 #endif

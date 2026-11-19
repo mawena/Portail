@@ -379,3 +379,75 @@ int fl_luks2_slot_remove(fl_bdev *dev, int slot, const void *auth, size_t authle
   ctx_free(&c);
   return rc;
 }
+
+/* --- phase 18 : taille des données ------------------------------------------------------------- */
+
+int fl_luks_payload(fl_bdev *dev, uint64_t *off, uint64_t *fixed) {
+  if (!dev || !off || !fixed) return FL_EINVAL;
+  bool magic = false;
+  int ver = 0;
+  int rc = fl_luks_peek(dev, &magic, &ver);
+  if (rc != FL_OK) return rc;
+  if (magic && ver == 1) {
+    uint8_t h[512];
+    rc = fl_bdev_read_bytes(dev, 0, sizeof h, h);
+    if (rc != FL_OK) return rc;
+    uint32_t sectors = (uint32_t)h[104] << 24 | (uint32_t)h[105] << 16 | (uint32_t)h[106] << 8 | h[107];
+    *off = (uint64_t)sectors * 512;
+    *fixed = 0;
+    return *off < fl_bdev_size_bytes(dev) ? FL_OK : FL_ECORRUPT;
+  }
+  ctx c;
+  rc = begin(dev, &c);
+  if (rc == FL_OK) {
+    *off = c.x->seg_off;
+    *fixed = c.x->seg_size;
+  } else if (rc == FL_ENOTSUP && c.x && c.x->seg_off) {
+    /* en-tête que ce code ne réécrit pas, mais lisible */
+    *off = c.x->seg_off;
+    *fixed = c.x->seg_size;
+    rc = FL_OK;
+  }
+  ctx_free(&c);
+  return rc;
+}
+
+int fl_luks2_set_segment_size(fl_bdev *dev, uint64_t size) {
+  if (!dev || !size || size % 512) return FL_EINVAL;
+  bool magic = false;
+  int ver = 0;
+  int rc = fl_luks_peek(dev, &magic, &ver);
+  if (rc != FL_OK) return rc;
+  if (magic && ver == 1) return FL_OK;
+  ctx c;
+  rc = begin(dev, &c);
+  if (rc != FL_OK) {
+    ctx_free(&c);
+    return rc;
+  }
+  if (c.x->seg_size == 0 || c.x->seg_size == size) { /* « dynamic » : suit le volume */
+    ctx_free(&c);
+    return FL_OK;
+  }
+  if (c.x->seg_off >= fl_bdev_size_bytes(dev) || size > fl_bdev_size_bytes(dev) - c.x->seg_off) {
+    ctx_free(&c);
+    return FL_EINVAL;
+  }
+  cJSON *sg = cJSON_GetObjectItemCaseSensitive(child(c.root, "segments"), "0");
+  char *json = NULL;
+  if (!cJSON_IsObject(sg)) rc = FL_ENOTSUP;
+  if (rc == FL_OK) {
+    char v[24];
+    snprintf(v, sizeof v, "%llu", (unsigned long long)size);
+    cJSON *nv = cJSON_CreateString(v);
+    if (!nv || !cJSON_ReplaceItemInObjectCaseSensitive(sg, "size", nv)) {
+      cJSON_Delete(nv);
+      rc = FL_ENOMEM;
+    }
+  }
+  if (rc == FL_OK) rc = serialize(&c, &json);
+  if (rc == FL_OK) rc = write_hdrs(dev, &c, json);
+  if (json) cJSON_free(json);
+  ctx_free(&c);
+  return rc;
+}

@@ -50,7 +50,7 @@ foreach(f IN LISTS _e2_resize)
   list(APPEND E2FS_SOURCES ${E2FS_DIR}/resize/${f}.c)
 endforeach()
 
-add_library(fl_e2fsprogs STATIC ${E2FS_SOURCES} ${E2FS_GEN}/fl_e2fs_glue.c)
+add_library(fl_e2fsprogs STATIC ${E2FS_SOURCES} ${E2FS_GEN}/fl_e2fs_glue.c ${E2FS_GEN}/fl_rsz_glue.c)
 target_include_directories(fl_e2fsprogs SYSTEM PUBLIC ${E2FS_GEN} ${E2FS_DIR}/lib ${E2FS_DIR})
 target_include_directories(fl_e2fsprogs PRIVATE ${E2FS_GEN}/ext2fs ${E2FS_GEN}/support ${E2FS_DIR}/lib/ext2fs
   ${E2FS_DIR}/lib/support ${E2FS_DIR}/e2fsck ${E2FS_DIR}/resize)
@@ -73,8 +73,12 @@ endforeach()
 set(_e2_fsck_defs ext2fs_get_device_size2=fl_e2fs_get_device_size2 ext2fs_open2=fl_e2fs_open2
   ext2fs_close_free=fl_e2fs_close_free ext2fs_free=fl_e2fs_free)
 set_source_files_properties(${_e2_fsck_src} PROPERTIES COMPILE_DEFINITIONS "${_e2_fsck_defs}")
+list(APPEND _e2_resize_src ${E2FS_GEN}/fl_rsz_glue.c)
 set_source_files_properties(${_e2_resize_src} PROPERTIES COMPILE_DEFINITIONS
   "ext2fs_get_device_size2=fl_e2fs_get_device_size2;init_resource_track=fl_rsz_init_resource_track;print_resource_track=fl_rsz_print_resource_track")
+# resize_fs oublie deux bitmaps sur son chemin d'erreur : fl_rsz_glue.h les libère (voir ce fichier).
+set_source_files_properties(${E2FS_DIR}/resize/resize2fs.c PROPERTIES COMPILE_OPTIONS
+  "-include;${E2FS_GEN}/fl_rsz_glue.h")
 set_source_files_properties(${E2FS_DIR}/e2fsck/unix.c PROPERTIES COMPILE_DEFINITIONS
   "${_e2_fsck_defs};main=fl_e2fsck_main;check_plausibility=fl_e2fs_check_plausibility")
 set_target_properties(fl_e2fsprogs PROPERTIES C_EXTENSIONS ON)

@@ -59,6 +59,14 @@ int fl_luks2_slot_set(fl_bdev *dev, int slot, const void *auth, size_t authlen, 
  * `auth` n'ouvre aucun emplacement (le retiré compris). */
 int fl_luks2_slot_remove(fl_bdev *dev, int slot, const void *auth, size_t authlen);
 
+/* Données chiffrées (phase 18) : début (*off, en octets) et, pour un segment LUKS2 de taille fixe, sa taille
+ * (*fixed ; 0 : jusqu'à la fin du volume, LUKS1 ou segment « dynamic »). Sans phrase. FL_ENOTSUP si ce
+ * n'est pas du LUKS. */
+int fl_luks_payload(fl_bdev *dev, uint64_t *off, uint64_t *fixed);
+/* Segment LUKS2 de taille fixe porté à `size` octets (en-têtes primaire puis secondaire, seqid + 1) ; rien
+ * n'est écrit pour LUKS1 ou un segment « dynamic ». FL_EINVAL si le segment dépasserait `dev`. */
+int fl_luks2_set_segment_size(fl_bdev *dev, uint64_t size);
+
 #ifdef __cplusplus
 }
 #endif

@@ -598,6 +598,10 @@ formatage dans le même processus : use-after-free vu par ASan). Appelé par `fl
   `calculate_minimum_resize_size()`, avec les contrôles de son `main.c` repris dans
   `native/src/partops/e2fs.c` (sauf la date du dernier e2fsck : la vérification du moteur est en lecture
   seule et précède chaque redimensionnement).
+  En amont, le chemin d'erreur de `resize_fs()` libère sa structure sans les bitmaps `reserve_blocks` et
+  `move_blocks` (l'outil quitte aussitôt) : `native/cmake/e2fsprogs/fl_rsz_glue.[ch]`, inclus de force dans
+  `resize2fs.c` seul, les libère quand cette structure est libérée avec `old_fs` encore présent (seul le
+  chemin d'erreur le laisse).
 - Un seul appel à la fois (verrou), sur un fil à pile de 8 Mio. Compilé avec `-w`, en gnu11, `_GNU_SOURCE`,
   `_FILE_OFFSET_BITS=64`.
 
