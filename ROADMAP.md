@@ -456,10 +456,10 @@ dans le même commit que le travail.
 - [x] Plan de la phase 17 écrit *(demande du 2026-10-22 ; spec § 17, § 24, § 25 et § 26 ; phase 12, puis 13, 14, 15, 16, 17 et 15, jusqu'au 2026-10-25, puis 16, puis 17 du 2026-10-25 au 2026-11-12, puis 18 (spec § 29) ; plan du 2026-10-27, décisions du planificateur à valider : pas de déplacement, FAT32 et exFAT non redimensionnés, MBR étendu en étiquette seulement)*
 - [x] T1 — Moteur : table de partitions modifiable (GPT et MBR gardés tels quels hors changement, nouvelle table, espaces libres) *(test_part_layout 11 cas jugés par sfdisk et sgdisk, coupure à chaque écriture ; table de la phase 8 écrite par fl_pt_store ; 52/52 tests natifs hors lents, ASan/UBSan propres)*
 - [x] T2 — Moteur : créer, supprimer, formater une partition ; taille au formatage ; place occupée *(test_partops 9 cas jugés par fsck.fat, fsck.exfat, e2fsck, ntfsfix, cryptsetup et sfdisk ; formatage d'une tranche partagé avec la phase 8 ; 52/52 tests natifs, 902 Flutter, 664 JVM ; vérification par le noyau à lancer par l'utilisateur (sudo))*
-- [ ] T3 — e2fsprogs dans le moteur : vérification en lecture seule (`e2fsck -fn`) et redimensionnement d'ext4 (`resize2fs`)
-- [ ] T4 — `ntfsresize` et `ntfsfix -n` dans le moteur
-- [ ] T5 — Étiquette d'une partition (FAT32, exFAT, ext4, NTFS, dans LUKS)
-- [ ] T6 — Agrandir et réduire une partition et son système de fichiers (ext4, NTFS, dans LUKS1 et LUKS2)
+- [x] T3 — e2fsprogs dans le moteur : vérification en lecture seule (`e2fsck -fn`) et redimensionnement d'ext4 (`resize2fs`) *(e2fsprogs 1.47.3 sans correctif, appelé comme bibliothèque par des macros incluses de force ; test_e2fs 9 cas jugés par e2fsck, resize2fs -P, debugfs, dumpe2fs et blkid ; ASan propre ; compile pour arm64)*
+- [x] T4 — `ntfsresize` et `ntfsfix -n` dans le moteur *(fichiers de ntfs-3g 2022.10.3 inclus tels quels ; test_ntfsresize 9 cas jugés par ntfsfix, ntfsresize --info et ntfsjuge.py ; fuites d'inodes d'amont évitées)*
+- [x] T5 — Étiquette d'une partition (FAT32, exFAT, ext4, NTFS, dans LUKS) *(test_part_label 8 cas jugés par fatlabel, exfatlabel, blkid, ntfslabel et les fsck)*
+- [x] T6 — Agrandir et réduire une partition et son système de fichiers (ext4, NTFS, dans LUKS1 et LUKS2) *(test_part_resize 15 cas jugés par sfdisk, e2fsck, debugfs, ntfsfix, ntfsjuge.py et cryptsetup, coupures avant et après la table ; vérification par le noyau à lancer par l'utilisateur (sudo, FL_KEEP=1))*
 - [ ] T7 — JNI, gestionnaire des partitions en Kotlin et pont Pigeon
 - [ ] T8 — Opérations en attente et aperçu du disque (Dart)
 - [ ] T9 — Écran du disque comme GParted : barre à l'échelle, actions, résumé, application ; taille dans l'écran de formatage
