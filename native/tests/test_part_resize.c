@@ -2,7 +2,8 @@
 /* Phase 18, T6 : agrandir et réduire une partition et son système de fichiers (ext4, NTFS, dans LUKS1 et
  * LUKS2). Disque GPT de 512 Mio : partition 1 de 1 à 201 Mio (à redimensionner), partition 2 de 401 à
  * 451 Mio (voisine, remplie d'un motif qui ne doit pas changer). Jugés par sfdisk, e2fsck, debugfs, ntfsfix,
- * ntfsjuge.py et cryptsetup du PC. */
+ * ntfsjuge.py et cryptsetup du PC. FL_KEEP=1 garde chaque disque redimensionné
+ * (build/native/tmp/redim-<fs>-<clair|luks…>-<agrandie|reduite>.img) pour verify_partitions_with_kernel.sh. */
 #include <fcntl.h>
 #include <stdint.h>
 #include <stdio.h>
@@ -349,7 +350,14 @@ static void cas(int kind, uint64_t new_count) {
     TT_ASSERT(strstr(g_out, attendu) != NULL);
     unlink(part);
   }
-  unlink(img);
+  if (getenv("FL_KEEP")) { /* gardée pour tools/fixtures/verify_partitions_with_kernel.sh */
+    static const char *noms[] = {"ext4-clair", "ntfs-clair", "ext4-luks2", "ext4-luks2fixe", "ext4-luks1"};
+    char garde[4300];
+    snprintf(garde, sizeof garde, "%s/redim-%s-%s.img", g_td, noms[kind], new_count > P1_COUNT ? "agrandie" : "reduite");
+    TT_ASSERT_EQ(rename(img, garde), 0);
+  } else {
+    unlink(img);
+  }
 }
 
 static void test_grow_ext4(void) { cas(EXT4, 300 * M); }

@@ -1,10 +1,11 @@
 #!/usr/bin/env bash
-# Vérifie par le noyau Linux les partitions créées par Portail dans un espace libre (phase 17). À lancer par
-# l'utilisateur, avec sudo (loop, dm-crypt, montage) ; jamais par un agent.
+# Vérifie par le noyau Linux les partitions créées (partops-*) ou redimensionnées (redim-*) par Portail
+# (phase 18). À lancer par l'utilisateur, avec sudo (loop, dm-crypt, montage) ; jamais par un agent.
 #
 # Préparation (sans root) :
-#   FL_KEEP=1 ctest --test-dir build/native -R '^test_partops$'
-#   -> build/native/tmp/partops-<fs>-<clair|luks>-<gpt|mbr>.img
+#   FL_KEEP=1 ctest --test-dir build/native -R '^test_part(ops|_resize)$'
+#   -> build/native/tmp/partops-<fs>-<clair|luks>-<gpt|mbr>.img (partition 3, entre les voisines 1 et 2)
+#   -> build/native/tmp/redim-<fs>-<clair|luks…>-<agrandie|reduite>.img (partition 1, voisine 2)
 # Usage :
 #   sudo tools/fixtures/verify_partitions_with_kernel.sh [build/native/tmp]
 #
@@ -17,8 +18,8 @@ set -uo pipefail
 DIR="${1:-build/native/tmp}"
 [ "$(id -u)" = 0 ] || { echo "à lancer avec sudo" >&2; exit 2; }
 shopt -s nullglob
-IMAGES=("$DIR"/partops-*.img)
-[ ${#IMAGES[@]} -gt 0 ] || { echo "aucune image partops-*.img dans $DIR (FL_KEEP=1 ctest -R '^test_partops\$')" >&2; exit 2; }
+IMAGES=("$DIR"/partops-*.img "$DIR"/redim-*.img)
+[ ${#IMAGES[@]} -gt 0 ] || { echo "aucune image dans $DIR (FL_KEEP=1 ctest -R '^test_part(ops|_resize)\$')" >&2; exit 2; }
 
 PASS="phrase de test"
 MAP=portail-verif
@@ -34,17 +35,20 @@ trap 'nettoyer; rmdir "$MNT"' EXIT
 
 echecs=0
 for img in "${IMAGES[@]}"; do
-  nom="$(basename "$img" .img)"           # partops-<fs>-<clair|luks>-<gpt|mbr>
-  IFS=- read -r _ fs mode _ <<<"$nom"
+  nom="$(basename "$img" .img)"           # partops-<fs>-<clair|luks>-<gpt|mbr> ou redim-<fs>-<mode>-<sens>
+  IFS=- read -r genre fs mode _ <<<"$nom"
+  if [ "$genre" = redim ]; then cible=1 voisines=(2); else cible=3 voisines=(1 2); fi
   err() { echo "ÉCHEC $nom : $*"; echecs=$((echecs + 1)); nettoyer; }
 
   LOOP="$(losetup -f -P --show "$img")" || { err "losetup"; continue; }
   udevadm settle 2>/dev/null || sleep 1
-  [ -b "${LOOP}p1" ] && [ -b "${LOOP}p2" ] || { err "partitions voisines absentes"; continue; }
-  part="${LOOP}p3"
-  [ -b "$part" ] || { err "partition 3 absente"; continue; }
+  manque=0
+  for v in "${voisines[@]}"; do [ -b "${LOOP}p$v" ] || manque=1; done
+  [ "$manque" = 0 ] || { err "partitions voisines absentes"; continue; }
+  part="${LOOP}p$cible"
+  [ -b "$part" ] || { err "partition $cible absente"; continue; }
   dev="$part"
-  if [ "$mode" = luks ]; then
+  if [ "$mode" != clair ]; then
     printf '%s' "$PASS" | cryptsetup open --key-file - "$part" "$MAP" || { err "cryptsetup open"; continue; }
     dev="/dev/mapper/$MAP"
   fi

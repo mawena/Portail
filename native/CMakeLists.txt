@@ -217,7 +217,7 @@ if(FL_TESTS)
   target_link_libraries(test_part_resize PRIVATE fl_testsupport)
   target_compile_definitions(test_part_resize PRIVATE FL_SOURCE_DIR="${CMAKE_CURRENT_SOURCE_DIR}")
   set_tests_properties(test_part_resize PROPERTIES TIMEOUT 1800
-    ENVIRONMENT "NTFS_REMPLIR=$<TARGET_FILE:ntfs-remplir>")
+    ENVIRONMENT "FL_FIXTURES=${CMAKE_BINARY_DIR}/fixtures;NTFS_REMPLIR=$<TARGET_FILE:ntfs-remplir>")
   add_dependencies(test_part_resize ntfs-remplir)
   fl_add_test(test_format_fat)
   target_link_libraries(test_format_fat PRIVATE fl_testsupport)
