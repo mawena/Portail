@@ -244,7 +244,7 @@ numérotation), § 14 (formatage de la phase 8), § 19 (interface et accessibili
   ```
   `vol` est la partition ou le volume LUKS déchiffré ; aucune de ces fonctions ne garde `vol` après son retour.
 
-- [ ] **Step 1 : tests en échec** (`test_e2fs.c`, images faites par `mke2fs -t ext4` du PC, avec `metadata_csum`,
+- [x] **Step 1 : tests en échec** (`test_e2fs.c`, images faites par `mke2fs -t ext4` du PC, avec `metadata_csum`,
   `64bit`, `flex_bg` ; une image cassée par `debugfs -w -R "clri <12>"`) : `checkCleanImage` (`clean`, code 0) ;
   `checkReportsCorruption` (pas `clean`, rapport non vide, image inchangée : SHA-256 égal avant et après) ;
   `minSizeMatchesResize2fsP` (égal à `resize2fs -P` du PC, au bloc près) ; `growThenJudged` et `shrinkThenJudged`
@@ -252,16 +252,16 @@ numérotation), § 14 (formatage de la phase 8), § 19 (interface et accessibili
   identiques par `debugfs -R "dump"` et SHA-256) ; `labelSetJudged` (`blkid -s LABEL` rend l'étiquette, `e2fsck -fn`
   propre) ; `exitNeverKillsProcess` (image dont le superbloc est détruit : FL_ECORRUPT rendu, le test continue) ;
   `twoCallsSequential` (deux vérifications de suite dans le même processus, ASan propre).
-- [ ] **Step 2 :** `ctest -R test_e2fs` : échec.
-- [ ] **Step 3 : implémentation.** Correctif `0001-bibliotheque.patch` : `main` d'e2fsck renommé et appelé avec
+- [x] **Step 2 :** `ctest -R test_e2fs` : échec.
+- [x] **Step 3 : implémentation.** Correctif `0001-bibliotheque.patch` : `main` d'e2fsck renommé et appelé avec
   `argv = {"e2fsck", "-fn", "fl"}` ; `exit` et `fatal_error` remplacés par un retour par `longjmp` vers
   `fl_e2fs_check` ; état global remis à zéro à chaque appel ; `unix_io_manager` remplacé par `fl_e2fs_io_manager`
   (nom de périphérique « fl » associé à `vol`). `resize2fs` appelé par `resize_fs()` et
   `calculate_minimum_resize_size()`, sans son `main`. Un mutex sérialise tous les appels ; chacun tourne sur un fil à
   pile de 8 Mio. `config.h` écrit à la main pour Linux et Android (pas de `configure`). Licences recopiées dans
   `PATCHES.md`.
-- [ ] **Step 4 :** tests du moteur verts, ASan/UBSan propres ; `flutter build apk --debug` compile (arm64 et armv7).
-- [ ] **Step 5 : commit** `feat(partitions): e2fsprogs dans le moteur, vérification et redimensionnement d'ext4`.
+- [x] **Step 4 :** tests du moteur verts, ASan/UBSan propres ; `flutter build apk --debug` compile (arm64 et armv7).
+- [x] **Step 5 : commit** `feat(partitions): e2fsprogs dans le moteur, vérification et redimensionnement d'ext4`.
 
 ### Task 4 : ntfsresize et ntfsfix -n dans le moteur
 
@@ -282,18 +282,18 @@ numérotation), § 14 (formatage de la phase 8), § 19 (interface et accessibili
   int fl_ntfs_set_label(fl_bdev *vol, const char *label);         /* ntfs_volume_rename, 32 caractères */
   ```
 
-- [ ] **Step 1 : tests en échec** (`test_ntfsresize.c`, images faites par `mkntfs -Q` du PC puis remplies par
+- [x] **Step 1 : tests en échec** (`test_ntfsresize.c`, images faites par `mkntfs -Q` du PC puis remplies par
   `ntfs-remplir`) : `checkClean`, `checkDirtyVolumeReported` (volume marqué sale : pas `clean`, image inchangée) ;
   `minSizeMatchesNtfsresizeInfo` (égal à `ntfsresize --info --force` du PC à 1 Mio près) ; `growThenJudged`,
   `shrinkThenJudged` (`ntfsfix -n` du PC propre, fichiers identiques par `ntfsjuge.py`) ; `labelSetJudged`
   (`ntfslabel` du PC la relit) ; `exitNeverKillsProcess` ; `resizeSetsChkdskFlagLikeUpstream` (comme `ntfsresize`,
   le volume est marqué à vérifier par Windows : comportement documenté, pas une erreur).
-- [ ] **Step 2 :** `ctest -R test_ntfsresize` : échec.
-- [ ] **Step 3 : implémentation** sur le modèle du correctif `0007-mkntfs-bibliotheque.patch` : `main` remplacé par des
+- [x] **Step 2 :** `ctest -R test_ntfsresize` : échec.
+- [x] **Step 3 : implémentation** sur le modèle du correctif `0007-mkntfs-bibliotheque.patch` : `main` remplacé par des
   fonctions qui prennent le périphérique de l'appelant, `err_exit` et `exit` par un retour, globales remises à zéro,
   messages recueillis dans `report` au lieu de `stdout`. Mutex et fil à grande pile partagés avec T3.
-- [ ] **Step 4 :** tests du moteur verts ; `flutter build apk --debug` compile.
-- [ ] **Step 5 : commit** `feat(partitions): ntfsresize et ntfsfix dans le moteur`.
+- [x] **Step 4 :** tests du moteur verts ; `flutter build apk --debug` compile.
+- [x] **Step 5 : commit** `feat(partitions): ntfsresize et ntfsfix dans le moteur`.
 
 ### Task 5 : étiquette d'une partition (moteur)
 
@@ -306,16 +306,16 @@ numérotation), § 14 (formatage de la phase 8), § 19 (interface et accessibili
 - Produces : `int fl_part_set_label(fl_bdev *disk, uint32_t index, uint64_t expect_first_lba, const char *label, const void *pass, size_t passlen);`
   (chiffrée : étiquette du système de fichiers intérieur, phrase exigée, FL_EBADPASS sinon ; logique MBR permise).
 
-- [ ] **Step 1 : tests en échec** : `fat32LabelBothPlaces` (`fatlabel` du PC et le champ du secteur de démarrage et de
+- [x] **Step 1 : tests en échec** : `fat32LabelBothPlaces` (`fatlabel` du PC et le champ du secteur de démarrage et de
   sa copie, secteur 6, rendent l'étiquette en majuscules ; `fsck.fat -n` propre) ; `exfatLabelJudged` (`exfatlabel`,
   `fsck.exfat -n`) ; `ext4LabelJudged` ; `ntfsLabelJudged` ; `encryptedLabelInside` (`blkid` du volume ouvert par
   `cryptsetup` du PC) ; `invalidLabelRefusedBeforeWrite` (FL_EINVAL, image inchangée) ; `wrongPassRefused`
   (FL_EBADPASS, image inchangée).
-- [ ] **Step 2 :** `ctest -R test_part_label` : échec.
-- [ ] **Step 3 : implémentation** : FAT32 et exFAT par `f_setlabel` de FatFs, puis, en FAT32, `BS_VolLab` du secteur
+- [x] **Step 2 :** `ctest -R test_part_label` : échec.
+- [x] **Step 3 : implémentation** : FAT32 et exFAT par `f_setlabel` de FatFs, puis, en FAT32, `BS_VolLab` du secteur
   de démarrage et de sa copie (comme `fatlabel`) ; ext4 et NTFS par T3 et T4.
-- [ ] **Step 4 :** tests du moteur verts.
-- [ ] **Step 5 : commit** `feat(partitions): changer l'étiquette d'une partition`.
+- [x] **Step 4 :** tests du moteur verts.
+- [x] **Step 5 : commit** `feat(partitions): changer l'étiquette d'une partition`.
 
 ### Task 6 : redimensionner une partition et son système de fichiers (moteur)
 
@@ -339,19 +339,19 @@ numérotation), § 14 (formatage de la phase 8), § 19 (interface et accessibili
   = système de fichiers, puis LUKS, puis table. FAT12/16/32 et exFAT : `resizable` faux, `why` = « FAT32 et exFAT ne
   se redimensionnent pas ici : copiez les fichiers ailleurs, puis recréez la partition ».
 
-- [ ] **Step 1 : tests en échec** (`test_part_resize.c`) : `growExt4`, `shrinkExt4`, `growNtfs`, `shrinkNtfs`,
+- [x] **Step 1 : tests en échec** (`test_part_resize.c`) : `growExt4`, `shrinkExt4`, `growNtfs`, `shrinkNtfs`,
   `growLuks2Ext4`, `shrinkLuks2Ext4`, `growLuks1Ext4`, `resizeLuks2FixedSegment` (fichiers identiques par SHA-256,
   `sfdisk --json` montre la nouvelle taille, juges du PC propres, `cryptsetup luksDump` : taille du segment juste) ;
   `shrinkBelowMinimumRefused` et `growBeyondFreeRefused` (FL_EINVAL, image inchangée) ; `fatNotResizable` ;
   `resizeRefusedWhenCheckFails` (ext4 cassé : FL_ECORRUPT, image inchangée) ; `growCutAfterTableKeepsData` et
   `shrinkCutBeforeTableKeepsData` (`fault_bdev` coupé entre les étapes : la partition se monte et les fichiers sont
   intacts) ; `startNeverMoves` (début identique après chaque cas).
-- [ ] **Step 2 :** `ctest -R test_part_resize` : échec.
-- [ ] **Step 3 : implémentation** selon l'ordre ci-dessus ; un segment LUKS2 « dynamic » et LUKS1 suivent la partition
+- [x] **Step 2 :** `ctest -R test_part_resize` : échec.
+- [x] **Step 3 : implémentation** selon l'ordre ci-dessus ; un segment LUKS2 « dynamic » et LUKS1 suivent la partition
   sans écriture d'en-tête.
 - [ ] **Step 4 :** tests du moteur verts ; `sudo tools/fixtures/verify_partitions_with_kernel.sh` sur les images
   redimensionnées gardées : montées par le noyau, propres.
-- [ ] **Step 5 : commit** `feat(partitions): agrandir et réduire ext4 et NTFS, aussi dans LUKS`.
+- [x] **Step 5 : commit** `feat(partitions): agrandir et réduire ext4 et NTFS, aussi dans LUKS`.
 
 ### Task 7 : JNI et Kotlin (`PartitionManager`)
 
