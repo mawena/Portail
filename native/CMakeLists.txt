@@ -37,6 +37,7 @@ set(FL_SOURCES
   src/partops/e2fs.c
   src/partops/tool_run.c
   src/partops/ntfs.c
+  src/partops/label.c
   src/partops/ntfs_tool.c
   src/partops/ntfsresize_tool.c
   src/partops/ntfsfix_tool.c
@@ -208,6 +209,9 @@ if(FL_TESTS)
   set_tests_properties(test_ntfsresize PROPERTIES TIMEOUT 900
     ENVIRONMENT "FL_FIXTURES=${CMAKE_BINARY_DIR}/fixtures;NTFS_REMPLIR=$<TARGET_FILE:ntfs-remplir>")
   add_dependencies(test_ntfsresize ntfs-remplir)
+  fl_add_test(test_part_label)
+  target_link_libraries(test_part_label PRIVATE fl_testsupport)
+  set_tests_properties(test_part_label PROPERTIES TIMEOUT 900)
   fl_add_test(test_format_fat)
   target_link_libraries(test_format_fat PRIVATE fl_testsupport)
   fl_add_test(test_format_ext4)

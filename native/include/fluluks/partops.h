@@ -46,6 +46,13 @@ typedef struct {
  * lecture seule du système de fichiers. FL_ENOENT si l'index n'existe pas. */
 int fl_part_usage_of(fl_bdev *disk, uint32_t index, fl_part_usage *out);
 
+/* Étiquette de la partition `index` (phase 18), logiques comprises : FAT12/16/32 (entrée du dossier racine et
+ * BS_VolLab du secteur de démarrage et de sa copie, en majuscules), exFAT, ext4, NTFS ; chiffrée : étiquette
+ * du système de fichiers intérieur, phrase exigée (FL_EBADPASS sinon). Étiquette refusée par les règles du
+ * formatage : FL_EINVAL avant toute écriture. Le nom de partition GPT ne change pas. */
+int fl_part_set_label(fl_bdev *disk, uint32_t index, uint64_t expect_first_lba, const char *label, const void *pass,
+                      size_t passlen);
+
 /* --- ext4 par e2fsprogs (phase 18) ------------------------------------------------------------------
  * `vol` est la partition ou le volume LUKS déchiffré ; aucune de ces fonctions ne garde `vol` après son
  * retour. Un seul appel à la fois (verrou commun), sur un fil à pile de 8 Mio. */

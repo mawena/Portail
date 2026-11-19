@@ -955,6 +955,60 @@ static int fat32_boot_label(fl_bdev *dev, const char *label) {
   return rc;
 }
 
+/* FAT12/16 : BS_VolLab à l'octet 43 du secteur de démarrage, sans copie de secours. */
+static int fat16_boot_label(fl_bdev *dev, const char *label) {
+  uint8_t *s = malloc(dev->sector_size);
+  if (!s) return FL_ENOMEM;
+  int rc = fl_bdev_read(dev, 0, 1, s);
+  if (rc == FL_OK) {
+    memset(s + 43, ' ', 11);
+    memcpy(s + 43, label, strnlen(label, 11));
+    rc = fl_bdev_write(dev, 0, 1, s);
+  }
+  free(s);
+  return rc;
+}
+
+/* Étiquette d'un volume monté en écriture (phase 18), déjà validée par l'appelant : entrée du dossier racine
+ * par f_setlabel, puis, en FAT12/16/32, BS_VolLab du secteur de démarrage et de sa copie, comme fatlabel
+ * (Windows lit la première, certains appareils le second). FAT : en majuscules ; vide : « NO NAME ». */
+int fl_fat_set_label(fl_fs *fs, const char *label) {
+  if (!fs || !label) return FL_EINVAL;
+  fat_vol *v = fs->priv;
+  if (fs->read_only) return FL_EROFS;
+  char up[12] = "";
+  bool exfat = v->ff.fs_type == FS_EXFAT;
+  if (!exfat) {
+    size_t n = strnlen(label, 11);
+    for (size_t i = 0; i < n; i++) up[i] = (char)(label[i] >= 'a' && label[i] <= 'z' ? label[i] - 32 : label[i]);
+    up[n] = 0;
+    label = up;
+  }
+  pthread_mutex_lock(&g_fat_lock);
+  int rc = mark_dirty(v);
+  if (rc == FL_OK) {
+    char lab[4 + 128];
+    snprintf(lab, sizeof lab, "%s%s", v->drv, label);
+    rc = wr_err(v, f_setlabel(lab));
+  }
+  if (rc == FL_OK) rc = sync_locked(v);
+  if (rc == FL_OK && !exfat) {
+    rc = fat_disk_drain(v->disk);
+    if (rc == FL_OK) {
+      if (v->ff.fs_type == FS_FAT32) {
+        rc = fat32_boot_label(fs->dev, *label ? label : "NO NAME");
+      } else {
+        rc = fat16_boot_label(fs->dev, *label ? label : "NO NAME");
+      }
+    }
+    if (rc == FL_OK) rc = fl_bdev_flush(fs->dev);
+    if (v->ff.winsect == v->ff.volbase && !v->ff.wflag) v->ff.winsect = (LBA_t)0 - 1; /* fenêtre périmée */
+    if (rc != FL_OK) go_ro(v, FL_RO_IOERR);
+  }
+  pthread_mutex_unlock(&g_fat_lock);
+  return rc;
+}
+
 /* Formatage (phase 8) : `dev` est la partition entière (FM_SFD : pas de table de partitions écrite par
  * FatFs), sur un emplacement libre et sous g_fat_lock comme un montage. Étiquette déjà validée par
  * l'appelant. FL_ENOSPC si FatFs juge le volume trop petit pour le format demandé. */

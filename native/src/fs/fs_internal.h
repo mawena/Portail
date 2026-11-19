@@ -64,6 +64,8 @@ int fl_ext4_mount(fl_bdev *dev, bool want_rw, fl_fs **out);
 int fl_fat_mount(fl_bdev *dev, bool want_rw, fl_fs **out);
 /* Formatage FAT32 ou exFAT de tout `dev` (phase 8, fat_glue.c). */
 int fl_fat_mkfs(fl_bdev *dev, bool exfat, const char *label);
+/* Étiquette d'un volume FAT ou exFAT monté en écriture (phase 18), déjà validée par l'appelant. */
+int fl_fat_set_label(fl_fs *fs, const char *label);
 /* Formatage ext4 avec journal de tout `dev` (phase 8, ext4_glue.c). */
 int fl_ext4_mkfs(fl_bdev *dev, const char *label, const uint8_t uuid[16], uint32_t uid, uint32_t gid);
 /* NTFS par libntfs-3g (ntfs_glue.c, phase 5). */
